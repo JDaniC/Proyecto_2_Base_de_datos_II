@@ -32,3 +32,6 @@ build/
 # Configuración local de editores
 .idea/
 .vscode/
+
+# Configuración local de Obsidian
+.obsidian/
