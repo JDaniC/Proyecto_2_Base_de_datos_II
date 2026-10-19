@@ -66,9 +66,13 @@ El script crea la base `clinica_odontologica`.
 .
 ├── Agente/
 │   └── AGENTS.md
+├── Backend/
+│   └── .gitkeep
 ├── Database/
 │   ├── clinica_odontologica_mysql.sql
 │   └── hospital_general_postgresql.sql
+├── Frontend/
+│   └── .gitkeep
 ├── README.md
 └── plan/
 ```
