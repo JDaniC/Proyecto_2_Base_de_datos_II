@@ -105,6 +105,47 @@ export interface CitaDashboard {
   consultorioOArea?: string;
 }
 
+// --- Tipos de la Pantalla 05 Aprobada: Agenda de Citas (V08 y V09) ---
+
+export interface CitaAgenda {
+  id: string;
+  institucionId: InstitucionId;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteCodigo: string;
+  pacienteTelefono?: string;
+  profesionalId: string;
+  profesionalNombre: string;
+  profesionalRol: string;
+  fecha: string; // YYYY-MM-DD
+  horaInicio: string; // HH:mm (24 h)
+  horaFin: string; // HH:mm (24 h)
+  duracionMinutos: number;
+  motivo: string;
+  estado: EstadoCita;
+  consultorio: string;
+  motivoCancelacion?: string;
+  fechaCreacion: string;
+}
+
+export interface FiltrosAgendaQuery {
+  fechaDesde: string;
+  fechaHasta: string;
+  profesionalId?: string;
+  estado?: EstadoCita | 'TODOS';
+  q?: string;
+}
+
+export interface CrearCitaDTO {
+  pacienteId: string;
+  profesionalId: string;
+  fecha: string;
+  horaInicio: string;
+  duracionMinutos: number;
+  motivo: string;
+  consultorio?: string;
+}
+
 export interface ActividadReciente {
   id: string;
   tiempoRelativo: string;

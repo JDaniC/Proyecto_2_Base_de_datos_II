@@ -10,6 +10,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { PatientsListPage } from '../features/patients/PatientsListPage';
 import { PatientFormPage } from '../features/patients/PatientFormPage';
 import { PatientRecordPage } from '../features/patients/PatientRecordPage';
+import { AppointmentsCalendarPage } from '../features/appointments/AppointmentsCalendarPage';
 
 export const App: React.FC = () => {
   return (
@@ -33,6 +34,7 @@ export const App: React.FC = () => {
               <Route path="/pacientes/nuevo" element={<PatientFormPage />} />
               <Route path="/pacientes/:pacienteId/editar" element={<PatientFormPage />} />
               <Route path="/pacientes/:pacienteId" element={<PatientRecordPage />} />
+              <Route path="/agenda" element={<AppointmentsCalendarPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               
