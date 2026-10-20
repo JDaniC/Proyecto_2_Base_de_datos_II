@@ -30,7 +30,9 @@ import {
   AseguradoraCatalogo,
   ProcedimientoOdontologico,
   PruebaLaboratorioCatalogo,
-  VacunaCatalogo
+  VacunaCatalogo,
+  EventoAuditoria,
+  FiltrosAuditoriaQuery
 } from './types';
 
 export interface IniciarSesionParams {
@@ -124,4 +126,10 @@ export interface CatalogRepository {
   obtenerProcedimientosOdontologicos(institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]>;
   obtenerPruebasLaboratorio(institucionId: InstitucionId): Promise<PruebaLaboratorioCatalogo[]>;
   obtenerVacunas(institucionId: InstitucionId): Promise<VacunaCatalogo[]>;
+}
+
+export interface AuditRepository {
+  consultarEventos(institucionId: InstitucionId, filtros: FiltrosAuditoriaQuery): Promise<EventoAuditoria[]>;
+  obtenerEventoPorId(institucionId: InstitucionId, id: string): Promise<EventoAuditoria | null>;
+  registrarEvento(institucionId: InstitucionId, evento: Omit<EventoAuditoria, 'id' | 'correlacionId' | 'timestamp' | 'institucionId'>): Promise<EventoAuditoria>;
 }

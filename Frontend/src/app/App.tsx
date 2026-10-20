@@ -15,6 +15,7 @@ import { NewConsultationWizardPage } from '../features/consultations/NewConsulta
 import { ConsultationDetailPage } from '../features/consultations/ConsultationDetailPage';
 import { UsersManagementPage } from '../features/admin/UsersManagementPage';
 import { CatalogosManagementPage } from '../features/admin/CatalogosManagementPage';
+import { AuditSearchPage } from '../features/admin/AuditSearchPage';
 
 export const App: React.FC = () => {
   return (
@@ -49,7 +50,7 @@ export const App: React.FC = () => {
                 path="/administracion/auditoria"
                 element={
                   <AuthGuard requierePermiso="auditoria.leer">
-                    <div style={{ padding: '24px' }}>Auditoría del sistema</div>
+                    <AuditSearchPage />
                   </AuthGuard>
                 }
               />

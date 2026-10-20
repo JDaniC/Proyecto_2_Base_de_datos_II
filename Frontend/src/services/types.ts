@@ -577,3 +577,60 @@ export class PacienteDuplicadoException extends Error {
     this.numeroIdentificacion = existente.numeroIdentificacion;
   }
 }
+
+export type AccionAuditoria =
+  | 'CREACION'
+  | 'MODIFICACION'
+  | 'RECTIFICACION_CA10'
+  | 'ARCHIVADO_EXPEDIENTE'
+  | 'REACTIVACION_EXPEDIENTE'
+  | 'CAMBIO_ESTADO_CUENTA'
+  | 'ASIGNACION_PERMISOS'
+  | 'EMISION_RECETA'
+  | 'ACCESO_CLINICO';
+
+export type TipoRecursoAuditoria =
+  | 'PACIENTE'
+  | 'EXPEDIENTE'
+  | 'CONSULTA'
+  | 'RECETA'
+  | 'USUARIO'
+  | 'ROL'
+  | 'CATALOGO_MEDICO'
+  | 'PRUEBA_LAB';
+
+export type SeveridadAuditoria = 'INFO' | 'ADVERTENCIA' | 'CRITICO';
+
+export interface EventoAuditoria {
+  id: string;
+  correlacionId: string;
+  institucionId: InstitucionId;
+  timestamp: string;
+  actor: {
+    nombre: string;
+    email: string;
+    rol: string;
+    ipOrigen?: string;
+  };
+  accion: AccionAuditoria;
+  tipoRecurso: TipoRecursoAuditoria;
+  recursoId: string;
+  recursoNombre: string;
+  versionAfectada?: string;
+  motivoJustificacion?: string;
+  severidad: SeveridadAuditoria;
+  cambiosDetalle?: {
+    campo: string;
+    valorAnterior: string | null;
+    valorNuevo: string;
+  }[];
+}
+
+export interface FiltrosAuditoriaQuery {
+  actor?: string;
+  accion?: string;
+  tipoRecurso?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  correlacionId?: string;
+}
