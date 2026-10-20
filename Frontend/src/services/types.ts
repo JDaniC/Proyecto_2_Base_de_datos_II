@@ -634,3 +634,78 @@ export interface FiltrosAuditoriaQuery {
   fechaHasta?: string;
   correlacionId?: string;
 }
+
+export type EstadoHospitalizacion = 'ACTIVA' | 'EGRESADA' | 'CANCELADA';
+export type EstadoCama = 'DISPONIBLE' | 'OCUPADA' | 'MANTENIMIENTO';
+
+export interface CamaHospitalaria {
+  id: string;
+  habitacionId: string;
+  numeroHabitacion: string;
+  piso: number;
+  salaServicio: string;
+  codigoCama: string;
+  estado: EstadoCama;
+  hospitalizacionActivaId?: string;
+  pacienteActual?: string;
+}
+
+export interface AsignacionCamaItem {
+  id: string;
+  camaId: string;
+  codigoCama: string;
+  habitacion: string;
+  servicio: string;
+  fechaInicio: string;
+  fechaFin?: string;
+  motivoCambio?: string;
+}
+
+export interface HospitalizacionItem {
+  id: string;
+  codigoIngreso: string;
+  institucionId: InstitucionId;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteExpediente: string;
+  medicoTratanteId: string;
+  medicoTratanteNombre: string;
+  medicoTratanteColegiado: string;
+  fechaIngreso: string;
+  fechaEgreso?: string;
+  estado: EstadoHospitalizacion;
+  diagnosticoIngresoCIE: string;
+  diagnosticoIngresoNombre: string;
+  diagnosticoEgresoCIE?: string;
+  diagnosticoEgresoNombre?: string;
+  motivoIngreso: string;
+  resumenEgreso?: string;
+  tipoEgreso?: 'ALTA_MEDICA' | 'TRASLADO' | 'VOLUNTARIA' | 'FALLECIMIENTO';
+  camaActual?: {
+    camaId: string;
+    codigoCama: string;
+    habitacion: string;
+    servicio: string;
+  };
+  asignacionesCama: AsignacionCamaItem[];
+  consultasEnlazadasIds: string[];
+}
+
+export interface CrearIngresoHospitalarioDTO {
+  pacienteId: string;
+  medicoTratanteId: string;
+  fechaIngreso: string;
+  camaId: string;
+  diagnosticoIngresoCIE: string;
+  diagnosticoIngresoNombre: string;
+  motivoIngreso: string;
+  consultasEnlazadasIds?: string[];
+}
+
+export interface RegistrarEgresoHospitalarioDTO {
+  fechaEgreso: string;
+  tipoEgreso: 'ALTA_MEDICA' | 'TRASLADO' | 'VOLUNTARIA' | 'FALLECIMIENTO';
+  diagnosticoEgresoCIE: string;
+  diagnosticoEgresoNombre: string;
+  resumenClinico: string;
+}

@@ -32,7 +32,11 @@ import {
   PruebaLaboratorioCatalogo,
   VacunaCatalogo,
   EventoAuditoria,
-  FiltrosAuditoriaQuery
+  FiltrosAuditoriaQuery,
+  HospitalizacionItem,
+  CamaHospitalaria,
+  CrearIngresoHospitalarioDTO,
+  RegistrarEgresoHospitalarioDTO
 } from './types';
 
 export interface IniciarSesionParams {
@@ -132,4 +136,15 @@ export interface AuditRepository {
   consultarEventos(institucionId: InstitucionId, filtros: FiltrosAuditoriaQuery): Promise<EventoAuditoria[]>;
   obtenerEventoPorId(institucionId: InstitucionId, id: string): Promise<EventoAuditoria | null>;
   registrarEvento(institucionId: InstitucionId, evento: Omit<EventoAuditoria, 'id' | 'correlacionId' | 'timestamp' | 'institucionId'>): Promise<EventoAuditoria>;
+}
+
+export interface HospitalizationRepository {
+  listarHospitalizaciones(institucionId: InstitucionId, filtroEstado?: string): Promise<HospitalizacionItem[]>;
+  obtenerHospitalizacionPorId(institucionId: InstitucionId, id: string): Promise<HospitalizacionItem | null>;
+  obtenerHospitalizacionesPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<HospitalizacionItem[]>;
+  crearIngreso(institucionId: InstitucionId, dto: CrearIngresoHospitalarioDTO): Promise<HospitalizacionItem>;
+  registrarEgreso(institucionId: InstitucionId, hospitalizacionId: string, dto: RegistrarEgresoHospitalarioDTO): Promise<HospitalizacionItem>;
+  listarCamas(institucionId: InstitucionId): Promise<CamaHospitalaria[]>;
+  asignarCama(institucionId: InstitucionId, hospitalizacionId: string, nuevaCamaId: string, fechaInicio: string, motivo: string): Promise<HospitalizacionItem>;
+  liberarCama(institucionId: InstitucionId, hospitalizacionId: string, fechaFin: string): Promise<HospitalizacionItem>;
 }
