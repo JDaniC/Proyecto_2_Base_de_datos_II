@@ -198,3 +198,7 @@ No se afirma que estén probados los flujos clínicos CA01–CA20, la concurrenc
 - [Índices parciales](https://www.mongodb.com/docs/manual/core/index-partial/): unicidad para datos opcionales presentes.
 - [Tamaño BSON](https://www.mongodb.com/docs/manual/reference/operator/aggregation/bsonsize/): límite aplicado al documento completo.
 - [Requisitos transaccionales](https://www.mongodb.com/docs/manual/core/transactions-production-consideration/): replica set/clúster y límites que deben considerar los adaptadores.
+
+## Correcciones de cierre
+
+El validador de `consultas_clinicas` comprueba el intervalo de cada tratamiento cuando tiene ambas fechas, el prescriptor igual al médico de consulta y los IDs de medicamentos sin repetición. `tests/auditoria_mongodb.js` agrega siete regresiones; junto a las 102 existentes suman 109 PASS. Una base inicializada con validadores anteriores requiere migración explícita: el preflight no los sobrescribe. Ver [cierre](CIERRE_DATABASE.md) y [verificación unificada](README.md).

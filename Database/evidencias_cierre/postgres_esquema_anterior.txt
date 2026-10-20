@@ -1,0 +1,4 @@
+
+NOTICE:  schema "hospital_general" already exists, skipping
+ERROR:  ESQUEMA_ANTERIOR_SIN_MANIFIESTO_REQUIERE_MIGRACION
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE

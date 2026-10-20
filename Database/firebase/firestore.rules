@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Toda lectura/escritura, incluidos catalogos, pasa por la API autorizada.
+    // Admin SDK omite estas reglas: el backend requiere validacion e IAM propios.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

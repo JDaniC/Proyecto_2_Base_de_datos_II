@@ -514,9 +514,11 @@ CA03–CA08 se ejecutan en los cuatro adaptadores con el mismo contrato. CA09–
 
 ## 11. Estado actual y trabajo pendiente
 
-Estado actualizado el 19 de octubre de 2026: existen los dos SQL iniciales y `Database/laboratorio_clinico_mongodb.js`, que crea las 27 colecciones MongoDB adoptadas, con validadores estrictos y 63 índices secundarios. `Database/ANALISIS_MONGODB.md` documenta el modelo y su ejecución. La suite `Database/tests/laboratorio_clinico_mongodb.test.js` pasó 102 comprobaciones sobre un replica set temporal MongoDB 8.0.32, incluyendo reejecución, unicidad, validación y rollback real. No se aplicó el script sobre una base compartida.
+Estado actualizado el 19 de octubre de 2026: existen los dos SQL v2 (cierre en sección 16) y `Database/laboratorio_clinico_mongodb.js`, que crea las 27 colecciones MongoDB adoptadas, con validadores estrictos y 63 índices secundarios. `Database/ANALISIS_MONGODB.md` documenta el modelo y su ejecución. La suite `Database/tests/laboratorio_clinico_mongodb.test.js` pasó 102 comprobaciones sobre un replica set temporal MongoDB 8.0.32, incluyendo reejecución, unicidad, validación y rollback real. No se aplicó el script sobre una base compartida.
 
-`Backend/` y `Frontend/` contienen únicamente `.gitkeep`. Siguen pendientes la aplicación, los adaptadores, las migraciones SQL de las ampliaciones, Firestore, las pruebas de los casos de uso CA01–CA20 y el comparativo final. Tener el esquema MongoDB no demuestra todavía relaciones válidas entre documentos, permisos, inmutabilidad ni saldos concurrentes: son responsabilidades del backend descritas en el análisis.
+También existe `Database/centro_pediatrico_firestore.mjs`, con plan offline e inicialización transaccional de configuración y cuatro roles. `Database/firebase/` contiene 22 modelos de documento, reglas que deniegan acceso directo del cliente y diez índices compuestos declarados. `Database/ANALISIS_FIREBASE.md` explica ejecución y límites. Pasaron 181 pruebas (82 de modelo y 99 contra Firestore Emulator 1.22.0), sin escribir en un proyecto Firebase real. Firestore materializa las colecciones al escribir documentos; no se crearon placeholders clínicos. Sus validadores son de servidor y no restricciones nativas del motor; índices/reglas no se han desplegado remotamente.
+
+`Backend/` y `Frontend/` contienen únicamente `.gitkeep`. Siguen pendientes la aplicación, los adaptadores, la migración de instalaciones SQL anteriores, la integración de las reglas transaccionales y validadores, las pruebas de los casos de uso CA01–CA20 y el comparativo final. Tener los modelos de persistencia no demuestra todavía relaciones válidas entre documentos, permisos clínicos, inmutabilidad ni saldos concurrentes: son responsabilidades del backend descritas en los análisis.
 
 El diseño especifica los requisitos y corrige los siete vacíos documentales identificados; no acredita que la entrega funcional esté completada. La tabla de retroalimentación de 14.2 sigue pendiente por falta de observaciones docentes. La sección 13 constituye la comparación de decisiones adoptadas y debe contrastarse con la implementación para entregar el comparativo final.
 
@@ -585,9 +587,9 @@ Generar `Agente/COMPARATIVO_MOTORES.md` al completar la implementación, usando 
 
 ### 14.1 Cambios adoptados para la implementación
 
-Los atributos de la primera entrega se conservan salvo los cambios explícitos siguientes. Los SQL actuales permanecen como base; estas decisiones requieren migraciones nuevas, reversibles cuando sea posible, sin ejecutar borrados destructivos sobre datos existentes. Actualizar diagramas y diccionario de datos junto con las migraciones.
+Los atributos de la primera entrega se conservan salvo los cambios explícitos siguientes. Los inicializadores SQL v2 incorporan las estructuras de almacenamiento de M01, M02, M05, M06 y M07 para bases nuevas; los modelos documentales incorporan sus ampliaciones. Una instalación anterior con datos requiere migraciones nuevas, reversibles cuando sea posible, sin borrados destructivos. El diccionario SQL verificado está en `Database/DICCIONARIO_SQL.md`; las reglas y límites del cierre están en `Database/README.md`. Los servicios y adaptadores siguen pendientes.
 
-| ID | Cambio adoptado | Fuente / motivo | Implementación requerida, todavía pendiente |
+| ID | Cambio adoptado | Fuente / motivo | Implementación requerida y estado de integración |
 |---|---|---|---|
 | M01 | ID público UUID y versión de concurrencia; registro de operaciones idempotentes y reservas de identidad | Equivalencia F, pp. 3–4; duplicados/concurrencia I, pp. 45–46 y 54 | Campos únicos y tablas/colecciones técnicas por motor; no sustituir PK internas referenciadas. |
 | M02 | Identidad Firebase vinculada a usuario interno y roles institucionales; sin contraseña local | Decisión técnica de 5.3.1 frente a hash local en PG e I, p. 38 | Migrar usuarios de PG/MongoDB; incorporar cuentas/roles/auditoría en MySQL/Firestore. Conservar actor histórico y admitir cuentas administrativas sin vínculo clínico. |
@@ -661,3 +663,12 @@ F corresponde a la consigna final e I al levantamiento de la primera entrega, co
 | I13 | Receta pediátrica histórica | 3.5.2, 5.7, 14.1 | CA10 |
 | I14 | Dosis única, cronología y reactivación | 3.5.2, 5.7 | CA07–CA08, CA11 |
 | I15 | Relaciones, permisos, auditoría y concurrencia | 4, 5.3–5.7, 13.2–13.3 | CA01–CA02, CA05, CA09, CA13–CA18 |
+
+
+## 16. Cierre de la fase Database — 19/10/2026
+
+Los inicializadores SQL v2 incorporan las estructuras de almacenamiento de M01, M02, M05, M06 y M07: UUID públicos/revisión en tablas originales, UID Firebase sin contraseñas locales, roles/auditoría en clínica, reservas de identidad, operaciones y revisiones, metadatos de archivo e instantáneas de receta. PostgreSQL tiene 50 tablas y MySQL 22; las 46/14 entidades originales se conservan. El preflight rechaza esquemas antiguos sin manifiesto y deriva; actualizar datos existentes sigue requiriendo migración explícita.
+
+Se corrigieron todos los hallazgos del informe Database inicial y se comprobaron 350 casos, más arranque, reejecución, incompatibilidad y concurrencia. El detalle vigente está en `Database/README.md` y `Database/CIERRE_DATABASE.md`; las observaciones previas de este documento se conservan como estado histórico. Las cuentas de infraestructura, adaptadores, normalización compartida, autorización y transacciones de negocio siguen pendientes en las fases de Docker/backend. La existencia de tablas técnicas no acredita por sí sola los casos de uso CA01–CA20.
+
+En MySQL la preparación de diagnósticos se hace con consulta ABIERTA y al finalizar se exige un principal; en PostgreSQL la exigencia se comprueba al confirmar la transacción. Los servicios deben conservar el contrato de diagnóstico principal al completar su unidad de trabajo. La receta SQL parte de BORRADOR; una corrección emitida conserva la instantánea anterior y aumenta revisión. Estas precisiones completan el contrato de almacenamiento de las secciones 5.6 y 14.

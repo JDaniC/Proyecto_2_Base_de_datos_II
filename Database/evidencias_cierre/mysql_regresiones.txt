@@ -1,0 +1,27 @@
+MY01 paciente de cita incompatible	PASS
+MY02 cita cancelada	PASS
+MY03 dos principales	PASS
+MY04 profesional incompatible	PASS
+MY05 consulta valida	PASS
+MY06 no cancelar cita atendida	PASS
+MY07 no mover historial	PASS
+MY08 no mover consulta	PASS
+MY09 principal booleano	PASS
+MY10 historial unico	PASS
+MY11 consulta unica por cita	PASS
+MY12 estado valido	PASS
+MY13 fechas invertidas	PASS
+MY14 fechas iguales	PASS
+MY15 finalizacion exige principal	PASS
+MY16 no eliminar principal finalizado	PASS
+MY17 FK de paciente	PASS
+MY18 instantanea invalida	PASS
+MY19 no corregir sin revision	PASS
+MY20 no borrar receta emitida	PASS
+MY21 auditoria append only	PASS
+MY22 archivo exige evidencia	PASS
+MY23 no reabrir consulta finalizada	PASS
+MY24 corregir con revision	PASS
+MY25 revisiones append only	PASS
+MY26 estados canonicos	PASS
+MY27 no espacios en estado	PASS

@@ -1,0 +1,56 @@
+{
+  "indexes": [
+    { "collectionGroup": "pacientes", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "estado", "order": "ASCENDING" },
+      { "fieldPath": "nombre_busqueda", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "pediatra_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "paciente_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "estado", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "paciente_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "pediatra_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "aplicaciones_vacuna", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "paciente_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_aplicacion", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "aplicaciones_vacuna", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "paciente_id", "order": "ASCENDING" },
+      { "fieldPath": "estado", "order": "ASCENDING" },
+      { "fieldPath": "fecha_aplicacion", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "auditoria", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "tipo_recurso", "order": "ASCENDING" },
+      { "fieldPath": "recurso_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] },
+    { "collectionGroup": "auditoria", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "usuario_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "ASCENDING" }
+    ] }
+  ],
+  "fieldOverrides": [
+    { "collectionGroup": "consultas", "fieldPath": "receta", "indexes": [] },
+    { "collectionGroup": "consultas", "fieldPath": "diagnosticos", "indexes": [] },
+    { "collectionGroup": "consultas", "fieldPath": "tratamientos", "indexes": [] },
+    { "collectionGroup": "consultas", "fieldPath": "autorizacion_historica", "indexes": [] },
+    { "collectionGroup": "versiones", "fieldPath": "contenido_anterior", "indexes": [] },
+    { "collectionGroup": "versiones", "fieldPath": "dosis", "indexes": [] },
+    { "collectionGroup": "operaciones", "fieldPath": "respuesta", "indexes": [] },
+    { "collectionGroup": "auditoria", "fieldPath": "detalle", "indexes": [] }
+  ]
+}

@@ -402,6 +402,14 @@
       }, ['paciente_id', 'historial_id', 'solicitante_medico_id', 'registrado_por_id', 'fecha_hora',
         'motivo', 'estado', 'diagnosticos', 'tratamientos']),
       reglas: [idsUnicos('diagnosticos', 'diagnostico_id'), idsUnicos('tratamientos', 'tratamiento_id'),
+        { $expr: { $cond: [{ $eq: [{ $type: '$receta' }, 'missing'] }, true, { $and: [
+          { $eq: ['$receta.prescriptor_id', '$solicitante_medico_id'] },
+          idsUnicos('receta.medicamentos', 'medicamento_id').$expr,
+        ] }] } },
+        { $expr: { $allElementsTrue: [{ $map: { input: { $ifNull: ['$tratamientos', []] }, as: 't', in: { $or: [
+          { $eq: [{ $type: '$$t.fecha_inicio' }, 'missing'] }, { $eq: [{ $type: '$$t.fecha_fin' }, 'missing'] },
+          { $gte: ['$$t.fecha_fin', '$$t.fecha_inicio'] },
+        ] } } }] } },
         { $expr: { $cond: [{ $isArray: '$diagnosticos' }, { $or: [
           { $eq: [{ $size: '$diagnosticos' }, 0] },
           { $eq: [{ $size: { $filter: { input: '$diagnosticos', as: 'd', cond: { $eq: ['$$d.es_principal', true] } } } }, 1] },

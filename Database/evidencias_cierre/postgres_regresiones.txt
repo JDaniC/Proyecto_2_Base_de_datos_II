@@ -1,0 +1,34 @@
+PG01 consulta con cita de otro paciente|PASS
+PG02 hospitalizacion_consulta de otro paciente|PASS
+PG03 hospitalizacion_diagnostico de otro paciente|PASS
+PG04 tratamiento y diagnostico de consultas distintas|PASS
+PG05 dos ocupaciones abiertas de la misma cama|PASS
+PG06 segunda consulta para la misma cita|PASS
+PG07 estado de historial fuera del catalogo|PASS
+PG08 codigo de diagnostico duplicado con sistema/version NULL|PASS
+PG09 peso negativo rechazado (control)|PASS
+PG10 historial duplicado rechazado (control)|PASS
+PG11 consulta con historial inexistente rechazada (control)|PASS
+PG12 consulta de cita cancelada|PASS
+PG13 no reasignar historial|PASS
+PG14 no reasignar diagnostico|PASS
+PG15 no reasignar tratamiento|PASS
+PG16 no reasignar hospitalizacion|PASS
+PG17 no reasignar consulta|PASS
+PG18 no cancelar cita atendida|PASS
+PG19 no invertir intervalo cama|PASS
+PG20 no intervalo vacio|PASS
+PG21 un principal maximo|PASS
+PG22 principal requerido al confirmar|PASS
+PG23 vinculo hospital consulta del mismo paciente|PASS
+PG24 consulta sin cita valida|PASS
+PG25 traslado contiguo permitido|PASS
+PG26 misma hospitalizacion en dos camas|PASS
+PG27 receta emitida incompleta|PASS
+PG28 no cambiar receta emitida sin revision|PASS
+PG29 no borrar receta emitida|PASS
+PG30 auditoria append only|PASS
+PG31 archivo exige evidencia|PASS
+PG32 archivo documentado permitido|PASS
+PG33 correccion receta conserva anterior|PASS
+PASS|33

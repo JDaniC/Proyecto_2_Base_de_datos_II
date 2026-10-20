@@ -1,0 +1,163 @@
+{"data_type": "char(36)", "table_name": "antecedente", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "antecedente", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "antecedente", "column_name": "id_antecedente", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "antecedente", "column_name": "id_historial", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "antecedente", "column_name": "tipo", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "antecedente", "column_name": "descripcion", "is_nullable": "NO", "column_default": null}
+{"data_type": "date", "table_name": "antecedente", "column_name": "fecha_registro", "is_nullable": "NO", "column_default": "curdate()"}
+{"data_type": "bigint unsigned", "table_name": "auditoria", "column_name": "id_auditoria", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(36)", "table_name": "auditoria", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "auditoria", "column_name": "id_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "auditoria", "column_name": "accion", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "auditoria", "column_name": "tabla_afectada", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(120)", "table_name": "auditoria", "column_name": "registro_afectado", "is_nullable": "YES", "column_default": null}
+{"data_type": "datetime", "table_name": "auditoria", "column_name": "fecha_hora", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "json", "table_name": "auditoria", "column_name": "detalle", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "cita", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "cita", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "cita", "column_name": "id_cita", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "cita", "column_name": "id_paciente", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "cita", "column_name": "id_odontologo", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "cita", "column_name": "id_secretaria", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "cita", "column_name": "fecha_hora", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "cita", "column_name": "motivo", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "cita", "column_name": "estado", "is_nullable": "NO", "column_default": "PROGRAMADA"}
+{"data_type": "datetime", "table_name": "cita", "column_name": "fecha_creacion", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "char(36)", "table_name": "consulta_diagnostico", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "consulta_diagnostico", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "consulta_diagnostico", "column_name": "id_consulta", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "consulta_diagnostico", "column_name": "id_diagnostico", "is_nullable": "NO", "column_default": null}
+{"data_type": "tinyint(1)", "table_name": "consulta_diagnostico", "column_name": "es_principal", "is_nullable": "NO", "column_default": "0"}
+{"data_type": "bigint unsigned", "table_name": "consulta_diagnostico", "column_name": "principal_consulta", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "consulta_diagnostico", "column_name": "observaciones", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "consulta_odontologica", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "consulta_odontologica", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "consulta_odontologica", "column_name": "id_consulta", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "consulta_odontologica", "column_name": "id_historial", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "consulta_odontologica", "column_name": "id_cita", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "consulta_odontologica", "column_name": "id_odontologo", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "consulta_odontologica", "column_name": "fecha_hora", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "text", "table_name": "consulta_odontologica", "column_name": "motivo", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "consulta_odontologica", "column_name": "observaciones", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "consulta_odontologica", "column_name": "estado", "is_nullable": "NO", "column_default": "ABIERTA"}
+{"data_type": "char(36)", "table_name": "consulta_tratamiento", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "consulta_tratamiento", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "consulta_tratamiento", "column_name": "id_consulta", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "consulta_tratamiento", "column_name": "id_tratamiento", "is_nullable": "NO", "column_default": null}
+{"data_type": "date", "table_name": "consulta_tratamiento", "column_name": "fecha_inicio", "is_nullable": "YES", "column_default": null}
+{"data_type": "date", "table_name": "consulta_tratamiento", "column_name": "fecha_fin", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "consulta_tratamiento", "column_name": "observaciones", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "detalle_receta", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "detalle_receta", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "detalle_receta", "column_name": "id_receta", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "detalle_receta", "column_name": "id_medicamento", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(120)", "table_name": "detalle_receta", "column_name": "dosis", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(120)", "table_name": "detalle_receta", "column_name": "frecuencia", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(120)", "table_name": "detalle_receta", "column_name": "duracion", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "detalle_receta", "column_name": "via_administracion", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "detalle_receta", "column_name": "indicaciones", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "diagnostico", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "diagnostico", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "diagnostico", "column_name": "id_diagnostico", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(50)", "table_name": "diagnostico", "column_name": "codigo", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(180)", "table_name": "diagnostico", "column_name": "nombre", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "diagnostico", "column_name": "descripcion", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "historial_clinico", "column_name": "causa_baja", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "historial_clinico", "column_name": "motivo_baja", "is_nullable": "YES", "column_default": null}
+{"data_type": "datetime", "table_name": "historial_clinico", "column_name": "fecha_baja", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "historial_clinico", "column_name": "actor_baja", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "historial_clinico", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "historial_clinico", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "historial_clinico", "column_name": "id_historial", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "historial_clinico", "column_name": "id_paciente", "is_nullable": "NO", "column_default": null}
+{"data_type": "date", "table_name": "historial_clinico", "column_name": "fecha_apertura", "is_nullable": "NO", "column_default": "curdate()"}
+{"data_type": "varchar(30)", "table_name": "historial_clinico", "column_name": "estado", "is_nullable": "NO", "column_default": "ACTIVO"}
+{"data_type": "text", "table_name": "historial_clinico", "column_name": "motivo_cierre", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "historial_clinico", "column_name": "observaciones", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(64)", "table_name": "identidades_paciente", "column_name": "clave", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(40)", "table_name": "identidades_paciente", "column_name": "tipo_documento", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(80)", "table_name": "identidades_paciente", "column_name": "numero_documento", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "identidades_paciente", "column_name": "id_paciente", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "identidades_paciente", "column_name": "fecha_registro", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "char(36)", "table_name": "medicamento", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "medicamento", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "medicamento", "column_name": "id_medicamento", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(180)", "table_name": "medicamento", "column_name": "nombre_generico", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(150)", "table_name": "medicamento", "column_name": "presentacion", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "medicamento", "column_name": "concentracion", "is_nullable": "YES", "column_default": null}
+{"data_type": "smallint", "table_name": "modelo_database", "column_name": "id", "is_nullable": "NO", "column_default": null}
+{"data_type": "int", "table_name": "modelo_database", "column_name": "version", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(64)", "table_name": "modelo_database", "column_name": "huella", "is_nullable": "NO", "column_default": null}
+{"data_type": "timestamp", "table_name": "modelo_database", "column_name": "fecha_creacion", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "char(36)", "table_name": "odontologo", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "odontologo", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "odontologo", "column_name": "id_odontologo", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "odontologo", "column_name": "nombres", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "odontologo", "column_name": "apellidos", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(50)", "table_name": "odontologo", "column_name": "colegiado", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "odontologo", "column_name": "telefono", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(254)", "table_name": "odontologo", "column_name": "correo", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "operaciones", "column_name": "id_operacion", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "operaciones", "column_name": "id_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "operaciones", "column_name": "caso_uso", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(200)", "table_name": "operaciones", "column_name": "clave", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(64)", "table_name": "operaciones", "column_name": "hash_entrada", "is_nullable": "NO", "column_default": null}
+{"data_type": "int", "table_name": "operaciones", "column_name": "codigo_respuesta", "is_nullable": "NO", "column_default": null}
+{"data_type": "json", "table_name": "operaciones", "column_name": "respuesta", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "operaciones", "column_name": "fecha_hora", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "char(36)", "table_name": "paciente", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "paciente", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "paciente", "column_name": "id_paciente", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "paciente", "column_name": "nombres", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "paciente", "column_name": "apellidos", "is_nullable": "NO", "column_default": null}
+{"data_type": "date", "table_name": "paciente", "column_name": "fecha_nacimiento", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "paciente", "column_name": "telefono", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(254)", "table_name": "paciente", "column_name": "correo", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "paciente", "column_name": "estado", "is_nullable": "NO", "column_default": "ACTIVO"}
+{"data_type": "varchar(20)", "table_name": "receta", "column_name": "estado", "is_nullable": "NO", "column_default": "BORRADOR"}
+{"data_type": "json", "table_name": "receta", "column_name": "contenido_historico", "is_nullable": "YES", "column_default": null}
+{"data_type": "text", "table_name": "receta", "column_name": "motivo_anulacion", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "receta", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "receta", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "receta", "column_name": "id_receta", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "receta", "column_name": "id_consulta", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "receta", "column_name": "fecha_emision", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "char(36)", "table_name": "revisiones", "column_name": "id_revision", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(100)", "table_name": "revisiones", "column_name": "tipo_recurso", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(36)", "table_name": "revisiones", "column_name": "recurso_id", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint", "table_name": "revisiones", "column_name": "version", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "revisiones", "column_name": "id_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "datetime", "table_name": "revisiones", "column_name": "fecha_hora", "is_nullable": "NO", "column_default": "CURRENT_TIMESTAMP"}
+{"data_type": "text", "table_name": "revisiones", "column_name": "motivo", "is_nullable": "NO", "column_default": null}
+{"data_type": "json", "table_name": "revisiones", "column_name": "contenido_anterior", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "rol", "column_name": "id_rol", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(36)", "table_name": "rol", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "rol", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "varchar(80)", "table_name": "rol", "column_name": "nombre", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "rol", "column_name": "descripcion", "is_nullable": "YES", "column_default": null}
+{"data_type": "json", "table_name": "rol", "column_name": "permisos", "is_nullable": "NO", "column_default": "json_array()"}
+{"data_type": "char(36)", "table_name": "secretaria", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "secretaria", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "secretaria", "column_name": "id_secretaria", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "secretaria", "column_name": "nombres", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(160)", "table_name": "secretaria", "column_name": "apellidos", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "secretaria", "column_name": "telefono", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(254)", "table_name": "secretaria", "column_name": "correo", "is_nullable": "YES", "column_default": null}
+{"data_type": "char(36)", "table_name": "tratamiento", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "tratamiento", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "bigint unsigned", "table_name": "tratamiento", "column_name": "id_tratamiento", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(180)", "table_name": "tratamiento", "column_name": "nombre", "is_nullable": "NO", "column_default": null}
+{"data_type": "text", "table_name": "tratamiento", "column_name": "descripcion", "is_nullable": "YES", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "usuario", "column_name": "id_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "char(36)", "table_name": "usuario", "column_name": "id_publico", "is_nullable": "NO", "column_default": "uuid()"}
+{"data_type": "bigint unsigned", "table_name": "usuario", "column_name": "revision", "is_nullable": "NO", "column_default": "1"}
+{"data_type": "varchar(128)", "table_name": "usuario", "column_name": "auth_uid", "is_nullable": "NO", "column_default": null}
+{"data_type": "varchar(20)", "table_name": "usuario", "column_name": "proveedor_identidad", "is_nullable": "NO", "column_default": "FIREBASE"}
+{"data_type": "varchar(40)", "table_name": "usuario", "column_name": "institucion_id", "is_nullable": "NO", "column_default": "CLINICA_ODONTOLOGICA"}
+{"data_type": "varchar(80)", "table_name": "usuario", "column_name": "nombre_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "usuario", "column_name": "id_odontologo", "is_nullable": "YES", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "usuario", "column_name": "id_secretaria", "is_nullable": "YES", "column_default": null}
+{"data_type": "varchar(30)", "table_name": "usuario", "column_name": "estado", "is_nullable": "NO", "column_default": "PENDIENTE"}
+{"data_type": "datetime", "table_name": "usuario", "column_name": "ultimo_acceso", "is_nullable": "YES", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "usuario_rol", "column_name": "id_usuario", "is_nullable": "NO", "column_default": null}
+{"data_type": "bigint unsigned", "table_name": "usuario_rol", "column_name": "id_rol", "is_nullable": "NO", "column_default": null}

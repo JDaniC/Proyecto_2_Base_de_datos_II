@@ -1,0 +1,8 @@
+2026-10-20T00:02:18.011310Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.
+2026-10-20T00:02:18.019496Z 0 [System] [MY-013169] [Server] /private/tmp/bdii_final/mysql-8.4.6-macos15-arm64/bin/mysqld (mysqld 8.4.6) initializing of server in progress as process 2901
+2026-10-20T00:02:18.023882Z 0 [Warning] [MY-010159] [Server] Setting lower_case_table_names=2 because file system for /var/folders/4x/h8f0txmd34ddl71b2g9jc6100000gn/T/bdii-test-yq9pibnt/mysql/ is case insensitive
+2026-10-20T00:02:18.031588Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-10-20T00:02:18.082876Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-10-20T00:02:18.590120Z 5 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+2026-10-20T00:02:18.793455Z 0 [System] [MY-013172] [Server] Received SHUTDOWN from user <via user signal>. Shutting down mysqld (Version: 8.4.6).
+2026-10-20T00:02:19.232776Z 0 [System] [MY-015018] [Server] MySQL Server Initialization - end.

@@ -1,0 +1,4 @@
+Primera transaccion: COMMIT
+Segunda transaccion rechazada:
+ERROR:  conflicting key value violates exclusion constraint "asignacion_cama_id_cama_tsrange_excl"
+DETAIL:  Key (id_cama, tsrange(fecha_hora_inicio, fecha_hora_fin, '[)'::text))=(20001, ["2026-10-19 09:00:00",)) conflicts with existing key (id_cama, tsrange(fecha_hora_inicio, fecha_hora_fin, '[)'::text))=(20001, ["2026-10-19 09:00:00",)).

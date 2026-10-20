@@ -1,0 +1,15 @@
+Evidencia de auditoria 2026-10-19. Datos sinteticos, instancia temporal local.
+ PG01 consulta con cita de otro paciente                       | FAIL
+ PG02 hospitalizacion_consulta de otro paciente                | FAIL
+ PG03 hospitalizacion_diagnostico de otro paciente             | FAIL
+ PG04 tratamiento y diagnostico de consultas distintas         | FAIL
+ PG05 dos ocupaciones abiertas de la misma cama                | FAIL
+ PG06 segunda consulta para la misma cita                      | FAIL
+ PG07 estado de historial fuera del catalogo                   | FAIL
+ PG08 codigo de diagnostico duplicado con sistema/version NULL | FAIL
+ PG09 peso negativo rechazado (control)                        | PASS
+ PG10 historial duplicado rechazado (control)                  | PASS
+ PG11 consulta con historial inexistente rechazada (control)   | PASS
+ FAIL   |     8
+ PASS   |     3
+ROLLBACK

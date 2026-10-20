@@ -1,0 +1,24 @@
+{
+  "name": "bdii-esquemas-datos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Inicializadores, contratos y pruebas de los cuatro motores de historiales clinicos",
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "scripts": {
+    "firestore:plan": "node centro_pediatrico_firestore.mjs --plan",
+    "test:firestore": "node --test tests/centro_pediatrico_firestore.test.mjs",
+    "test:firestore:emulator": "node --test tests/centro_pediatrico_firestore.emulator.test.mjs",
+    "test:database": "python3 tests/verificar_local.py"
+  },
+  "dependencies": {
+    "firebase-admin": "14.5.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
+    "firebase": "13.0.0"
+  }
+}

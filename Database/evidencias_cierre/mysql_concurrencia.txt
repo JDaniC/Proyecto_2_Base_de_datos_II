@@ -1,0 +1,3 @@
+Primera transaccion: COMMIT
+Segunda transaccion rechazada:
+ERROR 1062 (23000) at line 1: Duplicate entry '20001' for key 'consulta_odontologica.uq_consulta_cita'

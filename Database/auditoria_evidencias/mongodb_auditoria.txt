@@ -1,0 +1,4 @@
+Evidencia de auditoria 2026-10-19. Datos sinteticos, instancia temporal local.
+MongoDB: laboratorio_clinico_test_audit_1792453309710; 27 colecciones, 27 nuevas, 63 indices secundarios verificados.
+FAIL MG01 tratamiento con fin anterior al inicio
+PASS MG02 tratamiento con fechas iguales (control)
