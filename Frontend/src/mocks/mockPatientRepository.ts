@@ -9,6 +9,8 @@ import {
   PacienteDuplicadoException,
   ExpedienteCompleto,
   DiagnosticoHistorial,
+  RecetaHistorial,
+  RecetaMedicamentoItem,
   CausaArchivo
 } from '../services/types';
 import {
@@ -29,6 +31,7 @@ const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
 export class MockPatientRepository implements PatientRepository {
   private pacientes: Paciente[] = [];
   private diagnosticosPorPaciente: Record<string, DiagnosticoHistorial[]> = {};
+  private recetasPorPaciente: Record<string, RecetaHistorial[]> = {};
 
   constructor() {
     this.cargarPacientes();
@@ -159,8 +162,11 @@ export class MockPatientRepository implements PatientRepository {
     if (!this.diagnosticosPorPaciente[paciente.id]) {
       this.diagnosticosPorPaciente[paciente.id] = [...(MOCK_DIAGNOSTICOS_DEFECTO[paciente.id] || [])];
     }
-    const diagnosticos = this.diagnosticosPorPaciente[paciente.id];
-    const recetas = MOCK_RECETAS_DEFECTO[paciente.id] || [];
+    const diagnosticos = [...this.diagnosticosPorPaciente[paciente.id]];
+    if (!this.recetasPorPaciente[paciente.id]) {
+      this.recetasPorPaciente[paciente.id] = [...(MOCK_RECETAS_DEFECTO[paciente.id] || [])];
+    }
+    const recetas = [...this.recetasPorPaciente[paciente.id]];
     const eventos = MOCK_EVENTOS_TIMELINE_DEFECTO[paciente.id] || [
       {
         id: `evt-reg-${paciente.id}`,
@@ -393,5 +399,30 @@ export class MockPatientRepository implements PatientRepository {
 
     lista.unshift(nuevo);
     return nuevo;
+  }
+
+  async emitirReceta(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    receta: { emitidaPor: string; rolEmisor: string; medicamentos: RecetaMedicamentoItem[] }
+  ): Promise<RecetaHistorial> {
+    await new Promise((res) => setTimeout(res, 40));
+    if (!this.recetasPorPaciente[pacienteId]) {
+      this.recetasPorPaciente[pacienteId] = [...(MOCK_RECETAS_DEFECTO[pacienteId] || [])];
+    }
+    const correlativo = String(this.recetasPorPaciente[pacienteId].length + 1).padStart(4, '0');
+    const anio = new Date().getFullYear();
+    const nueva: RecetaHistorial = {
+      id: `rec-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      codigoReceta: `REC-${anio}-${correlativo}`,
+      fechaEmision: new Date().toISOString(),
+      emitidaPor: receta.emitidaPor,
+      rolEmisor: receta.rolEmisor,
+      estado: 'EMITIDA',
+      medicamentos: receta.medicamentos
+    };
+
+    this.recetasPorPaciente[pacienteId].unshift(nueva);
+    return nueva;
   }
 }

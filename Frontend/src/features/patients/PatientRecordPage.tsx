@@ -17,6 +17,7 @@ import { useServices } from '../../app/ServiceContext';
 import {
   ExpedienteCompleto,
   DiagnosticoHistorial,
+  RecetaHistorial,
   CausaArchivo
 } from '../../services/types';
 import { Button } from '../../design-system/components/Button';
@@ -30,6 +31,7 @@ import { Toast } from '../../design-system/components/Toast';
 import { ClinicalTimeline } from './components/ClinicalTimeline';
 import { ArchivePatientModal } from './components/ArchivePatientModal';
 import { DiagnosticosTratamientosView } from '../consultations/DiagnosticosTratamientosView';
+import { RecetasPrescripcionesView } from '../consultations/RecetasPrescripcionesView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -108,6 +110,10 @@ export const PatientRecordPage: React.FC = () => {
 
   const handleDiagnosticosActualizados = (nuevos: DiagnosticoHistorial[]) => {
     setExpediente((prev) => (prev ? { ...prev, diagnosticos: nuevos } : null));
+  };
+
+  const handleRecetasActualizadas = (nuevas: RecetaHistorial[]) => {
+    setExpediente((prev) => (prev ? { ...prev, recetas: nuevas } : null));
   };
 
   // Configuración de pestañas con subrayado de 3px
@@ -548,44 +554,12 @@ export const PatientRecordPage: React.FC = () => {
       )}
 
       {tabActiva === 'RECETAS' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {recetas.map((r) => (
-            <Panel
-              key={r.id}
-              title={`Receta ${r.codigoReceta}`}
-              subtitle={`Emitida por ${r.emitidaPor} (${r.rolEmisor}) · ${new Date(r.fechaEmision).toLocaleDateString('es-GT', { dateStyle: 'long' })}`}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {r.medicamentos.map((m, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      backgroundColor: 'var(--color-panel)',
-                      padding: '12px 16px',
-                      borderRadius: 'var(--radius-input)',
-                      border: '1px solid var(--color-border-panel)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '15px', color: 'var(--color-strong)' }}>
-                        {m.nombre} {m.dosis}
-                      </strong>
-                      <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                        Vía: {m.via} · {m.presentacion}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '13px', marginTop: '4px', color: 'var(--color-text)' }}>
-                      Pauta: <strong>{m.frecuencia}</strong> durante <strong>{m.duracion}</strong>
-                    </div>
-                    <div style={{ fontSize: '12px', marginTop: '2px', color: 'var(--color-text-secondary)' }}>
-                      Indicaciones: {m.indicaciones}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          ))}
-        </div>
+        <RecetasPrescripcionesView
+          paciente={paciente}
+          recetas={recetas}
+          onRecetasActualizadas={handleRecetasActualizadas}
+          esArchivado={paciente.estado === 'ARCHIVADO'}
+        />
       )}
 
       {tabActiva === 'TIMELINE' && (

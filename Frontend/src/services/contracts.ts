@@ -12,6 +12,8 @@ import {
   ActualizarPacienteDTO,
   ExpedienteCompleto,
   DiagnosticoHistorial,
+  RecetaHistorial,
+  RecetaMedicamentoItem,
   CausaArchivo,
   CitaAgenda,
   FiltrosAgendaQuery,
@@ -52,6 +54,11 @@ export interface PatientRepository {
     pacienteId: string,
     diagnostico: { codigoCIE: string; nombre: string; esPrincipal: boolean; registradoPor: string }
   ): Promise<DiagnosticoHistorial>;
+  emitirReceta(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    receta: { emitidaPor: string; rolEmisor: string; medicamentos: RecetaMedicamentoItem[] }
+  ): Promise<RecetaHistorial>;
 }
 
 export interface AppointmentRepository {

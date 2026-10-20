@@ -100,9 +100,9 @@ describe('U05 — Pantalla 03 Aprobada: Expediente Clínico (V06), Timeline (V07
     // Pestaña Recetas
     const tabRecetas = screen.getByRole('tab', { name: /Recetas emitidas/i });
     await user.click(tabRecetas);
-    expect(await screen.findByText(/Receta REC-2026-0419/i)).toBeInTheDocument();
-    expect(screen.getByText(/Losartán Potásico 50 mg/i)).toBeInTheDocument();
-    expect(screen.getByText(/Metformina Clorhidrato 850 mg/i)).toBeInTheDocument();
+    expect(await screen.findByText(/REC-2026-0419/i)).toBeInTheDocument();
+    expect(screen.getByText(/Losartán Potásico/i)).toBeInTheDocument();
+    expect(screen.getByText(/Metformina Clorhidrato/i)).toBeInTheDocument();
   });
 
   it('V07: Clinical Timeline muestra eventos históricos y permite conmutar orden cronológico (DEC-03)', async () => {

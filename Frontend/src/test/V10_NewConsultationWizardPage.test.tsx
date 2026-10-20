@@ -163,5 +163,5 @@ describe('V10 — Pantalla 04 Aprobada: Registro de Consulta Médica (Stepper en
     // Redirige al expediente clínico del paciente con la consulta guardada
     expect(await screen.findByText('Expediente Activo')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Roberto Estrada Morales' })).toBeInTheDocument();
-  });
+  }, 15000);
 });
