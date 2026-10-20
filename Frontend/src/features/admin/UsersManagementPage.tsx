@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   UserPlus,
   Search,
   Filter,
   CheckCircle2,
   Ban,
-  RotateCcw
+  RotateCcw,
+  Users,
+  ShieldCheck,
+  FlaskConical
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -14,11 +18,15 @@ import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { CrearUsuarioModal } from './CrearUsuarioModal';
+import { RolesPermissionsMatrixView } from './RolesPermissionsMatrixView';
+import { LaboratorioPersonalView } from './LaboratorioPersonalView';
 import { UsuarioInstitucional, EstadoCuenta } from '../../services/types';
 
 export const UsersManagementPage: React.FC = () => {
   const { sesion } = useAuthSession();
   const { userRepository } = useServices();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'usuarios';
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
@@ -89,65 +97,162 @@ export const UsersManagementPage: React.FC = () => {
         <span style={{ margin: '0 8px' }}>/</span>
         <span>Administración</span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Gestión de Usuarios (V15)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>
+          {activeTab === 'roles'
+            ? 'Roles y Permisos (V16)'
+            : activeTab === 'personal-laboratorio'
+            ? 'Personal de Laboratorio (L14)'
+            : 'Gestión de Usuarios (V15)'}
+        </strong>
       </nav>
 
-      {/* Alerta de notificación */}
-      {mensajeExito && (
-        <div
-          role="status"
-          style={{
-            backgroundColor: 'var(--color-success-bg)',
-            color: 'var(--color-success-text)',
-            border: '1px solid var(--color-success-border)',
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-input)',
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <CheckCircle2 size={16} />
-          <span>{mensajeExito}</span>
-        </div>
-      )}
-
-      {/* Cabecera Principal */}
+      {/* Tabs de Navegación Institucional */}
       <div
+        role="tablist"
+        aria-label="Submódulos de Administración de Cuentas"
         style={{
-          backgroundColor: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-panel)',
-          padding: '24px',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '16px'
+          gap: '8px',
+          borderBottom: '1px solid var(--color-border)',
+          paddingBottom: '0'
         }}
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              Administración de Usuarios y Cuentas (V15)
-            </h1>
-            <Badge variant="primary">{sesion?.institucionNombre || 'Institución Activa'}</Badge>
-          </div>
-          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '720px', lineHeight: 1.5 }}>
-            Gestión de provisión de cuentas, asignación de roles institucionales y control de ciclo de vida
-            (<code>PENDIENTE → ACTIVO → INACTIVO</code>). El alcance está estrictamente delimitado a esta institución.
-          </p>
-        </div>
-
-        <Button
-          variant="primary"
-          onClick={() => setShowCrearModal(true)}
-          leftIcon={<UserPlus size={16} />}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'usuarios'}
+          type="button"
+          onClick={() => setSearchParams({ tab: 'usuarios' })}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '14px',
+            fontWeight: activeTab === 'usuarios' ? 700 : 500,
+            color: activeTab === 'usuarios' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'usuarios' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)'
+          }}
         >
-          Aprovisionar Usuario Institucional
-        </Button>
+          <Users size={16} />
+          <span>Usuarios y Cuentas (V15)</span>
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={activeTab === 'roles'}
+          type="button"
+          onClick={() => setSearchParams({ tab: 'roles' })}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '14px',
+            fontWeight: activeTab === 'roles' ? 700 : 500,
+            color: activeTab === 'roles' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'roles' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)'
+          }}
+        >
+          <ShieldCheck size={16} />
+          <span>Matriz de Roles y Permisos (V16)</span>
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={activeTab === 'personal-laboratorio'}
+          type="button"
+          onClick={() => setSearchParams({ tab: 'personal-laboratorio' })}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '14px',
+            fontWeight: activeTab === 'personal-laboratorio' ? 700 : 500,
+            color: activeTab === 'personal-laboratorio' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'personal-laboratorio' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)'
+          }}
+        >
+          <FlaskConical size={16} />
+          <span>Personal de Laboratorio (L14)</span>
+        </button>
       </div>
+
+      {/* Renderizado Condicional por Pestaña */}
+      {activeTab === 'roles' ? (
+        <RolesPermissionsMatrixView />
+      ) : activeTab === 'personal-laboratorio' ? (
+        <LaboratorioPersonalView />
+      ) : (
+        <>
+          {/* Alerta de notificación */}
+          {mensajeExito && (
+            <div
+              role="status"
+              style={{
+                backgroundColor: 'var(--color-success-bg)',
+                color: 'var(--color-success-text)',
+                border: '1px solid var(--color-success-border)',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-input)',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <CheckCircle2 size={16} />
+              <span>{mensajeExito}</span>
+            </div>
+          )}
+
+          {/* Cabecera Principal */}
+          <div
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-panel)',
+              padding: '24px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
+                  Administración de Usuarios y Cuentas (V15)
+                </h1>
+                <Badge variant="primary">{sesion?.institucionNombre || 'Institución Activa'}</Badge>
+              </div>
+              <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '720px', lineHeight: 1.5 }}>
+                Gestión de provisión de cuentas, asignación de roles institucionales y control de ciclo de vida
+                (<code>PENDIENTE → ACTIVO → INACTIVO</code>). El alcance está estrictamente delimitado a esta institución.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              onClick={() => setShowCrearModal(true)}
+              leftIcon={<UserPlus size={16} />}
+            >
+              Aprovisionar Usuario Institucional
+            </Button>
+          </div>
 
       {/* Panel de Filtros y Búsqueda */}
       <Panel>
@@ -393,6 +498,8 @@ export const UsersManagementPage: React.FC = () => {
           onClose={() => setShowCrearModal(false)}
           onUsuarioCreado={handleUsuarioCreado}
         />
+      )}
+        </>
       )}
     </div>
   );

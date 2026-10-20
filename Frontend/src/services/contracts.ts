@@ -22,7 +22,10 @@ import {
   DetalleConsultaCompleta,
   UsuarioInstitucional,
   CrearUsuarioDTO,
-  EstadoCuenta
+  EstadoCuenta,
+  DefinicionRolInstitucional,
+  DefinicionPermiso,
+  PermisoId
 } from './types';
 
 export interface IniciarSesionParams {
@@ -103,4 +106,7 @@ export interface UserRepository {
   listarUsuarios(institucionId: InstitucionId): Promise<UsuarioInstitucional[]>;
   crearUsuario(institucionId: InstitucionId, dto: CrearUsuarioDTO): Promise<UsuarioInstitucional>;
   cambiarEstado(institucionId: InstitucionId, usuarioId: string, nuevoEstado: EstadoCuenta): Promise<UsuarioInstitucional>;
+  obtenerRolesInstitucionales(institucionId: InstitucionId): Promise<DefinicionRolInstitucional[]>;
+  obtenerCatalogoPermisos(): Promise<DefinicionPermiso[]>;
+  actualizarPermisosRol(institucionId: InstitucionId, rolId: RolId, permisos: PermisoId[]): Promise<DefinicionRolInstitucional>;
 }

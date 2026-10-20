@@ -35,6 +35,25 @@ export type PermisoId =
   | 'usuarios.administrar'
   | 'auditoria.leer';
 
+export type CategoriaPermiso = 'PACIENTES' | 'CLINICA' | 'LABORATORIO' | 'ADMINISTRACION';
+
+export interface DefinicionPermiso {
+  id: PermisoId;
+  categoria: CategoriaPermiso;
+  nombre: string;
+  descripcion: string;
+  esCritico: boolean;
+}
+
+export interface DefinicionRolInstitucional {
+  id: RolId;
+  etiqueta: string;
+  descripcion: string;
+  institucionesPermitidas: InstitucionId[];
+  permisos: PermisoId[];
+  totalUsuarios?: number;
+}
+
 export interface CuentaDemo {
   id: string;
   email: string;
