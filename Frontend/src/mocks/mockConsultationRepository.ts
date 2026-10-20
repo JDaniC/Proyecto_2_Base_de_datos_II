@@ -8,6 +8,7 @@ import {
 } from '../services/types';
 import {
   MOCK_CONSULTAS_DEFECTO,
+  MOCK_DIAGNOSTICOS_DEFECTO,
   MOCK_RECETAS_DEFECTO,
   MOCK_EVENTOS_TIMELINE_DEFECTO
 } from './mockClinicalData';
@@ -251,12 +252,57 @@ export class MockConsultationRepository implements ConsultationRepository {
     consultaId: string
   ): Promise<DetalleConsultaCompleta | null> {
     await new Promise((res) => setTimeout(res, 40));
-    const consulta = this.consultas.find(
+    let consulta = this.consultas.find(
       (c) =>
         c.id === consultaId &&
         c.pacienteId === pacienteId &&
         c.institucionId === institucionId
     );
+
+    if (!consulta) {
+      const listaDefecto = MOCK_CONSULTAS_DEFECTO[pacienteId] || [];
+      const encontrada = listaDefecto.find((c) => c.id === consultaId);
+      if (encontrada) {
+        const dxs = MOCK_DIAGNOSTICOS_DEFECTO[pacienteId] || [];
+        const recs = MOCK_RECETAS_DEFECTO[pacienteId] || [];
+        consulta = {
+          id: encontrada.id,
+          institucionId,
+          pacienteId,
+          fechaHora: encontrada.fechaHora,
+          motivo: encontrada.motivo,
+          sintomas: encontrada.sintomas,
+          observaciones: 'Evolución satisfactoria según pauta médica institucional.',
+          profesionalNombre: encontrada.profesionalNombre,
+          profesionalRol: encontrada.profesionalRol,
+          estado: encontrada.estado,
+          signosVitales: encontrada.signosVitales || {
+            pesoKg: 78.0,
+            tallaCm: 172,
+            temperaturaC: 36.6,
+            presionSistolica: 130,
+            presionDiastolica: 85,
+            frecuenciaCardiacaLpm: 72,
+            frecuenciaRespiratoriaRpm: 16,
+            saturacionOxigenoPct: 98,
+            perimetroCefalicoCm: null
+          },
+          diagnosticos: dxs,
+          tratamientos: [
+            {
+              descripcion: 'Control y seguimiento médico habitual',
+              indicaciones: 'Mantener pauta farmacológica indicada.'
+            }
+          ],
+          receta: recs[0],
+          revision: 1,
+          historialRevisiones: []
+        };
+        this.consultas.push(consulta);
+        this.guardarEnStorage();
+      }
+    }
+
     return consulta || null;
   }
 

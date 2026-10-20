@@ -9,6 +9,7 @@ import {
   Pill,
   Activity,
   FileCheck,
+  FileText,
   ShieldAlert
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -501,6 +502,28 @@ export const PatientRecordPage: React.FC = () => {
                     </span>
                     <strong style={{ color: 'var(--color-strong)' }}>{c.diagnosticoPrincipal}</strong>
                     <Badge variant="success">Finalizada</Badge>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '12px',
+                      borderTop: '1px solid var(--color-border)',
+                      paddingTop: '10px'
+                    }}
+                  >
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                      Consulta ID: <code>{c.id}</code>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => navigate(`/pacientes/${pacienteId}/consultas/${c.id}`)}
+                    >
+                      <FileText size={14} style={{ marginRight: '6px' }} />
+                      Ver Detalle de Consulta (V11)
+                    </Button>
                   </div>
                 </div>
               </Panel>
