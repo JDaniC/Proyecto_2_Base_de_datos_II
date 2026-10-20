@@ -25,7 +25,12 @@ import {
   EstadoCuenta,
   DefinicionRolInstitucional,
   DefinicionPermiso,
-  PermisoId
+  PermisoId,
+  MedicoCatalogo,
+  AseguradoraCatalogo,
+  ProcedimientoOdontologico,
+  PruebaLaboratorioCatalogo,
+  VacunaCatalogo
 } from './types';
 
 export interface IniciarSesionParams {
@@ -109,4 +114,14 @@ export interface UserRepository {
   obtenerRolesInstitucionales(institucionId: InstitucionId): Promise<DefinicionRolInstitucional[]>;
   obtenerCatalogoPermisos(): Promise<DefinicionPermiso[]>;
   actualizarPermisosRol(institucionId: InstitucionId, rolId: RolId, permisos: PermisoId[]): Promise<DefinicionRolInstitucional>;
+}
+
+export interface CatalogRepository {
+  obtenerMedicos(institucionId: InstitucionId): Promise<MedicoCatalogo[]>;
+  crearMedico(institucionId: InstitucionId, medico: Omit<MedicoCatalogo, 'id'>): Promise<MedicoCatalogo>;
+  cambiarEstadoMedico(institucionId: InstitucionId, id: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<MedicoCatalogo>;
+  obtenerAseguradoras(institucionId: InstitucionId): Promise<AseguradoraCatalogo[]>;
+  obtenerProcedimientosOdontologicos(institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]>;
+  obtenerPruebasLaboratorio(institucionId: InstitucionId): Promise<PruebaLaboratorioCatalogo[]>;
+  obtenerVacunas(institucionId: InstitucionId): Promise<VacunaCatalogo[]>;
 }

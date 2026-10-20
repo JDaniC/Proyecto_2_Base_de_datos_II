@@ -137,12 +137,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     // Módulos administrativos según permisos
     if (sesion.permisos.includes('usuarios.administrar')) {
-      items.push({
-        id: 'admin-usuarios',
-        path: '/administracion/usuarios',
-        label: 'Gestión de usuarios',
-        icon: <Settings size={20} />,
-      });
+      items.push(
+        {
+          id: 'admin-usuarios',
+          path: '/administracion/usuarios',
+          label: 'Gestión de usuarios',
+          icon: <Settings size={20} />,
+        },
+        {
+          id: 'admin-catalogos',
+          path: '/administracion/catalogos',
+          label: 'Catálogos institucionales',
+          icon: <BookOpen size={20} />,
+        }
+      );
     }
 
     if (sesion.permisos.includes('auditoria.leer')) {

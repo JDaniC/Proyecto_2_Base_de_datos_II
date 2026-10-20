@@ -5,7 +5,8 @@ import {
   PatientRepository,
   AppointmentRepository,
   ConsultationRepository,
-  UserRepository
+  UserRepository,
+  CatalogRepository
 } from '../services/contracts';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
 import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
@@ -13,6 +14,7 @@ import { MockPatientRepository } from '../mocks/mockPatientRepository';
 import { MockAppointmentRepository } from '../mocks/mockAppointmentRepository';
 import { MockConsultationRepository } from '../mocks/mockConsultationRepository';
 import { MockUserRepository } from '../mocks/mockUserRepository';
+import { MockCatalogRepository } from '../mocks/mockCatalogRepository';
 
 interface ServiceContainer {
   authRepository: AuthRepository;
@@ -21,6 +23,7 @@ interface ServiceContainer {
   appointmentRepository: AppointmentRepository;
   consultationRepository: ConsultationRepository;
   userRepository: UserRepository;
+  catalogRepository: CatalogRepository;
 }
 
 const ServiceContext = createContext<ServiceContainer | null>(null);
@@ -33,6 +36,7 @@ export interface ServiceProviderProps {
   customAppointmentRepository?: AppointmentRepository;
   customConsultationRepository?: ConsultationRepository;
   customUserRepository?: UserRepository;
+  customCatalogRepository?: CatalogRepository;
 }
 
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
@@ -43,6 +47,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   customAppointmentRepository,
   customConsultationRepository,
   customUserRepository,
+  customCatalogRepository,
 }) => {
   const services = useMemo<ServiceContainer>(() => {
     return {
@@ -52,6 +57,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       appointmentRepository: customAppointmentRepository || new MockAppointmentRepository(),
       consultationRepository: customConsultationRepository || new MockConsultationRepository(),
       userRepository: customUserRepository || new MockUserRepository(),
+      catalogRepository: customCatalogRepository || new MockCatalogRepository(),
     };
   }, [
     customAuthRepository,
@@ -60,6 +66,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
     customAppointmentRepository,
     customConsultationRepository,
     customUserRepository,
+    customCatalogRepository,
   ]);
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;

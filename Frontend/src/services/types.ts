@@ -54,6 +54,76 @@ export interface DefinicionRolInstitucional {
   totalUsuarios?: number;
 }
 
+export interface MedicoCatalogo {
+  id: string;
+  nombre: string;
+  colegiado: string;
+  especialidadPrincipal: string;
+  especialidadesSecundarias: string[];
+  email: string;
+  telefono: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
+export interface AseguradoraCatalogo {
+  id: string;
+  nombre: string;
+  codigoAseguradora: string;
+  planes: {
+    id: string;
+    nombrePlan: string;
+    porcentajeCobertura: number;
+    deducibleBaseGTQ: number;
+    activo: boolean;
+  }[];
+  telefonoAutorizaciones: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
+export interface ProcedimientoOdontologico {
+  id: string;
+  codigo: string;
+  nombre: string;
+  categoria: 'PREVENTIVA' | 'RESTAURADORA' | 'ENDODONCIA' | 'CIRUGIA' | 'PERIODONCIA';
+  duracionEstimadaMin: number;
+  arancelReferencialGTQ: number;
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
+export interface PruebaLaboratorioCatalogo {
+  id: string;
+  codigoPrueba: string;
+  nombre: string;
+  seccion: string;
+  tipoMuestra: string;
+  metodoAnalitico: string;
+  version: number;
+  tiempoEntregaHoras: number;
+  parametros: {
+    parametroId: string;
+    nombre: string;
+    unidadMedida: string;
+    rangoReferencia: string;
+  }[];
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
+export interface VacunaCatalogo {
+  id: string;
+  nombreVacuna: string;
+  enfermedadPrevenida: string;
+  viaAdministracion: 'INTRADERMICA' | 'INTRAMUSCULAR' | 'SUBCUTANEA' | 'ORAL';
+  esquemaVersion: string;
+  dosis: {
+    dosisId: string;
+    numeroDosis: number;
+    etiquetaDosis: string;
+    edadRecomendadaMeses: number;
+    intervaloMinimoSemanas?: number;
+  }[];
+  estado: 'ACTIVO' | 'INACTIVO';
+}
+
 export interface CuentaDemo {
   id: string;
   email: string;

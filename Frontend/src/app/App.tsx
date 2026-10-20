@@ -14,6 +14,7 @@ import { AppointmentsCalendarPage } from '../features/appointments/AppointmentsC
 import { NewConsultationWizardPage } from '../features/consultations/NewConsultationWizardPage';
 import { ConsultationDetailPage } from '../features/consultations/ConsultationDetailPage';
 import { UsersManagementPage } from '../features/admin/UsersManagementPage';
+import { CatalogosManagementPage } from '../features/admin/CatalogosManagementPage';
 
 export const App: React.FC = () => {
   return (
@@ -57,6 +58,14 @@ export const App: React.FC = () => {
                 element={
                   <AuthGuard requierePermiso="usuarios.administrar">
                     <UsersManagementPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/administracion/catalogos"
+                element={
+                  <AuthGuard requierePermiso="usuarios.administrar">
+                    <CatalogosManagementPage />
                   </AuthGuard>
                 }
               />
