@@ -1,8 +1,9 @@
 import { CuentaDemo, SesionUsuario, SimulacionEscenario } from './types';
 
 export interface IniciarSesionParams {
-  cuentaId: string;
   email: string;
+  password?: string;
+  cuentaId?: string;
   escenario?: SimulacionEscenario;
   simularLatencia?: boolean;
 }

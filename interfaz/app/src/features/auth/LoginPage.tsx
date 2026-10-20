@@ -1,30 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ShieldAlert,
-  Building2,
   Stethoscope,
-  FlaskConical,
-  Baby,
-  HelpCircle,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
   LogIn,
-  KeyRound,
+  ShieldCheck,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '../../design-system/components/Button';
 import { Alert } from '../../design-system/components/Alert';
 import { Input } from '../../design-system/components/Input';
 import { Select } from '../../design-system/components/Select';
-import { Badge } from '../../design-system/components/Badge';
-import { Switch } from '../../design-system/components/Switch';
-import { Radio } from '../../design-system/components/Radio';
 import { Panel } from '../../design-system/components/Panel';
 import { Modal } from '../../design-system/components/Modal';
-import { Tabs, TabItem } from '../../design-system/components/Tabs';
 import { Toast, ToastMessage } from '../../design-system/components/Toast';
 import { ProgressBar } from '../../design-system/components/ProgressBar';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
-import { CuentaDemo, InstitucionId, SimulacionEscenario, AppError } from '../../services/types';
+import { CuentaDemo, SimulacionEscenario, AppError } from '../../services/types';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,96 +29,71 @@ export const LoginPage: React.FC = () => {
   const { authRepository } = useServices();
 
   const [cuentas, setCuentas] = useState<CuentaDemo[]>([]);
+  const [emailInput, setEmailInput] = useState<string>('elena.morales@hospital-general.salud.gt');
+  const [passwordInput, setPasswordInput] = useState<string>('Clinica2026!');
+  const [mostrarPassword, setMostrarPassword] = useState<boolean>(false);
+  const [recordarSesion, setRecordarSesion] = useState<boolean>(true);
+
+  // Selector de prueba discreto para evaluación
   const [cuentaSeleccionadaId, setCuentaSeleccionadaId] = useState<string>('usr-hosp-med-01');
-  const [filtroInstitucion, setFiltroInstitucion] = useState<string>('TODAS');
-  const [emailInput, setEmailInput] = useState<string>('');
   const [escenario, setEscenario] = useState<SimulacionEscenario>('NORMAL');
-  const [simularLatencia, setSimularLatencia] = useState<boolean>(true);
+  const [mostrarHerramientasEvaluacion, setMostrarHerramientasEvaluacion] = useState<boolean>(false);
+
   const [enviando, setEnviando] = useState<boolean>(false);
   const [errorGlobal, setErrorGlobal] = useState<AppError | null>(null);
   const [campoError, setCampoError] = useState<string | null>(null);
   const [modalAyudaAbierto, setModalAyudaAbierto] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Redirigir a /sesion-activa si ya existe una sesión
+  // Redirigir a /sesion-activa si ya existe sesión
   useEffect(() => {
     if (sesion) {
       navigate('/sesion-activa');
     }
   }, [sesion, navigate]);
 
-  // Cargar catálogo de cuentas demo
+  // Cargar cuentas sintéticas disponibles para el evaluador
   useEffect(() => {
     authRepository.obtenerCuentasDemo().then((lista) => {
       setCuentas(lista);
-      const predeterminada = lista.find((c) => c.id === 'usr-hosp-med-01') || lista[0];
-      if (predeterminada) {
-        setCuentaSeleccionadaId(predeterminada.id);
-        setEmailInput(predeterminada.email);
-      }
     });
   }, [authRepository]);
 
-  // Sincronizar input de correo al cambiar de cuenta
-  const handleSeleccionarCuenta = (cuenta: CuentaDemo) => {
-    setCuentaSeleccionadaId(cuenta.id);
-    setEmailInput(cuenta.email);
-    setErrorGlobal(null);
-    setCampoError(null);
+  const handleSeleccionarCuentaDemo = (cuentaId: string) => {
+    setCuentaSeleccionadaId(cuentaId);
+    const cuenta = cuentas.find((c) => c.id === cuentaId);
+    if (cuenta) {
+      setEmailInput(cuenta.email);
+      setPasswordInput('Clinica2026!');
+      setErrorGlobal(null);
+      setCampoError(null);
+      setToast({
+        id: `demo-${Date.now()}`,
+        type: 'info',
+        message: `Perfil cargado: ${cuenta.nombre} (${cuenta.institucionNombre})`,
+      });
+    }
   };
-
-  const cuentaActiva = cuentas.find((c) => c.id === cuentaSeleccionadaId);
-
-  // Filtro de cuentas por institución
-  const cuentasFiltradas = cuentas.filter((c) => {
-    if (filtroInstitucion === 'TODAS') return true;
-    return c.institucionId === filtroInstitucion;
-  });
-
-  const tabs: TabItem[] = [
-    { id: 'TODAS', label: `Todas (${cuentas.length})` },
-    {
-      id: 'HOSPITAL_GENERAL',
-      label: 'Hospital General',
-      badge: <Badge variant="neutral">PostgreSQL</Badge>,
-    },
-    {
-      id: 'CLINICA_ODONTOLOGICA',
-      label: 'Clínica Odontológica',
-      badge: <Badge variant="neutral">MySQL</Badge>,
-    },
-    {
-      id: 'LABORATORIO_CLINICO',
-      label: 'Laboratorio Clínico',
-      badge: <Badge variant="neutral">MongoDB</Badge>,
-    },
-    {
-      id: 'CENTRO_PEDIATRICO',
-      label: 'Centro Pediátrico',
-      badge: <Badge variant="neutral">Firestore</Badge>,
-    },
-  ];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cuentaActiva) return;
-
     setErrorGlobal(null);
     setCampoError(null);
     setEnviando(true);
 
     try {
       const nuevaSesion = await iniciarSesion({
-        cuentaId: cuentaActiva.id,
         email: emailInput,
+        password: passwordInput,
+        cuentaId: cuentaSeleccionadaId,
         escenario,
-        simularLatencia,
+        simularLatencia: import.meta.env.MODE !== 'test',
       });
 
       setToast({
         id: `login-${Date.now()}`,
         type: 'success',
-        message: `Bienvenido, ${nuevaSesion.nombre}. Acceso autenticado en ${nuevaSesion.institucionNombre}.`,
+        message: `Bienvenido, ${nuevaSesion.nombre}`,
       });
 
       navigate('/sesion-activa');
@@ -131,337 +103,280 @@ export const LoginPage: React.FC = () => {
       if (appErr.campos?.email) {
         setCampoError(appErr.campos.email);
       }
-      setToast({
-        id: `err-${Date.now()}`,
-        type: 'danger',
-        message: appErr.mensaje || 'Error al iniciar sesión',
-      });
     } finally {
       setEnviando(false);
     }
   };
 
-  const getInstitucionIcon = (instId: InstitucionId) => {
-    switch (instId) {
-      case 'HOSPITAL_GENERAL':
-        return <Building2 size={16} aria-hidden="true" />;
-      case 'CLINICA_ODONTOLOGICA':
-        return <Stethoscope size={16} aria-hidden="true" />;
-      case 'LABORATORIO_CLINICO':
-        return <FlaskConical size={16} aria-hidden="true" />;
-      case 'CENTRO_PEDIATRICO':
-        return <Baby size={16} aria-hidden="true" />;
-    }
-  };
+  const cuentaActiva = cuentas.find((c) => c.id === cuentaSeleccionadaId);
 
-  const getEstadoBadgeVariant = (estado: string) => {
-    switch (estado) {
-      case 'ACTIVO':
-        return 'success';
-      case 'INACTIVO':
-        return 'danger';
-      case 'PENDIENTE':
-        return 'warning';
-      default:
-        return 'neutral';
-    }
-  };
+  // Opciones agrupadas de perfiles de prueba para el evaluador
+  const opcionesCuentasDemo = [
+    { value: '', label: '— Cargar un perfil de prueba preconfigurado —' },
+    ...cuentas.map((c) => ({
+      value: c.id,
+      label: `[${c.institucionNombre.split(' ')[0]}] ${c.nombre} — ${c.rolEtiqueta} (${c.estado})`,
+    })),
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background-alt)', padding: '24px 16px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: 'var(--color-background-alt)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '32px 16px',
+      }}
+    >
+      <div style={{ width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* Banner permanente de Modo Demostración */}
-        <Alert
-          variant="info"
-          title="Modo demostración — sin autenticación real · Datos clínicos ficticios"
-          icon={<ShieldAlert size={22} />}
-        >
-          Esta aplicación frontend simula honestamente la autenticación clínica con repositorios en memoria desacoplados.
-          La institución y los permisos quedan determinados por la identidad seleccionada. No requiere contraseñas reales ni expone selector manual de motor de base de datos.
-        </Alert>
-
-        {/* Encabezado principal */}
-        <header style={{ padding: '8px 4px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--color-strong)' }}>
-            Plataforma Unificada de Historiales Clínicos
-          </h1>
-          <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-            Acceso institucional y catálogo sintético de evaluación · Bases de Datos II (URL)
-          </p>
-        </header>
-
-        {/* Layout en dos columnas: Catálogo de Cuentas (Principal) y Panel de Acceso (Lateral) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: '24px', alignItems: 'start' }}>
-          
-          {/* COLUMNA 1: Catálogo interactivo de identidades sintéticas */}
-          <Panel
-            variant="white"
-            title="Seleccionar cuenta institucional de evaluación"
-            subtitle="Elija un perfil sintético para explorar la aplicación según el rol y motor correspondiente"
-            padding="md"
+        {/* Cabecera institucional limpia */}
+        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
+              backgroundColor: 'var(--color-selection)',
+              color: 'var(--color-primary)',
+              marginBottom: '14px',
+              boxShadow: 'var(--shadow-sm)',
+            }}
           >
-            {/* Tabs de Instituciones */}
-            <Tabs
-              tabs={tabs}
-              activeTab={filtroInstitucion}
-              onChange={setFiltroInstitucion}
-              className="mb-4"
-            />
+            <Stethoscope size={30} aria-hidden="true" />
+          </div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-strong)' }}>
+            Plataforma de Historiales Clínicos
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Portal Institucional de Gestión de Expedientes Médicos
+          </p>
+        </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
-              {cuentasFiltradas.map((cuenta) => {
-                const isSelected = cuenta.id === cuentaSeleccionadaId;
-                return (
-                  <div
-                    key={cuenta.id}
-                    onClick={() => handleSeleccionarCuenta(cuenta)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSeleccionarCuenta(cuenta);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                      borderRadius: 'var(--radius-panel)',
-                      border: `1.5px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                      backgroundColor: isSelected ? 'var(--color-selection)' : 'var(--color-background)',
-                      padding: '14px 16px',
-                      cursor: 'pointer',
-                      transition: 'all var(--transition-fast)',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '14px',
-                    }}
-                  >
-                    <div style={{ marginTop: '2px' }}>
-                      <Radio
-                        checked={isSelected}
-                        onChange={() => handleSeleccionarCuenta(cuenta)}
-                        aria-label={`Seleccionar cuenta de ${cuenta.nombre}`}
-                        style={{ minHeight: 'auto', padding: 0, border: 'none', backgroundColor: 'transparent' }}
-                      />
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                          {cuenta.nombre}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Badge variant={getEstadoBadgeVariant(cuenta.estado)} withDot>
-                            {cuenta.estado}
-                          </Badge>
-                          <Badge variant="neutral">
-                            {cuenta.motorObjetivo}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          {getInstitucionIcon(cuenta.institucionId)}
-                          {cuenta.institucionNombre}
-                        </span>
-                        <span>•</span>
-                        <span style={{ fontWeight: 600 }}>{cuenta.rolEtiqueta}</span>
-                        {cuenta.colegiado && (
-                          <>
-                            <span>•</span>
-                            <span>Col. {cuenta.colegiado}</span>
-                          </>
-                        )}
-                      </div>
-
-                      <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '6px' }}>
-                        {cuenta.descripcion}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+        {/* Tarjeta principal de Inicio de Sesión */}
+        <Panel variant="white" padding="lg">
+          {enviando && (
+            <div style={{ marginBottom: '16px' }}>
+              <ProgressBar indeterminate label="Verificando credenciales..." />
             </div>
-          </Panel>
+          )}
 
-          {/* COLUMNA 2: Formulario de Verificación y Simulación */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <Panel
-              variant="subtle"
-              title="Verificación de identidad"
-              subtitle="Confirme los datos de la cuenta sintética para emitir la sesión simulada"
-              padding="md"
-            >
-              {enviando && (
-                <div style={{ marginBottom: '16px' }}>
-                  <ProgressBar indeterminate label="Verificando identidad institucional..." />
-                </div>
-              )}
-
-              {errorGlobal && (
-                <div style={{ marginBottom: '16px' }}>
-                  <Alert
-                    variant="danger"
-                    title={errorGlobal.codigo}
-                    onClose={() => setErrorGlobal(null)}
-                  >
-                    <div>{errorGlobal.mensaje}</div>
-                    <div style={{ fontSize: '12px', marginTop: '6px', opacity: 0.85 }}>
-                      ID de correlación: <code>{errorGlobal.correlacion}</code>
-                    </div>
-                  </Alert>
-                </div>
-              )}
-
-              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {cuentaActiva && (
-                  <div
-                    style={{
-                      padding: '12px',
-                      backgroundColor: 'var(--color-background)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-input)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px',
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-                      Perfil seleccionado:
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                      {cuentaActiva.nombre}
-                    </span>
-                    <span style={{ fontSize: '13px', color: 'var(--color-primary)' }}>
-                      {cuentaActiva.institucionNombre}
-                    </span>
+          {errorGlobal && (
+            <div style={{ marginBottom: '16px' }}>
+              <Alert variant="danger" title={errorGlobal.codigo} onClose={() => setErrorGlobal(null)}>
+                <div>{errorGlobal.mensaje}</div>
+                {errorGlobal.correlacion && (
+                  <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
+                    Referencia: <code>{errorGlobal.correlacion}</code>
                   </div>
                 )}
+              </Alert>
+            </div>
+          )}
 
-                <Input
-                  label="Identificador / Correo sintético"
-                  value={emailInput}
-                  onChange={(e) => {
-                    setEmailInput(e.target.value);
-                    if (campoError) setCampoError(null);
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <Input
+              label="Correo institucional o usuario"
+              value={emailInput}
+              onChange={(e) => {
+                setEmailInput(e.target.value);
+                if (campoError) setCampoError(null);
+              }}
+              error={campoError || undefined}
+              placeholder="profesional@institucion.salud.gt"
+              leftIcon={<Mail size={18} />}
+              required
+            />
+
+            <Input
+              label="Contraseña"
+              type={mostrarPassword ? 'text' : 'password'}
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="••••••••••••"
+              leftIcon={<Lock size={18} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setMostrarPassword(!mostrarPassword)}
+                  aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
-                  error={campoError || undefined}
-                  helperText="Para la demostración, el correo debe coincidir con la cuenta seleccionada"
-                  placeholder="usuario@institucion.salud.gt"
-                  leftIcon={<KeyRound size={16} />}
-                  required
+                >
+                  {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              }
+              required
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="checkbox"
+                  checked={recordarSesion}
+                  onChange={(e) => setRecordarSesion(e.target.checked)}
+                  style={{ accentColor: 'var(--color-primary)', width: '16px', height: '16px' }}
                 />
+                <span style={{ color: 'var(--color-text-secondary)' }}>Recordar en este equipo</span>
+              </label>
 
-                <Select
-                  label="Simulación de respuesta de backend"
-                  value={escenario}
-                  onChange={(e) => setEscenario(e.target.value as SimulacionEscenario)}
-                  options={[
-                    { value: 'NORMAL', label: 'Respuesta normal (Éxito 200)' },
-                    { value: '401_NO_AUTENTICADO', label: 'Simular 401 NO_AUTENTICADO' },
-                    { value: '403_CUENTA_NO_HABILITADA', label: 'Simular 403 CUENTA_NO_HABILITADA' },
-                    { value: '503_PERSISTENCIA_NO_DISPONIBLE', label: 'Simular 503 PERSISTENCIA_NO_DISPONIBLE' },
-                  ]}
-                  helperText="Permite auditar el comportamiento ante rechazos HTTP y fallos transaccionales"
-                />
+              <button
+                type="button"
+                onClick={() => setModalAyudaAbierto(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                ¿Olvidó su contraseña?
+              </button>
+            </div>
 
-                <div style={{ paddingTop: '4px' }}>
-                  <Switch
-                    checked={simularLatencia}
-                    onChange={setSimularLatencia}
-                    label="Simular latencia de red (600 ms)"
-                  />
-                </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={enviando}
+              leftIcon={<LogIn size={18} />}
+              style={{ width: '100%', marginTop: '4px' }}
+            >
+              Iniciar sesión
+            </Button>
+          </form>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    loading={enviando}
-                    leftIcon={<LogIn size={18} />}
-                    style={{ width: '100%' }}
-                  >
-                    Iniciar sesión demo
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setModalAyudaAbierto(true)}
-                    leftIcon={<HelpCircle size={16} />}
-                  >
-                    ¿Problemas de acceso o información de cuentas?
-                  </Button>
-                </div>
-              </form>
-            </Panel>
-
-            {/* Tarjeta de permisos otorgados en la cuenta seleccionada */}
-            {cuentaActiva && (
-              <Panel variant="white" title="Permisos efectivos simulados" padding="sm">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                  {cuentaActiva.permisos.length > 0 ? (
-                    cuentaActiva.permisos.map((p) => (
-                      <Badge key={p} variant="neutral">
-                        {p}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span style={{ fontSize: '13px', color: 'var(--color-danger-text)', fontWeight: 500 }}>
-                      Sin permisos (Cuenta no habilitada / inactiva)
-                    </span>
-                  )}
-                </div>
-              </Panel>
-            )}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid var(--color-divider)',
+              fontSize: '12px',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <ShieldCheck size={16} color="var(--color-primary)" />
+            <span>Acceso seguro con cifrado institucional SSL</span>
           </div>
+        </Panel>
+
+        {/* Panel plegable para el evaluador: Cuentas de demostración preconfiguradas */}
+        <div
+          style={{
+            backgroundColor: 'var(--color-background)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-panel)',
+            padding: '12px 16px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setMostrarHerramientasEvaluacion(!mostrarHerramientasEvaluacion)}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              color: 'var(--color-strong)',
+              fontSize: '13px',
+              fontWeight: 600,
+              padding: 0,
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={16} color="var(--color-primary)" />
+              Perfiles de prueba para evaluación (Demo)
+            </span>
+            <ChevronDown
+              size={16}
+              style={{
+                transform: mostrarHerramientasEvaluacion ? 'rotate(180deg)' : 'none',
+                transition: 'transform var(--transition-fast)',
+              }}
+            />
+          </button>
+
+          {mostrarHerramientasEvaluacion && (
+            <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '12px', borderTop: '1px solid var(--color-divider)' }}>
+              <Select
+                label="Cargar cuenta de demostración"
+                value={cuentaSeleccionadaId}
+                onChange={(e) => handleSeleccionarCuentaDemo(e.target.value)}
+                options={opcionesCuentasDemo}
+                helperText="Seleccione una cuenta para autocompletar credenciales y probar la institución correspondiente"
+              />
+
+              {cuentaActiva && (
+                <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-control)', padding: '8px 12px', borderRadius: '8px' }}>
+                  <strong>Perfil activo:</strong> {cuentaActiva.nombre} ({cuentaActiva.rolEtiqueta}) — <em>{cuentaActiva.institucionNombre}</em>
+                </div>
+              )}
+
+              <Select
+                label="Simular respuesta del servidor"
+                value={escenario}
+                onChange={(e) => setEscenario(e.target.value as SimulacionEscenario)}
+                options={[
+                  { value: 'NORMAL', label: 'Respuesta normal (Éxito 200)' },
+                  { value: '401_NO_AUTENTICADO', label: 'Simular 401 Credenciales inválidas' },
+                  { value: '403_CUENTA_NO_HABILITADA', label: 'Simular 403 Cuenta no habilitada' },
+                  { value: '503_PERSISTENCIA_NO_DISPONIBLE', label: 'Simular 503 Servicio no disponible' },
+                ]}
+              />
+            </div>
+          )}
         </div>
+
+        <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+          Entorno Clínico · Proyecto de Bases de Datos II · Universidad Rafael Landívar
+        </p>
       </div>
 
-      {/* Modal de Ayuda e Información de Acceso */}
+      {/* Modal de Asistencia y Recuperación de Acceso */}
       <Modal
         isOpen={modalAyudaAbierto}
         onClose={() => setModalAyudaAbierto(false)}
-        title="Instrucciones de Acceso Institucional (Demo)"
-        description="Información para el evaluador del Proyecto Final de Bases de Datos II"
+        title="Asistencia de Acceso Institucional"
+        description="Información de soporte para usuarios del sistema clínico"
         footer={
           <Button variant="primary" onClick={() => setModalAyudaAbierto(false)}>
-            Entendido
+            Cerrar
           </Button>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', lineHeight: 1.5 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px', lineHeight: 1.5 }}>
           <p>
-            <strong>Arquitectura de identidad:</strong> En un entorno de producción, la aplicación cliente intercambia
-            credenciales con Firebase Authentication para recibir un JWT ID Token, el cual es verificado en el backend
-            NestJS.
-          </p>
-          <p>
-            <strong>Aislamiento de persistencia:</strong> Cada usuario clínico está vinculado a una única institución médica.
-            La aplicación no permite al médico ni a la secretaría escoger el motor de base de datos; el enrutamiento se produce en el backend:
+            Para restablecer su contraseña institucional o solicitar habilitación de cuenta:
           </p>
           <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <li><strong>Hospital General:</strong> PostgreSQL (transaccional, integridad referencial).</li>
-            <li><strong>Clínica Odontológica:</strong> MySQL (agenda y consultas odontológicas).</li>
-            <li><strong>Laboratorio Clínico:</strong> MongoDB (documentos semiestructurados de pruebas y muestras).</li>
-            <li><strong>Centro Médico Pediátrico:</strong> Firebase / Cloud Firestore (pacientes menores y vacunas).</li>
+            <li>Contacte al Departamento de Informática o Administración de su sede.</li>
+            <li>Su cuenta debe encontrarse en estado <strong>ACTIVO</strong> para ingresar al portal.</li>
+            <li>En este entorno de evaluación, puede desplegar la sección <em>«Perfiles de prueba para evaluación»</em> en la parte inferior para alternar entre roles médicos y administrativos.</li>
           </ul>
-          <p>
-            <strong>Cuentas para comprobación de fallos:</strong>
-            <br />
-            - Use <em>Dr. Mateo Solares</em> para verificar el rechazo automático de cuentas en estado <code>INACTIVO</code>.
-            <br />
-            - Use <em>Lic. Diego Arévalo</em> para verificar el rechazo de cuentas en estado <code>PENDIENTE</code>.
-            <br />
-            - Use el selector de simulación para provocar respuestas <code>401</code> o <code>503</code>.
-          </p>
         </div>
       </Modal>
 
-      {/* Notificación flotante Toast */}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );

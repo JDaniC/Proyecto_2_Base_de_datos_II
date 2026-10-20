@@ -1,119 +1,137 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../app/App';
 
-describe('V01 — Inicio de Sesión (Modo Demostración)', () => {
+describe('V01 — Inicio de Sesión (Diseño Clínico Institucional)', () => {
   beforeEach(() => {
     localStorage.clear();
     window.history.pushState({}, '', '/acceso');
   });
 
-  it('CA-V01-01 / CA-V01-02: Renderiza encabezado, banner de modo demo y catálogo de identidades', async () => {
+  it('CA-V01-01 / CA-V01-02: Renderiza encabezado institucional, campos de credenciales y botón de acceso', async () => {
     render(<App />);
 
     expect(
-      await screen.findByText(/Plataforma Unificada de Historiales Clínicos/i)
+      await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i })
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText(/Modo demostración — sin autenticación real · Datos clínicos ficticios/i)
+      screen.getByLabelText(/Correo institucional o usuario/i)
     ).toBeInTheDocument();
 
-    const matchesElena = await screen.findAllByText(/Dra. Elena Morales/i);
-    expect(matchesElena.length).toBeGreaterThan(0);
+    expect(
+      screen.getByPlaceholderText(/••••••••••••/i)
+    ).toBeInTheDocument();
 
     expect(
-      screen.getByRole('button', { name: /Iniciar sesión demo/i })
+      screen.getByRole('button', { name: /Iniciar sesión/i })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Acceso seguro con cifrado institucional SSL/i)
     ).toBeInTheDocument();
   });
 
-  it('Filtra las cuentas al seleccionar una pestaña de institución', async () => {
+  it('Permite cargar un perfil de prueba para evaluación desde el panel de herramientas', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findByText(/Plataforma Unificada/i);
-    await screen.findAllByText(/Dra. Elena Morales/i);
+    await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i });
 
-    const tabOdon = screen.getByRole('tab', { name: /Clínica Odontológica/i });
-    await user.click(tabOdon);
+    // Desplegar panel de evaluación rápida
+    const botonHerramientas = screen.getByRole('button', { name: /Perfiles de prueba para evaluación/i });
+    await user.click(botonHerramientas);
 
-    expect(await screen.findByText(/Dr. Javier Castellanos/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Medicina Interna — Acceso a consultas/i)).not.toBeInTheDocument();
-  });
+    const selectorDemo = screen.getByLabelText(/Cargar cuenta de demostración/i);
+    expect(selectorDemo).toBeInTheDocument();
 
-  it('Actualiza el correo al seleccionar otra cuenta sintética', async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    // Seleccionar cuenta de Odontología
+    await user.selectOptions(selectorDemo, 'usr-odon-sec-01');
 
-    await screen.findAllByText(/Dra. Elena Morales/i);
-
-    const inputEmail = screen.getByLabelText(/Identificador \/ Correo sintético/i);
-    expect(inputEmail).toHaveValue('elena.morales@hospital-general.salud.gt');
-
-    const cardAna = screen.getByText(/Ana Lucía Méndez/i);
-    await user.click(cardAna);
-
+    const inputEmail = screen.getByLabelText(/Correo institucional o usuario/i);
     expect(inputEmail).toHaveValue('secretaria@clinica-dental.salud.gt');
   });
 
-  it('CA-V01-03: Realiza un inicio de sesión exitoso y transiciona a la vista de sesión activa', async () => {
+  it('CA-V01-03: Realiza inicio de sesión exitoso y muestra la vista institucional sin filtrar motores de base de datos', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findAllByText(/Dra. Elena Morales/i);
+    await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i });
 
-    // Desactivar latencia para acelerar prueba
-    const switchLatencia = screen.getByRole('switch', { name: /Simular latencia de red/i });
-    await user.click(switchLatencia);
-
-    const botonLogin = screen.getByRole('button', { name: /Iniciar sesión demo/i });
+    const botonLogin = screen.getByRole('button', { name: /Iniciar sesión/i });
     await user.click(botonLogin);
 
-    // Debe mostrar la vista /sesion-activa
+    // Debe acceder al portal institucional
     expect(await screen.findByRole('heading', { name: /Bienvenido, Dra. Elena Morales/i })).toBeInTheDocument();
     expect(screen.getAllByText(/Hospital General San Juan/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/PostgreSQL/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/SESIÓN ACTIVA/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Médico Especialista/i).length).toBeGreaterThan(0);
+
+    // Comprobar que NO expone nombres técnicos de motores de base de datos al usuario clínico
+    expect(screen.queryByText(/PostgreSQL/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Aislamiento Institucional Estricto/i)).not.toBeInTheDocument();
   });
 
   it('CA-V01-04: Bloquea el acceso para cuentas en estado INACTIVO (403 CUENTA_NO_HABILITADA)', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const cardMateo = await screen.findByText(/Dr. Mateo Solares/i);
-    await user.click(cardMateo);
+    await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i });
 
-    const inputEmail = screen.getByLabelText(/Identificador \/ Correo sintético/i);
-    expect(inputEmail).toHaveValue('mateo.solares@hospital-general.salud.gt');
+    // Desplegar herramientas de evaluación y seleccionar cuenta inactiva
+    const botonHerramientas = screen.getByRole('button', { name: /Perfiles de prueba para evaluación/i });
+    await user.click(botonHerramientas);
 
-    const switchLatencia = screen.getByRole('switch', { name: /Simular latencia de red/i });
-    await user.click(switchLatencia);
+    const selectorDemo = screen.getByLabelText(/Cargar cuenta de demostración/i);
+    await user.selectOptions(selectorDemo, 'usr-hosp-ina-01');
 
-    const botonLogin = screen.getByRole('button', { name: /Iniciar sesión demo/i });
+    const botonLogin = screen.getByRole('button', { name: /Iniciar sesión/i });
     await user.click(botonLogin);
 
     const alertError = await screen.findByRole('alert');
     expect(alertError).toHaveTextContent(/403 CUENTA_NO_HABILITADA/i);
-    expect(alertError).toHaveTextContent(/La cuenta de Dr. Mateo Solares/i);
+    expect(alertError).toHaveTextContent(/Dr. Mateo Solares/i);
   });
 
-  it('Abre y cierra el modal de instrucciones de acceso demo', async () => {
+  it('Abre y cierra el modal de recuperación de contraseña', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findAllByText(/Dra. Elena Morales/i);
+    await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i });
 
-    const botonAyuda = screen.getByRole('button', { name: /¿Problemas de acceso o información de cuentas\?/i });
-    await user.click(botonAyuda);
+    const botonOlvido = screen.getByRole('button', { name: /¿Olvidó su contraseña\?/i });
+    await user.click(botonOlvido);
 
-    expect(screen.getByRole('dialog', { name: /Instrucciones de Acceso Institucional \(Demo\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /Asistencia de Acceso Institucional/i })).toBeInTheDocument();
 
-    const botonEntendido = screen.getByRole('button', { name: /Entendido/i });
-    await user.click(botonEntendido);
+    const botonCerrar = screen.getByRole('button', { name: 'Cerrar' });
+    await user.click(botonCerrar);
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+
+  it('Permite cerrar sesión y regresar al inicio de sesión', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i });
+
+    const botonLogin = screen.getByRole('button', { name: /Iniciar sesión/i });
+    await user.click(botonLogin);
+
+    await screen.findByRole('heading', { name: /Bienvenido, Dra. Elena Morales/i });
+
+    const botonAbrirModal = screen.getByRole('button', { name: /Cerrar sesión/i });
+    await user.click(botonAbrirModal);
+
+    // Modal de confirmación
+    const dialog = screen.getByRole('dialog');
+    const botonConfirmar = within(dialog).getByRole('button', { name: /Cerrar sesión/i });
+    await user.click(botonConfirmar);
+
+    // Debe volver a la pantalla de acceso
+    expect(await screen.findByRole('heading', { name: /Plataforma de Historiales Clínicos/i })).toBeInTheDocument();
   });
 });

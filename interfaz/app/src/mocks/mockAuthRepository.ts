@@ -22,14 +22,14 @@ export class MockAuthRepository implements AuthRepository {
   }
 
   async iniciarSesion(params: IniciarSesionParams): Promise<SesionUsuario> {
-    const { cuentaId, email, escenario = 'NORMAL', simularLatencia = false } = params;
+    const { email, password, cuentaId, escenario = 'NORMAL', simularLatencia = false } = params;
     const correlacion = this.generarCorrelacion();
 
     if (simularLatencia) {
-      await this.esperar(600);
+      await this.esperar(450);
     }
 
-    // Validación de campos obligatorios
+    // Validación de email obligatorio
     if (!email || email.trim() === '') {
       const error: AppError = {
         codigo: '400 CORREO_REQUERIDO',
@@ -41,11 +41,23 @@ export class MockAuthRepository implements AuthRepository {
       throw error;
     }
 
+    // Validación de contraseña si se suministra
+    if (password !== undefined && password.trim().length > 0 && password.trim().length < 4) {
+      const error: AppError = {
+        codigo: '400 CONTRASENA_INVALIDA',
+        mensaje: 'La contraseña debe contener al menos 4 caracteres.',
+        status: 400,
+        correlacion,
+        campos: { password: 'Longitud mínima de 4 caracteres' },
+      };
+      throw error;
+    }
+
     // Simulación forzada de escenarios de prueba
     if (escenario === '401_NO_AUTENTICADO') {
       const error: AppError = {
         codigo: '401 NO_AUTENTICADO',
-        mensaje: 'Credenciales inválidas o identidad no verificable. Modo demostración simulando fallo de autenticación.',
+        mensaje: 'Credenciales inválidas. Verifique su correo o contraseña institucional.',
         status: 401,
         correlacion,
       };
@@ -55,7 +67,7 @@ export class MockAuthRepository implements AuthRepository {
     if (escenario === '403_CUENTA_NO_HABILITADA') {
       const error: AppError = {
         codigo: '403 CUENTA_NO_HABILITADA',
-        mensaje: 'La cuenta no posee privilegios suficientes o se encuentra suspendida.',
+        mensaje: 'La cuenta no posee permisos vigentes o se encuentra inactiva.',
         status: 403,
         correlacion,
       };
@@ -65,33 +77,29 @@ export class MockAuthRepository implements AuthRepository {
     if (escenario === '503_PERSISTENCIA_NO_DISPONIBLE') {
       const error: AppError = {
         codigo: '503 PERSISTENCIA_NO_DISPONIBLE',
-        mensaje: 'Servicio de persistencia no disponible temporalmente. Intente nuevamente en unos instantes.',
+        mensaje: 'El servicio de autenticación institucional no está disponible temporalmente.',
         status: 503,
         correlacion,
       };
       throw error;
     }
 
-    // Búsqueda de cuenta
-    const cuenta = this.cuentas.find((c) => c.id === cuentaId);
+    // Búsqueda de cuenta por ID o por correo
+    let cuenta: CuentaDemo | undefined;
+    if (cuentaId) {
+      cuenta = this.cuentas.find((c) => c.id === cuentaId);
+    }
+    if (!cuenta) {
+      cuenta = this.cuentas.find((c) => c.email.toLowerCase() === email.trim().toLowerCase());
+    }
+
     if (!cuenta) {
       const error: AppError = {
         codigo: '404 CUENTA_NO_ENCONTRADA',
-        mensaje: 'La cuenta sintética seleccionada no existe en el catálogo de pruebas.',
+        mensaje: 'No se encontró un usuario institucional asociado al correo ingresado.',
         status: 404,
         correlacion,
-      };
-      throw error;
-    }
-
-    // Validación de correo coincidente
-    if (cuenta.email.toLowerCase() !== email.trim().toLowerCase()) {
-      const error: AppError = {
-        codigo: '400 CORREO_NO_COINCIDE',
-        mensaje: `El correo ingresado no coincide con el asignado a ${cuenta.nombre} (${cuenta.email}).`,
-        status: 400,
-        correlacion,
-        campos: { email: `Debe ser exactamente ${cuenta.email}` },
+        campos: { email: 'Usuario no registrado' },
       };
       throw error;
     }
@@ -100,14 +108,14 @@ export class MockAuthRepository implements AuthRepository {
     if (cuenta.estado !== 'ACTIVO') {
       const error: AppError = {
         codigo: '403 CUENTA_NO_HABILITADA',
-        mensaje: `Acceso restringido: La cuenta de ${cuenta.nombre} se encuentra en estado "${cuenta.estado}". Comuníquese con el administrador institucional.`,
+        mensaje: `Acceso restringido: La cuenta de ${cuenta.nombre} se encuentra en estado "${cuenta.estado}". Comuníquese con el departamento administrativo.`,
         status: 403,
         correlacion,
       };
       throw error;
     }
 
-    // Sesión válida creada
+    // Sesión válida creada (sin filtrar detalles internos de base de datos)
     const sesion: SesionUsuario = {
       cuentaId: cuenta.id,
       email: cuenta.email,
@@ -120,13 +128,13 @@ export class MockAuthRepository implements AuthRepository {
       colegiado: cuenta.colegiado,
       permisos: [...cuenta.permisos],
       fechaInicio: new Date().toISOString(),
-      tokenSintetico: `demo-token-${cuenta.id}-${Date.now()}`,
+      tokenSintetico: `inst-token-${cuenta.id.slice(4)}-${Date.now()}`,
     };
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sesion));
     } catch {
-      // Ignorar errores de localStorage en entornos restringidos
+      // Ignorar errores de localStorage
     }
 
     return sesion;
