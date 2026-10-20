@@ -1,6 +1,6 @@
-# Database — cierre de esquemas e inicializadores
+# Database — modelos e inicializadores
 
-Estado: scripts preparados para la fase de Docker. Los nueve casos que fallaron en la auditoría inicial y las dos observaciones de MySQL están corregidos. Las pruebas se ejecutan en procesos locales nuevos, con datos sintéticos; no se requieren cuentas de nube.
+Modelos, inicializadores y validadores de las cuatro instituciones. PostgreSQL, MySQL y MongoDB tienen montaje local con Docker; Firestore se configura por separado. Las pruebas usan procesos nuevos y datos sintéticos.
 
 ## Motores y contenido
 
@@ -60,12 +60,12 @@ python3 Database/tests/verificar_local.py --postgres-bin /ruta/postgresql/bin --
 
 El verificador **no acepta una URL de una base existente**: crea directorios temporales, puertos libres, un clúster PostgreSQL nuevo, una instancia MySQL nueva, un replica set MongoDB nuevo y proyectos `demo-*` en el emulador. Detiene sus procesos y elimina sus directorios al terminar. `initdb` se ejecuta como usuario normal, no como root. Es posible seleccionar un grupo con `--motores postgres mysql`, `--motores mongo` o `--motores firestore`; Java y Firebase CLI solo son necesarios para este último. En macOS restringido pueden requerirse permisos locales para iniciar los servidores.
 
-Resultado de cierre: **350 casos PASS**, además de carga, reejecución, rechazo de deriva y de esquemas anteriores, y dos pruebas con sesiones concurrentes. Desglose: 33 PostgreSQL, 27 MySQL, 102 MongoDB existentes + siete regresiones, 82 Firestore offline y 99 de emulador. Las pruebas fallan con código distinto de cero ante una regresión. [Evidencia ejecutada](evidencias_cierre/resultado.json).
+Las suites cubren integridad, validación, unicidad, rollback y concurrencia. Se conservan como pruebas de regresión en `tests/`; no se incluyen informes históricos ni capturas de ejecuciones. El verificador genera resultados en `.test-results/database/`, carpeta ignorada por Git.
 
-El [informe inicial](AUDITORIA_DATABASE.md) y `auditoria_evidencias/` conservan los fallos anteriores a las correcciones; no representan el estado final. El [cierre](CIERRE_DATABASE.md) relaciona cada hallazgo con su solución.
+La configuración Docker se comprueba por separado con `python3 Database/docker/verificar.py`, sin requerir motores instalados nativamente. Ver [la guía Docker](docker/README.md).
 
 ## Límite entre esta fase y la aplicación
 
 Esta fase entrega almacenamiento, validadores, inicializadores y pruebas de integridad. El backend sigue siendo responsable de autorización clínica, normalización común de identidades, invocación de validadores Firestore, validación de referencias documentales, transacciones de paciente/responsables/auditoría, comparación de revisiones e idempotencia, saldo/stock concurrentes y conservación de versiones MongoDB/Firestore. Son casos de uso de la siguiente implementación, no garantías que un inicializador pueda sustituir.
 
-Para Docker quedará configurar imágenes y volúmenes, salud/arranque, replica set MongoDB, emulador Firestore con Java y publicación de puertos; definir secretos/cuentas de aplicación y comprobar restauración de respaldos. No hay todavía despliegue de reglas/índices ni configuración IAM en un proyecto Firebase real. No se recibió retroalimentación docente; su aceptación académica continúa pendiente de esa fuente.
+PostgreSQL, MySQL y MongoDB ya tienen [montaje local Docker](docker/README.md), con volúmenes, salud/arranque, replica set y cuentas técnicas separadas. Firebase queda fuera de Compose por decisión del proyecto. La recuperación de respaldos y la configuración de despliegues remotos se abordarán por separado. No hay todavía despliegue de reglas/índices ni configuración IAM en un proyecto Firebase real. No se recibió retroalimentación docente; su aceptación académica continúa pendiente de esa fuente.

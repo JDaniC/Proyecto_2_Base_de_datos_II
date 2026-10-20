@@ -22,16 +22,16 @@ BEGIN
  END;
  ROLLBACK TO SAVEPOINT caso;
  RELEASE SAVEPOINT caso;
- INSERT INTO resultados_auditoria VALUES(nombre,IF(rechazado=rechazo_esperado,'PASS','FAIL'));
+ INSERT INTO resultados_prueba VALUES(nombre,IF(rechazado=rechazo_esperado,'PASS','FAIL'));
 END$$
 DROP PROCEDURE IF EXISTS _cerrar_pruebas$$
 CREATE PROCEDURE _cerrar_pruebas()
 BEGIN
- IF EXISTS(SELECT 1 FROM resultados_auditoria WHERE estado<>'PASS') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='REGRESION_DATABASE_MYSQL'; END IF;
+ IF EXISTS(SELECT 1 FROM resultados_prueba WHERE estado<>'PASS') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='REGRESION_DATABASE_MYSQL'; END IF;
 END$$
 DELIMITER ;
 START TRANSACTION;
-CREATE TEMPORARY TABLE resultados_auditoria(caso VARCHAR(150),estado VARCHAR(10));
+CREATE TEMPORARY TABLE resultados_prueba(caso VARCHAR(150),estado VARCHAR(10));
 INSERT INTO paciente(id_paciente,nombres,apellidos) VALUES(10001,'SinteticoA','Prueba'),(10002,'SinteticoB','Prueba'),(10003,'SinteticoC','Prueba');
 INSERT INTO historial_clinico(id_historial,id_paciente) VALUES(10001,10001),(10002,10002);
 INSERT INTO secretaria(id_secretaria,nombres,apellidos) VALUES(10001,'Sintetica','Prueba');
@@ -80,7 +80,7 @@ CALL _caso('MY24 corregir con revision',"UPDATE receta SET revision=revision+1,c
 CALL _caso('MY25 revisiones append only',"DELETE FROM revisiones WHERE tipo_recurso='receta'",TRUE);
 CALL _caso('MY26 estados canonicos',"UPDATE historial_clinico SET estado='activo' WHERE id_historial=10001",TRUE);
 CALL _caso('MY27 no espacios en estado',"UPDATE historial_clinico SET estado='ACTIVO ' WHERE id_historial=10001",TRUE);
-SELECT * FROM resultados_auditoria ORDER BY caso;
+SELECT * FROM resultados_prueba ORDER BY caso;
 CALL _cerrar_pruebas();
 ROLLBACK;
 DROP PROCEDURE _caso;

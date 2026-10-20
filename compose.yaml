@@ -1,0 +1,134 @@
+name: bdii-databases
+
+services:
+  postgres:
+    build: ./Database/docker/postgres
+    image: bdii-postgres:18.6
+    pull_policy: build
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres_admin
+      POSTGRES_DB: hospital_general
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
+      TZ: UTC
+      PGTZ: UTC
+    command: [postgres, -c, timezone=UTC]
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./Database/hospital_general_postgresql.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    secrets:
+      - postgres_admin_password
+      - postgres_app_password
+    healthcheck:
+      test: [CMD, sh, /config/healthcheck.sh]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    stop_grace_period: 30s
+    networks: [databases]
+
+  mysql:
+    build: ./Database/docker/mysql
+    image: bdii-mysql:8.4.6
+    pull_policy: build
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinica_odontologica
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      TZ: UTC
+    command:
+      - --default-time-zone=+00:00
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-13306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./Database/clinica_odontologica_mysql.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    secrets:
+      - mysql_root_password
+      - mysql_app_password
+    healthcheck:
+      test: [CMD, sh, /config/healthcheck.sh]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 40s
+    stop_grace_period: 30s
+    networks: [databases]
+
+  mongodb:
+    image: mongo:8.0.32
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo_admin
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
+      TZ: UTC
+    entrypoint: [sh, /config/entrypoint.sh]
+    command: [mongod, --replSet, rs0, --keyFile, /run/mongodb/keyfile, --bind_ip_all]
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27018}:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./Database/docker/mongo/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./Database/docker/mongo/healthcheck.js:/config/healthcheck.js:ro
+    tmpfs:
+      - /run/mongodb:rw,noexec,nosuid,size=1m
+    secrets:
+      - mongo_admin_password
+      - mongo_keyfile
+    healthcheck:
+      test: [CMD, mongosh, --nodb, --norc, --quiet, --file, /config/healthcheck.js]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    stop_grace_period: 60s
+    networks: [databases]
+
+  mongo-init:
+    image: mongo:8.0.32
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    working_dir: /workspace
+    environment:
+      MONGO_LAB_DB: laboratorio_clinico
+    entrypoint: [mongosh, --nodb, --norc, --quiet, --file, /config/bootstrap.js]
+    volumes:
+      - ./Database/laboratorio_clinico_mongodb.js:/workspace/Database/laboratorio_clinico_mongodb.js:ro
+      - ./Database/docker/mongo/bootstrap.js:/config/bootstrap.js:ro
+    secrets:
+      - mongo_admin_password
+      - mongo_app_password
+    networks: [databases]
+
+volumes:
+  postgres_data:
+  mysql_data:
+  mongo_data:
+  mongo_config:
+
+networks:
+  databases:
+
+secrets:
+  postgres_admin_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/postgres_admin_password
+  postgres_app_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/postgres_app_password
+  mysql_root_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/mysql_root_password
+  mysql_app_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/mysql_app_password
+  mongo_admin_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/mongo_admin_password
+  mongo_app_password:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/mongo_app_password
+  mongo_keyfile:
+    file: ${DB_SECRETS_DIR:-.docker/secrets}/mongo_keyfile

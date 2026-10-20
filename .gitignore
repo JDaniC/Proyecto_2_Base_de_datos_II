@@ -35,3 +35,12 @@ build/
 
 # Configuración local de Obsidian
 .obsidian/
+
+# Credenciales locales de Docker Compose
+.docker/
+
+# Resultados regenerables de pruebas
+.test-results/
+Database/evidencias_cierre/
+Database/auditoria_evidencias/
+Database/docker/VERIFICACION.json

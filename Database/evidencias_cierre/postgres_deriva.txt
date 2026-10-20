@@ -1,4 +1,0 @@
-
-NOTICE:  schema "hospital_general" already exists, skipping
-ERROR:  MODELO_INCOMPATIBLE_REQUIERE_MIGRACION
-CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE

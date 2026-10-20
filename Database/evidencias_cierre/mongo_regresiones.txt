@@ -1,9 +1,0 @@
-MongoDB: laboratorio_clinico_test_audit_1792454499976; 27 colecciones, 27 nuevas, 63 indices secundarios verificados.
-No se cargaron datos ni cuentas. Las reglas entre documentos requieren el backend transaccional.
-PASS MG01 tratamiento con fin anterior al inicio
-PASS MG02 tratamiento con fechas iguales (control)
-PASS MG03 tratamiento sin fecha fin
-PASS MG04 UPDATE tampoco invierte fechas
-PASS MG05 prescriptor distinto
-PASS MG06 medicamento duplicado por ID
-PASS MG07 receta coherente

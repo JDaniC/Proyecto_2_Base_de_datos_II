@@ -62,7 +62,7 @@ class Verificacion:
             sql("SELECT row_to_json(c) FROM (SELECT table_name,column_name,data_type,is_nullable,column_default FROM information_schema.columns WHERE table_schema='hospital_general' ORDER BY table_name,ordinal_position) c;", nombre='diccionario_postgresql')
             sql(esquema, nombre='postgres_reejecucion')
             self.registrar('PostgreSQL', 'reejecucion compatible')
-            sql((DB/'tests/auditoria_postgresql.sql').read_text(), nombre='postgres_regresiones')
+            sql((DB/'tests/regresiones_postgresql.sql').read_text(), nombre='postgres_regresiones')
             self.registrar('PostgreSQL', '33 regresiones SQL')
             # La segunda conexion espera el commit de la primera, despues rechaza el solapamiento.
             sql("""SET search_path=hospital_general,public;
@@ -133,7 +133,7 @@ class Verificacion:
             sql(esquema, nombre='mysql_esquema'); self.registrar('MySQL', 'carga nueva')
             sql("SELECT JSON_OBJECT('table_name',TABLE_NAME,'column_name',COLUMN_NAME,'data_type',COLUMN_TYPE,'is_nullable',IS_NULLABLE,'column_default',COLUMN_DEFAULT) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='clinica_odontologica' ORDER BY TABLE_NAME,ORDINAL_POSITION;",nombre='diccionario_mysql')
             sql(esquema, nombre='mysql_reejecucion'); self.registrar('MySQL', 'reejecucion compatible')
-            sql('SET @bdii_pruebas_autorizadas=1;\n'+(DB/'tests/auditoria_mysql.sql').read_text(), nombre='mysql_regresiones')
+            sql('SET @bdii_pruebas_autorizadas=1;\n'+(DB/'tests/regresiones_mysql.sql').read_text(), nombre='mysql_regresiones')
             self.registrar('MySQL', '27 regresiones SQL')
             sql(esquema, nombre='mysql_reejecucion_tras_tests')
             sql("""USE clinica_odontologica;
@@ -176,7 +176,7 @@ class Verificacion:
             conexion = f'mongodb://127.0.0.1:{port}/?directConnection=true'
             self.ejecutar([mongosh,conexion,'--norc','--quiet','--eval',
               f'rs.initiate({{_id:"bdii_test_rs",members:[{{_id:0,host:"127.0.0.1:{port}"}}]}}); for(let i=0;i<150&&!db.hello().isWritablePrimary;i++)sleep(100); if(!db.hello().isWritablePrimary)throw Error("NO_PRIMARY");'])
-            for file,name in [('laboratorio_clinico_mongodb.test.js','mongo_suite'),('auditoria_mongodb.js','mongo_regresiones')]:
+            for file,name in [('laboratorio_clinico_mongodb.test.js','mongo_suite'),('regresiones_mongodb.js','mongo_regresiones')]:
                 self.ejecutar([mongosh,f'mongodb://127.0.0.1:{port}/?replicaSet=bdii_test_rs','--norc','--quiet','--file',DB/'tests'/file],nombre=name)
                 self.registrar('MongoDB',file)
         finally:
@@ -203,7 +203,7 @@ def main():
     parser.add_argument('--motores',nargs='+',choices=['postgres','mysql','mongo','firestore'],default=['postgres','mysql','mongo','firestore'])
     parser.add_argument('--postgres-bin')
     parser.add_argument('--mysql-bin')
-    parser.add_argument('--evidencias',default=str(DB/'evidencias_cierre'))
+    parser.add_argument('--evidencias',default=str(ROOT/'.test-results/database'))
     args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='bdii-test-') as carpeta:
         v=Verificacion(args,Path(carpeta))
