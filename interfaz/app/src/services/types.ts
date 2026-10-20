@@ -107,6 +107,14 @@ export interface CitaDashboard {
 
 // --- Tipos de la Pantalla 05 Aprobada: Agenda de Citas (V08 y V09) ---
 
+export interface ReprogramacionRegistro {
+  fechaHoraPrevia: string;
+  nuevaFechaHora: string;
+  motivo: string;
+  fechaRegistro: string;
+  usuario?: string;
+}
+
 export interface CitaAgenda {
   id: string;
   institucionId: InstitucionId;
@@ -125,6 +133,8 @@ export interface CitaAgenda {
   estado: EstadoCita;
   consultorio: string;
   motivoCancelacion?: string;
+  secretariaGestora?: string;
+  historialReprogramaciones?: ReprogramacionRegistro[];
   fechaCreacion: string;
 }
 
@@ -144,6 +154,8 @@ export interface CrearCitaDTO {
   duracionMinutos: number;
   motivo: string;
   consultorio?: string;
+  secretariaGestora?: string;
+  idempotencyKey?: string;
 }
 
 export interface ActividadReciente {

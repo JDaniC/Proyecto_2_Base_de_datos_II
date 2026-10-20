@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CalendarPlus,
@@ -9,7 +9,12 @@ import {
   User,
   MapPin,
   Filter,
-  FileText
+  FileText,
+  RefreshCw,
+  XCircle,
+  Stethoscope,
+  History,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -23,6 +28,9 @@ import { Modal } from '../../design-system/components/Modal';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { EmptyState } from '../../design-system/components/EmptyState';
 import { PROFESIONALES_DISPONIBLES } from '../../mocks/mockAppointmentsData';
+import { CrearCitaModal } from './CrearCitaModal';
+import { ReprogramarCitaModal } from './ReprogramarCitaModal';
+import { CancelarCitaModal } from './CancelarCitaModal';
 
 const DIAS_SEMANA_BASE = [
   { diaSemana: 'LUN', fecha: '2026-10-19', label: '19 oct' },
@@ -51,8 +59,13 @@ export const AppointmentsCalendarPage: React.FC = () => {
   const [cargando, setCargando] = useState(true);
   const [citaSeleccionada, setCitaSeleccionada] = useState<CitaAgenda | null>(null);
 
-  useEffect(() => {
-    let active = true;
+  // Estados de Modales V09
+  const [isCrearModalOpen, setIsCrearModalOpen] = useState(false);
+  const [citaParaReprogramar, setCitaParaReprogramar] = useState<CitaAgenda | null>(null);
+  const [citaParaCancelar, setCitaParaCancelar] = useState<CitaAgenda | null>(null);
+  const [toastMensaje, setToastMensaje] = useState<string | null>(null);
+
+  const cargarCitas = useCallback(() => {
     setCargando(true);
     const fechaDesde = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-19';
     const fechaHasta = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-24';
@@ -66,30 +79,33 @@ export const AppointmentsCalendarPage: React.FC = () => {
         q: terminoBusqueda
       })
       .then((data) => {
-        if (active) {
-          setCitas(data);
-          setCargando(false);
-        }
+        setCitas(data);
+        setCargando(false);
       })
       .catch((err) => {
-        if (active) {
-          console.error('Error cargando citas de agenda:', err);
-          setCargando(false);
-        }
+        console.error('Error cargando citas de agenda:', err);
+        setCargando(false);
       });
-
-    return () => {
-      active = false;
-    };
   }, [
-    institucionId,
     appointmentRepository,
+    institucionId,
     vistaModo,
     fechaSeleccionada,
     profesionalFiltro,
     estadoFiltro,
     terminoBusqueda
   ]);
+
+  useEffect(() => {
+    cargarCitas();
+  }, [cargarCitas]);
+
+  const mostrarToast = (mensaje: string) => {
+    setToastMensaje(mensaje);
+    setTimeout(() => {
+      setToastMensaje(null);
+    }, 4000);
+  };
 
   const getBadgeEstado = (estado: EstadoCita) => {
     switch (estado) {
@@ -141,6 +157,29 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Agenda de citas</span>
       </nav>
 
+      {/* Notificación de retroalimentación de operaciones V09 */}
+      {toastMensaje && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'var(--color-success-bg)',
+            color: 'var(--color-success-text)',
+            border: '1px solid var(--color-success-border)',
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-input)',
+            marginBottom: '16px',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
+        >
+          <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+          <span>{toastMensaje}</span>
+        </div>
+      )}
+
       {/* Encabezado y Acción Primaria */}
       <div
         style={{
@@ -184,7 +223,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <Button
           variant="primary"
           leftIcon={<CalendarPlus size={18} />}
-          onClick={() => navigate('/pacientes')}
+          onClick={() => setIsCrearModalOpen(true)}
           aria-label="Crear nueva cita médica"
         >
           Nueva cita
@@ -709,6 +748,14 @@ export const AppointmentsCalendarPage: React.FC = () => {
               </p>
             </div>
 
+            {/* Secretaria gestora (Odontología C02) */}
+            {citaSeleccionada.secretariaGestora && (
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                <strong>Secretaría gestora:</strong> {citaSeleccionada.secretariaGestora}
+              </div>
+            )}
+
+            {/* Motivo de cancelación obligatorio (si aplica) */}
             {citaSeleccionada.estado === 'CANCELADA' && citaSeleccionada.motivoCancelacion && (
               <div
                 style={{
@@ -727,38 +774,181 @@ export const AppointmentsCalendarPage: React.FC = () => {
               </div>
             )}
 
+            {/* Historial de reprogramaciones (Auditoría V09) */}
+            {citaSeleccionada.historialReprogramaciones && citaSeleccionada.historialReprogramaciones.length > 0 && (
+              <div
+                style={{
+                  backgroundColor: 'var(--color-input-bg)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: 'var(--color-strong)',
+                    marginBottom: '8px'
+                  }}
+                >
+                  <History size={15} />
+                  <span>Historial de reprogramaciones (Auditoría):</span>
+                </div>
+                {citaSeleccionada.historialReprogramaciones.map((rep, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      fontSize: '12px',
+                      borderTop: idx > 0 ? '1px dashed var(--color-border)' : 'none',
+                      paddingTop: idx > 0 ? '6px' : 0,
+                      marginTop: idx > 0 ? '6px' : 0
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Horario anterior:</span>{' '}
+                      <strong>{rep.fechaHoraPrevia}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Nuevo horario:</span>{' '}
+                      <strong>{rep.nuevaFechaHora}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Motivo:</span> {rep.motivo}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Botones de acción contextual */}
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'flex-end',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 gap: '10px',
                 marginTop: '16px',
                 flexWrap: 'wrap'
               }}
             >
-              <Button
-                variant="secondary"
-                size="sm"
-                leftIcon={<FileText size={15} />}
-                onClick={() => {
-                  const pId = citaSeleccionada.pacienteId;
-                  setCitaSeleccionada(null);
-                  navigate(`/pacientes/${pId}`);
-                }}
-              >
-                Ver expediente
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setCitaSeleccionada(null)}
-              >
-                Cerrar
-              </Button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {citaSeleccionada.estado === 'PROGRAMADA' && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<RefreshCw size={14} />}
+                      onClick={() => {
+                        setCitaParaReprogramar(citaSeleccionada);
+                        setCitaSeleccionada(null);
+                      }}
+                    >
+                      Reprogramar cita
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      leftIcon={<XCircle size={14} />}
+                      onClick={() => {
+                        setCitaParaCancelar(citaSeleccionada);
+                        setCitaSeleccionada(null);
+                      }}
+                    >
+                      Cancelar cita
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {citaSeleccionada.estado === 'PROGRAMADA' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    leftIcon={<Stethoscope size={15} />}
+                    onClick={() => {
+                      const pId = citaSeleccionada.pacienteId;
+                      const cId = citaSeleccionada.id;
+                      setCitaSeleccionada(null);
+                      navigate(`/pacientes/${pId}/consultas/nueva?citaId=${cId}`);
+                    }}
+                  >
+                    {institucionId === 'CLINICA_ODONTOLOGICA'
+                      ? 'Iniciar consulta odontológica'
+                      : 'Iniciar atención médica'}
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={<FileText size={15} />}
+                  onClick={() => {
+                    const pId = citaSeleccionada.pacienteId;
+                    setCitaSeleccionada(null);
+                    navigate(`/pacientes/${pId}`);
+                  }}
+                >
+                  Ver expediente
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCitaSeleccionada(null)}
+                >
+                  Cerrar
+                </Button>
+              </div>
             </div>
           </div>
         </Modal>
       )}
+
+      {/* Modal V09: Programar Nueva Cita */}
+      <CrearCitaModal
+        isOpen={isCrearModalOpen}
+        onClose={() => setIsCrearModalOpen(false)}
+        fechaInicial={fechaSeleccionada}
+        onCitaCreada={(_nuevaId) => {
+          cargarCitas();
+          mostrarToast('Cita médica programada exitosamente en el horario seleccionado.');
+        }}
+      />
+
+      {/* Modal V09: Reprogramar Cita */}
+      <ReprogramarCitaModal
+        isOpen={Boolean(citaParaReprogramar)}
+        onClose={() => {
+          setCitaSeleccionada(citaParaReprogramar);
+          setCitaParaReprogramar(null);
+        }}
+        cita={citaParaReprogramar}
+        onCitaReprogramada={(citaActualizada) => {
+          setCitaParaReprogramar(null);
+          setCitaSeleccionada(citaActualizada);
+          cargarCitas();
+          mostrarToast('Cita médica reprogramada exitosamente. Se ha registrado en la bitácora de auditoría.');
+        }}
+      />
+
+      {/* Modal V09: Cancelar Cita */}
+      <CancelarCitaModal
+        isOpen={Boolean(citaParaCancelar)}
+        onClose={() => {
+          setCitaSeleccionada(citaParaCancelar);
+          setCitaParaCancelar(null);
+        }}
+        cita={citaParaCancelar}
+        onCitaCancelada={(citaActualizada) => {
+          setCitaParaCancelar(null);
+          setCitaSeleccionada(citaActualizada);
+          cargarCitas();
+          mostrarToast('Cita médica cancelada con motivo registrado según normativa.');
+        }}
+      />
     </div>
   );
 };
