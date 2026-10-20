@@ -11,6 +11,7 @@ import {
   CrearPacienteDTO,
   ActualizarPacienteDTO,
   ExpedienteCompleto,
+  DiagnosticoHistorial,
   CausaArchivo,
   CitaAgenda,
   FiltrosAgendaQuery,
@@ -46,6 +47,11 @@ export interface PatientRepository {
   actualizar(institucionId: InstitucionId, id: string, dto: ActualizarPacienteDTO): Promise<Paciente>;
   archivar(institucionId: InstitucionId, id: string, causa: CausaArchivo, motivo: string): Promise<Paciente>;
   reactivar(institucionId: InstitucionId, id: string, motivo: string, correccionFallecimiento?: boolean): Promise<Paciente>;
+  agregarDiagnostico(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    diagnostico: { codigoCIE: string; nombre: string; esPrincipal: boolean; registradoPor: string }
+  ): Promise<DiagnosticoHistorial>;
 }
 
 export interface AppointmentRepository {

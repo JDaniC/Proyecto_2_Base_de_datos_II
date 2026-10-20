@@ -95,7 +95,7 @@ describe('U05 — Pantalla 03 Aprobada: Expediente Clínico (V06), Timeline (V07
     await user.click(tabDx);
     expect(await screen.findByText('E11.9')).toBeInTheDocument();
     expect(screen.getByText(/Diabetes mellitus tipo 2/i)).toBeInTheDocument();
-    expect(screen.getByText('Principal')).toBeInTheDocument();
+    expect(screen.getAllByText('Principal').length).toBeGreaterThan(0);
 
     // Pestaña Recetas
     const tabRecetas = screen.getByRole('tab', { name: /Recetas emitidas/i });

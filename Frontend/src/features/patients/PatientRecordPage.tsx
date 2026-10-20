@@ -16,6 +16,7 @@ import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import {
   ExpedienteCompleto,
+  DiagnosticoHistorial,
   CausaArchivo
 } from '../../services/types';
 import { Button } from '../../design-system/components/Button';
@@ -28,6 +29,7 @@ import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { Toast } from '../../design-system/components/Toast';
 import { ClinicalTimeline } from './components/ClinicalTimeline';
 import { ArchivePatientModal } from './components/ArchivePatientModal';
+import { DiagnosticosTratamientosView } from '../consultations/DiagnosticosTratamientosView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -103,6 +105,10 @@ export const PatientRecordPage: React.FC = () => {
 
   const { paciente, antecedentes, consultas, diagnosticos, recetas, eventos } = expediente;
   const isArchived = paciente.estado === 'ARCHIVADO';
+
+  const handleDiagnosticosActualizados = (nuevos: DiagnosticoHistorial[]) => {
+    setExpediente((prev) => (prev ? { ...prev, diagnosticos: nuevos } : null));
+  };
 
   // Configuración de pestañas con subrayado de 3px
   const tabsList: TabItem[] = [
@@ -533,42 +539,12 @@ export const PatientRecordPage: React.FC = () => {
       )}
 
       {tabActiva === 'DIAGNOSTICOS' && (
-        <Panel title="Historial Diagnóstico Codificado CIE">
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-divider)', textAlign: 'left' }}>
-                <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>Código CIE</th>
-                <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>Diagnóstico</th>
-                <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>Tipo</th>
-                <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>Fecha</th>
-                <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)' }}>Registrado por</th>
-              </tr>
-            </thead>
-            <tbody>
-              {diagnosticos.map((d) => (
-                <tr key={d.id} style={{ borderBottom: '1px solid var(--color-divider)' }}>
-                  <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary)' }}>
-                    {d.codigoCIE}
-                  </td>
-                  <td style={{ padding: '12px', fontWeight: 600, color: 'var(--color-strong)' }}>
-                    {d.nombre}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <Badge variant={d.esPrincipal ? 'primary' : 'neutral'}>
-                      {d.esPrincipal ? 'Principal' : 'Secundario'}
-                    </Badge>
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--color-text-secondary)' }}>
-                    {d.fechaRegistro}
-                  </td>
-                  <td style={{ padding: '12px', color: 'var(--color-text)' }}>
-                    {d.registradoPor}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Panel>
+        <DiagnosticosTratamientosView
+          pacienteId={paciente.id}
+          diagnosticos={diagnosticos}
+          onDiagnosticosActualizados={handleDiagnosticosActualizados}
+          esArchivado={paciente.estado === 'ARCHIVADO'}
+        />
       )}
 
       {tabActiva === 'RECETAS' && (

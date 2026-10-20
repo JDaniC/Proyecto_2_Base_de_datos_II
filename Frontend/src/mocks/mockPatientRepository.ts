@@ -8,6 +8,7 @@ import {
   ActualizarPacienteDTO,
   PacienteDuplicadoException,
   ExpedienteCompleto,
+  DiagnosticoHistorial,
   CausaArchivo
 } from '../services/types';
 import {
@@ -27,6 +28,7 @@ const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
 
 export class MockPatientRepository implements PatientRepository {
   private pacientes: Paciente[] = [];
+  private diagnosticosPorPaciente: Record<string, DiagnosticoHistorial[]> = {};
 
   constructor() {
     this.cargarPacientes();
@@ -154,7 +156,10 @@ export class MockPatientRepository implements PatientRepository {
     };
 
     const consultas = MOCK_CONSULTAS_DEFECTO[paciente.id] || [];
-    const diagnosticos = MOCK_DIAGNOSTICOS_DEFECTO[paciente.id] || [];
+    if (!this.diagnosticosPorPaciente[paciente.id]) {
+      this.diagnosticosPorPaciente[paciente.id] = [...(MOCK_DIAGNOSTICOS_DEFECTO[paciente.id] || [])];
+    }
+    const diagnosticos = this.diagnosticosPorPaciente[paciente.id];
     const recetas = MOCK_RECETAS_DEFECTO[paciente.id] || [];
     const eventos = MOCK_EVENTOS_TIMELINE_DEFECTO[paciente.id] || [
       {
@@ -358,5 +363,35 @@ export class MockPatientRepository implements PatientRepository {
     };
     this.guardarEnStorage();
     return this.pacientes[index];
+  }
+
+  async agregarDiagnostico(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    diagnostico: { codigoCIE: string; nombre: string; esPrincipal: boolean; registradoPor: string }
+  ): Promise<DiagnosticoHistorial> {
+    await new Promise((res) => setTimeout(res, 40));
+    if (!this.diagnosticosPorPaciente[pacienteId]) {
+      this.diagnosticosPorPaciente[pacienteId] = [...(MOCK_DIAGNOSTICOS_DEFECTO[pacienteId] || [])];
+    }
+    const lista = this.diagnosticosPorPaciente[pacienteId];
+
+    if (diagnostico.esPrincipal) {
+      lista.forEach((d) => {
+        d.esPrincipal = false;
+      });
+    }
+
+    const nuevo: DiagnosticoHistorial = {
+      id: `dx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      codigoCIE: diagnostico.codigoCIE,
+      nombre: diagnostico.nombre,
+      esPrincipal: diagnostico.esPrincipal,
+      fechaRegistro: new Date().toISOString().split('T')[0],
+      registradoPor: diagnostico.registradoPor
+    };
+
+    lista.unshift(nuevo);
+    return nuevo;
   }
 }
