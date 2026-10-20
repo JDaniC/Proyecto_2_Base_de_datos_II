@@ -14,7 +14,9 @@ import {
   CausaArchivo,
   CitaAgenda,
   FiltrosAgendaQuery,
-  CrearCitaDTO
+  CrearCitaDTO,
+  RegistroConsultaCompletaDTO,
+  DetalleConsultaCompleta
 } from './types';
 
 export interface IniciarSesionParams {
@@ -58,4 +60,25 @@ export interface AppointmentRepository {
     motivo: string
   ): Promise<CitaAgenda>;
   cancelar(institucionId: InstitucionId, id: string, motivoCancelacion: string): Promise<CitaAgenda>;
+}
+
+export interface ConsultationRepository {
+  registrarConsultaCompleta(
+    institucionId: InstitucionId,
+    dto: RegistroConsultaCompletaDTO,
+    profesional: { nombre: string; rol: string }
+  ): Promise<DetalleConsultaCompleta>;
+  obtenerPorId(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    consultaId: string
+  ): Promise<DetalleConsultaCompleta | null>;
+  actualizarConsultaFinalizada(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    consultaId: string,
+    cambios: Partial<RegistroConsultaCompletaDTO>,
+    motivoCorreccion: string,
+    autor: string
+  ): Promise<DetalleConsultaCompleta>;
 }

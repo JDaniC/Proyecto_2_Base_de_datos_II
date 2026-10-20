@@ -244,6 +244,86 @@ export interface AntecedentesClinicos {
   medicamentosActuales: string[];
 }
 
+export interface SignosVitales {
+  pesoKg: number | null;
+  tallaCm: number | null;
+  temperaturaC: number | null;
+  presionSistolica: number | null;
+  presionDiastolica: number | null;
+  frecuenciaCardiacaLpm: number | null;
+  frecuenciaRespiratoriaRpm?: number | null;
+  saturacionOxigenoPct?: number | null;
+  perimetroCefalicoCm?: number | null;
+}
+
+export interface DiagnosticoItemDTO {
+  codigoCIE: string;
+  nombre: string;
+  esPrincipal: boolean;
+  observacion?: string;
+}
+
+export interface TratamientoItemDTO {
+  descripcion: string;
+  indicaciones: string;
+}
+
+export interface MedicamentoRecetaDTO {
+  nombre: string;
+  presentacion: string;
+  concentracion: string;
+  dosis: string;
+  unidad: string;
+  frecuencia: string;
+  duracion: string;
+  via: string;
+  indicaciones: string;
+}
+
+export interface RegistroConsultaCompletaDTO {
+  pacienteId: string;
+  citaId?: string;
+  responsableId?: string;
+  motivo: string;
+  sintomas: string;
+  observaciones?: string;
+  signosVitales: SignosVitales;
+  diagnosticos: DiagnosticoItemDTO[];
+  tratamientos: TratamientoItemDTO[];
+  receta?: {
+    medicamentos: MedicamentoRecetaDTO[];
+    observaciones?: string;
+  };
+  idempotencyKey: string;
+}
+
+export interface RevisionConsultaItem {
+  revision: number;
+  fechaHora: string;
+  autor: string;
+  motivo: string;
+}
+
+export interface DetalleConsultaCompleta {
+  id: string;
+  institucionId: InstitucionId;
+  pacienteId: string;
+  citaId?: string;
+  fechaHora: string;
+  motivo: string;
+  sintomas: string;
+  observaciones?: string;
+  profesionalNombre: string;
+  profesionalRol: string;
+  estado: 'ABIERTA' | 'FINALIZADA';
+  signosVitales: SignosVitales;
+  diagnosticos: DiagnosticoHistorial[];
+  tratamientos: TratamientoItemDTO[];
+  receta?: RecetaHistorial;
+  revision: number;
+  historialRevisiones?: RevisionConsultaItem[];
+}
+
 export interface ConsultaPaciente {
   id: string;
   fechaHora: string;
@@ -253,6 +333,7 @@ export interface ConsultaPaciente {
   profesionalRol: string;
   diagnosticoPrincipal: string;
   estado: 'FINALIZADA' | 'ABIERTA';
+  signosVitales?: SignosVitales;
 }
 
 export interface DiagnosticoHistorial {

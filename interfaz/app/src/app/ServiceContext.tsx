@@ -3,18 +3,21 @@ import {
   AuthRepository,
   DashboardRepository,
   PatientRepository,
-  AppointmentRepository
+  AppointmentRepository,
+  ConsultationRepository
 } from '../services/contracts';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
 import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
 import { MockPatientRepository } from '../mocks/mockPatientRepository';
 import { MockAppointmentRepository } from '../mocks/mockAppointmentRepository';
+import { MockConsultationRepository } from '../mocks/mockConsultationRepository';
 
 interface ServiceContainer {
   authRepository: AuthRepository;
   dashboardRepository: DashboardRepository;
   patientRepository: PatientRepository;
   appointmentRepository: AppointmentRepository;
+  consultationRepository: ConsultationRepository;
 }
 
 const ServiceContext = createContext<ServiceContainer | null>(null);
@@ -25,6 +28,7 @@ export interface ServiceProviderProps {
   customDashboardRepository?: DashboardRepository;
   customPatientRepository?: PatientRepository;
   customAppointmentRepository?: AppointmentRepository;
+  customConsultationRepository?: ConsultationRepository;
 }
 
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
@@ -33,6 +37,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   customDashboardRepository,
   customPatientRepository,
   customAppointmentRepository,
+  customConsultationRepository,
 }) => {
   const services = useMemo<ServiceContainer>(() => {
     return {
@@ -40,12 +45,14 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       dashboardRepository: customDashboardRepository || new MockDashboardRepository(),
       patientRepository: customPatientRepository || new MockPatientRepository(),
       appointmentRepository: customAppointmentRepository || new MockAppointmentRepository(),
+      consultationRepository: customConsultationRepository || new MockConsultationRepository(),
     };
   }, [
     customAuthRepository,
     customDashboardRepository,
     customPatientRepository,
     customAppointmentRepository,
+    customConsultationRepository,
   ]);
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;
