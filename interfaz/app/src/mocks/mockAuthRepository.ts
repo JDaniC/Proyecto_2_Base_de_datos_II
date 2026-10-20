@@ -84,13 +84,13 @@ export class MockAuthRepository implements AuthRepository {
       throw error;
     }
 
-    // Búsqueda de cuenta por ID o por correo
+    // Búsqueda de cuenta por correo primero (si fue editado en el input) o por ID
     let cuenta: CuentaDemo | undefined;
-    if (cuentaId) {
-      cuenta = this.cuentas.find((c) => c.id === cuentaId);
-    }
-    if (!cuenta) {
+    if (email && email.trim() !== '') {
       cuenta = this.cuentas.find((c) => c.email.toLowerCase() === email.trim().toLowerCase());
+    }
+    if (!cuenta && cuentaId) {
+      cuenta = this.cuentas.find((c) => c.id === cuentaId);
     }
 
     if (!cuenta) {

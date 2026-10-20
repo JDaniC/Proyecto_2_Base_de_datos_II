@@ -9,7 +9,9 @@ import {
   BuscarPacientesQuery,
   ResultadoPaginadoPacientes,
   CrearPacienteDTO,
-  ActualizarPacienteDTO
+  ActualizarPacienteDTO,
+  ExpedienteCompleto,
+  CausaArchivo
 } from './types';
 
 export interface IniciarSesionParams {
@@ -34,8 +36,9 @@ export interface DashboardRepository {
 export interface PatientRepository {
   buscar(institucionId: InstitucionId, query: BuscarPacientesQuery): Promise<ResultadoPaginadoPacientes>;
   obtenerPorId(institucionId: InstitucionId, id: string): Promise<Paciente | null>;
+  obtenerExpedienteCompleto(institucionId: InstitucionId, id: string): Promise<ExpedienteCompleto | null>;
   crear(institucionId: InstitucionId, dto: CrearPacienteDTO): Promise<Paciente>;
   actualizar(institucionId: InstitucionId, id: string, dto: ActualizarPacienteDTO): Promise<Paciente>;
-  archivar(institucionId: InstitucionId, id: string, causa: string, motivo: string): Promise<Paciente>;
-  reactivar(institucionId: InstitucionId, id: string, motivo: string): Promise<Paciente>;
+  archivar(institucionId: InstitucionId, id: string, causa: CausaArchivo, motivo: string): Promise<Paciente>;
+  reactivar(institucionId: InstitucionId, id: string, motivo: string, correccionFallecimiento?: boolean): Promise<Paciente>;
 }

@@ -6,13 +6,22 @@ import {
   ResultadoPaginadoPacientes,
   CrearPacienteDTO,
   ActualizarPacienteDTO,
-  PacienteDuplicadoException
+  PacienteDuplicadoException,
+  ExpedienteCompleto,
+  CausaArchivo
 } from '../services/types';
 import {
   MOCK_PACIENTES_INICIALES,
   calcularEdadAnios,
   normalizarIdentificacion
 } from './mockPatientsData';
+import {
+  MOCK_ANTECEDENTES_DEFECTO,
+  MOCK_CONSULTAS_DEFECTO,
+  MOCK_DIAGNOSTICOS_DEFECTO,
+  MOCK_RECETAS_DEFECTO,
+  MOCK_EVENTOS_TIMELINE_DEFECTO
+} from './mockClinicalData';
 
 const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
 
@@ -126,6 +135,47 @@ export class MockPatientRepository implements PatientRepository {
       (p) => p.id === id && p.institucionId === institucionId
     );
     return encontrado || null;
+  }
+
+  async obtenerExpedienteCompleto(
+    institucionId: InstitucionId,
+    id: string
+  ): Promise<ExpedienteCompleto | null> {
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = await this.obtenerPorId(institucionId, id);
+    if (!paciente) return null;
+
+    const antecedentes = MOCK_ANTECEDENTES_DEFECTO[paciente.id] || {
+      patologicos: ['Sin antecedentes patológicos crónicos registrados'],
+      quirurgicos: ['Sin intervenciones quirúrgicas mayores'],
+      familiares: ['No refiere antecedentes familiares relevantes'],
+      alergias: [],
+      medicamentosActuales: []
+    };
+
+    const consultas = MOCK_CONSULTAS_DEFECTO[paciente.id] || [];
+    const diagnosticos = MOCK_DIAGNOSTICOS_DEFECTO[paciente.id] || [];
+    const recetas = MOCK_RECETAS_DEFECTO[paciente.id] || [];
+    const eventos = MOCK_EVENTOS_TIMELINE_DEFECTO[paciente.id] || [
+      {
+        id: `evt-reg-${paciente.id}`,
+        fechaHora: paciente.fechaRegistro,
+        tipoEvento: 'DIAGNOSTICO',
+        titulo: 'Apertura de expediente clínico',
+        descripcion: 'Registro administrativo inicial de paciente',
+        profesional: 'Personal Administrativo',
+        rolProfesional: 'Admisión'
+      }
+    ];
+
+    return {
+      paciente,
+      antecedentes,
+      consultas,
+      diagnosticos,
+      recetas,
+      eventos
+    };
   }
 
   async crear(institucionId: InstitucionId, dto: CrearPacienteDTO): Promise<Paciente> {
@@ -267,8 +317,8 @@ export class MockPatientRepository implements PatientRepository {
   async archivar(
     institucionId: InstitucionId,
     id: string,
-    _causa: string,
-    _motivo: string
+    causa: CausaArchivo,
+    motivo: string
   ): Promise<Paciente> {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.pacientes.findIndex(
@@ -277,7 +327,12 @@ export class MockPatientRepository implements PatientRepository {
     if (index === -1) {
       throw new Error(`Paciente con ID ${id} no encontrado.`);
     }
-    this.pacientes[index] = { ...this.pacientes[index], estado: 'ARCHIVADO' };
+    this.pacientes[index] = {
+      ...this.pacientes[index],
+      estado: 'ARCHIVADO',
+      causaArchivo: causa,
+      motivoArchivo: motivo
+    };
     this.guardarEnStorage();
     return this.pacientes[index];
   }
@@ -285,7 +340,8 @@ export class MockPatientRepository implements PatientRepository {
   async reactivar(
     institucionId: InstitucionId,
     id: string,
-    _motivo: string
+    _motivo: string,
+    _correccionFallecimiento?: boolean
   ): Promise<Paciente> {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.pacientes.findIndex(
@@ -294,7 +350,12 @@ export class MockPatientRepository implements PatientRepository {
     if (index === -1) {
       throw new Error(`Paciente con ID ${id} no encontrado.`);
     }
-    this.pacientes[index] = { ...this.pacientes[index], estado: 'ACTIVO' };
+    this.pacientes[index] = {
+      ...this.pacientes[index],
+      estado: 'ACTIVO',
+      causaArchivo: undefined,
+      motivoArchivo: undefined
+    };
     this.guardarEnStorage();
     return this.pacientes[index];
   }

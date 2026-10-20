@@ -171,6 +171,96 @@ export interface Paciente {
   responsables?: ResponsablePediatrico[];
   fechaRegistro: string; // ISO
   historialConsultasCount: number;
+  causaArchivo?: CausaArchivo;
+  motivoArchivo?: string;
+}
+
+export type CausaArchivo = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
+
+export interface AlergiaRegistro {
+  sustancia: string;
+  severidad: 'LEVE' | 'MODERADA' | 'SEVERA';
+  reaccion: string;
+}
+
+export interface AntecedentesClinicos {
+  patologicos: string[];
+  quirurgicos: string[];
+  familiares: string[];
+  alergias: AlergiaRegistro[];
+  medicamentosActuales: string[];
+}
+
+export interface ConsultaPaciente {
+  id: string;
+  fechaHora: string;
+  motivo: string;
+  sintomas: string;
+  profesionalNombre: string;
+  profesionalRol: string;
+  diagnosticoPrincipal: string;
+  estado: 'FINALIZADA' | 'ABIERTA';
+}
+
+export interface DiagnosticoHistorial {
+  id: string;
+  codigoCIE: string;
+  nombre: string;
+  esPrincipal: boolean;
+  fechaRegistro: string;
+  registradoPor: string;
+}
+
+export interface RecetaMedicamentoItem {
+  nombre: string;
+  presentacion: string;
+  dosis: string;
+  frecuencia: string;
+  duracion: string;
+  via: string;
+  indicaciones: string;
+}
+
+export interface RecetaHistorial {
+  id: string;
+  codigoReceta: string;
+  fechaEmision: string;
+  emitidaPor: string;
+  rolEmisor: string;
+  estado: 'EMITIDA' | 'DISPENSADA';
+  medicamentos: RecetaMedicamentoItem[];
+}
+
+export type TipoEventoHistorial =
+  | 'CONSULTA'
+  | 'RECETA'
+  | 'DIAGNOSTICO'
+  | 'ARCHIVO'
+  | 'REACTIVACION'
+  | 'HOSPITALIZACION'
+  | 'EXAMEN'
+  | 'ORDEN_LAB'
+  | 'VACUNA'
+  | 'CRECIMIENTO';
+
+export interface EventoHistorial {
+  id: string;
+  fechaHora: string;
+  tipoEvento: TipoEventoHistorial;
+  titulo: string;
+  descripcion: string;
+  profesional: string;
+  rolProfesional: string;
+  recursoCodigo?: string;
+}
+
+export interface ExpedienteCompleto {
+  paciente: Paciente;
+  antecedentes: AntecedentesClinicos;
+  consultas: ConsultaPaciente[];
+  diagnosticos: DiagnosticoHistorial[];
+  recetas: RecetaHistorial[];
+  eventos: EventoHistorial[];
 }
 
 export interface BuscarPacientesQuery {
