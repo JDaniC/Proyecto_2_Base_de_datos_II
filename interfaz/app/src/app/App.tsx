@@ -2,8 +2,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ServiceProvider } from './ServiceContext';
 import { AuthSessionProvider } from './AuthSessionContext';
+import { AuthGuard } from './AuthGuard';
+import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { LoginPage } from '../features/auth/LoginPage';
-import { SessionActiveView } from '../features/auth/SessionActiveView';
+import { AccessRestrictedPage } from '../features/auth/AccessRestrictedPage';
+import { DashboardPlaceholder } from '../features/dashboard/DashboardPlaceholder';
 
 export const App: React.FC = () => {
   return (
@@ -11,10 +14,43 @@ export const App: React.FC = () => {
       <AuthSessionProvider>
         <BrowserRouter>
           <Routes>
+            {/* Ruta pública de acceso */}
             <Route path="/acceso" element={<LoginPage />} />
-            <Route path="/sesion-activa" element={<SessionActiveView />} />
-            <Route path="/" element={<Navigate to="/acceso" replace />} />
-            <Route path="*" element={<Navigate to="/acceso" replace />} />
+
+            {/* Rutas protegidas bajo el Shell autenticado (U02) */}
+            <Route
+              element={
+                <AuthGuard>
+                  <AuthenticatedLayout />
+                </AuthGuard>
+              }
+            >
+              <Route path="/panel" element={<DashboardPlaceholder />} />
+              <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
+              <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
+              
+              {/* Rutas con verificación de permisos específicos para probar V02 */}
+              <Route
+                path="/administracion/auditoria"
+                element={
+                  <AuthGuard requierePermiso="auditoria.leer">
+                    <div style={{ padding: '24px' }}>Auditoría del sistema</div>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/administracion/usuarios"
+                element={
+                  <AuthGuard requierePermiso="usuarios.administrar">
+                    <div style={{ padding: '24px' }}>Gestión de usuarios</div>
+                  </AuthGuard>
+                }
+              />
+            </Route>
+
+            {/* Redirecciones por defecto */}
+            <Route path="/" element={<Navigate to="/panel" replace />} />
+            <Route path="*" element={<Navigate to="/panel" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthSessionProvider>
