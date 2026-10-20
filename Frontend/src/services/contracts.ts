@@ -19,7 +19,10 @@ import {
   FiltrosAgendaQuery,
   CrearCitaDTO,
   RegistroConsultaCompletaDTO,
-  DetalleConsultaCompleta
+  DetalleConsultaCompleta,
+  UsuarioInstitucional,
+  CrearUsuarioDTO,
+  EstadoCuenta
 } from './types';
 
 export interface IniciarSesionParams {
@@ -94,4 +97,10 @@ export interface ConsultationRepository {
     motivoCorreccion: string,
     autor: string
   ): Promise<DetalleConsultaCompleta>;
+}
+
+export interface UserRepository {
+  listarUsuarios(institucionId: InstitucionId): Promise<UsuarioInstitucional[]>;
+  crearUsuario(institucionId: InstitucionId, dto: CrearUsuarioDTO): Promise<UsuarioInstitucional>;
+  cambiarEstado(institucionId: InstitucionId, usuarioId: string, nuevoEstado: EstadoCuenta): Promise<UsuarioInstitucional>;
 }

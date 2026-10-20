@@ -66,6 +66,28 @@ export interface SesionUsuario {
   tokenSintetico: string;
 }
 
+export interface UsuarioInstitucional {
+  id: string;
+  institucionId: InstitucionId;
+  nombreCompleto: string;
+  email: string;
+  rolId: RolId;
+  rolEtiqueta: string;
+  estado: EstadoCuenta;
+  authUid: string;
+  profesionalVinculado?: string;
+  fechaCreacion: string;
+  ultimoAcceso?: string;
+}
+
+export interface CrearUsuarioDTO {
+  nombreCompleto: string;
+  email: string;
+  rolId: RolId;
+  estado: EstadoCuenta;
+  profesionalVinculado?: string;
+}
+
 export type SimulacionEscenario =
   | 'NORMAL'
   | '401_NO_AUTENTICADO'

@@ -13,6 +13,7 @@ import { PatientRecordPage } from '../features/patients/PatientRecordPage';
 import { AppointmentsCalendarPage } from '../features/appointments/AppointmentsCalendarPage';
 import { NewConsultationWizardPage } from '../features/consultations/NewConsultationWizardPage';
 import { ConsultationDetailPage } from '../features/consultations/ConsultationDetailPage';
+import { UsersManagementPage } from '../features/admin/UsersManagementPage';
 
 export const App: React.FC = () => {
   return (
@@ -55,7 +56,7 @@ export const App: React.FC = () => {
                 path="/administracion/usuarios"
                 element={
                   <AuthGuard requierePermiso="usuarios.administrar">
-                    <div style={{ padding: '24px' }}>Gestión de usuarios</div>
+                    <UsersManagementPage />
                   </AuthGuard>
                 }
               />

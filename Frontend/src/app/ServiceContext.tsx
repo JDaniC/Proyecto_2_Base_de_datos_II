@@ -4,13 +4,15 @@ import {
   DashboardRepository,
   PatientRepository,
   AppointmentRepository,
-  ConsultationRepository
+  ConsultationRepository,
+  UserRepository
 } from '../services/contracts';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
 import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
 import { MockPatientRepository } from '../mocks/mockPatientRepository';
 import { MockAppointmentRepository } from '../mocks/mockAppointmentRepository';
 import { MockConsultationRepository } from '../mocks/mockConsultationRepository';
+import { MockUserRepository } from '../mocks/mockUserRepository';
 
 interface ServiceContainer {
   authRepository: AuthRepository;
@@ -18,6 +20,7 @@ interface ServiceContainer {
   patientRepository: PatientRepository;
   appointmentRepository: AppointmentRepository;
   consultationRepository: ConsultationRepository;
+  userRepository: UserRepository;
 }
 
 const ServiceContext = createContext<ServiceContainer | null>(null);
@@ -29,6 +32,7 @@ export interface ServiceProviderProps {
   customPatientRepository?: PatientRepository;
   customAppointmentRepository?: AppointmentRepository;
   customConsultationRepository?: ConsultationRepository;
+  customUserRepository?: UserRepository;
 }
 
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
@@ -38,6 +42,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   customPatientRepository,
   customAppointmentRepository,
   customConsultationRepository,
+  customUserRepository,
 }) => {
   const services = useMemo<ServiceContainer>(() => {
     return {
@@ -46,6 +51,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       patientRepository: customPatientRepository || new MockPatientRepository(),
       appointmentRepository: customAppointmentRepository || new MockAppointmentRepository(),
       consultationRepository: customConsultationRepository || new MockConsultationRepository(),
+      userRepository: customUserRepository || new MockUserRepository(),
     };
   }, [
     customAuthRepository,
@@ -53,6 +59,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
     customPatientRepository,
     customAppointmentRepository,
     customConsultationRepository,
+    customUserRepository,
   ]);
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;
