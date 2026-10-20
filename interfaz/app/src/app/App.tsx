@@ -6,7 +6,7 @@ import { AuthGuard } from './AuthGuard';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { LoginPage } from '../features/auth/LoginPage';
 import { AccessRestrictedPage } from '../features/auth/AccessRestrictedPage';
-import { DashboardPlaceholder } from '../features/dashboard/DashboardPlaceholder';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 
 export const App: React.FC = () => {
   return (
@@ -25,7 +25,7 @@ export const App: React.FC = () => {
                 </AuthGuard>
               }
             >
-              <Route path="/panel" element={<DashboardPlaceholder />} />
+              <Route path="/panel" element={<DashboardPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               

@@ -1,4 +1,4 @@
-import { CuentaDemo, SesionUsuario, SimulacionEscenario } from './types';
+import { CuentaDemo, SesionUsuario, SimulacionEscenario, DashboardData, InstitucionId, RolId } from './types';
 
 export interface IniciarSesionParams {
   email: string;
@@ -13,4 +13,8 @@ export interface AuthRepository {
   iniciarSesion(params: IniciarSesionParams): Promise<SesionUsuario>;
   cerrarSesion(): Promise<void>;
   obtenerSesionActual(): Promise<SesionUsuario | null>;
+}
+
+export interface DashboardRepository {
+  obtenerDashboard(institucionId: InstitucionId, rolId: RolId): Promise<DashboardData>;
 }

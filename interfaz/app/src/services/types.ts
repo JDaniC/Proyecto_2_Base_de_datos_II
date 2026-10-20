@@ -79,3 +79,47 @@ export interface AppError {
   correlacion: string;
   campos?: Record<string, string>;
 }
+
+// --- Tipos de la Pantalla 01 Aprobada: Dashboard Principal (V03) ---
+
+export interface MetricaOperativa {
+  id: string;
+  etiqueta: string;
+  valor: string | number;
+  tendencia?: string;
+  colorVariante?: 'primary' | 'info' | 'success' | 'warning';
+}
+
+export type EstadoCita = 'PROGRAMADA' | 'EN_CURSO' | 'ATENDIDA' | 'CANCELADA';
+
+export interface CitaDashboard {
+  id: string;
+  hora: string;
+  fecha: string;
+  esHoy: boolean;
+  pacienteNombre: string;
+  pacienteCodigo: string;
+  motivo: string;
+  profesionalNombre: string;
+  estado: EstadoCita;
+  consultorioOArea?: string;
+}
+
+export interface ActividadReciente {
+  id: string;
+  tiempoRelativo: string;
+  autor: string;
+  rolAutor: string;
+  descripcion: string;
+  recursoCodigo?: string;
+  tipoEvento: 'CONSULTA' | 'RECETA' | 'DIAGNOSTICO' | 'CITA' | 'MUESTRA' | 'INGRESO' | 'AUDITORIA';
+}
+
+export interface DashboardData {
+  institucionId: InstitucionId;
+  institucionNombre: string;
+  metricas: MetricaOperativa[];
+  citasHoy: CitaDashboard[];
+  citasProximas: CitaDashboard[];
+  actividades: ActividadReciente[];
+}

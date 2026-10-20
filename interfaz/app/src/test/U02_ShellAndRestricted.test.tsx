@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { App } from '../app/App';
+import { ServiceProvider } from '../app/ServiceContext';
+import { AuthSessionProvider } from '../app/AuthSessionContext';
 import { SkeletonLoader } from '../design-system/components/SkeletonLoader';
 import { EmptyState } from '../design-system/components/EmptyState';
 import { ErrorState } from '../design-system/components/ErrorState';
+import { AccessRestrictedPage } from '../features/auth/AccessRestrictedPage';
 
 describe('U02 — Shell de Navegación, Header, V02 Acceso Restringido y V19 Estados Transversales', () => {
   beforeEach(() => {
@@ -96,20 +100,22 @@ describe('U02 — Shell de Navegación, Header, V02 Acceso Restringido y V19 Est
     expect(screen.getByRole('button', { name: /Expandir barra lateral/i })).toBeInTheDocument();
   });
 
-  it('V02: Acceso restringido muestra motivo claro y acciones de recuperación sin fugas técnicas', async () => {
-    const user = userEvent.setup();
-    render(<App />);
+  it('V02: Acceso restringido muestra motivo claro y acciones de recuperación sin fugas técnicas', () => {
+    render(
+      <ServiceProvider>
+        <AuthSessionProvider>
+          <MemoryRouter>
+            <AccessRestrictedPage
+              codigo="403 SIN_PERMISO"
+              motivo="Demostración de estado de acceso restringido para funciones no asignadas al rol."
+              permisoRequerido="auditoria.leer"
+            />
+          </MemoryRouter>
+        </AuthSessionProvider>
+      </ServiceProvider>
+    );
 
-    const botonLogin = await screen.findByRole('button', { name: /Iniciar sesión/i });
-    await user.click(botonLogin);
-
-    await screen.findAllByText('Hospital General San Juan');
-
-    // Navegar a vista de demostración V02
-    const botonV02 = screen.getByRole('button', { name: /Ver pantalla V02/i });
-    await user.click(botonV02);
-
-    expect(await screen.findByRole('heading', { name: /Módulo con Acceso Restringido/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Módulo con Acceso Restringido/i })).toBeInTheDocument();
     expect(screen.getByText('403 SIN_PERMISO')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Volver al panel principal/i })).toBeInTheDocument();
 

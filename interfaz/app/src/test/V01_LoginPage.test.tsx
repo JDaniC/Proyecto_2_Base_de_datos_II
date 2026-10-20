@@ -63,7 +63,7 @@ describe('V01 — Inicio de Sesión (Diseño Clínico Institucional)', () => {
     await user.click(botonLogin);
 
     // Debe acceder al portal institucional
-    expect(await screen.findByRole('heading', { name: /Bienvenido, Dra. Elena Morales/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Resumen general/i })).toBeInTheDocument();
     expect(screen.getAllByText(/Hospital General San Juan/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Médico Especialista/i).length).toBeGreaterThan(0);
 
@@ -121,9 +121,9 @@ describe('V01 — Inicio de Sesión (Diseño Clínico Institucional)', () => {
     const botonLogin = screen.getByRole('button', { name: /Iniciar sesión/i });
     await user.click(botonLogin);
 
-    await screen.findByRole('heading', { name: /Bienvenido, Dra. Elena Morales/i });
+    await screen.findByRole('heading', { name: /Resumen general/i });
 
-    const botonAbrirModal = screen.getByRole('button', { name: /Cerrar sesión/i });
+    const botonAbrirModal = screen.getByRole('button', { name: 'Cerrar sesión' });
     await user.click(botonAbrirModal);
 
     // Modal de confirmación

@@ -1,22 +1,32 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { AuthRepository } from '../services/contracts';
+import { AuthRepository, DashboardRepository } from '../services/contracts';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
+import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
 
 interface ServiceContainer {
   authRepository: AuthRepository;
+  dashboardRepository: DashboardRepository;
 }
 
 const ServiceContext = createContext<ServiceContainer | null>(null);
 
-export const ServiceProvider: React.FC<{ children: React.ReactNode; customAuthRepository?: AuthRepository }> = ({
+export interface ServiceProviderProps {
+  children: React.ReactNode;
+  customAuthRepository?: AuthRepository;
+  customDashboardRepository?: DashboardRepository;
+}
+
+export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   children,
   customAuthRepository,
+  customDashboardRepository,
 }) => {
   const services = useMemo<ServiceContainer>(() => {
     return {
       authRepository: customAuthRepository || new MockAuthRepository(),
+      dashboardRepository: customDashboardRepository || new MockDashboardRepository(),
     };
-  }, [customAuthRepository]);
+  }, [customAuthRepository, customDashboardRepository]);
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;
 };
