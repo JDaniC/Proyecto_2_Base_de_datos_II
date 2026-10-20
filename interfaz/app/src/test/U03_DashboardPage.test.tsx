@@ -86,8 +86,8 @@ describe('U03 — Pantalla 01 Aprobada: Panel Inicial / Dashboard (V03)', () => 
 
     await screen.findByRole('heading', { name: /Resumen general/i });
 
-    expect(screen.getByText(/Actividad reciente del centro/i)).toBeInTheDocument();
-    expect(screen.getByText(/Dr. Fernando Paz/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Actividad reciente del centro/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Dr. Fernando Paz/i)).toBeInTheDocument();
     expect(screen.getByText(/Diagnóstico principal registrado y codificado para paciente/i)).toBeInTheDocument();
   });
 });

@@ -7,6 +7,8 @@ import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { LoginPage } from '../features/auth/LoginPage';
 import { AccessRestrictedPage } from '../features/auth/AccessRestrictedPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { PatientsListPage } from '../features/patients/PatientsListPage';
+import { PatientFormPage } from '../features/patients/PatientFormPage';
 
 export const App: React.FC = () => {
   return (
@@ -26,6 +28,9 @@ export const App: React.FC = () => {
               }
             >
               <Route path="/panel" element={<DashboardPage />} />
+              <Route path="/pacientes" element={<PatientsListPage />} />
+              <Route path="/pacientes/nuevo" element={<PatientFormPage />} />
+              <Route path="/pacientes/:pacienteId/editar" element={<PatientFormPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               

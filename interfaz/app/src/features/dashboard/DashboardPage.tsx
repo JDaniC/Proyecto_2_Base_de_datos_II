@@ -132,7 +132,7 @@ export const DashboardPage: React.FC = () => {
           <Button
             variant="primary"
             size="md"
-            onClick={() => navigate('/pacientes')}
+            onClick={() => navigate('/pacientes/nuevo')}
             leftIcon={<UserPlus size={16} />}
           >
             Registrar paciente
