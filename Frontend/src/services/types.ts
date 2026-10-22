@@ -661,6 +661,25 @@ export interface AsignacionCamaItem {
   motivoCambio?: string;
 }
 
+export interface NotaEvolucionItem {
+  id: string;
+  fechaHora: string;
+  medicoNombre: string;
+  medicoColegiado: string;
+  notaClinica: string;
+  planTerapeutico?: string;
+}
+
+export interface ProcedimientoHospitalarioItem {
+  id: string;
+  nombre: string;
+  codigo?: string;
+  fechaHora: string;
+  profesionalNombre: string;
+  resultado: string;
+  observaciones?: string;
+}
+
 export interface HospitalizacionItem {
   id: string;
   codigoIngreso: string;
@@ -689,11 +708,17 @@ export interface HospitalizacionItem {
   };
   asignacionesCama: AsignacionCamaItem[];
   consultasEnlazadasIds: string[];
+  notasEvolucion?: NotaEvolucionItem[];
+  procedimientos?: ProcedimientoHospitalarioItem[];
 }
 
 export interface CrearIngresoHospitalarioDTO {
   pacienteId: string;
+  pacienteNombre?: string;
+  pacienteExpediente?: string;
   medicoTratanteId: string;
+  medicoTratanteNombre?: string;
+  medicoTratanteColegiado?: string;
   fechaIngreso: string;
   camaId: string;
   diagnosticoIngresoCIE: string;

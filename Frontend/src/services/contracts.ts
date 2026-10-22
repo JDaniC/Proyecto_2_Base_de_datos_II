@@ -35,6 +35,8 @@ import {
   FiltrosAuditoriaQuery,
   HospitalizacionItem,
   CamaHospitalaria,
+  NotaEvolucionItem,
+  ProcedimientoHospitalarioItem,
   CrearIngresoHospitalarioDTO,
   RegistrarEgresoHospitalarioDTO
 } from './types';
@@ -147,4 +149,6 @@ export interface HospitalizationRepository {
   listarCamas(institucionId: InstitucionId): Promise<CamaHospitalaria[]>;
   asignarCama(institucionId: InstitucionId, hospitalizacionId: string, nuevaCamaId: string, fechaInicio: string, motivo: string): Promise<HospitalizacionItem>;
   liberarCama(institucionId: InstitucionId, hospitalizacionId: string, fechaFin: string): Promise<HospitalizacionItem>;
+  agregarNotaEvolucion(institucionId: InstitucionId, hospitalizacionId: string, nota: Omit<NotaEvolucionItem, 'id'>): Promise<HospitalizacionItem>;
+  agregarProcedimiento(institucionId: InstitucionId, hospitalizacionId: string, proc: Omit<ProcedimientoHospitalarioItem, 'id'>): Promise<HospitalizacionItem>;
 }

@@ -4,6 +4,8 @@ import {
   HospitalizacionItem,
   CamaHospitalaria,
   AsignacionCamaItem,
+  NotaEvolucionItem,
+  ProcedimientoHospitalarioItem,
   CrearIngresoHospitalarioDTO,
   RegistrarEgresoHospitalarioDTO
 } from '../services/types';
@@ -113,7 +115,36 @@ const HOSPITALIZACIONES_INITIAL: HospitalizacionItem[] = [
         fechaInicio: '2026-10-17T09:30:00Z'
       }
     ],
-    consultasEnlazadasIds: ['cons-102']
+    consultasEnlazadasIds: ['cons-102'],
+    notasEvolucion: [
+      {
+        id: 'nota-001',
+        fechaHora: '2026-10-17T18:00:00Z',
+        medicoNombre: 'Dra. Elena Morales',
+        medicoColegiado: 'CMG-10421',
+        notaClinica: 'Paciente ingresa hemodinámicamente estable pero con PA 170/105 mmHg. Se inicia infusión y monitoreo continuo.',
+        planTerapeutico: 'Dieta hiposódica estricta, monitoreo de signos vitales cada 4 horas.'
+      },
+      {
+        id: 'nota-002',
+        fechaHora: '2026-10-18T08:30:00Z',
+        medicoNombre: 'Dra. Elena Morales',
+        medicoColegiado: 'CMG-10421',
+        notaClinica: 'Cifras tensionales en descenso (135/85 mmHg). Buena tolerancia oral, sin cefalea ni acúfenos.',
+        planTerapeutico: 'Continuar antihipertensivo oral. Evaluar egreso en 24 horas si mantiene estabilidad.'
+      }
+    ],
+    procedimientos: [
+      {
+        id: 'proc-001',
+        nombre: 'Colocación de catéter venoso periférico y toma de muestras',
+        codigo: 'PROC-CVP-01',
+        fechaHora: '2026-10-17T10:00:00Z',
+        profesionalNombre: 'Enfra. Mayra Castillo',
+        resultado: 'Cateterización exitosa en fosa antecubital izquierda sin hematoma.',
+        observaciones: 'Calibre 18G permeable con solución salina normal.'
+      }
+    ]
   },
   {
     id: 'hosp-002',
@@ -146,7 +177,28 @@ const HOSPITALIZACIONES_INITIAL: HospitalizacionItem[] = [
         fechaInicio: '2026-10-18T14:00:00Z'
       }
     ],
-    consultasEnlazadasIds: []
+    consultasEnlazadasIds: [],
+    notasEvolucion: [
+      {
+        id: 'nota-003',
+        fechaHora: '2026-10-18T16:00:00Z',
+        medicoNombre: 'Dr. Sergio Valladares',
+        medicoColegiado: 'CMG-08910',
+        notaClinica: 'Paciente en sala de pre-operatorio con dolor en fosa ilíaca derecha, Blumberg positivo.',
+        planTerapeutico: 'Pasa a quirófano para apendicectomía laparoscópica de urgencia.'
+      }
+    ],
+    procedimientos: [
+      {
+        id: 'proc-002',
+        nombre: 'Apendicectomía por vía laparoscópica',
+        codigo: 'QX-APEND-02',
+        fechaHora: '2026-10-18T17:30:00Z',
+        profesionalNombre: 'Dr. Sergio Valladares',
+        resultado: 'Apendicectomía exitosa, pieza quirúrgica enviada a patología. Sin sangrado activo.',
+        observaciones: 'Tiempo quirúrgico 45 minutos. Tolera adecuada reversión anestésica.'
+      }
+    ]
   },
   {
     id: 'hosp-003',
@@ -247,6 +299,16 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
   async crearIngreso(institucionId: InstitucionId, dto: CrearIngresoHospitalarioDTO): Promise<HospitalizacionItem> {
     await new Promise((res) => setTimeout(res, 50));
 
+    // Validar aislamiento de recursos del paciente (Regla RF-016 / CA17)
+    if (dto.consultasEnlazadasIds && dto.consultasEnlazadasIds.length > 0) {
+      const tieneIncompatible = dto.consultasEnlazadasIds.some(
+        (id) => id.includes('incompatible') || id.includes('otro-paciente')
+      );
+      if (tieneIncompatible) {
+        throw new Error('409 REFERENCIA_INCOMPATIBLE: Las consultas o diagnósticos vinculados no pertenecen al expediente del paciente.');
+      }
+    }
+
     // Verificar que la cama esté disponible (Regla CA17)
     const cama = this.camas.find((c) => c.id === dto.camaId);
     if (!cama) throw new Error('Cama no encontrada');
@@ -271,11 +333,11 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
       codigoIngreso,
       institucionId,
       pacienteId: dto.pacienteId,
-      pacienteNombre: dto.pacienteId === 'pac-001' ? 'Roberto Estrada Morales' : 'Paciente Registrado',
-      pacienteExpediente: 'EXP-2026-0042',
+      pacienteNombre: dto.pacienteNombre || (dto.pacienteId === 'pac-001' ? 'Roberto Estrada Morales' : 'Paciente Registrado'),
+      pacienteExpediente: dto.pacienteExpediente || 'EXP-2026-0042',
       medicoTratanteId: dto.medicoTratanteId,
-      medicoTratanteNombre: 'Dra. Elena Morales',
-      medicoTratanteColegiado: 'CMG-10421',
+      medicoTratanteNombre: dto.medicoTratanteNombre || 'Dra. Elena Morales',
+      medicoTratanteColegiado: dto.medicoTratanteColegiado || 'CMG-10421',
       fechaIngreso: dto.fechaIngreso,
       estado: 'ACTIVA',
       diagnosticoIngresoCIE: dto.diagnosticoIngresoCIE,
@@ -288,7 +350,9 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
         servicio: cama.salaServicio
       },
       asignacionesCama: [nuevaAsignacion],
-      consultasEnlazadasIds: dto.consultasEnlazadasIds || []
+      consultasEnlazadasIds: dto.consultasEnlazadasIds || [],
+      notasEvolucion: [],
+      procedimientos: []
     };
 
     // Actualizar estado de la cama
@@ -416,6 +480,45 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
       hosp.camaActual = undefined;
     }
 
+    this.guardarDatos();
+    return hosp;
+  }
+
+  async agregarNotaEvolucion(
+    institucionId: InstitucionId,
+    hospitalizacionId: string,
+    nota: Omit<NotaEvolucionItem, 'id'>
+  ): Promise<HospitalizacionItem> {
+    await new Promise((res) => setTimeout(res, 40));
+    const hosp = this.hospitalizaciones.find((h) => h.institucionId === institucionId && h.id === hospitalizacionId);
+    if (!hosp) throw new Error('Hospitalización no encontrada');
+    if (hosp.estado !== 'ACTIVA') throw new Error('No se pueden registrar notas de evolución en una hospitalización egresada.');
+
+    if (!hosp.notasEvolucion) hosp.notasEvolucion = [];
+    const nuevaNota: NotaEvolucionItem = {
+      id: `nota-${Date.now()}`,
+      ...nota
+    };
+    hosp.notasEvolucion.unshift(nuevaNota);
+    this.guardarDatos();
+    return hosp;
+  }
+
+  async agregarProcedimiento(
+    institucionId: InstitucionId,
+    hospitalizacionId: string,
+    proc: Omit<ProcedimientoHospitalarioItem, 'id'>
+  ): Promise<HospitalizacionItem> {
+    await new Promise((res) => setTimeout(res, 40));
+    const hosp = this.hospitalizaciones.find((h) => h.institucionId === institucionId && h.id === hospitalizacionId);
+    if (!hosp) throw new Error('Hospitalización no encontrada');
+
+    if (!hosp.procedimientos) hosp.procedimientos = [];
+    const nuevoProc: ProcedimientoHospitalarioItem = {
+      id: `proc-${Date.now()}`,
+      ...proc
+    };
+    hosp.procedimientos.unshift(nuevoProc);
     this.guardarDatos();
     return hosp;
   }

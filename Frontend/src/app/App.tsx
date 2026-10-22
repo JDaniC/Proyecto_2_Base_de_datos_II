@@ -17,6 +17,8 @@ import { UsersManagementPage } from '../features/admin/UsersManagementPage';
 import { CatalogosManagementPage } from '../features/admin/CatalogosManagementPage';
 import { AuditSearchPage } from '../features/admin/AuditSearchPage';
 import { HospitalizationsListPage } from '../features/hospital/HospitalizationsListPage';
+import { HospitalizationAdmissionPage } from '../features/hospital/HospitalizationAdmissionPage';
+import { HospitalizationDetailPage } from '../features/hospital/HospitalizationDetailPage';
 
 export const App: React.FC = () => {
   return (
@@ -44,6 +46,8 @@ export const App: React.FC = () => {
               <Route path="/pacientes/:pacienteId/consultas/:consultaId" element={<ConsultationDetailPage />} />
               <Route path="/agenda" element={<AppointmentsCalendarPage />} />
               <Route path="/hospital/hospitalizaciones" element={<HospitalizationsListPage />} />
+              <Route path="/hospital/hospitalizaciones/nueva" element={<HospitalizationAdmissionPage />} />
+              <Route path="/hospital/hospitalizaciones/:ingresoId" element={<HospitalizationDetailPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               
