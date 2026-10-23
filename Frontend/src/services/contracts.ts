@@ -62,7 +62,12 @@ import {
   LoteReactivo,
   MovimientoInventario,
   RegistrarMovimientoDTO,
-  RegistrarNuevoLoteDTO
+  RegistrarNuevoLoteDTO,
+  FacturaLaboratorio,
+  PagoLaboratorio,
+  RegistrarPagoDTO,
+  RevertirPagoDTO,
+  AnularFacturaDTO
 } from './types';
 
 export interface IniciarSesionParams {
@@ -286,4 +291,22 @@ export interface LaboratoryRepository {
     dto: RegistrarNuevoLoteDTO,
     actor: { id: string; nombre: string }
   ): Promise<LoteReactivo>;
+  obtenerFacturas(institucionId: InstitucionId): Promise<FacturaLaboratorio[]>;
+  obtenerFacturaPorId(institucionId: InstitucionId, facturaId: string): Promise<FacturaLaboratorio | null>;
+  obtenerFacturaPorOrden(institucionId: InstitucionId, ordenId: string): Promise<FacturaLaboratorio | null>;
+  registrarPagoFactura(
+    institucionId: InstitucionId,
+    dto: RegistrarPagoDTO,
+    cajero: { id: string; nombre: string }
+  ): Promise<{ factura: FacturaLaboratorio; pago: PagoLaboratorio }>;
+  revertirPagoFactura(
+    institucionId: InstitucionId,
+    dto: RevertirPagoDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio>;
+  anularFactura(
+    institucionId: InstitucionId,
+    dto: AnularFacturaDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio>;
 }

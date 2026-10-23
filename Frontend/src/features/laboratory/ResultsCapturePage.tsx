@@ -134,8 +134,7 @@ export const ResultsCapturePage: React.FC = () => {
       }
       setObservaciones('');
     }
-    setMensajeExito(null);
-  }, [itemSeleccionadoId, orden, resultadosExistentes]);
+  }, [itemSeleccionadoId]);
 
   const itemActivo: ItemOrdenLab | undefined = useMemo(() => {
     return orden?.items.find((i) => i.id === itemSeleccionadoId);
@@ -232,6 +231,7 @@ export const ResultsCapturePage: React.FC = () => {
         `Resultados de «${itemActivo.nombrePrueba}» guardados exitosamente en estado BORRADOR (Serie: ${resultadoGuardado.serieResultadoId}, Versión ${resultadoGuardado.version}).`
       );
     } catch (err: any) {
+      console.log('ERROR IN handleGuardarBorrador:', err);
       setErrorGlobal(err?.message || 'Error guardando resultados analíticos.');
     } finally {
       setGuardando(false);

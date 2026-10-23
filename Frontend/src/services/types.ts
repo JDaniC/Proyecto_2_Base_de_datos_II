@@ -1216,5 +1216,73 @@ export interface RegistrarNuevoLoteDTO {
   motivoRecepcion?: string;
 }
 
+// -------------------------------------------------------------
+// FACTURACIÓN Y PAGOS EN UNIDADES ENTERAS GTQ (L13, CA14)
+// -------------------------------------------------------------
+
+export type EstadoFacturaLab = 'EMITIDA' | 'PAGADA_TOTAL' | 'PAGADA_PARCIAL' | 'ANULADA';
+export type MetodoPagoLab = 'EFECTIVO' | 'TARJETA_CREDITO' | 'TRANSFERENCIA_BANCARIA' | 'SEGURO_MEDICO';
+export type EstadoPagoLab = 'CONFIRMADO' | 'REVERTIDO';
+
+export interface ItemFacturaLab {
+  id: string;
+  pruebaId: string;
+  codigoPrueba: string;
+  nombrePrueba: string;
+  arancelCentavos: number;
+}
+
+export interface PagoLaboratorio {
+  id: string;
+  facturaId: string;
+  codigoRecibo: string;
+  montoCentavos: number;
+  metodoPago: MetodoPagoLab;
+  idempotencyKey: string;
+  fechaHora: string;
+  cajeroId: string;
+  cajeroNombre: string;
+  estado: EstadoPagoLab;
+  motivoReversion?: string;
+  fechaReversion?: string;
+}
+
+export interface FacturaLaboratorio {
+  id: string;
+  codigoFactura: string;
+  ordenId: string;
+  codigoOrden: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteNit: string;
+  fechaEmision: string;
+  estado: EstadoFacturaLab;
+  totalCentavos: number;
+  totalPagadoCentavos: number;
+  saldoPendienteCentavos: number;
+  items: ItemFacturaLab[];
+  pagos: PagoLaboratorio[];
+  motivoAnulacion?: string;
+}
+
+export interface RegistrarPagoDTO {
+  facturaId: string;
+  montoCentavos: number;
+  metodoPago: MetodoPagoLab;
+  idempotencyKey: string;
+}
+
+export interface RevertirPagoDTO {
+  facturaId: string;
+  pagoId: string;
+  motivo: string;
+}
+
+export interface AnularFacturaDTO {
+  facturaId: string;
+  motivo: string;
+}
+
+
 
 

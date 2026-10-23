@@ -21,7 +21,12 @@ import {
   LoteReactivo,
   MovimientoInventario,
   RegistrarMovimientoDTO,
-  RegistrarNuevoLoteDTO
+  RegistrarNuevoLoteDTO,
+  FacturaLaboratorio,
+  PagoLaboratorio,
+  RegistrarPagoDTO,
+  RevertirPagoDTO,
+  AnularFacturaDTO
 } from '../services/types';
 
 const STORAGE_KEY_ORDENES = 'clinica_lab_ordenes_v1';
@@ -32,6 +37,7 @@ const STORAGE_KEY_EQUIPOS = 'clinica_lab_equipos_v1';
 const STORAGE_KEY_QC = 'clinica_lab_qc_v1';
 const STORAGE_KEY_LOTES = 'clinica_lab_lotes_v1';
 const STORAGE_KEY_MOVIMIENTOS = 'clinica_lab_movs_v1';
+const STORAGE_KEY_FACTURAS = 'clinica_lab_facturas_v1';
 
 export function calcularAlertaParametro(
   valorStr: string,
@@ -125,6 +131,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   private controlesCalidad: RegistroControlCalidad[] = [];
   private lotesReactivos: LoteReactivo[] = [];
   private movimientosInventario: MovimientoInventario[] = [];
+  private facturas: FacturaLaboratorio[] = [];
 
   constructor() {
     this.cargarDatos();
@@ -140,6 +147,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       const rawQC = localStorage.getItem(STORAGE_KEY_QC);
       const rawL = localStorage.getItem(STORAGE_KEY_LOTES);
       const rawMov = localStorage.getItem(STORAGE_KEY_MOVIMIENTOS);
+      const rawF = localStorage.getItem(STORAGE_KEY_FACTURAS);
 
       if (rawO) this.ordenes = JSON.parse(rawO);
       if (rawM) this.muestras = JSON.parse(rawM);
@@ -149,6 +157,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       if (rawQC) this.controlesCalidad = JSON.parse(rawQC);
       if (rawL) this.lotesReactivos = JSON.parse(rawL);
       if (rawMov) this.movimientosInventario = JSON.parse(rawMov);
+      if (rawF) this.facturas = JSON.parse(rawF);
     } catch {
       // fallback
     }
@@ -926,6 +935,92 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       ];
     }
 
+    if (this.facturas.length === 0) {
+      this.facturas = [
+        {
+          id: 'fact-01',
+          codigoFactura: 'FACT-LAB-2026-0081',
+          ordenId: 'ord-lab-01',
+          codigoOrden: 'ORD-LAB-2026-0081',
+          pacienteId: 'pac-01',
+          pacienteNombre: 'Ana Lucía Morales',
+          pacienteNit: '491204-1',
+          fechaEmision: '2026-10-22T08:00:00Z',
+          estado: 'PAGADA_PARCIAL',
+          totalCentavos: 42000,
+          totalPagadoCentavos: 20000,
+          saldoPendienteCentavos: 22000,
+          items: [
+            { id: 'it-f-01', pruebaId: 'lab-gas-01', codigoPrueba: 'GAS-001', nombrePrueba: 'Gasometría Arterial Completa', arancelCentavos: 24000 },
+            { id: 'it-f-02', pruebaId: 'lab-elec-01', codigoPrueba: 'BIO-004', nombrePrueba: 'Electrólitos Séricos', arancelCentavos: 18000 }
+          ],
+          pagos: [
+            {
+              id: 'pago-01',
+              facturaId: 'fact-01',
+              codigoRecibo: 'REC-2026-0042',
+              montoCentavos: 20000,
+              metodoPago: 'TARJETA_CREDITO',
+              idempotencyKey: 'idemp-fact-01-pago-01',
+              fechaHora: '2026-10-22T08:05:00Z',
+              cajeroId: 'usr-caja-01',
+              cajeroNombre: 'Recepción Central',
+              estado: 'CONFIRMADO'
+            }
+          ]
+        },
+        {
+          id: 'fact-02',
+          codigoFactura: 'FACT-LAB-2026-0085',
+          ordenId: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteNit: 'CF',
+          fechaEmision: '2026-10-21T18:00:00Z',
+          estado: 'PAGADA_TOTAL',
+          totalCentavos: 38000,
+          totalPagadoCentavos: 38000,
+          saldoPendienteCentavos: 0,
+          items: [
+            { id: 'it-f-03', pruebaId: 'lab-trop-01', codigoPrueba: 'INM-001', nombrePrueba: 'Troponina I de Alta Sensibilidad', arancelCentavos: 38000 }
+          ],
+          pagos: [
+            {
+              id: 'pago-02',
+              facturaId: 'fact-02',
+              codigoRecibo: 'REC-2026-0039',
+              montoCentavos: 38000,
+              metodoPago: 'EFECTIVO',
+              idempotencyKey: 'idemp-fact-02-pago-01',
+              fechaHora: '2026-10-21T18:10:00Z',
+              cajeroId: 'usr-caja-01',
+              cajeroNombre: 'Recepción Central',
+              estado: 'CONFIRMADO'
+            }
+          ]
+        },
+        {
+          id: 'fact-03',
+          codigoFactura: 'FACT-LAB-2026-0082',
+          ordenId: 'ord-lab-02',
+          codigoOrden: 'ORD-LAB-2026-0082',
+          pacienteId: 'pac-02',
+          pacienteNombre: 'Carlos Humberto Gómez',
+          pacienteNit: '781299-4',
+          fechaEmision: '2026-10-22T08:30:00Z',
+          estado: 'EMITIDA',
+          totalCentavos: 13000,
+          totalPagadoCentavos: 0,
+          saldoPendienteCentavos: 13000,
+          items: [
+            { id: 'it-f-04', pruebaId: 'lab-hem-01', codigoPrueba: 'HEM-001', nombrePrueba: 'Hematología Completa', arancelCentavos: 13000 }
+          ],
+          pagos: []
+        }
+      ];
+    }
+
     // Unir todas las muestras de las órdenes
     this.muestras = this.ordenes.flatMap((o) => o.muestras);
     this.guardarDatos();
@@ -941,6 +1036,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       localStorage.setItem(STORAGE_KEY_QC, JSON.stringify(this.controlesCalidad));
       localStorage.setItem(STORAGE_KEY_LOTES, JSON.stringify(this.lotesReactivos));
       localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(this.movimientosInventario));
+      localStorage.setItem(STORAGE_KEY_FACTURAS, JSON.stringify(this.facturas));
     } catch {
       // ignore
     }
@@ -1923,5 +2019,148 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     this.movimientosInventario.unshift(movInicial);
     this.guardarDatos();
     return { ...nuevoLote };
+  }
+
+  async obtenerFacturas(_institucionId: InstitucionId): Promise<FacturaLaboratorio[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.facturas];
+  }
+
+  async obtenerFacturaPorId(_institucionId: InstitucionId, facturaId: string): Promise<FacturaLaboratorio | null> {
+    await new Promise((res) => setTimeout(res, 30));
+    const f = this.facturas.find((x) => x.id === facturaId || x.codigoFactura === facturaId);
+    return f ? { ...f } : null;
+  }
+
+  async obtenerFacturaPorOrden(_institucionId: InstitucionId, ordenId: string): Promise<FacturaLaboratorio | null> {
+    await new Promise((res) => setTimeout(res, 30));
+    const f = this.facturas.find((x) => x.ordenId === ordenId || x.codigoOrden === ordenId);
+    return f ? { ...f } : null;
+  }
+
+  async registrarPagoFactura(
+    _institucionId: InstitucionId,
+    dto: RegistrarPagoDTO,
+    cajero: { id: string; nombre: string }
+  ): Promise<{ factura: FacturaLaboratorio; pago: PagoLaboratorio }> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+
+    if (factura.estado === 'ANULADA') {
+      throw new Error('Regla CA14: No se pueden registrar pagos en una factura anulada.');
+    }
+
+    if (dto.montoCentavos <= 0) {
+      throw new Error('El monto a pagar debe ser un número entero positivo de centavos GTQ mayor a cero.');
+    }
+
+    // Regla CA14: Idempotencia - si ya existe un pago confirmado con la misma Idempotency-Key
+    const pagoExistente = factura.pagos.find(
+      (p) => p.idempotencyKey === dto.idempotencyKey && p.estado === 'CONFIRMADO'
+    );
+    if (pagoExistente) {
+      return { factura: { ...factura }, pago: { ...pagoExistente } };
+    }
+
+    // Regla CA14: Bloqueo de sobrepago
+    if (dto.montoCentavos > factura.saldoPendienteCentavos) {
+      const montoQ = (dto.montoCentavos / 100).toFixed(2);
+      const saldoQ = (factura.saldoPendienteCentavos / 100).toFixed(2);
+      throw new Error(
+        `Regla CA14: Bloqueo de sobrepago. El monto a pagar (Q ${montoQ}) supera el saldo pendiente de la factura (Q ${saldoQ}). No se admiten pagos excesivos.`
+      );
+    }
+
+    // Cálculo exacto en centavos enteros sin coma flotante (CA14)
+    factura.totalPagadoCentavos += dto.montoCentavos;
+    factura.saldoPendienteCentavos = factura.totalCentavos - factura.totalPagadoCentavos;
+
+    if (factura.saldoPendienteCentavos === 0) {
+      factura.estado = 'PAGADA_TOTAL';
+    } else {
+      factura.estado = 'PAGADA_PARCIAL';
+    }
+
+    const nuevoPago: PagoLaboratorio = {
+      id: `pago-${Date.now()}`,
+      facturaId: factura.id,
+      codigoRecibo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      montoCentavos: dto.montoCentavos,
+      metodoPago: dto.metodoPago,
+      idempotencyKey: dto.idempotencyKey,
+      fechaHora: new Date().toISOString(),
+      cajeroId: cajero.id,
+      cajeroNombre: cajero.nombre,
+      estado: 'CONFIRMADO'
+    };
+
+    factura.pagos.push(nuevoPago);
+    this.guardarDatos();
+    return { factura: { ...factura }, pago: { ...nuevoPago } };
+  }
+
+  async revertirPagoFactura(
+    _institucionId: InstitucionId,
+    dto: RevertirPagoDTO,
+    _actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+
+    const pago = factura.pagos.find((p) => p.id === dto.pagoId);
+    if (!pago) throw new Error(`Pago ${dto.pagoId} no encontrado en la factura.`);
+    if (pago.estado === 'REVERTIDO') {
+      throw new Error('El pago ya se encuentra revertido.');
+    }
+
+    if (!dto.motivo.trim()) {
+      throw new Error('Debe especificar el motivo justificado de la reversión del pago.');
+    }
+
+    pago.estado = 'REVERTIDO';
+    pago.motivoReversion = dto.motivo.trim();
+    pago.fechaReversion = new Date().toISOString();
+
+    // Reabrir saldo
+    factura.totalPagadoCentavos -= pago.montoCentavos;
+    factura.saldoPendienteCentavos = factura.totalCentavos - factura.totalPagadoCentavos;
+
+    if (factura.totalPagadoCentavos === 0) {
+      factura.estado = 'EMITIDA';
+    } else {
+      factura.estado = 'PAGADA_PARCIAL';
+    }
+
+    this.guardarDatos();
+    return { ...factura };
+  }
+
+  async anularFactura(
+    _institucionId: InstitucionId,
+    dto: AnularFacturaDTO,
+    _actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+
+    // Regla CA14: No se anula una factura con pagos confirmados sin registrar antes sus reversiones
+    const tienePagosConfirmados = factura.pagos.some((p) => p.estado === 'CONFIRMADO');
+    if (tienePagosConfirmados) {
+      throw new Error(
+        'Regla CA14: No se puede anular una factura con pagos confirmados vigentes. Debe revertir los pagos primero antes de proceder a la anulación tributaria.'
+      );
+    }
+
+    if (!dto.motivo.trim()) {
+      throw new Error('Debe especificar el motivo justificado de la anulación de la factura.');
+    }
+
+    factura.estado = 'ANULADA';
+    factura.motivoAnulacion = dto.motivo.trim();
+    this.guardarDatos();
+    return { ...factura };
   }
 }
