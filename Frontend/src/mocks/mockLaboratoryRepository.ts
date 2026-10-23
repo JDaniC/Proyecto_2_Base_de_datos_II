@@ -667,4 +667,45 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     this.guardarDatos();
     return nuevaMuestra;
   }
+
+  async rectificarDatoMuestra(
+    _institucionId: InstitucionId,
+    muestraId: string,
+    campo: 'tuboContenedor' | 'tipoMuestra',
+    nuevoValor: string,
+    motivo: string,
+    actor: string
+  ): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 40));
+
+    const idx = this.muestras.findIndex((m) => m.id === muestraId || m.codigoMuestra === muestraId);
+    if (idx === -1) throw new Error('Muestra no encontrada para rectificación');
+
+    const m = this.muestras[idx];
+    const valorAnterior = m[campo];
+    m[campo] = nuevoValor;
+
+    const ahora = new Date().toISOString();
+    m.eventosTrazabilidad.push({
+      id: `evt-${Date.now()}`,
+      tipoEvento: 'RECTIFICACION',
+      fechaHora: ahora,
+      actor,
+      detalle: `Rectificación de campo «${campo}»: de «${valorAnterior}» a «${nuevoValor}»`,
+      motivo
+    });
+
+    // Sincronizar en la orden
+    const ordIdx = this.ordenes.findIndex((o) => o.id === m.ordenId);
+    if (ordIdx !== -1) {
+      const mIdx = this.ordenes[ordIdx].muestras.findIndex((x) => x.id === m.id);
+      if (mIdx !== -1) {
+        this.ordenes[ordIdx].muestras[mIdx] = { ...m };
+      }
+    }
+
+    this.guardarDatos();
+    return { ...m };
+  }
 }

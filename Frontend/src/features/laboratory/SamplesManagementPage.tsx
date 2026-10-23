@@ -6,6 +6,8 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
+  History,
+  Edit3,
   X
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -37,6 +39,14 @@ export const SamplesManagementPage: React.FC = () => {
   const [motivoRechazo, setMotivoRechazo] = useState('Hemólisis severa grado 3 (interferencia analítica)');
   const [muestraParaRetoma, setMuestraParaRetoma] = useState<MuestraLaboratorio | null>(null);
   const [motivoRetoma, setMotivoRetoma] = useState('Retoma requerida por muestra coagulada al ingreso');
+
+  // Trazabilidad y Rectificación (L05, CA12)
+  const [muestraParaTrazabilidad, setMuestraParaTrazabilidad] = useState<MuestraLaboratorio | null>(null);
+  const [mostrarFormRectificar, setMostrarFormRectificar] = useState(false);
+  const [campoRectificar, setCampoRectificar] = useState<'tuboContenedor' | 'tipoMuestra'>('tuboContenedor');
+  const [nuevoValorRectificar, setNuevoValorRectificar] = useState('');
+  const [motivoRectificar, setMotivoRectificar] = useState('');
+  const [guardandoRectificacion, setGuardandoRectificacion] = useState(false);
 
   const [notificacion, setNotificacion] = useState<string | null>(null);
 
@@ -153,6 +163,36 @@ export const SamplesManagementPage: React.FC = () => {
       setTimeout(() => setNotificacion(null), 4000);
     } catch {
       // ignore
+    }
+  };
+
+  const handleConfirmarRectificacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!muestraParaTrazabilidad || !nuevoValorRectificar.trim() || !motivoRectificar.trim()) return;
+
+    setGuardandoRectificacion(true);
+    try {
+      const actor = sesion?.nombre || 'Analista de Calidad';
+      const rectificada = await laboratoryRepository.rectificarDatoMuestra(
+        institucionId,
+        muestraParaTrazabilidad.id,
+        campoRectificar,
+        nuevoValorRectificar.trim(),
+        motivoRectificar.trim(),
+        actor
+      );
+
+      setMuestras((prev) => prev.map((m) => (m.id === rectificada.id ? rectificada : m)));
+      setMuestraParaTrazabilidad(rectificada);
+      setMostrarFormRectificar(false);
+      setNuevoValorRectificar('');
+      setMotivoRectificar('');
+      setNotificacion(`Dato de la muestra ${rectificada.codigoMuestra} rectificado con bitácora de trazabilidad.`);
+      setTimeout(() => setNotificacion(null), 4000);
+    } catch {
+      // ignore
+    } finally {
+      setGuardandoRectificacion(false);
     }
   };
 
@@ -483,6 +523,19 @@ export const SamplesManagementPage: React.FC = () => {
                             Apta para análisis
                           </span>
                         )}
+
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            setMuestraParaTrazabilidad(muestra);
+                            setMostrarFormRectificar(false);
+                          }}
+                          aria-label={`Ver trazabilidad de ${muestra.codigoMuestra}`}
+                        >
+                          <History size={13} style={{ marginRight: '4px' }} />
+                          Trazabilidad (L05)
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -672,6 +725,300 @@ export const SamplesManagementPage: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Trazabilidad de Muestra y Eventos (L05) */}
+      {muestraParaTrazabilidad && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-trazabilidad-title"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px'
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--color-surface, #ffffff)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '640px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '20px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              border: '1px solid var(--color-border)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--color-divider)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--color-selection)',
+                    color: 'var(--color-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <History size={20} />
+                </div>
+                <div>
+                  <h3 id="modal-trazabilidad-title" style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
+                    Bitácora de Trazabilidad y Eventos (L05)
+                  </h3>
+                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                    Muestra: <strong style={{ fontFamily: 'monospace' }}>{muestraParaTrazabilidad.codigoMuestra}</strong> · Orden: <strong style={{ fontFamily: 'monospace' }}>{muestraParaTrazabilidad.codigoOrden}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMuestraParaTrazabilidad(null)}
+                aria-label="Cerrar modal"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Ficha resumida de la muestra */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '8px',
+                padding: '10px 14px',
+                backgroundColor: 'var(--color-panel)',
+                borderRadius: '8px',
+                border: '1px solid var(--color-border)',
+                fontSize: '12px',
+                marginBottom: '16px'
+              }}
+            >
+              <div>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Paciente: </span>
+                <strong>{muestraParaTrazabilidad.pacienteNombre}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Estado Actual: </span>
+                <strong>{muestraParaTrazabilidad.estado}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Contenedor: </span>
+                <strong>{muestraParaTrazabilidad.tuboContenedor}</strong>
+              </div>
+              <div>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Tipo Muestra: </span>
+                <strong>{muestraParaTrazabilidad.tipoMuestra}</strong>
+              </div>
+            </div>
+
+            {/* Sub-formulario de rectificación administrativa */}
+            <div style={{ marginBottom: '16px' }}>
+              {!mostrarFormRectificar ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setMostrarFormRectificar(true)}
+                  leftIcon={<Edit3 size={14} />}
+                >
+                  Rectificar Dato Administrativo (CA12)
+                </Button>
+              ) : (
+                <form
+                  onSubmit={handleConfirmarRectificacion}
+                  style={{
+                    padding: '14px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--color-background-alt)',
+                    border: '1px solid var(--color-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}
+                >
+                  <strong style={{ fontSize: '13px', color: 'var(--color-strong)' }}>
+                    Rectificación Auditada de Dato Preanalítico
+                  </strong>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '3px' }}>
+                        Campo a Rectificar
+                      </label>
+                      <select
+                        value={campoRectificar}
+                        onChange={(e) => setCampoRectificar(e.target.value as 'tuboContenedor' | 'tipoMuestra')}
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-input-bg)',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <option value="tuboContenedor">Contenedor / Tubo</option>
+                        <option value="tipoMuestra">Tipo de Muestra</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '3px' }}>
+                        Nuevo Valor *
+                      </label>
+                      <input
+                        type="text"
+                        value={nuevoValorRectificar}
+                        onChange={(e) => setNuevoValorRectificar(e.target.value)}
+                        placeholder="Ej. Tubo Lila K2EDTA 4 mL"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-input-bg)',
+                          fontSize: '12px'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '3px' }}>
+                      Motivo / Justificación Obligatoria de Corrección *
+                    </label>
+                    <input
+                      type="text"
+                      value={motivoRectificar}
+                      onChange={(e) => setMotivoRectificar(e.target.value)}
+                      placeholder="Ej. Corrección por especificación exacta del volumen del tubo"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '7px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-input-bg)',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      type="button"
+                      onClick={() => setMostrarFormRectificar(false)}
+                      disabled={guardandoRectificacion}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      type="submit"
+                      disabled={guardandoRectificacion}
+                    >
+                      {guardandoRectificacion ? 'Guardando...' : 'Guardar Rectificación'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Línea de tiempo de eventos */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-strong)' }}>
+                Eventos Cronológicos Registrados ({muestraParaTrazabilidad.eventosTrazabilidad.length})
+              </div>
+
+              {muestraParaTrazabilidad.eventosTrazabilidad
+                .slice()
+                .reverse()
+                .map((evt, idx) => (
+                  <div
+                    key={evt.id || idx}
+                    style={{
+                      padding: '12px',
+                      backgroundColor: 'var(--color-panel)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          backgroundColor:
+                            evt.tipoEvento === 'ACEPTACION'
+                              ? 'rgba(16, 185, 129, 0.15)'
+                              : evt.tipoEvento === 'RECHAZO'
+                              ? 'rgba(239, 68, 68, 0.15)'
+                              : evt.tipoEvento === 'RECTIFICACION'
+                              ? 'rgba(245, 158, 11, 0.15)'
+                              : 'var(--color-selection)',
+                          color:
+                            evt.tipoEvento === 'ACEPTACION'
+                              ? '#047857'
+                              : evt.tipoEvento === 'RECHAZO'
+                              ? '#B91C1C'
+                              : evt.tipoEvento === 'RECTIFICACION'
+                              ? '#B45309'
+                              : 'var(--color-primary)'
+                        }}
+                      >
+                        {evt.tipoEvento}
+                      </span>
+                      <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+                        {new Date(evt.fechaHora).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div style={{ color: 'var(--color-strong)', fontWeight: 500 }}>
+                      {evt.detalle}
+                    </div>
+
+                    <div style={{ marginTop: '2px', color: 'var(--color-text-secondary)' }}>
+                      Actor: <strong>{evt.actor}</strong>
+                    </div>
+
+                    {evt.motivo && (
+                      <div style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--color-text-secondary)' }}>
+                        Motivo: «{evt.motivo}»
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', borderTop: '1px solid var(--color-divider)', paddingTop: '12px' }}>
+              <Button variant="secondary" onClick={() => setMuestraParaTrazabilidad(null)}>
+                Cerrar Bitácora
+              </Button>
+            </div>
           </div>
         </div>
       )}

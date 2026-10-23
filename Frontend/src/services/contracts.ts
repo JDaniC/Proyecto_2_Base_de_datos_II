@@ -208,4 +208,12 @@ export interface LaboratoryRepository {
     motivoRetoma: string,
     actor: string
   ): Promise<MuestraLaboratorio>;
+  rectificarDatoMuestra(
+    institucionId: InstitucionId,
+    muestraId: string,
+    campo: 'tuboContenedor' | 'tipoMuestra',
+    nuevoValor: string,
+    motivo: string,
+    actor: string
+  ): Promise<MuestraLaboratorio>;
 }
