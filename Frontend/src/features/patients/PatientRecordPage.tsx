@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User,
   PlusCircle,
@@ -32,9 +32,11 @@ import { ClinicalTimeline } from './components/ClinicalTimeline';
 import { ArchivePatientModal } from './components/ArchivePatientModal';
 import { DiagnosticosTratamientosView } from '../consultations/DiagnosticosTratamientosView';
 import { RecetasPrescripcionesView } from '../consultations/RecetasPrescripcionesView';
+import { PatientInsurancesView } from './components/PatientInsurancesView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
   const { patientRepository } = useServices();
@@ -43,9 +45,17 @@ export const PatientRecordPage: React.FC = () => {
 
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [tabActiva, setTabActiva] = useState('GENERAL');
+  const initialTab = searchParams.get('tab') === 'seguros' ? 'SEGUROS' : 'GENERAL';
+  const [tabActiva, setTabActiva] = useState(initialTab);
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'seguros') {
+      setTabActiva('SEGUROS');
+    }
+  }, [searchParams]);
 
   const tienePermisoHistorial = sesion?.permisos.includes('historial.leer') ?? true;
   const tienePermisoArchivar = sesion?.permisos.includes('historial.archivar') ?? false;
@@ -122,6 +132,7 @@ export const PatientRecordPage: React.FC = () => {
     { id: 'CONSULTAS', label: `Consultas (${consultas.length})` },
     { id: 'DIAGNOSTICOS', label: `Diagnósticos (${diagnosticos.length})` },
     { id: 'RECETAS', label: `Recetas emitidas (${recetas.length})` },
+    { id: 'SEGUROS', label: `Seguros y cobertura (${expediente.polizas?.length || 0})` },
     { id: 'TIMELINE', label: `Actividad e historial (${eventos.length})` }
   ];
 
@@ -558,6 +569,16 @@ export const PatientRecordPage: React.FC = () => {
           paciente={paciente}
           recetas={recetas}
           onRecetasActualizadas={handleRecetasActualizadas}
+          esArchivado={paciente.estado === 'ARCHIVADO'}
+        />
+      )}
+
+      {tabActiva === 'SEGUROS' && (
+        <PatientInsurancesView
+          pacienteId={paciente.id}
+          pacienteNombre={paciente.nombreCompleto}
+          pacienteDpi={paciente.numeroIdentificacion}
+          pacienteTelefono={paciente.telefono}
           esArchivado={paciente.estado === 'ARCHIVADO'}
         />
       )}

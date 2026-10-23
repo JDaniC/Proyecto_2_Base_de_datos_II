@@ -11,6 +11,8 @@ import {
   DiagnosticoHistorial,
   RecetaHistorial,
   RecetaMedicamentoItem,
+  PolizaSeguroPaciente,
+  AfiliarPolizaDTO,
   CausaArchivo
 } from '../services/types';
 import {
@@ -27,11 +29,67 @@ import {
 } from './mockClinicalData';
 
 const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
+const LOCAL_STORAGE_KEY_POLIZAS = 'clinica_pacientes_polizas_v1';
+
+const MOCK_POLIZAS_INICIALES: Record<string, PolizaSeguroPaciente[]> = {
+  'pac-hosp-001': [
+    {
+      id: 'pol-001',
+      pacienteId: 'pac-hosp-001',
+      aseguradoraId: 'aseg-01',
+      aseguradoraNombre: 'Seguros El Roble, S.A.',
+      planId: 'pln-01',
+      planNombre: 'Plan Roble Oro Hospitalario',
+      numeroPoliza: 'POL-ROB-2026-4401',
+      numeroCertificado: 'CERT-0089',
+      vigenciaDesde: '2026-01-01',
+      vigenciaHasta: '2026-12-31',
+      estadoVigencia: 'ACTIVA',
+      porcentajeCobertura: 90,
+      copagoConsultaGTQ: 50,
+      deducibleBaseGTQ: 500,
+      limiteMaximoAnualGTQ: 150000,
+      titular: {
+        nombreCompleto: 'Roberto Estrada Morales',
+        parentesco: 'TITULAR',
+        numeroIdentificacion: '9900-10101-0101',
+        telefonoContacto: '5555-0104'
+      },
+      observaciones: 'Cobertura preferencial en hospitalización al 90% con copago fijo de Q 50 en consulta externa.'
+    }
+  ],
+  'pac-hosp-002': [
+    {
+      id: 'pol-002',
+      pacienteId: 'pac-hosp-002',
+      aseguradoraId: 'aseg-01',
+      aseguradoraNombre: 'Seguros El Roble, S.A.',
+      planId: 'pln-02',
+      planNombre: 'Plan Roble Clásico Integral',
+      numeroPoliza: 'POL-ROB-2025-1102',
+      numeroCertificado: 'CERT-0145',
+      vigenciaDesde: '2025-01-01',
+      vigenciaHasta: '2025-12-31',
+      estadoVigencia: 'VENCIDA',
+      porcentajeCobertura: 80,
+      copagoConsultaGTQ: 75,
+      deducibleBaseGTQ: 1000,
+      titular: {
+        nombreCompleto: 'Claudia Méndez Arriola',
+        parentesco: 'TITULAR',
+        numeroIdentificacion: '9900-10102-0101',
+        telefonoContacto: '5555-0108'
+      },
+      observaciones: 'Póliza no renovada para el ciclo actual.'
+    }
+  ]
+};
 
 export class MockPatientRepository implements PatientRepository {
   private pacientes: Paciente[] = [];
   private diagnosticosPorPaciente: Record<string, DiagnosticoHistorial[]> = {};
   private recetasPorPaciente: Record<string, RecetaHistorial[]> = {};
+  private polizasPorPaciente: Record<string, PolizaSeguroPaciente[]> = {};
 
   constructor() {
     this.cargarPacientes();
@@ -42,18 +100,28 @@ export class MockPatientRepository implements PatientRepository {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (raw) {
         this.pacientes = JSON.parse(raw);
-        return;
+      } else {
+        this.pacientes = [...MOCK_PACIENTES_INICIALES];
       }
+      const rawPol = localStorage.getItem(LOCAL_STORAGE_KEY_POLIZAS);
+      if (rawPol) {
+        this.polizasPorPaciente = JSON.parse(rawPol);
+      } else {
+        this.polizasPorPaciente = JSON.parse(JSON.stringify(MOCK_POLIZAS_INICIALES));
+      }
+      return;
     } catch {
       // Fallback
     }
     this.pacientes = [...MOCK_PACIENTES_INICIALES];
+    this.polizasPorPaciente = JSON.parse(JSON.stringify(MOCK_POLIZAS_INICIALES));
     this.guardarEnStorage();
   }
 
   private guardarEnStorage(): void {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.pacientes));
+      localStorage.setItem(LOCAL_STORAGE_KEY_POLIZAS, JSON.stringify(this.polizasPorPaciente));
     } catch {
       // Ignore if quota exceeded
     }
@@ -185,7 +253,8 @@ export class MockPatientRepository implements PatientRepository {
       consultas,
       diagnosticos,
       recetas,
-      eventos
+      eventos,
+      polizas: this.polizasPorPaciente[paciente.id] || []
     };
   }
 
@@ -424,5 +493,62 @@ export class MockPatientRepository implements PatientRepository {
 
     this.recetasPorPaciente[pacienteId].unshift(nueva);
     return nueva;
+  }
+
+  async obtenerPolizasSeguro(
+    _institucionId: InstitucionId,
+    pacienteId: string
+  ): Promise<PolizaSeguroPaciente[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...(this.polizasPorPaciente[pacienteId] || [])];
+  }
+
+  async afiliarPolizaSeguro(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    dto: AfiliarPolizaDTO
+  ): Promise<PolizaSeguroPaciente> {
+    await new Promise((res) => setTimeout(res, 50));
+    const nuevaPoliza: PolizaSeguroPaciente = {
+      id: `pol-${Date.now()}`,
+      pacienteId,
+      aseguradoraId: dto.aseguradoraId,
+      aseguradoraNombre: dto.aseguradoraId === 'aseg-01' ? 'Seguros El Roble, S.A.' : 'Seguros Universales, S.A.',
+      planId: dto.planId,
+      planNombre: dto.planId === 'pln-01' ? 'Plan Roble Oro Hospitalario' : 'Plan Preferencial de Salud',
+      numeroPoliza: dto.numeroPoliza.trim(),
+      numeroCertificado: dto.numeroCertificado.trim(),
+      vigenciaDesde: dto.vigenciaDesde,
+      vigenciaHasta: dto.vigenciaHasta,
+      estadoVigencia: 'ACTIVA',
+      porcentajeCobertura: 85,
+      copagoConsultaGTQ: dto.copagoConsultaGTQ || 50,
+      deducibleBaseGTQ: 500,
+      limiteMaximoAnualGTQ: 100000,
+      titular: dto.titular,
+      observaciones: dto.observaciones
+    };
+
+    if (!this.polizasPorPaciente[pacienteId]) {
+      this.polizasPorPaciente[pacienteId] = [];
+    }
+    this.polizasPorPaciente[pacienteId].unshift(nuevaPoliza);
+    this.guardarEnStorage();
+    return nuevaPoliza;
+  }
+
+  async cambiarEstadoPoliza(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    polizaId: string,
+    estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA'
+  ): Promise<PolizaSeguroPaciente> {
+    await new Promise((res) => setTimeout(res, 40));
+    const lista = this.polizasPorPaciente[pacienteId] || [];
+    const pol = lista.find((p) => p.id === polizaId);
+    if (!pol) throw new Error('Póliza no encontrada');
+    pol.estadoVigencia = estado;
+    this.guardarEnStorage();
+    return pol;
   }
 }

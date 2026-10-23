@@ -499,6 +499,45 @@ export interface EventoHistorial {
   recursoCodigo?: string;
 }
 
+export interface TitularSeguro {
+  nombreCompleto: string;
+  parentesco: 'TITULAR' | 'PADRE' | 'MADRE' | 'CONYUGE' | 'HIJO' | 'OTRO';
+  numeroIdentificacion: string;
+  telefonoContacto: string;
+}
+
+export interface PolizaSeguroPaciente {
+  id: string;
+  pacienteId: string;
+  aseguradoraId: string;
+  aseguradoraNombre: string;
+  planId: string;
+  planNombre: string;
+  numeroPoliza: string;
+  numeroCertificado: string;
+  vigenciaDesde: string;
+  vigenciaHasta: string;
+  estadoVigencia: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA';
+  porcentajeCobertura: number;
+  copagoConsultaGTQ: number;
+  deducibleBaseGTQ?: number;
+  limiteMaximoAnualGTQ?: number;
+  titular: TitularSeguro;
+  observaciones?: string;
+}
+
+export interface AfiliarPolizaDTO {
+  aseguradoraId: string;
+  planId: string;
+  numeroPoliza: string;
+  numeroCertificado: string;
+  vigenciaDesde: string;
+  vigenciaHasta: string;
+  titular: TitularSeguro;
+  copagoConsultaGTQ?: number;
+  observaciones?: string;
+}
+
 export interface ExpedienteCompleto {
   paciente: Paciente;
   antecedentes: AntecedentesClinicos;
@@ -506,6 +545,7 @@ export interface ExpedienteCompleto {
   diagnosticos: DiagnosticoHistorial[];
   recetas: RecetaHistorial[];
   eventos: EventoHistorial[];
+  polizas?: PolizaSeguroPaciente[];
 }
 
 export interface BuscarPacientesQuery {

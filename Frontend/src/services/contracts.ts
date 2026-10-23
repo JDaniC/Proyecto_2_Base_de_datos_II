@@ -28,6 +28,8 @@ import {
   PermisoId,
   MedicoCatalogo,
   AseguradoraCatalogo,
+  PolizaSeguroPaciente,
+  AfiliarPolizaDTO,
   ProcedimientoOdontologico,
   PruebaLaboratorioCatalogo,
   VacunaCatalogo,
@@ -79,6 +81,9 @@ export interface PatientRepository {
     pacienteId: string,
     receta: { emitidaPor: string; rolEmisor: string; medicamentos: RecetaMedicamentoItem[] }
   ): Promise<RecetaHistorial>;
+  obtenerPolizasSeguro(institucionId: InstitucionId, pacienteId: string): Promise<PolizaSeguroPaciente[]>;
+  afiliarPolizaSeguro(institucionId: InstitucionId, pacienteId: string, dto: AfiliarPolizaDTO): Promise<PolizaSeguroPaciente>;
+  cambiarEstadoPoliza(institucionId: InstitucionId, pacienteId: string, polizaId: string, estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA'): Promise<PolizaSeguroPaciente>;
 }
 
 export interface AppointmentRepository {
