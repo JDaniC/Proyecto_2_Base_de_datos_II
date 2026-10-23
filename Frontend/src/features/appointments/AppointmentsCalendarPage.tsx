@@ -192,7 +192,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <h1
               style={{
                 fontSize: '26px',
@@ -201,11 +201,16 @@ export const AppointmentsCalendarPage: React.FC = () => {
                 margin: 0
               }}
             >
-              Agenda médica institucional
+              {institucionId === 'CLINICA_ODONTOLOGICA'
+                ? 'Agenda odontológica / Gestión de secretaría'
+                : 'Agenda médica institucional'}
             </h1>
             <Badge variant="neutral">
               {citas.length} {citas.length === 1 ? 'cita' : 'citas'}
             </Badge>
+            {institucionId === 'CLINICA_ODONTOLOGICA' && (
+              <Badge variant="primary">Odontología</Badge>
+            )}
           </div>
           <p
             style={{
@@ -215,8 +220,9 @@ export const AppointmentsCalendarPage: React.FC = () => {
               marginBottom: 0
             }}
           >
-            Gestión y seguimiento de atenciones programadas en{' '}
-            <strong style={{ color: 'var(--color-strong)' }}>{sesion?.institucionNombre}</strong>.
+            {institucionId === 'CLINICA_ODONTOLOGICA'
+              ? 'Gestión y programación de citas para sillones odontológicos y especialistas en Clínica Odontológica Integral.'
+              : `Gestión y seguimiento de atenciones programadas en ${sesion?.institucionNombre}.`}
           </p>
         </div>
 
@@ -224,11 +230,119 @@ export const AppointmentsCalendarPage: React.FC = () => {
           variant="primary"
           leftIcon={<CalendarPlus size={18} />}
           onClick={() => setIsCrearModalOpen(true)}
-          aria-label="Crear nueva cita médica"
+          aria-label={
+            institucionId === 'CLINICA_ODONTOLOGICA'
+              ? 'Crear nueva cita odontológica'
+              : 'Crear nueva cita médica'
+          }
         >
-          Nueva cita
+          {institucionId === 'CLINICA_ODONTOLOGICA' ? 'Nueva cita odontológica' : 'Nueva cita'}
         </Button>
       </div>
+
+      {/* Banner de Secretaría Odontológica (C01, RF-C08) */}
+      {institucionId === 'CLINICA_ODONTOLOGICA' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: 'var(--color-selection)',
+            border: '1px solid var(--color-primary)',
+            borderRadius: 'var(--radius-input)',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            color: 'var(--color-strong)',
+            flexWrap: 'wrap',
+            gap: '8px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <User size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+            <span>
+              <strong>Gestión de Secretaría (C01):</strong> Operador activo:{' '}
+              <strong>{sesion?.nombre || 'Ana Lucía Méndez'}</strong> ({sesion?.rolEtiqueta || 'Secretaría'}). Asignación de sillones y control de citas odontológicas.
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+            <span>Sillón 1: Operatoria</span>
+            <span>•</span>
+            <span>Sillón 2: Endodoncia</span>
+            <span>•</span>
+            <span>Sillón 3: Ortodoncia</span>
+          </div>
+        </div>
+      )}
+
+      {/* Tarjetas de Resumen C01 Odontología */}
+      {institucionId === 'CLINICA_ODONTOLOGICA' && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px'
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--color-background)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-panel)',
+              padding: '12px 16px',
+              boxShadow: 'var(--shadow-panel)'
+            }}
+          >
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Citas del día</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-strong)' }}>
+              {citas.length}
+            </div>
+          </div>
+          <div
+            style={{
+              backgroundColor: 'var(--color-background)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-panel)',
+              padding: '12px 16px',
+              boxShadow: 'var(--shadow-panel)'
+            }}
+          >
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Programadas</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-primary)' }}>
+              {citas.filter((c) => c.estado === 'PROGRAMADA').length}
+            </div>
+          </div>
+          <div
+            style={{
+              backgroundColor: 'var(--color-background)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-panel)',
+              padding: '12px 16px',
+              boxShadow: 'var(--shadow-panel)'
+            }}
+          >
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Atendidas</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-success-text)' }}>
+              {citas.filter((c) => c.estado === 'ATENDIDA').length}
+            </div>
+          </div>
+          <div
+            style={{
+              backgroundColor: 'var(--color-background)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-panel)',
+              padding: '12px 16px',
+              boxShadow: 'var(--shadow-panel)'
+            }}
+          >
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Canceladas</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-danger-text)' }}>
+              {citas.filter((c) => c.estado === 'CANCELADA').length}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Panel Superior: Selector de Semana y Tira de Días Interactiva */}
       <div
@@ -595,6 +709,11 @@ export const AppointmentsCalendarPage: React.FC = () => {
                     <MapPin size={13} />
                     <span>{cita.consultorio}</span>
                   </div>
+                  {cita.secretariaGestora && (
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                      Secretaría: <strong>{cita.secretariaGestora}</strong>
+                    </div>
+                  )}
                 </div>
 
                 {/* Estado */}
@@ -675,6 +794,11 @@ export const AppointmentsCalendarPage: React.FC = () => {
                       <div style={{ color: 'var(--color-text-secondary)', marginTop: '2px', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {cita.motivo}
                       </div>
+                      {cita.secretariaGestora && (
+                        <div style={{ color: 'var(--color-primary)', fontSize: '10px', marginTop: '2px' }}>
+                          Sec: {cita.secretariaGestora}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -684,12 +808,16 @@ export const AppointmentsCalendarPage: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Detalle de Cita Médica */}
+      {/* Modal de Detalle de Cita Médica / Odontológica (C02) */}
       {citaSeleccionada && (
         <Modal
           isOpen={Boolean(citaSeleccionada)}
           onClose={() => setCitaSeleccionada(null)}
-          title="Detalle de Cita Médica (V08)"
+          title={
+            institucionId === 'CLINICA_ODONTOLOGICA'
+              ? 'Detalle de Cita Odontológica (C02)'
+              : 'Detalle de Cita Médica (V08)'
+          }
           maxWidth="560px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -866,21 +994,35 @@ export const AppointmentsCalendarPage: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {citaSeleccionada.estado === 'PROGRAMADA' && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    leftIcon={<Stethoscope size={15} />}
-                    onClick={() => {
-                      const pId = citaSeleccionada.pacienteId;
-                      const cId = citaSeleccionada.id;
-                      setCitaSeleccionada(null);
-                      navigate(`/pacientes/${pId}/consultas/nueva?citaId=${cId}`);
-                    }}
-                  >
-                    {institucionId === 'CLINICA_ODONTOLOGICA'
-                      ? 'Iniciar consulta odontológica'
-                      : 'Iniciar atención médica'}
-                  </Button>
+                  sesion?.rolId === 'SECRETARIA' ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<Stethoscope size={15} />}
+                      disabled
+                      title="Atención clínica odontológica reservada para el odontólogo tratante (CA18)"
+                    >
+                      {institucionId === 'CLINICA_ODONTOLOGICA'
+                        ? 'Iniciar consulta odontológica'
+                        : 'Iniciar atención médica'}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      leftIcon={<Stethoscope size={15} />}
+                      onClick={() => {
+                        const pId = citaSeleccionada.pacienteId;
+                        const cId = citaSeleccionada.id;
+                        setCitaSeleccionada(null);
+                        navigate(`/pacientes/${pId}/consultas/nueva?citaId=${cId}`);
+                      }}
+                    >
+                      {institucionId === 'CLINICA_ODONTOLOGICA'
+                        ? 'Iniciar consulta odontológica'
+                        : 'Iniciar atención médica'}
+                    </Button>
+                  )
                 )}
                 <Button
                   variant="secondary"

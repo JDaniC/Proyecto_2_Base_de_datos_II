@@ -45,7 +45,11 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   const [fecha, setFecha] = useState(fechaInicial || '2026-10-19');
   const [horaInicio, setHoraInicio] = useState(horaInicial || '08:00');
   const [duracionMinutos, setDuracionMinutos] = useState(30);
-  const [consultorio, setConsultorio] = useState('Consultorio 104 - Planta Baja');
+  const [consultorio, setConsultorio] = useState(
+    institucionId === 'CLINICA_ODONTOLOGICA'
+      ? 'Sillón 1 — Operatoria y Estética Dental'
+      : 'Consultorio 104 - Planta Baja'
+  );
   const [motivo, setMotivo] = useState('');
 
   const [guardando, setGuardando] = useState(false);
@@ -122,10 +126,29 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Programar Nueva Cita Médica (V09)"
+      title={
+        institucionId === 'CLINICA_ODONTOLOGICA'
+          ? 'Programar Cita Odontológica (C01)'
+          : 'Programar Nueva Cita Médica (V09)'
+      }
       maxWidth="620px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {institucionId === 'CLINICA_ODONTOLOGICA' && (
+          <div
+            style={{
+              backgroundColor: 'var(--color-selection)',
+              border: '1px solid var(--color-primary)',
+              borderRadius: 'var(--radius-input)',
+              padding: '10px 14px',
+              fontSize: '13px',
+              color: 'var(--color-strong)'
+            }}
+          >
+            <strong>Secretaría gestora asignada:</strong> {sesion?.nombre || 'Ana Lucía Méndez (Secretaría Odontológica)'} — Vínculo administrativo registrado automáticamente (CA18).
+          </div>
+        )}
+
         {errorValidacion && (
           <div
             role="alert"

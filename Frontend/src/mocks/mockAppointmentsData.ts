@@ -173,6 +173,88 @@ export const MOCK_CITAS_INICIALES: CitaAgenda[] = [
     estado: 'PROGRAMADA',
     consultorio: 'Consultorio 204 — Medicina Interna',
     fechaCreacion: '2026-10-18T10:00:00Z'
+  },
+  // --- Citas Clínica Odontológica (C01, C02) ---
+  {
+    id: 'cita-odon-001',
+    institucionId: 'CLINICA_ODONTOLOGICA',
+    pacienteId: 'pac-odon-001',
+    pacienteNombre: 'María Fernanda López Barillas',
+    pacienteCodigo: 'HC-ODON-0201',
+    pacienteTelefono: '5555-0201',
+    profesionalId: 'usr-odon-odo-01',
+    profesionalNombre: 'Dr. Javier Castellanos',
+    profesionalRol: 'Odontólogo General',
+    fecha: '2026-10-19',
+    horaInicio: '09:00',
+    horaFin: '09:45',
+    duracionMinutos: 45,
+    motivo: 'Evaluación de caries oclusal y profilaxis dental profunda',
+    estado: 'PROGRAMADA',
+    consultorio: 'Sillón 1 — Operatoria y Estética Dental',
+    secretariaGestora: 'Ana Lucía Méndez',
+    fechaCreacion: '2026-10-14T08:30:00Z'
+  },
+  {
+    id: 'cita-odon-002',
+    institucionId: 'CLINICA_ODONTOLOGICA',
+    pacienteId: 'pac-odon-002',
+    pacienteNombre: 'Sergio Estuardo Ramos Aguilar',
+    pacienteCodigo: 'HC-ODON-0205',
+    pacienteTelefono: '5555-0205',
+    profesionalId: 'usr-odon-odo-01',
+    profesionalNombre: 'Dr. Javier Castellanos',
+    profesionalRol: 'Odontólogo General',
+    fecha: '2026-10-19',
+    horaInicio: '10:30',
+    horaFin: '11:15',
+    duracionMinutos: 45,
+    motivo: 'Endodoncia unirradicular pieza 2.1 y obturación estética',
+    estado: 'ATENDIDA',
+    consultorio: 'Sillón 2 — Endodoncia y Cirugía Oral',
+    secretariaGestora: 'Ana Lucía Méndez',
+    fechaCreacion: '2026-10-15T09:15:00Z'
+  },
+  {
+    id: 'cita-odon-003',
+    institucionId: 'CLINICA_ODONTOLOGICA',
+    pacienteId: 'pac-odon-003',
+    pacienteNombre: 'Sandra Maribel Contreras Solís',
+    pacienteCodigo: 'HC-ODON-0208',
+    pacienteTelefono: '5555-0208',
+    profesionalId: 'usr-odon-odo-01',
+    profesionalNombre: 'Dr. Javier Castellanos',
+    profesionalRol: 'Odontólogo General',
+    fecha: '2026-10-19',
+    horaInicio: '14:00',
+    horaFin: '14:30',
+    duracionMinutos: 30,
+    motivo: 'Revisión y ajuste de prótesis dental removible',
+    estado: 'CANCELADA',
+    motivoCancelacion: 'Paciente notificó incompatibilidad laboral de último momento',
+    consultorio: 'Sillón 1 — Operatoria y Estética Dental',
+    secretariaGestora: 'Ana Lucía Méndez',
+    fechaCreacion: '2026-10-16T11:00:00Z'
+  },
+  {
+    id: 'cita-odon-004',
+    institucionId: 'CLINICA_ODONTOLOGICA',
+    pacienteId: 'pac-odon-001',
+    pacienteNombre: 'María Fernanda López Barillas',
+    pacienteCodigo: 'HC-ODON-0201',
+    pacienteTelefono: '5555-0201',
+    profesionalId: 'usr-odon-odo-02',
+    profesionalNombre: 'Dra. Sofía Valenzuela',
+    profesionalRol: 'Especialista en Ortodoncia y Odontopediatría',
+    fecha: '2026-10-21',
+    horaInicio: '11:00',
+    horaFin: '11:45',
+    duracionMinutos: 45,
+    motivo: 'Control de ortodoncia mensual y calibración de arcos',
+    estado: 'PROGRAMADA',
+    consultorio: 'Sillón 3 — Ortodoncia',
+    secretariaGestora: 'Ana Lucía Méndez',
+    fechaCreacion: '2026-10-17T14:20:00Z'
   }
 ];
 
@@ -182,7 +264,9 @@ export const PROFESIONALES_DISPONIBLES: Record<string, { id: string; nombre: str
     { id: 'med-hosp-02', nombre: 'Dr. Fernando Paz', especialidad: 'Consulta Externa' }
   ],
   CLINICA_ODONTOLOGICA: [
-    { id: 'usr-odon-odo-01', nombre: 'Dr. Javier Castellanos', especialidad: 'Odontología General' }
+    { id: 'usr-odon-odo-01', nombre: 'Dr. Javier Castellanos', especialidad: 'Odontología General' },
+    { id: 'usr-odon-odo-02', nombre: 'Dra. Sofía Valenzuela', especialidad: 'Ortodoncia y Odontopediatría' },
+    { id: 'usr-odon-odo-03', nombre: 'Dr. Carlos Morales', especialidad: 'Endodoncia y Cirugía Oral' }
   ],
   LABORATORIO_CLINICO: [
     { id: 'usr-lab-med-01', nombre: 'Dr. Arturo Valenzuela', especialidad: 'Médico Solicitante' }

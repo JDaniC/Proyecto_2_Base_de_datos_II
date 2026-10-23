@@ -45,6 +45,7 @@ export class MockAppointmentRepository implements AppointmentRepository {
     institucionId: InstitucionId,
     query: FiltrosAgendaQuery
   ): Promise<CitaAgenda[]> {
+    this.cargarCitas();
     await new Promise((res) => setTimeout(res, 40));
 
     let filtradas = this.citas.filter((c) => c.institucionId === institucionId);
@@ -90,6 +91,7 @@ export class MockAppointmentRepository implements AppointmentRepository {
   }
 
   async obtenerPorId(institucionId: InstitucionId, id: string): Promise<CitaAgenda | null> {
+    this.cargarCitas();
     await new Promise((res) => setTimeout(res, 30));
     const cita = this.citas.find((c) => c.id === id && c.institucionId === institucionId);
     return cita || null;
