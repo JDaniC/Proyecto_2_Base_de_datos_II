@@ -878,8 +878,53 @@ export const AppointmentsCalendarPage: React.FC = () => {
 
             {/* Secretaria gestora (Odontología C02) */}
             {citaSeleccionada.secretariaGestora && (
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                <strong>Secretaría gestora:</strong> {citaSeleccionada.secretariaGestora}
+              <div
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--color-strong)',
+                  backgroundColor: 'var(--color-selection)',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--color-primary)'
+                }}
+              >
+                <strong>Secretaría gestora de la cita:</strong> {citaSeleccionada.secretariaGestora}
+              </div>
+            )}
+
+            {/* Aviso de cita ya atendida (C02) */}
+            {citaSeleccionada.estado === 'ATENDIDA' && (
+              <div
+                style={{
+                  backgroundColor: 'var(--color-success-bg)',
+                  border: '1px solid var(--color-success-border)',
+                  borderRadius: 'var(--radius-input)',
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  color: 'var(--color-success-text)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>Cita atendida. Registro de consulta clínica completado exitosamente (409 CITA_YA_ATENDIDA en reintentos).</span>
+              </div>
+            )}
+
+            {/* Aviso de aislamiento de rol secretaría (RF-C08, CA18) */}
+            {sesion?.rolId === 'SECRETARIA' && institucionId === 'CLINICA_ODONTOLOGICA' && (
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--color-text-secondary)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                <strong>Aislamiento de rol (CA18):</strong> Como secretaría, puede reprogramar o cancelar esta cita. El inicio de la consulta y examen clínico corresponde exclusivamente al odontólogo tratante.
               </div>
             )}
 
@@ -1023,6 +1068,22 @@ export const AppointmentsCalendarPage: React.FC = () => {
                         : 'Iniciar atención médica'}
                     </Button>
                   )
+                )}
+                {citaSeleccionada.estado === 'ATENDIDA' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    leftIcon={<FileText size={15} />}
+                    onClick={() => {
+                      const pId = citaSeleccionada.pacienteId;
+                      setCitaSeleccionada(null);
+                      navigate(`/pacientes/${pId}`);
+                    }}
+                  >
+                    {institucionId === 'CLINICA_ODONTOLOGICA'
+                      ? 'Ver consulta odontológica realizada'
+                      : 'Ver atención en expediente'}
+                  </Button>
                 )}
                 <Button
                   variant="secondary"

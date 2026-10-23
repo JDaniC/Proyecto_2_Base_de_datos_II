@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { App } from '../app/App';
 
 describe('C01 — Agenda de Secretaría Odontológica (C01, RF-C08, CA18)', () => {
