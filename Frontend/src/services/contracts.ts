@@ -30,6 +30,7 @@ import {
   AseguradoraCatalogo,
   PolizaSeguroPaciente,
   AfiliarPolizaDTO,
+  ResponsablePediatrico,
   ProcedimientoOdontologico,
   PruebaLaboratorioCatalogo,
   VacunaCatalogo,
@@ -112,6 +113,9 @@ export interface PatientRepository {
   cambiarEstadoPoliza(institucionId: InstitucionId, pacienteId: string, polizaId: string, estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA'): Promise<PolizaSeguroPaciente>;
   obtenerProcedimientosPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ProcedimientoHospitalarioItem[]>;
   registrarProcedimientoPaciente(institucionId: InstitucionId, pacienteId: string, proc: Omit<ProcedimientoHospitalarioItem, 'id'>): Promise<ProcedimientoHospitalarioItem>;
+  agregarResponsable(institucionId: InstitucionId, pacienteId: string, resp: Omit<ResponsablePediatrico, 'id'>): Promise<ResponsablePediatrico>;
+  actualizarResponsable(institucionId: InstitucionId, pacienteId: string, responsableId: string, cambios: Partial<Omit<ResponsablePediatrico, 'id'>>): Promise<ResponsablePediatrico>;
+  eliminarResponsable(institucionId: InstitucionId, pacienteId: string, responsableId: string): Promise<void>;
 }
 
 export interface AppointmentRepository {

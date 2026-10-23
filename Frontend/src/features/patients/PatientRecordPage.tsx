@@ -35,6 +35,7 @@ import { RecetasPrescripcionesView } from '../consultations/RecetasPrescripcione
 import { PatientInsurancesView } from './components/PatientInsurancesView';
 import { PatientExamsView } from './components/PatientExamsView';
 import { PatientProceduresView } from './components/PatientProceduresView';
+import { PediatricGuardiansView } from './components/PediatricGuardiansView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -68,6 +69,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('EXAMENES');
     } else if (tabParam === 'procedimientos') {
       setTabActiva('PROCEDIMIENTOS');
+    } else if (tabParam === 'responsables') {
+      setTabActiva('RESPONSABLES');
     }
   }, [searchParams]);
 
@@ -75,16 +78,16 @@ export const PatientRecordPage: React.FC = () => {
   const tienePermisoArchivar = sesion?.permisos.includes('historial.archivar') ?? false;
   const tienePermisoConsultas = sesion?.permisos.includes('consultas.registrar') ?? false;
 
-  const cargarExpediente = useCallback(async () => {
+  const cargarExpediente = useCallback(async (silencioso = false) => {
     if (!pacienteId) return;
-    setCargando(true);
+    if (!silencioso) setCargando(true);
     try {
       const data = await patientRepository.obtenerExpedienteCompleto(institucionId, pacienteId);
       setExpediente(data);
     } catch (err) {
       console.error('Error cargando expediente clínico:', err);
     } finally {
-      setCargando(false);
+      if (!silencioso) setCargando(false);
     }
   }, [institucionId, pacienteId, patientRepository]);
 
@@ -140,9 +143,14 @@ export const PatientRecordPage: React.FC = () => {
     setExpediente((prev) => (prev ? { ...prev, recetas: nuevas } : null));
   };
 
+  const esPediatrico = institucionId === 'CENTRO_PEDIATRICO' || paciente.responsables !== undefined;
+
   // Configuración de pestañas con subrayado de 3px
   const tabsList: TabItem[] = [
     { id: 'GENERAL', label: 'General y antecedentes' },
+    ...(esPediatrico
+      ? [{ id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` }]
+      : []),
     { id: 'CONSULTAS', label: `Consultas (${consultas.length})` },
     { id: 'DIAGNOSTICOS', label: `Diagnósticos (${diagnosticos.length})` },
     { id: 'RECETAS', label: `Recetas emitidas (${recetas.length})` },
@@ -511,6 +519,13 @@ export const PatientRecordPage: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {tabActiva === 'RESPONSABLES' && (
+        <PediatricGuardiansView
+          paciente={paciente}
+          onActualizado={() => cargarExpediente(true)}
+        />
       )}
 
       {tabActiva === 'CONSULTAS' && (

@@ -13,6 +13,7 @@ import {
   RecetaMedicamentoItem,
   PolizaSeguroPaciente,
   AfiliarPolizaDTO,
+  ResponsablePediatrico,
   ProcedimientoHospitalarioItem,
   CausaArchivo
 } from '../services/types';
@@ -618,5 +619,112 @@ export class MockPatientRepository implements PatientRepository {
     this.procedimientosPorPaciente[pacienteId].unshift(nuevoProc);
     this.guardarEnStorage();
     return nuevoProc;
+  }
+
+  async agregarResponsable(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    resp: Omit<ResponsablePediatrico, 'id'>
+  ): Promise<ResponsablePediatrico> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+
+    if (!paciente.responsables) {
+      paciente.responsables = [];
+    }
+
+    const nuevo: ResponsablePediatrico = {
+      ...resp,
+      id: `resp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
+    };
+
+    paciente.responsables.push(nuevo);
+    this.guardarEnStorage();
+    return { ...nuevo };
+  }
+
+  async actualizarResponsable(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    responsableId: string,
+    cambios: Partial<Omit<ResponsablePediatrico, 'id'>>
+  ): Promise<ResponsablePediatrico> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente.responsables) paciente.responsables = [];
+
+    const index = paciente.responsables.findIndex((r) => r.id === responsableId);
+    if (index === -1) throw new Error(`Responsable ${responsableId} no encontrado.`);
+
+    const respActual = paciente.responsables[index];
+
+    // Regla CA09: Nunca se permite desmarcar al único responsable principal del menor
+    if (cambios.esPrincipal === false && respActual.esPrincipal) {
+      const otrosPrincipales = paciente.responsables.filter((r) => r.id !== responsableId && r.esPrincipal);
+      if (otrosPrincipales.length === 0) {
+        throw new Error(
+          'Regla CA09: No es posible desmarcar al único responsable principal del menor. El menor debe contar siempre con al menos un responsable principal activo.'
+        );
+      }
+    }
+
+    const respActualizado = {
+      ...respActual,
+      ...cambios
+    };
+
+    paciente.responsables[index] = respActualizado;
+
+    // Regla CA09: Responsable compartido entre hermanos - sincronizar contacto si comparte documento o nombre
+    if (cambios.telefono || cambios.nombre) {
+      for (const p of this.pacientes) {
+        if (p.id !== pacienteId && p.responsables) {
+          for (let i = 0; i < p.responsables.length; i++) {
+            const rComp = p.responsables[i];
+            const coincideDocumento = respActual.documento && rComp.documento && respActual.documento === rComp.documento;
+            const coincideNombre = rComp.nombre === respActual.nombre;
+            if (coincideDocumento || coincideNombre) {
+              if (cambios.telefono) rComp.telefono = cambios.telefono;
+              if (cambios.nombre) rComp.nombre = cambios.nombre;
+            }
+          }
+        }
+      }
+    }
+
+    this.guardarEnStorage();
+    return { ...respActualizado };
+  }
+
+  async eliminarResponsable(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    responsableId: string
+  ): Promise<void> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente.responsables) return;
+
+    const respActual = paciente.responsables.find((r) => r.id === responsableId);
+    if (!respActual) return;
+
+    // Regla CA09: Nunca se permite dar de baja al último responsable principal del menor
+    if (respActual.esPrincipal) {
+      const principalesRestantes = paciente.responsables.filter((r) => r.id !== responsableId && r.esPrincipal);
+      if (principalesRestantes.length === 0) {
+        throw new Error(
+          'Regla CA09: No es posible dar de baja al único responsable principal del menor. Debe designar otro responsable principal antes de proceder a la eliminación del vínculo.'
+        );
+      }
+    }
+
+    paciente.responsables = paciente.responsables.filter((r) => r.id !== responsableId);
+    this.guardarEnStorage();
   }
 }
