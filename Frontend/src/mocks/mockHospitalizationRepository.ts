@@ -3,6 +3,7 @@ import {
   InstitucionId,
   HospitalizacionItem,
   CamaHospitalaria,
+  EstadoCama,
   AsignacionCamaItem,
   NotaEvolucionItem,
   ProcedimientoHospitalarioItem,
@@ -482,6 +483,19 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
 
     this.guardarDatos();
     return hosp;
+  }
+
+  async cambiarEstadoCama(_institucionId: InstitucionId, camaId: string, nuevoEstado: EstadoCama): Promise<CamaHospitalaria> {
+    await new Promise((res) => setTimeout(res, 35));
+    const cama = this.camas.find((c) => c.id === camaId);
+    if (!cama) throw new Error('Cama no encontrada');
+    if (cama.estado === 'OCUPADA' && nuevoEstado !== 'OCUPADA') {
+      throw new Error(`No se puede modificar el estado de la cama ${cama.codigoCama} mientras está ocupada por un paciente.`);
+    }
+
+    cama.estado = nuevoEstado;
+    this.guardarDatos();
+    return cama;
   }
 
   async agregarNotaEvolucion(

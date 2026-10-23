@@ -19,6 +19,7 @@ import { AuditSearchPage } from '../features/admin/AuditSearchPage';
 import { HospitalizationsListPage } from '../features/hospital/HospitalizationsListPage';
 import { HospitalizationAdmissionPage } from '../features/hospital/HospitalizationAdmissionPage';
 import { HospitalizationDetailPage } from '../features/hospital/HospitalizationDetailPage';
+import { HospitalBedsMapPage } from '../features/hospital/HospitalBedsMapPage';
 
 export const App: React.FC = () => {
   return (
@@ -48,6 +49,7 @@ export const App: React.FC = () => {
               <Route path="/hospital/hospitalizaciones" element={<HospitalizationsListPage />} />
               <Route path="/hospital/hospitalizaciones/nueva" element={<HospitalizationAdmissionPage />} />
               <Route path="/hospital/hospitalizaciones/:ingresoId" element={<HospitalizationDetailPage />} />
+              <Route path="/hospital/camas" element={<HospitalBedsMapPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               
