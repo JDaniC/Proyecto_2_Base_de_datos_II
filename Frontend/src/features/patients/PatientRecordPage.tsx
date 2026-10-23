@@ -34,6 +34,7 @@ import { DiagnosticosTratamientosView } from '../consultations/DiagnosticosTrata
 import { RecetasPrescripcionesView } from '../consultations/RecetasPrescripcionesView';
 import { PatientInsurancesView } from './components/PatientInsurancesView';
 import { PatientExamsView } from './components/PatientExamsView';
+import { PatientProceduresView } from './components/PatientProceduresView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -47,7 +48,14 @@ export const PatientRecordPage: React.FC = () => {
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
   const [cargando, setCargando] = useState(true);
   const tabParam = searchParams.get('tab');
-  const initialTab = tabParam === 'seguros' ? 'SEGUROS' : tabParam === 'examenes' ? 'EXAMENES' : 'GENERAL';
+  const initialTab =
+    tabParam === 'seguros'
+      ? 'SEGUROS'
+      : tabParam === 'examenes'
+      ? 'EXAMENES'
+      : tabParam === 'procedimientos'
+      ? 'PROCEDIMIENTOS'
+      : 'GENERAL';
   const [tabActiva, setTabActiva] = useState(initialTab);
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
@@ -58,6 +66,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('SEGUROS');
     } else if (tabParam === 'examenes') {
       setTabActiva('EXAMENES');
+    } else if (tabParam === 'procedimientos') {
+      setTabActiva('PROCEDIMIENTOS');
     }
   }, [searchParams]);
 
@@ -138,6 +148,7 @@ export const PatientRecordPage: React.FC = () => {
     { id: 'RECETAS', label: `Recetas emitidas (${recetas.length})` },
     { id: 'SEGUROS', label: `Seguros y cobertura (${expediente.polizas?.length || 0})` },
     { id: 'EXAMENES', label: 'Exámenes y resultados' },
+    { id: 'PROCEDIMIENTOS', label: 'Procedimientos realizados' },
     { id: 'TIMELINE', label: `Actividad e historial (${eventos.length})` }
   ];
 
@@ -590,6 +601,14 @@ export const PatientRecordPage: React.FC = () => {
 
       {tabActiva === 'EXAMENES' && (
         <PatientExamsView
+          pacienteId={paciente.id}
+          pacienteNombre={paciente.nombreCompleto}
+          esArchivado={paciente.estado === 'ARCHIVADO'}
+        />
+      )}
+
+      {tabActiva === 'PROCEDIMIENTOS' && (
+        <PatientProceduresView
           pacienteId={paciente.id}
           pacienteNombre={paciente.nombreCompleto}
           esArchivado={paciente.estado === 'ARCHIVADO'}

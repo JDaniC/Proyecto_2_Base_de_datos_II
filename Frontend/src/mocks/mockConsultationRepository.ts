@@ -4,7 +4,8 @@ import {
   RegistroConsultaCompletaDTO,
   DetalleConsultaCompleta,
   DiagnosticoHistorial,
-  RecetaHistorial
+  RecetaHistorial,
+  ProcedimientoHospitalarioItem
 } from '../services/types';
 import {
   MOCK_CONSULTAS_DEFECTO,
@@ -94,6 +95,19 @@ export class MockConsultationRepository implements ConsultationRepository {
           ]
         },
         revision: 1,
+        procedimientos: [
+          {
+            id: 'proc-cons-01',
+            nombre: 'Electrocardiograma de 12 derivaciones en reposo',
+            codigo: 'PROC-CARD-01',
+            fechaHora: '2026-10-18T09:40:00Z',
+            profesionalNombre: 'Dra. Elena Morales',
+            resultado: 'Ritmo sinusal normal, frecuencia 72 lpm, sin signos de isquemia ni arritmia ventricular.',
+            observaciones: 'Trazado impreso y archivado en expediente físico.',
+            origen: 'CONSULTA',
+            origenReferencia: 'con-0104-1'
+          }
+        ],
         historialRevisiones: []
       }
     ];
@@ -353,5 +367,30 @@ export class MockConsultationRepository implements ConsultationRepository {
     this.consultas[index] = actualizada;
     this.guardarEnStorage();
     return actualizada;
+  }
+
+  async agregarProcedimiento(
+    _institucionId: InstitucionId,
+    _pacienteId: string,
+    consultaId: string,
+    proc: Omit<ProcedimientoHospitalarioItem, 'id'>
+  ): Promise<DetalleConsultaCompleta> {
+    await new Promise((res) => setTimeout(res, 50));
+    const consulta = this.consultas.find((c) => c.id === consultaId);
+    if (!consulta) throw new Error('Consulta no encontrada');
+
+    const nuevoProc: ProcedimientoHospitalarioItem = {
+      ...proc,
+      id: `proc-cons-${Date.now()}`,
+      origen: 'CONSULTA',
+      origenReferencia: consultaId
+    };
+
+    if (!consulta.procedimientos) {
+      consulta.procedimientos = [];
+    }
+    consulta.procedimientos.push(nuevoProc);
+    this.guardarEnStorage();
+    return { ...consulta };
   }
 }

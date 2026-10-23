@@ -431,6 +431,7 @@ export interface DetalleConsultaCompleta {
   diagnosticos: DiagnosticoHistorial[];
   tratamientos: TratamientoItemDTO[];
   receta?: RecetaHistorial;
+  procedimientos?: ProcedimientoHospitalarioItem[];
   revision: number;
   historialRevisiones?: RevisionConsultaItem[];
 }
@@ -547,6 +548,7 @@ export interface ExpedienteCompleto {
   eventos: EventoHistorial[];
   polizas?: PolizaSeguroPaciente[];
   ordenesExamen?: OrdenExamenHospital[];
+  procedimientos?: ProcedimientoHospitalarioItem[];
 }
 
 export type PrioridadOrdenExamen = 'RUTINA' | 'URGENTE' | 'STAT';
@@ -808,6 +810,8 @@ export interface ProcedimientoHospitalarioItem {
   profesionalNombre: string;
   resultado: string;
   observaciones?: string;
+  origen?: 'HOSPITALIZACION' | 'CONSULTA';
+  origenReferencia?: string;
 }
 
 export interface HospitalizacionItem {

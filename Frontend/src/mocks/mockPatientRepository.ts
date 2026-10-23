@@ -13,6 +13,7 @@ import {
   RecetaMedicamentoItem,
   PolizaSeguroPaciente,
   AfiliarPolizaDTO,
+  ProcedimientoHospitalarioItem,
   CausaArchivo
 } from '../services/types';
 import {
@@ -30,6 +31,34 @@ import {
 
 const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
 const LOCAL_STORAGE_KEY_POLIZAS = 'clinica_pacientes_polizas_v1';
+const LOCAL_STORAGE_KEY_PROCEDIMIENTOS = 'clinica_pacientes_procedimientos_v1';
+
+const MOCK_PROCEDIMIENTOS_INICIALES: Record<string, ProcedimientoHospitalarioItem[]> = {
+  'pac-hosp-001': [
+    {
+      id: 'proc-hosp-01',
+      nombre: 'Colecistectomía Laparoscópica Electiva',
+      codigo: 'QXR-LAP-041',
+      fechaHora: '2026-04-12T10:00:00Z',
+      profesionalNombre: 'Dr. Fernando Arévalo (Cirujano General)',
+      resultado: 'Resección vesicular completa sin perforación ni complicaciones biliares.',
+      observaciones: 'Pieza quirúrgica enviada a anatomía patológica. Hemostasia verificada.',
+      origen: 'HOSPITALIZACION',
+      origenReferencia: 'hosp-001'
+    },
+    {
+      id: 'proc-cons-01',
+      nombre: 'Electrocardiograma de 12 derivaciones en reposo',
+      codigo: 'PROC-CARD-01',
+      fechaHora: '2026-10-18T09:40:00Z',
+      profesionalNombre: 'Dra. Elena Morales',
+      resultado: 'Ritmo sinusal normal, frecuencia 72 lpm, sin signos de isquemia.',
+      observaciones: 'Trazado normal sin alteraciones de conducción.',
+      origen: 'CONSULTA',
+      origenReferencia: 'con-0104-1'
+    }
+  ]
+};
 
 const MOCK_POLIZAS_INICIALES: Record<string, PolizaSeguroPaciente[]> = {
   'pac-hosp-001': [
@@ -90,6 +119,7 @@ export class MockPatientRepository implements PatientRepository {
   private diagnosticosPorPaciente: Record<string, DiagnosticoHistorial[]> = {};
   private recetasPorPaciente: Record<string, RecetaHistorial[]> = {};
   private polizasPorPaciente: Record<string, PolizaSeguroPaciente[]> = {};
+  private procedimientosPorPaciente: Record<string, ProcedimientoHospitalarioItem[]> = {};
 
   constructor() {
     this.cargarPacientes();
@@ -109,12 +139,19 @@ export class MockPatientRepository implements PatientRepository {
       } else {
         this.polizasPorPaciente = JSON.parse(JSON.stringify(MOCK_POLIZAS_INICIALES));
       }
+      const rawProc = localStorage.getItem(LOCAL_STORAGE_KEY_PROCEDIMIENTOS);
+      if (rawProc) {
+        this.procedimientosPorPaciente = JSON.parse(rawProc);
+      } else {
+        this.procedimientosPorPaciente = JSON.parse(JSON.stringify(MOCK_PROCEDIMIENTOS_INICIALES));
+      }
       return;
     } catch {
       // Fallback
     }
     this.pacientes = [...MOCK_PACIENTES_INICIALES];
     this.polizasPorPaciente = JSON.parse(JSON.stringify(MOCK_POLIZAS_INICIALES));
+    this.procedimientosPorPaciente = JSON.parse(JSON.stringify(MOCK_PROCEDIMIENTOS_INICIALES));
     this.guardarEnStorage();
   }
 
@@ -122,6 +159,7 @@ export class MockPatientRepository implements PatientRepository {
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.pacientes));
       localStorage.setItem(LOCAL_STORAGE_KEY_POLIZAS, JSON.stringify(this.polizasPorPaciente));
+      localStorage.setItem(LOCAL_STORAGE_KEY_PROCEDIMIENTOS, JSON.stringify(this.procedimientosPorPaciente));
     } catch {
       // Ignore if quota exceeded
     }
@@ -131,6 +169,7 @@ export class MockPatientRepository implements PatientRepository {
     institucionId: InstitucionId,
     query: BuscarPacientesQuery
   ): Promise<ResultadoPaginadoPacientes> {
+    this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 50));
 
     // Filtrar estrictamente por institución
@@ -203,6 +242,7 @@ export class MockPatientRepository implements PatientRepository {
   }
 
   async obtenerPorId(institucionId: InstitucionId, id: string): Promise<Paciente | null> {
+    this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 30));
     const encontrado = this.pacientes.find(
       (p) => p.id === id && p.institucionId === institucionId
@@ -254,7 +294,8 @@ export class MockPatientRepository implements PatientRepository {
       diagnosticos,
       recetas,
       eventos,
-      polizas: this.polizasPorPaciente[paciente.id] || []
+      polizas: this.polizasPorPaciente[paciente.id] || [],
+      procedimientos: this.procedimientosPorPaciente[paciente.id] || []
     };
   }
 
@@ -550,5 +591,32 @@ export class MockPatientRepository implements PatientRepository {
     pol.estadoVigencia = estado;
     this.guardarEnStorage();
     return pol;
+  }
+
+  async obtenerProcedimientosPaciente(
+    _institucionId: InstitucionId,
+    pacienteId: string
+  ): Promise<ProcedimientoHospitalarioItem[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...(this.procedimientosPorPaciente[pacienteId] || [])];
+  }
+
+  async registrarProcedimientoPaciente(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    proc: Omit<ProcedimientoHospitalarioItem, 'id'>
+  ): Promise<ProcedimientoHospitalarioItem> {
+    await new Promise((res) => setTimeout(res, 50));
+    const nuevoProc: ProcedimientoHospitalarioItem = {
+      ...proc,
+      id: `proc-pac-${Date.now()}`
+    };
+
+    if (!this.procedimientosPorPaciente[pacienteId]) {
+      this.procedimientosPorPaciente[pacienteId] = [];
+    }
+    this.procedimientosPorPaciente[pacienteId].unshift(nuevoProc);
+    this.guardarEnStorage();
+    return nuevoProc;
   }
 }

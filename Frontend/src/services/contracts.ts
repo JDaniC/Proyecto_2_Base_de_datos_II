@@ -88,6 +88,8 @@ export interface PatientRepository {
   obtenerPolizasSeguro(institucionId: InstitucionId, pacienteId: string): Promise<PolizaSeguroPaciente[]>;
   afiliarPolizaSeguro(institucionId: InstitucionId, pacienteId: string, dto: AfiliarPolizaDTO): Promise<PolizaSeguroPaciente>;
   cambiarEstadoPoliza(institucionId: InstitucionId, pacienteId: string, polizaId: string, estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA'): Promise<PolizaSeguroPaciente>;
+  obtenerProcedimientosPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ProcedimientoHospitalarioItem[]>;
+  registrarProcedimientoPaciente(institucionId: InstitucionId, pacienteId: string, proc: Omit<ProcedimientoHospitalarioItem, 'id'>): Promise<ProcedimientoHospitalarioItem>;
 }
 
 export interface AppointmentRepository {
@@ -122,6 +124,12 @@ export interface ConsultationRepository {
     cambios: Partial<RegistroConsultaCompletaDTO>,
     motivoCorreccion: string,
     autor: string
+  ): Promise<DetalleConsultaCompleta>;
+  agregarProcedimiento(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    consultaId: string,
+    proc: Omit<ProcedimientoHospitalarioItem, 'id'>
   ): Promise<DetalleConsultaCompleta>;
 }
 

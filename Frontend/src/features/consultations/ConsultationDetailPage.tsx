@@ -6,7 +6,8 @@ import {
   Edit3,
   User,
   Stethoscope,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -37,6 +38,42 @@ export const ConsultationDetailPage: React.FC = () => {
   const [showImprimirReceta, setShowImprimirReceta] = useState(false);
   const [showModificarConsulta, setShowModificarConsulta] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
+  // Procedimientos H07
+  const [mostrarFormProc, setMostrarFormProc] = useState(false);
+  const [procNombre, setProcNombre] = useState('');
+  const [procResultado, setProcResultado] = useState('');
+  const [procObs, setProcObs] = useState('');
+  const [guardandoProc, setGuardandoProc] = useState(false);
+
+  const handleRegistrarProcedimiento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consulta || !pacienteId || !procNombre.trim() || !procResultado.trim()) return;
+    setGuardandoProc(true);
+    try {
+      const actualizada = await consultationRepository.agregarProcedimiento(
+        institucionId,
+        pacienteId,
+        consulta.id,
+        {
+          nombre: procNombre.trim(),
+          fechaHora: new Date().toISOString(),
+          profesionalNombre: sesion?.nombre || consulta.profesionalNombre,
+          resultado: procResultado.trim(),
+          observaciones: procObs.trim() || undefined
+        }
+      );
+      setConsulta(actualizada);
+      setProcNombre('');
+      setProcResultado('');
+      setProcObs('');
+      setMostrarFormProc(false);
+      setMensajeExito('Procedimiento clínico registrado exitosamente.');
+      setTimeout(() => setMensajeExito(null), 3500);
+    } finally {
+      setGuardandoProc(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -748,6 +785,167 @@ export const ConsultationDetailPage: React.FC = () => {
         ) : (
           <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
             No se prescribieron medicamentos para esta consulta médica.
+          </div>
+        )}
+      </Panel>
+
+      {/* Procedimientos Clínicos Realizados (H07) */}
+      <Panel
+        title="Procedimientos Clínicos Realizados (H07)"
+        subtitle="Intervenciones, exploraciones diagnósticas o procedimientos menores ambulatorios"
+        action={
+          !mostrarFormProc && (
+            <Button
+              size="sm"
+              variant="secondary"
+              leftIcon={<Plus size={14} />}
+              onClick={() => setMostrarFormProc(true)}
+            >
+              Registrar Procedimiento (H07)
+            </Button>
+          )
+        }
+      >
+        {mostrarFormProc && (
+          <form
+            onSubmit={handleRegistrarProcedimiento}
+            style={{
+              padding: '16px',
+              backgroundColor: 'var(--color-panel)',
+              borderRadius: 'var(--radius-panel)',
+              border: '1px solid var(--color-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              marginBottom: '16px'
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-strong)' }}>
+              Registrar Procedimiento Clínico (H07)
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+              <div>
+                <label
+                  htmlFor="proc-cons-nombre"
+                  style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '4px' }}
+                >
+                  Nombre del Procedimiento *
+                </label>
+                <input
+                  id="proc-cons-nombre"
+                  type="text"
+                  value={procNombre}
+                  onChange={(e) => setProcNombre(e.target.value)}
+                  placeholder="Ejemplo: Curación de herida, Infiltración articular..."
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-field)',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="proc-cons-resultado"
+                  style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '4px' }}
+                >
+                  Resultado o Hallazgos Obtenidos *
+                </label>
+                <input
+                  id="proc-cons-resultado"
+                  type="text"
+                  value={procResultado}
+                  onChange={(e) => setProcResultado(e.target.value)}
+                  placeholder="Ejemplo: Procedimiento tolerado sin incidentes, sangrado mínimo..."
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-field)',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="proc-cons-obs"
+                style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '4px' }}
+              >
+                Observaciones y Cuidados Posteriores (Opcional)
+              </label>
+              <input
+                id="proc-cons-obs"
+                type="text"
+                value={procObs}
+                onChange={(e) => setProcObs(e.target.value)}
+                placeholder="Ejemplo: Se colocó vendaje compresivo, cita de control en 7 días..."
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-field)',
+                  fontSize: '13px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+              <Button size="sm" variant="secondary" onClick={() => setMostrarFormProc(false)} disabled={guardandoProc}>
+                Cancelar
+              </Button>
+              <Button size="sm" type="submit" variant="primary" disabled={guardandoProc}>
+                {guardandoProc ? 'Registrando...' : 'Guardar Procedimiento (H07)'}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {consulta.procedimientos && consulta.procedimientos.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {consulta.procedimientos.map((p) => (
+              <div
+                key={p.id}
+                style={{
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-panel)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-field)',
+                  fontSize: '13px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <strong style={{ color: 'var(--color-strong)', fontSize: '14px' }}>{p.nombre}</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                    {new Date(p.fechaHora).toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ marginBottom: '4px' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Profesional: </span>
+                  <span style={{ fontWeight: 600 }}>{p.profesionalNombre}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Resultado: </span>
+                  <span>{p.resultado}</span>
+                </div>
+                {p.observaciones && (
+                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                    <em>Observaciones: {p.observaciones}</em>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+            No se realizaron procedimientos invasivos o diagnósticos en esta consulta médica.
           </div>
         )}
       </Panel>

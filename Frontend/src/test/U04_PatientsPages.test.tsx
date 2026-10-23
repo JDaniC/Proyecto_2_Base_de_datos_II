@@ -51,7 +51,7 @@ describe('U04 — Pantalla 02 Aprobada: Búsqueda de Pacientes (V04) y Alta/Edic
     await waitFor(() => {
       expect(screen.queryByText('Roberto Estrada Morales')).not.toBeInTheDocument();
     });
-    expect(screen.getByText('Claudia Méndez Arriola')).toBeInTheDocument();
+    expect(await screen.findByText('Claudia Méndez Arriola')).toBeInTheDocument();
 
     // Búsqueda por documento CUI de Carlos Villagrán
     await user.clear(buscador);
