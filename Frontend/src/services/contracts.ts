@@ -31,6 +31,9 @@ import {
   PolizaSeguroPaciente,
   AfiliarPolizaDTO,
   ResponsablePediatrico,
+  AntecedentesClinicos,
+  AntecedentesPerinatales,
+  AlergiaRegistro,
   ProcedimientoOdontologico,
   PruebaLaboratorioCatalogo,
   VacunaCatalogo,
@@ -116,6 +119,12 @@ export interface PatientRepository {
   agregarResponsable(institucionId: InstitucionId, pacienteId: string, resp: Omit<ResponsablePediatrico, 'id'>): Promise<ResponsablePediatrico>;
   actualizarResponsable(institucionId: InstitucionId, pacienteId: string, responsableId: string, cambios: Partial<Omit<ResponsablePediatrico, 'id'>>): Promise<ResponsablePediatrico>;
   eliminarResponsable(institucionId: InstitucionId, pacienteId: string, responsableId: string): Promise<void>;
+  obtenerAntecedentes?(institucionId: InstitucionId, pacienteId: string): Promise<AntecedentesClinicos>;
+  actualizarAntecedentes?(institucionId: InstitucionId, pacienteId: string, antecedentes: AntecedentesClinicos): Promise<AntecedentesClinicos>;
+  confirmarSinAlergias?(institucionId: InstitucionId, pacienteId: string, verificadoPor: string): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  registrarAlergia?(institucionId: InstitucionId, pacienteId: string, alergia: AlergiaRegistro, verificadoPor?: string): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  eliminarAlergia?(institucionId: InstitucionId, pacienteId: string, sustancia: string): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  actualizarPerinatales?(institucionId: InstitucionId, pacienteId: string, perinatales: AntecedentesPerinatales): Promise<AntecedentesClinicos>;
 }
 
 export interface AppointmentRepository {

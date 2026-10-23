@@ -15,7 +15,10 @@ import {
   AfiliarPolizaDTO,
   ResponsablePediatrico,
   ProcedimientoHospitalarioItem,
-  CausaArchivo
+  CausaArchivo,
+  AntecedentesClinicos,
+  AntecedentesPerinatales,
+  AlergiaRegistro
 } from '../services/types';
 import {
   MOCK_PACIENTES_INICIALES,
@@ -33,6 +36,7 @@ import {
 const LOCAL_STORAGE_KEY = 'clinica_pacientes_dataset_v1';
 const LOCAL_STORAGE_KEY_POLIZAS = 'clinica_pacientes_polizas_v1';
 const LOCAL_STORAGE_KEY_PROCEDIMIENTOS = 'clinica_pacientes_procedimientos_v1';
+const LOCAL_STORAGE_KEY_ANTECEDENTES = 'clinica_pacientes_antecedentes_v1';
 
 const MOCK_PROCEDIMIENTOS_INICIALES: Record<string, ProcedimientoHospitalarioItem[]> = {
   'pac-hosp-001': [
@@ -121,6 +125,7 @@ export class MockPatientRepository implements PatientRepository {
   private recetasPorPaciente: Record<string, RecetaHistorial[]> = {};
   private polizasPorPaciente: Record<string, PolizaSeguroPaciente[]> = {};
   private procedimientosPorPaciente: Record<string, ProcedimientoHospitalarioItem[]> = {};
+  private antecedentesPorPaciente: Record<string, AntecedentesClinicos> = {};
 
   constructor() {
     this.cargarPacientes();
@@ -146,6 +151,12 @@ export class MockPatientRepository implements PatientRepository {
       } else {
         this.procedimientosPorPaciente = JSON.parse(JSON.stringify(MOCK_PROCEDIMIENTOS_INICIALES));
       }
+      const rawAnt = localStorage.getItem(LOCAL_STORAGE_KEY_ANTECEDENTES);
+      if (rawAnt) {
+        this.antecedentesPorPaciente = JSON.parse(rawAnt);
+      } else {
+        this.antecedentesPorPaciente = JSON.parse(JSON.stringify(MOCK_ANTECEDENTES_DEFECTO));
+      }
       return;
     } catch {
       // Fallback
@@ -153,6 +164,7 @@ export class MockPatientRepository implements PatientRepository {
     this.pacientes = [...MOCK_PACIENTES_INICIALES];
     this.polizasPorPaciente = JSON.parse(JSON.stringify(MOCK_POLIZAS_INICIALES));
     this.procedimientosPorPaciente = JSON.parse(JSON.stringify(MOCK_PROCEDIMIENTOS_INICIALES));
+    this.antecedentesPorPaciente = JSON.parse(JSON.stringify(MOCK_ANTECEDENTES_DEFECTO));
     this.guardarEnStorage();
   }
 
@@ -161,6 +173,7 @@ export class MockPatientRepository implements PatientRepository {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.pacientes));
       localStorage.setItem(LOCAL_STORAGE_KEY_POLIZAS, JSON.stringify(this.polizasPorPaciente));
       localStorage.setItem(LOCAL_STORAGE_KEY_PROCEDIMIENTOS, JSON.stringify(this.procedimientosPorPaciente));
+      localStorage.setItem(LOCAL_STORAGE_KEY_ANTECEDENTES, JSON.stringify(this.antecedentesPorPaciente));
     } catch {
       // Ignore if quota exceeded
     }
@@ -259,7 +272,7 @@ export class MockPatientRepository implements PatientRepository {
     const paciente = await this.obtenerPorId(institucionId, id);
     if (!paciente) return null;
 
-    const antecedentes = MOCK_ANTECEDENTES_DEFECTO[paciente.id] || {
+    const antecedentes = this.antecedentesPorPaciente[paciente.id] || MOCK_ANTECEDENTES_DEFECTO[paciente.id] || {
       patologicos: ['Sin antecedentes patológicos crónicos registrados'],
       quirurgicos: ['Sin intervenciones quirúrgicas mayores'],
       familiares: ['No refiere antecedentes familiares relevantes'],
@@ -726,5 +739,173 @@ export class MockPatientRepository implements PatientRepository {
 
     paciente.responsables = paciente.responsables.filter((r) => r.id !== responsableId);
     this.guardarEnStorage();
+  }
+
+  async obtenerAntecedentes(
+    _institucionId: InstitucionId,
+    pacienteId: string
+  ): Promise<AntecedentesClinicos> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 30));
+    return (
+      this.antecedentesPorPaciente[pacienteId] ||
+      MOCK_ANTECEDENTES_DEFECTO[pacienteId] || {
+        patologicos: [],
+        quirurgicos: [],
+        familiares: [],
+        alergias: [],
+        medicamentosActuales: []
+      }
+    );
+  }
+
+  async actualizarAntecedentes(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    antecedentes: AntecedentesClinicos
+  ): Promise<AntecedentesClinicos> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    this.antecedentesPorPaciente[pacienteId] = { ...antecedentes };
+    this.guardarEnStorage();
+    return this.antecedentesPorPaciente[pacienteId];
+  }
+
+  async confirmarSinAlergias(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    verificadoPor: string
+  ): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+
+    paciente.estadoAlergias = 'SIN_ALERGIAS_CONOCIDAS';
+
+    if (!this.antecedentesPorPaciente[pacienteId]) {
+      this.antecedentesPorPaciente[pacienteId] = JSON.parse(
+        JSON.stringify(
+          MOCK_ANTECEDENTES_DEFECTO[pacienteId] || {
+            patologicos: [],
+            quirurgicos: [],
+            familiares: [],
+            alergias: [],
+            medicamentosActuales: []
+          }
+        )
+      );
+    }
+
+    this.antecedentesPorPaciente[pacienteId].alergias = [];
+    this.antecedentesPorPaciente[pacienteId].verificacionAlergias = {
+      verificadoPor,
+      fechaVerificacion: new Date().toISOString().split('T')[0],
+      notas: 'Verificación clínica realizada sin hallazgos de atopia ni hipersensibilidad farmacológica.'
+    };
+
+    this.guardarEnStorage();
+    return { paciente, antecedentes: this.antecedentesPorPaciente[pacienteId] };
+  }
+
+  async registrarAlergia(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    alergia: AlergiaRegistro,
+    verificadoPor?: string
+  ): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+
+    if (!this.antecedentesPorPaciente[pacienteId]) {
+      this.antecedentesPorPaciente[pacienteId] = JSON.parse(
+        JSON.stringify(
+          MOCK_ANTECEDENTES_DEFECTO[pacienteId] || {
+            patologicos: [],
+            quirurgicos: [],
+            familiares: [],
+            alergias: [],
+            medicamentosActuales: []
+          }
+        )
+      );
+    }
+
+    const index = this.antecedentesPorPaciente[pacienteId].alergias.findIndex(
+      (a) => a.sustancia.toLowerCase() === alergia.sustancia.toLowerCase()
+    );
+
+    const nuevaAlergia: AlergiaRegistro = {
+      ...alergia,
+      fechaRegistro: alergia.fechaRegistro || new Date().toISOString().split('T')[0]
+    };
+
+    if (index >= 0) {
+      this.antecedentesPorPaciente[pacienteId].alergias[index] = nuevaAlergia;
+    } else {
+      this.antecedentesPorPaciente[pacienteId].alergias.push(nuevaAlergia);
+    }
+
+    paciente.estadoAlergias = 'CON_ALERGIAS';
+    if (verificadoPor) {
+      this.antecedentesPorPaciente[pacienteId].verificacionAlergias = {
+        verificadoPor,
+        fechaVerificacion: new Date().toISOString().split('T')[0]
+      };
+    }
+
+    this.guardarEnStorage();
+    return { paciente, antecedentes: this.antecedentesPorPaciente[pacienteId] };
+  }
+
+  async eliminarAlergia(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    sustancia: string
+  ): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    const paciente = this.pacientes.find((p) => p.id === pacienteId);
+    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+
+    if (this.antecedentesPorPaciente[pacienteId]) {
+      this.antecedentesPorPaciente[pacienteId].alergias = this.antecedentesPorPaciente[
+        pacienteId
+      ].alergias.filter((a) => a.sustancia.toLowerCase() !== sustancia.toLowerCase());
+      if (this.antecedentesPorPaciente[pacienteId].alergias.length === 0) {
+        paciente.estadoAlergias = 'SIN_ALERGIAS_CONOCIDAS';
+      }
+    }
+
+    this.guardarEnStorage();
+    return { paciente, antecedentes: this.antecedentesPorPaciente[pacienteId] };
+  }
+
+  async actualizarPerinatales(
+    _institucionId: InstitucionId,
+    pacienteId: string,
+    perinatales: AntecedentesPerinatales
+  ): Promise<AntecedentesClinicos> {
+    this.cargarPacientes();
+    await new Promise((res) => setTimeout(res, 40));
+    if (!this.antecedentesPorPaciente[pacienteId]) {
+      this.antecedentesPorPaciente[pacienteId] = JSON.parse(
+        JSON.stringify(
+          MOCK_ANTECEDENTES_DEFECTO[pacienteId] || {
+            patologicos: [],
+            quirurgicos: [],
+            familiares: [],
+            alergias: [],
+            medicamentosActuales: []
+          }
+        )
+      );
+    }
+
+    this.antecedentesPorPaciente[pacienteId].perinatales = { ...perinatales };
+    this.guardarEnStorage();
+    return this.antecedentesPorPaciente[pacienteId];
   }
 }

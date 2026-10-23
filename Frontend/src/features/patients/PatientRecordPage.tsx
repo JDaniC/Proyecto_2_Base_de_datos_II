@@ -37,6 +37,7 @@ import { PatientExamsView } from './components/PatientExamsView';
 import { PatientProceduresView } from './components/PatientProceduresView';
 import { PediatricGuardiansView } from './components/PediatricGuardiansView';
 import { PediatricGrowthView } from './components/PediatricGrowthView';
+import { PediatricHistoryAllergiesView } from './components/PediatricHistoryAllergiesView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -57,6 +58,12 @@ export const PatientRecordPage: React.FC = () => {
       ? 'EXAMENES'
       : tabParam === 'procedimientos'
       ? 'PROCEDIMIENTOS'
+      : tabParam === 'responsables'
+      ? 'RESPONSABLES'
+      : tabParam === 'crecimiento'
+      ? 'CRECIMIENTO'
+      : tabParam === 'antecedentes'
+      ? 'ANTECEDENTES'
       : 'GENERAL';
   const [tabActiva, setTabActiva] = useState(initialTab);
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
@@ -74,6 +81,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('RESPONSABLES');
     } else if (tabParam === 'crecimiento') {
       setTabActiva('CRECIMIENTO');
+    } else if (tabParam === 'antecedentes') {
+      setTabActiva('ANTECEDENTES');
     }
   }, [searchParams]);
 
@@ -154,7 +163,8 @@ export const PatientRecordPage: React.FC = () => {
     ...(esPediatrico
       ? [
           { id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` },
-          { id: 'CRECIMIENTO', label: 'Crecimiento y curvas OMS' }
+          { id: 'CRECIMIENTO', label: 'Crecimiento y curvas OMS' },
+          { id: 'ANTECEDENTES', label: 'Antecedentes y alergias' }
         ]
       : []),
     { id: 'CONSULTAS', label: `Consultas (${consultas.length})` },
@@ -438,7 +448,13 @@ export const PatientRecordPage: React.FC = () => {
             variant="danger"
             title="ALERTA CLÍNICA: Paciente con alergias medicamentosas registradas"
           >
-            Se registran reacciones alérgicas documentadas: <strong>Penicilina y derivados betalactámicos</strong>, <strong>Ibuprofeno</strong>. Verifique contraindicaciones cruzadas antes de emitir recetas clínicas.
+            Se registran reacciones alérgicas documentadas:{' '}
+            <strong>
+              {antecedentes.alergias.length > 0
+                ? antecedentes.alergias.map((a) => a.sustancia).join(', ')
+                : 'Alergias documentadas'}
+            </strong>
+            . Verifique contraindicaciones cruzadas antes de emitir recetas clínicas o administrar fármacos.
           </Alert>
         </div>
       )}
@@ -539,6 +555,15 @@ export const PatientRecordPage: React.FC = () => {
           paciente={paciente}
           consultas={consultas}
           onActualizado={() => cargarExpediente(true)}
+        />
+      )}
+
+      {tabActiva === 'ANTECEDENTES' && (
+        <PediatricHistoryAllergiesView
+          paciente={paciente}
+          antecedentes={antecedentes}
+          institucionId={institucionId}
+          onActualizar={() => cargarExpediente(true)}
         />
       )}
 

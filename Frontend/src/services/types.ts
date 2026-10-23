@@ -341,10 +341,30 @@ export interface Paciente {
 
 export type CausaArchivo = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
 
+export type TipoParto = 'PARTO_VAGINAL' | 'CESAREA' | 'PARTO_INSTRUMENTADO';
+
+export interface AntecedentesPerinatales {
+  edadGestacionalSemanas?: number;
+  pesoNacimientoGramos?: number;
+  tallaNacimientoCm?: number;
+  apgar1Minuto?: number;
+  apgar5Minutos?: number;
+  tipoParto?: TipoParto;
+  lactanciaMaternaExclusivaMeses?: number;
+  complicacionesPerinatales?: string;
+}
+
+export interface VerificacionAlergias {
+  verificadoPor: string;
+  fechaVerificacion: string;
+  notas?: string;
+}
+
 export interface AlergiaRegistro {
   sustancia: string;
   severidad: 'LEVE' | 'MODERADA' | 'SEVERA';
   reaccion: string;
+  fechaRegistro?: string;
 }
 
 export interface AntecedentesClinicos {
@@ -353,6 +373,8 @@ export interface AntecedentesClinicos {
   familiares: string[];
   alergias: AlergiaRegistro[];
   medicamentosActuales: string[];
+  perinatales?: AntecedentesPerinatales;
+  verificacionAlergias?: VerificacionAlergias;
 }
 
 export interface SignosVitales {

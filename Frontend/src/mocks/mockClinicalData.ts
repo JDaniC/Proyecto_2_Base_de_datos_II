@@ -44,6 +44,97 @@ export const MOCK_ANTECEDENTES_DEFECTO: Record<string, AntecedentesClinicos> = {
     medicamentosActuales: [
       'Salbutamol inhalador 100 mcg a demanda ante broncoespasmo'
     ]
+  },
+  'pac-ped-001': {
+    patologicos: [
+      'Dermatitis atópica infantil de control ambulatorio',
+      'Bronquiolitis aguda a los 8 meses (resuelta sin secuelas)'
+    ],
+    quirurgicos: [
+      'Sin antecedentes quirúrgicos ni hospitalizaciones mayores'
+    ],
+    familiares: [
+      'Madre con rinitis alérgica estacional',
+      'Padre con antecedente de dermatitis de contacto'
+    ],
+    alergias: [
+      {
+        sustancia: 'Proteína de Leche de Vaca (Caseína / Lactoalbúmina)',
+        severidad: 'MODERADA',
+        reaccion: 'Erupción urticariana peribucal y reflujo gastroesofágico agudo'
+      },
+      {
+        sustancia: 'Amoxicilina / Clavulanato',
+        severidad: 'SEVERA',
+        reaccion: 'Exantema morbiliforme con broncoespasmo moderado'
+      }
+    ],
+    medicamentosActuales: [
+      'Cetirizina jarabe 2.5 mg/día en períodos de brote atópico',
+      'Crema emoliente con ceramidas tras baño diario'
+    ],
+    perinatales: {
+      edadGestacionalSemanas: 38,
+      pesoNacimientoGramos: 3150,
+      tallaNacimientoCm: 49,
+      apgar1Minuto: 8,
+      apgar5Minutos: 9,
+      tipoParto: 'PARTO_VAGINAL',
+      lactanciaMaternaExclusivaMeses: 6,
+      complicacionesPerinatales: 'Sin complicaciones. Ictericia fisiológica leve resuelta sin fototerapia.'
+    },
+    verificacionAlergias: {
+      verificadoPor: 'Dra. Carmen Morales (Pediatra)',
+      fechaVerificacion: '2026-06-15',
+      notas: 'Alergias confirmadas por prueba cutánea y provocación oral controlada.'
+    }
+  },
+  'pac-ped-002': {
+    patologicos: [
+      'Sin patologías crónicas documentadas'
+    ],
+    quirurgicos: [],
+    familiares: [
+      'Sin antecedentes heredo-familiares de relevancia'
+    ],
+    alergias: [],
+    medicamentosActuales: [],
+    perinatales: {
+      edadGestacionalSemanas: 39,
+      pesoNacimientoGramos: 3300,
+      tallaNacimientoCm: 50,
+      apgar1Minuto: 9,
+      apgar5Minutos: 10,
+      tipoParto: 'CESAREA',
+      lactanciaMaternaExclusivaMeses: 4,
+      complicacionesPerinatales: 'Cesárea por presentación podálica. Sin asfixia neonatal.'
+    }
+  },
+  'pac-ped-003': {
+    patologicos: [
+      'Rinitis alérgica estacional leve'
+    ],
+    quirurgicos: [],
+    familiares: [
+      'Madre asmática'
+    ],
+    alergias: [],
+    medicamentosActuales: [],
+    perinatales: {
+      edadGestacionalSemanas: 40,
+      pesoNacimientoGramos: 3450,
+      tallaNacimientoCm: 51,
+      apgar1Minuto: 9,
+      apgar5Minutos: 9,
+      tipoParto: 'PARTO_VAGINAL',
+      lactanciaMaternaExclusivaMeses: 6,
+      complicacionesPerinatales: 'Parto eutócico a término sin incidencias.'
+    },
+    verificacionAlergias: {
+      verificadoPor: 'Dr. Roberto Santos (Pediatra)',
+      fechaVerificacion: '2026-08-20',
+      notas: 'Anamnesis farmacológica negativa para alergias medicamentosas y alimentarias.'
+    }
   }
 };
 
