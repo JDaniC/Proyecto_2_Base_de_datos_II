@@ -329,8 +329,24 @@ export class MockCatalogRepository implements CatalogRepository {
   }
 
   async obtenerProcedimientosOdontologicos(_institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]> {
+    this.cargarDatos();
     await new Promise((res) => setTimeout(res, 30));
     return [...this.procedimientosOdonto];
+  }
+
+  async crearProcedimientoOdontologico(
+    _institucionId: InstitucionId,
+    proc: Omit<ProcedimientoOdontologico, 'id'>
+  ): Promise<ProcedimientoOdontologico> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 40));
+    const nuevo: ProcedimientoOdontologico = {
+      ...proc,
+      id: `proc-odon-${Date.now()}`
+    };
+    this.procedimientosOdonto.push(nuevo);
+    this.guardarDatos();
+    return nuevo;
   }
 
   async obtenerPruebasLaboratorio(_institucionId: InstitucionId): Promise<PruebaLaboratorioCatalogo[]> {

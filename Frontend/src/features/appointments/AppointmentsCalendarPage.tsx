@@ -66,6 +66,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
 
   const cargarCitas = useCallback(() => {
+    let cancelado = false;
     setCargando(true);
     const fechaDesde = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-19';
     const fechaHasta = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-24';
@@ -79,13 +80,21 @@ export const AppointmentsCalendarPage: React.FC = () => {
         q: terminoBusqueda
       })
       .then((data) => {
-        setCitas(data);
-        setCargando(false);
+        if (!cancelado) {
+          setCitas(data);
+          setCargando(false);
+        }
       })
       .catch((err) => {
-        console.error('Error cargando citas de agenda:', err);
-        setCargando(false);
+        if (!cancelado) {
+          console.error('Error cargando citas de agenda:', err);
+          setCargando(false);
+        }
       });
+
+    return () => {
+      cancelado = true;
+    };
   }, [
     appointmentRepository,
     institucionId,
@@ -97,7 +106,10 @@ export const AppointmentsCalendarPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    cargarCitas();
+    const cleanup = cargarCitas();
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [cargarCitas]);
 
   const mostrarToast = (mensaje: string) => {

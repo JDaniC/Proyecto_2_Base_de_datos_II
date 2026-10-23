@@ -19,6 +19,7 @@ import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { RegistrarMedicoModal } from './RegistrarMedicoModal';
+import { RegistrarProcedimientoOdontoModal } from './RegistrarProcedimientoOdontoModal';
 import {
   MedicoCatalogo,
   AseguradoraCatalogo,
@@ -42,7 +43,8 @@ export const CatalogosManagementPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const activeTab = (searchParams.get('tab') as CatalogoTab) || 'personal-medico';
+  const defaultTab: CatalogoTab = sesion?.institucionId === 'CLINICA_ODONTOLOGICA' ? 'odontologia' : 'personal-medico';
+  const activeTab = (searchParams.get('tab') as CatalogoTab) || defaultTab;
 
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
@@ -57,6 +59,7 @@ export const CatalogosManagementPage: React.FC = () => {
 
   // Modales
   const [showModalMedico, setShowModalMedico] = useState(false);
+  const [showModalOdonto, setShowModalOdonto] = useState(false);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -99,6 +102,12 @@ export const CatalogosManagementPage: React.FC = () => {
   const handleMedicoCreado = (nuevo: MedicoCatalogo) => {
     setMedicos((prev) => [nuevo, ...prev]);
     setNotificacion(`Médico ${nuevo.nombre} colegiado ${nuevo.colegiado} registrado exitosamente.`);
+    setTimeout(() => setNotificacion(null), 5000);
+  };
+
+  const handleProcedimientoCreado = (nuevo: ProcedimientoOdontologico) => {
+    setProcedimientosOdonto((prev) => [...prev, nuevo]);
+    setNotificacion(`Procedimiento odontológico ${nuevo.codigo} - ${nuevo.nombre} registrado exitosamente en el catálogo.`);
     setTimeout(() => setNotificacion(null), 5000);
   };
 
@@ -184,6 +193,20 @@ export const CatalogosManagementPage: React.FC = () => {
           >
             Registrar Médico (H08)
           </Button>
+        )}
+
+        {activeTab === 'odontologia' && (
+          sesion?.permisos.includes('usuarios.administrar') || sesion?.rolId === 'ADMIN_INSTITUCIONAL' ? (
+            <Button
+              variant="primary"
+              onClick={() => setShowModalOdonto(true)}
+              leftIcon={<Plus size={16} />}
+            >
+              Nuevo Procedimiento (C05)
+            </Button>
+          ) : (
+            <Badge variant="info">Modo Consulta Clínica (Solo Lectura)</Badge>
+          )
         )}
       </div>
 
@@ -530,15 +553,72 @@ export const CatalogosManagementPage: React.FC = () => {
         /* Pestaña C05: Catálogos Odontológicos (Sin odontograma) */
         <Panel>
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
                 Catálogo de Procedimientos y Aranceles Odontológicos (C05)
               </h3>
               <Badge variant="neutral">Sin odontograma</Badge>
+              <Badge variant="info">Especialidad Estomatológica</Badge>
             </div>
             <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
               Nomenclatura nosológica de intervenciones estomatológicas, duración estimada de sillón y arancel referencial.
             </p>
+          </div>
+
+          {/* Métricas C05 */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '12px',
+              marginBottom: '16px'
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--color-panel)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '12px 14px'
+              }}
+            >
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                Procedimientos Registrados
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-strong)', marginTop: '2px' }}>
+                {procedimientosOdonto.length}
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: 'var(--color-panel)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '12px 14px'
+              }}
+            >
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                Categorías Clínicas
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', marginTop: '2px' }}>
+                5 especialidades
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: 'var(--color-panel)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '12px 14px'
+              }}
+            >
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                Rango Arancelario (GTQ)
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-strong)', marginTop: '6px' }}>
+                Q {procedimientosOdonto.length ? Math.min(...procedimientosOdonto.map((p) => p.arancelReferencialGTQ)).toFixed(2) : '0.00'} — Q {procedimientosOdonto.length ? Math.max(...procedimientosOdonto.map((p) => p.arancelReferencialGTQ)).toFixed(2) : '0.00'}
+              </div>
+            </div>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -553,27 +633,37 @@ export const CatalogosManagementPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {procedimientosOdonto
-                  .filter((p) =>
-                    busqueda ? p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.codigo.toLowerCase().includes(busqueda.toLowerCase()) : true
-                  )
-                  .map((proc) => (
-                    <tr key={proc.id} style={{ borderBottom: '1px solid var(--color-divider)' }}>
-                      <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 600 }}>{proc.codigo}</td>
-                      <td style={{ padding: '12px', fontWeight: 600, color: 'var(--color-strong)' }}>{proc.nombre}</td>
-                      <td style={{ padding: '12px' }}>
-                        <Badge variant="info">{proc.categoria}</Badge>
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-secondary)' }}>
-                          <Clock size={13} /> {proc.duracionEstimadaMin} min
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--color-strong)' }}>
-                        Q {proc.arancelReferencialGTQ.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
+                {procedimientosOdonto.filter((p) =>
+                  busqueda ? p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.codigo.toLowerCase().includes(busqueda.toLowerCase()) : true
+                ).length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                      No se encontraron procedimientos odontológicos que coincidan con «{busqueda}».
+                    </td>
+                  </tr>
+                ) : (
+                  procedimientosOdonto
+                    .filter((p) =>
+                      busqueda ? p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.codigo.toLowerCase().includes(busqueda.toLowerCase()) : true
+                    )
+                    .map((proc) => (
+                      <tr key={proc.id} style={{ borderBottom: '1px solid var(--color-divider)' }}>
+                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 600 }}>{proc.codigo}</td>
+                        <td style={{ padding: '12px', fontWeight: 600, color: 'var(--color-strong)' }}>{proc.nombre}</td>
+                        <td style={{ padding: '12px' }}>
+                          <Badge variant="info">{proc.categoria}</Badge>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-secondary)' }}>
+                            <Clock size={13} /> {proc.duracionEstimadaMin} min
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--color-strong)' }}>
+                          Q {proc.arancelReferencialGTQ.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
@@ -786,6 +876,15 @@ export const CatalogosManagementPage: React.FC = () => {
           isOpen={showModalMedico}
           onClose={() => setShowModalMedico(false)}
           onMedicoCreado={handleMedicoCreado}
+        />
+      )}
+
+      {/* Modal para alta de procedimiento odontológico (C05) */}
+      {showModalOdonto && (
+        <RegistrarProcedimientoOdontoModal
+          isOpen={showModalOdonto}
+          onClose={() => setShowModalOdonto(false)}
+          onProcedimientoCreado={handleProcedimientoCreado}
         />
       )}
     </div>

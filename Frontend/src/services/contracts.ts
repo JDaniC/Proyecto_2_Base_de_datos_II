@@ -148,6 +148,7 @@ export interface CatalogRepository {
   cambiarEstadoMedico(institucionId: InstitucionId, id: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<MedicoCatalogo>;
   obtenerAseguradoras(institucionId: InstitucionId): Promise<AseguradoraCatalogo[]>;
   obtenerProcedimientosOdontologicos(institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]>;
+  crearProcedimientoOdontologico(institucionId: InstitucionId, proc: Omit<ProcedimientoOdontologico, 'id'>): Promise<ProcedimientoOdontologico>;
   obtenerPruebasLaboratorio(institucionId: InstitucionId): Promise<PruebaLaboratorioCatalogo[]>;
   obtenerVacunas(institucionId: InstitucionId): Promise<VacunaCatalogo[]>;
 }

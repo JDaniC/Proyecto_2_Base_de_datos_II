@@ -75,7 +75,7 @@ export const App: React.FC = () => {
               <Route
                 path="/administracion/catalogos"
                 element={
-                  <AuthGuard requierePermiso="usuarios.administrar">
+                  <AuthGuard requierePermiso={['usuarios.administrar', 'historial.leer', 'consultas.registrar']}>
                     <CatalogosManagementPage />
                   </AuthGuard>
                 }
