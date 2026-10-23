@@ -7,6 +7,7 @@ import {
   BedDouble,
   DoorClosed,
   FileText,
+  FileCheck2,
   FlaskConical,
   TestTube2,
   Activity,
@@ -107,6 +108,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Muestras y tomas',
           icon: <TestTube2 size={20} />,
         },
+        ...(sesion.permisos.includes('resultados.validar')
+          ? [
+              {
+                id: 'validacion-lab',
+                path: '/laboratorio/resultados/validacion',
+                label: 'Validación técnica',
+                icon: <FileCheck2 size={20} />,
+              }
+            ]
+          : []),
         {
           id: 'calidad-lab',
           path: '/laboratorio/calidad',
