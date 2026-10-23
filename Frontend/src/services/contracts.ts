@@ -41,7 +41,11 @@ import {
   NotaEvolucionItem,
   ProcedimientoHospitalarioItem,
   CrearIngresoHospitalarioDTO,
-  RegistrarEgresoHospitalarioDTO
+  RegistrarEgresoHospitalarioDTO,
+  OrdenExamenHospital,
+  ResultadoExamenHospital,
+  CrearOrdenExamenDTO,
+  RegistrarResultadoExamenDTO
 } from './types';
 
 export interface IniciarSesionParams {
@@ -158,4 +162,16 @@ export interface HospitalizationRepository {
   cambiarEstadoCama(institucionId: InstitucionId, camaId: string, nuevoEstado: EstadoCama): Promise<CamaHospitalaria>;
   agregarNotaEvolucion(institucionId: InstitucionId, hospitalizacionId: string, nota: Omit<NotaEvolucionItem, 'id'>): Promise<HospitalizacionItem>;
   agregarProcedimiento(institucionId: InstitucionId, hospitalizacionId: string, proc: Omit<ProcedimientoHospitalarioItem, 'id'>): Promise<HospitalizacionItem>;
+}
+
+export interface HospitalExamRepository {
+  listarOrdenes(institucionId: InstitucionId, filtroEstado?: string): Promise<OrdenExamenHospital[]>;
+  obtenerOrdenPorId(institucionId: InstitucionId, id: string): Promise<OrdenExamenHospital | null>;
+  obtenerOrdenesPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<OrdenExamenHospital[]>;
+  crearOrden(institucionId: InstitucionId, dto: CrearOrdenExamenDTO): Promise<OrdenExamenHospital>;
+  cancelarOrden(institucionId: InstitucionId, ordenId: string, motivo: string): Promise<OrdenExamenHospital>;
+  obtenerResultadosPorOrden(institucionId: InstitucionId, ordenId: string): Promise<ResultadoExamenHospital[]>;
+  obtenerResultadoPorId(institucionId: InstitucionId, resultadoId: string): Promise<ResultadoExamenHospital | null>;
+  obtenerResultadosPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ResultadoExamenHospital[]>;
+  registrarResultado(institucionId: InstitucionId, dto: RegistrarResultadoExamenDTO): Promise<ResultadoExamenHospital>;
 }

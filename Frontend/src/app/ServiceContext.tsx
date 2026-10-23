@@ -8,7 +8,8 @@ import {
   UserRepository,
   CatalogRepository,
   AuditRepository,
-  HospitalizationRepository
+  HospitalizationRepository,
+  HospitalExamRepository
 } from '../services/contracts';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
 import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
@@ -19,6 +20,7 @@ import { MockUserRepository } from '../mocks/mockUserRepository';
 import { MockCatalogRepository } from '../mocks/mockCatalogRepository';
 import { MockAuditRepository } from '../mocks/mockAuditRepository';
 import { MockHospitalizationRepository } from '../mocks/mockHospitalizationRepository';
+import { MockHospitalExamRepository } from '../mocks/mockHospitalExamRepository';
 
 interface ServiceContainer {
   authRepository: AuthRepository;
@@ -30,6 +32,7 @@ interface ServiceContainer {
   catalogRepository: CatalogRepository;
   auditRepository: AuditRepository;
   hospitalizationRepository: HospitalizationRepository;
+  examRepository: HospitalExamRepository;
 }
 
 const ServiceContext = createContext<ServiceContainer | null>(null);
@@ -45,6 +48,7 @@ export interface ServiceProviderProps {
   customCatalogRepository?: CatalogRepository;
   customAuditRepository?: AuditRepository;
   customHospitalizationRepository?: HospitalizationRepository;
+  customExamRepository?: HospitalExamRepository;
 }
 
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
@@ -58,6 +62,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   customCatalogRepository,
   customAuditRepository,
   customHospitalizationRepository,
+  customExamRepository,
 }) => {
   const services = useMemo<ServiceContainer>(() => {
     return {
@@ -70,6 +75,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       catalogRepository: customCatalogRepository || new MockCatalogRepository(),
       auditRepository: customAuditRepository || new MockAuditRepository(),
       hospitalizationRepository: customHospitalizationRepository || new MockHospitalizationRepository(),
+      examRepository: customExamRepository || new MockHospitalExamRepository(),
     };
   }, [
     customAuthRepository,
@@ -81,6 +87,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
     customCatalogRepository,
     customAuditRepository,
     customHospitalizationRepository,
+    customExamRepository,
   ]);
 
   return <ServiceContext.Provider value={services}>{children}</ServiceContext.Provider>;

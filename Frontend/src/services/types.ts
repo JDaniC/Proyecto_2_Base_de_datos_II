@@ -546,6 +546,96 @@ export interface ExpedienteCompleto {
   recetas: RecetaHistorial[];
   eventos: EventoHistorial[];
   polizas?: PolizaSeguroPaciente[];
+  ordenesExamen?: OrdenExamenHospital[];
+}
+
+export type PrioridadOrdenExamen = 'RUTINA' | 'URGENTE' | 'STAT';
+export type EstadoOrdenExamen = 'SOLICITADA' | 'EN_PROCESO' | 'COMPLETADA' | 'CANCELADA';
+
+export interface ItemOrdenExamen {
+  id: string;
+  pruebaId: string;
+  codigoPrueba: string;
+  nombre: string;
+  seccion: string;
+  indicacionesMuestra?: string;
+  estado: 'PENDIENTE' | 'COMPLETADO';
+  resultadoId?: string;
+}
+
+export interface OrdenExamenHospital {
+  id: string;
+  codigoLegible: string; // e.g. ORD-HOSP-2026-0041
+  institucionId: InstitucionId;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteDpi: string;
+  medicoSolicitanteId: string;
+  medicoSolicitanteNombre: string;
+  hospitalizacionId?: string;
+  numeroCama?: string;
+  fechaSolicitud: string; // ISO
+  prioridad: PrioridadOrdenExamen;
+  estado: EstadoOrdenExamen;
+  diagnosticoPresuntivoCIE10?: string;
+  motivoClinico: string;
+  items: ItemOrdenExamen[];
+}
+
+export type AlertaParametro = 'NORMAL' | 'ELEVADO' | 'DISMINUIDO' | 'CRITICO';
+
+export interface ParametroResultado {
+  parametroId: string;
+  nombre: string;
+  valorMedido: string;
+  unidadMedida: string;
+  rangoReferencia: string;
+  alerta: AlertaParametro;
+}
+
+export interface ResultadoExamenHospital {
+  id: string;
+  ordenId: string;
+  codigoOrden: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pruebaId: string;
+  nombrePrueba: string;
+  seccion: string;
+  metodoAnalitico: string;
+  fechaEmision: string; // ISO
+  responsableAnalisis: string;
+  colegiadoResponsable?: string;
+  estado: 'VALIDADO' | 'PRELIMINAR';
+  parametros: ParametroResultado[];
+  interpretacionClinica: string;
+  observacionesTecnicas?: string;
+}
+
+export interface CrearOrdenExamenDTO {
+  pacienteId: string;
+  medicoSolicitanteId: string;
+  medicoSolicitanteNombre?: string;
+  hospitalizacionId?: string;
+  numeroCama?: string;
+  prioridad: PrioridadOrdenExamen;
+  motivoClinico: string;
+  diagnosticoPresuntivoCIE10?: string;
+  pruebasIds: string[];
+}
+
+export interface RegistrarResultadoExamenDTO {
+  ordenId: string;
+  pruebaId: string;
+  responsableAnalisis: string;
+  colegiadoResponsable?: string;
+  parametros: {
+    parametroId: string;
+    valorMedido: string;
+    alerta: AlertaParametro;
+  }[];
+  interpretacionClinica: string;
+  observacionesTecnicas?: string;
 }
 
 export interface BuscarPacientesQuery {

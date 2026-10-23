@@ -33,6 +33,7 @@ import { ArchivePatientModal } from './components/ArchivePatientModal';
 import { DiagnosticosTratamientosView } from '../consultations/DiagnosticosTratamientosView';
 import { RecetasPrescripcionesView } from '../consultations/RecetasPrescripcionesView';
 import { PatientInsurancesView } from './components/PatientInsurancesView';
+import { PatientExamsView } from './components/PatientExamsView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -45,7 +46,8 @@ export const PatientRecordPage: React.FC = () => {
 
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
   const [cargando, setCargando] = useState(true);
-  const initialTab = searchParams.get('tab') === 'seguros' ? 'SEGUROS' : 'GENERAL';
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'seguros' ? 'SEGUROS' : tabParam === 'examenes' ? 'EXAMENES' : 'GENERAL';
   const [tabActiva, setTabActiva] = useState(initialTab);
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
@@ -54,6 +56,8 @@ export const PatientRecordPage: React.FC = () => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'seguros') {
       setTabActiva('SEGUROS');
+    } else if (tabParam === 'examenes') {
+      setTabActiva('EXAMENES');
     }
   }, [searchParams]);
 
@@ -133,6 +137,7 @@ export const PatientRecordPage: React.FC = () => {
     { id: 'DIAGNOSTICOS', label: `Diagnósticos (${diagnosticos.length})` },
     { id: 'RECETAS', label: `Recetas emitidas (${recetas.length})` },
     { id: 'SEGUROS', label: `Seguros y cobertura (${expediente.polizas?.length || 0})` },
+    { id: 'EXAMENES', label: 'Exámenes y resultados' },
     { id: 'TIMELINE', label: `Actividad e historial (${eventos.length})` }
   ];
 
@@ -579,6 +584,14 @@ export const PatientRecordPage: React.FC = () => {
           pacienteNombre={paciente.nombreCompleto}
           pacienteDpi={paciente.numeroIdentificacion}
           pacienteTelefono={paciente.telefono}
+          esArchivado={paciente.estado === 'ARCHIVADO'}
+        />
+      )}
+
+      {tabActiva === 'EXAMENES' && (
+        <PatientExamsView
+          pacienteId={paciente.id}
+          pacienteNombre={paciente.nombreCompleto}
           esArchivado={paciente.estado === 'ARCHIVADO'}
         />
       )}

@@ -20,6 +20,7 @@ import { HospitalizationsListPage } from '../features/hospital/HospitalizationsL
 import { HospitalizationAdmissionPage } from '../features/hospital/HospitalizationAdmissionPage';
 import { HospitalizationDetailPage } from '../features/hospital/HospitalizationDetailPage';
 import { HospitalBedsMapPage } from '../features/hospital/HospitalBedsMapPage';
+import { HospitalExamOrdersPage } from '../features/hospital/HospitalExamOrdersPage';
 
 export const App: React.FC = () => {
   return (
@@ -50,6 +51,7 @@ export const App: React.FC = () => {
               <Route path="/hospital/hospitalizaciones/nueva" element={<HospitalizationAdmissionPage />} />
               <Route path="/hospital/hospitalizaciones/:ingresoId" element={<HospitalizationDetailPage />} />
               <Route path="/hospital/camas" element={<HospitalBedsMapPage />} />
+              <Route path="/hospital/examenes" element={<HospitalExamOrdersPage />} />
               <Route path="/acceso-restringido" element={<AccessRestrictedPage />} />
               <Route path="/sesion-activa" element={<Navigate to="/panel" replace />} />
               
