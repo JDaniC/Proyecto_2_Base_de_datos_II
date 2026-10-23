@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   User,
   CheckCircle2,
+  FileText,
   History
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -201,6 +202,13 @@ export const OrderDetailPage: React.FC = () => {
               leftIcon={<TestTube2 size={16} />}
             >
               Gestionar Muestras (L04)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/laboratorio/informes/${orden.id}`)}
+              leftIcon={<FileText size={16} />}
+            >
+              Informe Oficial (L09)
             </Button>
             <Button
               variant="primary"

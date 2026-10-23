@@ -1046,3 +1046,43 @@ export interface GuardarResultadoBorradorDTO {
   analistaNombre: string;
 }
 
+export type EstadoInformeLaboratorio = 'BORRADOR' | 'EMITIDO' | 'ANULADO';
+
+export interface ItemResultadoInforme {
+  resultadoId: string;
+  serieResultadoId: string;
+  version: number;
+  pruebaId: string;
+  codigoPrueba: string;
+  nombrePrueba: string;
+  seccion: string;
+  muestraCodigo: string;
+  equipoAnalitico: string;
+  metodoAnalitico: string;
+  parametros: ParametroResultadoLab[];
+  analistaNombre: string;
+  validadorNombre: string;
+  fechaValidacion: string;
+}
+
+export interface InformeLaboratorio {
+  id: string;
+  codigoInforme: string;
+  ordenId: string;
+  codigoOrden: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteDpi: string;
+  pacienteEdad: number;
+  pacienteSexo: string;
+  medicoSolicitante: string;
+  fechaEmision: string;
+  estado: EstadoInformeLaboratorio;
+  hashVerificacion: string;
+  emisorId: string;
+  emisorNombre: string;
+  emisorColegiado: string;
+  resultadosIncluidos: ItemResultadoInforme[];
+  conclusionesGenerales?: string;
+}
+

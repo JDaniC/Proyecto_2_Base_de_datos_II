@@ -52,7 +52,8 @@ import {
   MuestraLaboratorio,
   EstadoMuestraLaboratorio,
   ResultadoLaboratorio,
-  GuardarResultadoBorradorDTO
+  GuardarResultadoBorradorDTO,
+  InformeLaboratorio
 } from './types';
 
 export interface IniciarSesionParams {
@@ -240,4 +241,13 @@ export interface LaboratoryRepository {
     nuevaMuestraId: string,
     dto: GuardarResultadoBorradorDTO
   ): Promise<ResultadoLaboratorio>;
+  obtenerInformePorOrden(institucionId: InstitucionId, ordenId: string): Promise<InformeLaboratorio | null>;
+  emitirInforme(
+    institucionId: InstitucionId,
+    ordenId: string,
+    emisorId: string,
+    emisorNombre: string,
+    emisorColegiado: string,
+    conclusiones?: string
+  ): Promise<InformeLaboratorio>;
 }

@@ -10,12 +10,15 @@ import {
   ResultadoLaboratorio,
   GuardarResultadoBorradorDTO,
   ParametroResultadoLab,
-  AlertaParametroLab
+  AlertaParametroLab,
+  InformeLaboratorio,
+  ItemResultadoInforme
 } from '../services/types';
 
 const STORAGE_KEY_ORDENES = 'clinica_lab_ordenes_v1';
 const STORAGE_KEY_MUESTRAS = 'clinica_lab_muestras_v1';
 const STORAGE_KEY_RESULTADOS = 'clinica_lab_resultados_v1';
+const STORAGE_KEY_INFORMES = 'clinica_lab_informes_v1';
 
 export function calcularAlertaParametro(
   valorStr: string,
@@ -104,6 +107,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   private ordenes: OrdenLaboratorio[] = [];
   private muestras: MuestraLaboratorio[] = [];
   private resultados: ResultadoLaboratorio[] = [];
+  private informes: InformeLaboratorio[] = [];
 
   constructor() {
     this.cargarDatos();
@@ -114,10 +118,12 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       const rawO = localStorage.getItem(STORAGE_KEY_ORDENES);
       const rawM = localStorage.getItem(STORAGE_KEY_MUESTRAS);
       const rawR = localStorage.getItem(STORAGE_KEY_RESULTADOS);
+      const rawI = localStorage.getItem(STORAGE_KEY_INFORMES);
 
       if (rawO) this.ordenes = JSON.parse(rawO);
       if (rawM) this.muestras = JSON.parse(rawM);
       if (rawR) this.resultados = JSON.parse(rawR);
+      if (rawI) this.informes = JSON.parse(rawI);
     } catch {
       // fallback
     }
@@ -591,6 +597,60 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       ];
     }
 
+    if (this.informes.length === 0) {
+      this.informes = [
+        {
+          id: 'inf-lab-01',
+          codigoInforme: 'INF-LAB-2026-0085',
+          ordenId: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteDpi: '2234 56789 0101',
+          pacienteEdad: 63,
+          pacienteSexo: 'M',
+          medicoSolicitante: 'Dr. Alejandro Morales (Colegiado CMG-6540)',
+          fechaEmision: '2026-10-21T19:15:00Z',
+          estado: 'EMITIDO',
+          hashVerificacion: 'SHA256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+          emisorId: 'usr-lab-val-01',
+          emisorNombre: 'Lic. Kevin Estrada (Validador Técnico)',
+          emisorColegiado: 'QB-4912',
+          conclusionesGenerales: 'Valores concordantes con evento coronario agudo en seguimiento. Se recomienda correlación electrocardiográfica urgente.',
+          resultadosIncluidos: [
+            {
+              resultadoId: 'res-lab-seed-02',
+              serieResultadoId: 'SER-2026-0085-1',
+              version: 1,
+              pruebaId: 'lab-trop-01',
+              codigoPrueba: 'INM-001',
+              nombrePrueba: 'Troponina I de Alta Sensibilidad',
+              seccion: 'Inmunología Clínica',
+              muestraCodigo: 'MUE-2026-0085-01',
+              equipoAnalitico: 'Analizador Roche Cobas e 411',
+              metodoAnalitico: 'Inmunoensayo por Electroquimioluminiscencia (ECLIA)',
+              parametros: [
+                {
+                  id: 'p-inm-01',
+                  codigoParametro: 'TROP_I',
+                  nombre: 'Troponina I de Alta Sensibilidad',
+                  valor: '0.145',
+                  unidad: 'ng/mL',
+                  rangoReferenciaMax: 0.04,
+                  rangoTexto: '< 0.040',
+                  alerta: 'CRITICO',
+                  valorPanicoMax: 0.100
+                }
+              ],
+              analistaNombre: 'Licda. Sofía Paniagua',
+              validadorNombre: 'Lic. Kevin Estrada',
+              fechaValidacion: '2026-10-21T19:05:00Z'
+            }
+          ]
+        }
+      ];
+    }
+
     // Unir todas las muestras de las órdenes
     this.muestras = this.ordenes.flatMap((o) => o.muestras);
     this.guardarDatos();
@@ -601,6 +661,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       localStorage.setItem(STORAGE_KEY_ORDENES, JSON.stringify(this.ordenes));
       localStorage.setItem(STORAGE_KEY_MUESTRAS, JSON.stringify(this.muestras));
       localStorage.setItem(STORAGE_KEY_RESULTADOS, JSON.stringify(this.resultados));
+      localStorage.setItem(STORAGE_KEY_INFORMES, JSON.stringify(this.informes));
     } catch {
       // ignore
     }
@@ -1194,5 +1255,113 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     this.resultados.push(nuevaSerie);
     this.guardarDatos();
     return nuevaSerie;
+  }
+
+  async obtenerInformePorOrden(
+    _institucionId: InstitucionId,
+    ordenId: string
+  ): Promise<InformeLaboratorio | null> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    const inf = this.informes.find((i) => i.ordenId === ordenId || i.codigoOrden === ordenId);
+    return inf ? { ...inf } : null;
+  }
+
+  async emitirInforme(
+    _institucionId: InstitucionId,
+    ordenId: string,
+    emisorId: string,
+    emisorNombre: string,
+    emisorColegiado: string,
+    conclusiones?: string
+  ): Promise<InformeLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 60));
+
+    const orden = this.ordenes.find((o) => o.id === ordenId || o.codigoOrden === ordenId);
+    if (!orden) throw new Error(`Orden ${ordenId} no encontrada`);
+
+    // Regla crítica CA13: Todos los resultados incluidos deben estar en estado VALIDADO
+    const resultadosOrden = this.resultados.filter((r) => r.ordenId === orden.id);
+
+    const itemsNoValidados = orden.items.filter((item) => {
+      const res = resultadosOrden.find((r) => r.itemOrdenId === item.id);
+      return !res || res.estado !== 'VALIDADO';
+    });
+
+    if (itemsNoValidados.length > 0) {
+      const nombresFaltantes = itemsNoValidados.map((i) => `«${i.nombrePrueba}»`).join(', ');
+      throw new Error(
+        `Regla CA13 incumplida: No es posible emitir el informe analítico oficial porque las siguientes pruebas no están en estado VALIDADO: ${nombresFaltantes}. Se requiere validación pericial completa antes de emitir.`
+      );
+    }
+
+    // Armar instantánea inmutable de resultados con series y versiones exactas
+    const resultadosIncluidos: ItemResultadoInforme[] = orden.items.map((item) => {
+      // Buscar la versión activa validada (mayor versión en caso de correcciones)
+      const resValidados = resultadosOrden.filter((r) => r.itemOrdenId === item.id && r.estado === 'VALIDADO');
+      resValidados.sort((a, b) => b.version - a.version);
+      const res = resValidados[0];
+
+      return {
+        resultadoId: res.id,
+        serieResultadoId: res.serieResultadoId,
+        version: res.version,
+        pruebaId: item.pruebaId,
+        codigoPrueba: item.codigoPrueba,
+        nombrePrueba: item.nombrePrueba,
+        seccion: item.seccion,
+        muestraCodigo: res.codigoMuestra,
+        equipoAnalitico: res.equipoAnalitico,
+        metodoAnalitico: res.metodoAnalitico,
+        parametros: res.parametros,
+        analistaNombre: res.analistaNombre,
+        validadorNombre: res.validadorNombre || emisorNombre,
+        fechaValidacion: res.fechaValidacion || new Date().toISOString()
+      };
+    });
+
+    const ahora = new Date().toISOString();
+    const codigoSufijo = orden.codigoOrden.replace('ORD-LAB-', '');
+    const codigoInforme = `INF-LAB-${codigoSufijo}`;
+
+    // Hash criptográfico simulado de integridad
+    const pseudoHashHex = Array.from({ length: 48 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    const hashVerificacion = `SHA256:${pseudoHashHex}`;
+
+    // Si ya existía informe, actualizar a emitido
+    const idxExistente = this.informes.findIndex((i) => i.ordenId === orden.id);
+    const nuevoInforme: InformeLaboratorio = {
+      id: idxExistente !== -1 ? this.informes[idxExistente].id : `inf-lab-${Date.now()}`,
+      codigoInforme,
+      ordenId: orden.id,
+      codigoOrden: orden.codigoOrden,
+      pacienteId: orden.pacienteId,
+      pacienteNombre: orden.pacienteNombre,
+      pacienteDpi: orden.pacienteDpi,
+      pacienteEdad: orden.pacienteEdad,
+      pacienteSexo: orden.pacienteSexo,
+      medicoSolicitante: orden.medicoSolicitante,
+      fechaEmision: ahora,
+      estado: 'EMITIDO',
+      hashVerificacion,
+      emisorId,
+      emisorNombre,
+      emisorColegiado,
+      resultadosIncluidos,
+      conclusionesGenerales: conclusiones || 'Resultados analíticos validados conforme al estándar de calidad de Laboratorio Clínico Central.'
+    };
+
+    if (idxExistente !== -1) {
+      this.informes[idxExistente] = nuevoInforme;
+    } else {
+      this.informes.unshift(nuevoInforme);
+    }
+
+    // Orden pasa a COMPLETADA
+    orden.estado = 'COMPLETADA';
+
+    this.guardarDatos();
+    return nuevoInforme;
   }
 }
