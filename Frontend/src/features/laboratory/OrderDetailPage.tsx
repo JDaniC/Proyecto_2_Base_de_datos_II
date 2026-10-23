@@ -202,6 +202,13 @@ export const OrderDetailPage: React.FC = () => {
             >
               Gestionar Muestras (L04)
             </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/laboratorio/resultados/captura/${orden.id}`)}
+              leftIcon={<FlaskConical size={16} />}
+            >
+              Capturar Resultados (L06)
+            </Button>
           </div>
         </div>
       </div>

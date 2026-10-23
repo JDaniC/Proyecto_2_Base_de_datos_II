@@ -50,7 +50,9 @@ import {
   FiltrosBandejaLab,
   CrearOrdenLabDTO,
   MuestraLaboratorio,
-  EstadoMuestraLaboratorio
+  EstadoMuestraLaboratorio,
+  ResultadoLaboratorio,
+  GuardarResultadoBorradorDTO
 } from './types';
 
 export interface IniciarSesionParams {
@@ -216,4 +218,26 @@ export interface LaboratoryRepository {
     motivo: string,
     actor: string
   ): Promise<MuestraLaboratorio>;
+  obtenerResultadosPorOrden(institucionId: InstitucionId, ordenId: string): Promise<ResultadoLaboratorio[]>;
+  obtenerResultadoPorId(institucionId: InstitucionId, resultadoId: string): Promise<ResultadoLaboratorio | null>;
+  guardarResultadoBorrador(institucionId: InstitucionId, dto: GuardarResultadoBorradorDTO): Promise<ResultadoLaboratorio>;
+  validarResultado(
+    institucionId: InstitucionId,
+    resultadoId: string,
+    validadorId: string,
+    validadorNombre: string
+  ): Promise<ResultadoLaboratorio>;
+  corregirResultado(
+    institucionId: InstitucionId,
+    resultadoId: string,
+    dto: GuardarResultadoBorradorDTO,
+    motivo: string
+  ): Promise<ResultadoLaboratorio>;
+  repetirAnalisis(
+    institucionId: InstitucionId,
+    ordenId: string,
+    itemOrdenId: string,
+    nuevaMuestraId: string,
+    dto: GuardarResultadoBorradorDTO
+  ): Promise<ResultadoLaboratorio>;
 }

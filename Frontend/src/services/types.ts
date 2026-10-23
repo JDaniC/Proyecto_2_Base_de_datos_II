@@ -970,3 +970,79 @@ export interface CrearOrdenLabDTO {
   pruebasSeleccionadasIds: string[];
 }
 
+export type EstadoResultadoLab = 'BORRADOR' | 'VALIDADO' | 'CORREGIDO' | 'ANULADO';
+
+export type AlertaParametroLab = 'NORMAL' | 'ELEVADO' | 'DISMINUIDO' | 'CRITICO';
+
+export interface ParametroResultadoLab {
+  id: string;
+  codigoParametro: string;
+  nombre: string;
+  valor: string;
+  unidad: string;
+  rangoReferenciaMin?: number;
+  rangoReferenciaMax?: number;
+  rangoTexto: string;
+  alerta: AlertaParametroLab;
+  valorPanicoMin?: number;
+  valorPanicoMax?: number;
+}
+
+export interface ResultadoLaboratorio {
+  id: string;
+  serieResultadoId: string;
+  version: number;
+  ordenId: string;
+  codigoOrden: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteDpi: string;
+  itemOrdenId: string;
+  pruebaId: string;
+  codigoPrueba: string;
+  nombrePrueba: string;
+  seccion: string;
+  muestraId: string;
+  codigoMuestra: string;
+  equipoAnalitico: string;
+  metodoAnalitico: string;
+  loteReactivo?: string;
+  parametros: ParametroResultadoLab[];
+  observaciones?: string;
+  estado: EstadoResultadoLab;
+  analistaId: string;
+  analistaNombre: string;
+  fechaAnalisis: string;
+  validadorId?: string;
+  validadorNombre?: string;
+  fechaValidacion?: string;
+  motivoModificacion?: string;
+}
+
+export interface ParametroValorDTO {
+  parametroId: string;
+  codigoParametro: string;
+  nombre: string;
+  valor: string;
+  unidad: string;
+  rangoReferenciaMin?: number;
+  rangoReferenciaMax?: number;
+  rangoTexto: string;
+  alerta: AlertaParametroLab;
+  valorPanicoMin?: number;
+  valorPanicoMax?: number;
+}
+
+export interface GuardarResultadoBorradorDTO {
+  ordenId: string;
+  itemOrdenId: string;
+  muestraId: string;
+  equipoAnalitico: string;
+  metodoAnalitico: string;
+  loteReactivo?: string;
+  parametros: ParametroValorDTO[];
+  observaciones?: string;
+  analistaId: string;
+  analistaNombre: string;
+}
+

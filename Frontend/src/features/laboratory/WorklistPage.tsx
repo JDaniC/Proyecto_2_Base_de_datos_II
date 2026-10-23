@@ -582,6 +582,15 @@ export const WorklistPage: React.FC = () => {
                         <Button
                           variant="secondary"
                           size="sm"
+                          onClick={() => navigate(`/laboratorio/resultados/captura/${orden.id}`)}
+                          aria-label={`Capturar resultados de ${orden.codigoOrden}`}
+                        >
+                          <FlaskConical size={14} style={{ marginRight: '4px' }} />
+                          Resultados
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => navigate(`/laboratorio/ordenes/${orden.id}`)}
                           aria-label={`Ver orden ${orden.codigoOrden}`}
                         >
