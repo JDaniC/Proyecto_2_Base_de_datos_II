@@ -19,6 +19,7 @@ import {
   ResultadoLaboratorio,
   OrdenLaboratorio
 } from '../../services/types';
+import { CorrectionRepetitionModal } from './components/CorrectionRepetitionModal';
 
 export const ResultsValidationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export const ResultsValidationPage: React.FC = () => {
   const [filtroPrioridad, setFiltroPrioridad] = useState<'TODAS' | 'STAT' | 'URGENTE' | 'RUTINA'>('TODAS');
 
   const [resultadoSeleccionadoId, setResultadoSeleccionadoId] = useState<string | null>(null);
+  const [modalCorrectionOpen, setModalCorrectionOpen] = useState(false);
   const [notaValidacion, setNotaValidacion] = useState('Resultados revisados técnicamente y validados conforme a las normas de control de calidad institucional.');
   const [colegiadoValidador, setColegiadoValidador] = useState(sesion?.colegiado || 'QB-3108');
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
@@ -561,14 +563,23 @@ export const ResultsValidationPage: React.FC = () => {
 
               {/* Botones de Validación */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate(`/laboratorio/resultados/captura/${resultadoSeleccionado.ordenId}`)}
-                  aria-label="Abrir captura o solicitar corrección"
-                >
-                  <AlertTriangle size={15} style={{ marginRight: '6px' }} />
-                  Editar en Captura (L06)
-                </Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate(`/laboratorio/resultados/captura/${resultadoSeleccionado.ordenId}`)}
+                    aria-label="Abrir captura o solicitar corrección"
+                  >
+                    <AlertTriangle size={15} style={{ marginRight: '6px' }} />
+                    Editar en Captura (L06)
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setModalCorrectionOpen(true)}
+                    aria-label="Abrir diálogo de corrección o repetición L08"
+                  >
+                    Corrección / Repetición (L08)
+                  </Button>
+                </div>
 
                 <Button
                   variant="primary"
@@ -580,6 +591,21 @@ export const ResultsValidationPage: React.FC = () => {
                   {validando ? 'Certificando...' : 'Validar y Certificar Resultado (L07)'}
                 </Button>
               </div>
+
+              {/* Modal de Corrección vs Repetición (L08) */}
+              {modalCorrectionOpen && ordenSeleccionada && (
+                <CorrectionRepetitionModal
+                  isOpen={modalCorrectionOpen}
+                  onClose={() => setModalCorrectionOpen(false)}
+                  orden={ordenSeleccionada}
+                  resultadoActual={resultadoSeleccionado}
+                  todasLasVersiones={todosResultados.filter((r) => r.itemOrdenId === resultadoSeleccionado.itemOrdenId)}
+                  onExito={(nuevo) => {
+                    setMensajeExito(`Operación L08 completada: nueva versión/serie registrada (ID: ${nuevo.id}, Serie: ${nuevo.serieResultadoId}, Versión: v${nuevo.version}).`);
+                    cargarDatos();
+                  }}
+                />
+              )}
             </Panel>
           ) : (
             <Panel title="Detalle del Análisis">

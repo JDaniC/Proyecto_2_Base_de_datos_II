@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   TestTube2,
   FileCheck2,
+  History,
   Cpu
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -29,6 +30,7 @@ import {
   calcularAlertaParametro,
   obtenerParametrosDefecto
 } from '../../mocks/mockLaboratoryRepository';
+import { CorrectionRepetitionModal } from './components/CorrectionRepetitionModal';
 
 export const ResultsCapturePage: React.FC = () => {
   const { ordenId } = useParams<{ ordenId: string }>();
@@ -41,6 +43,7 @@ export const ResultsCapturePage: React.FC = () => {
   const [resultadosExistentes, setResultadosExistentes] = useState<ResultadoLaboratorio[]>([]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [modalCorrectionOpen, setModalCorrectionOpen] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorGlobal, setErrorGlobal] = useState<string | null>(null);
 
@@ -744,24 +747,58 @@ export const ResultsCapturePage: React.FC = () => {
             </div>
 
             {/* Botones de Acción */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', alignItems: 'center' }}>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => navigate(`/laboratorio/ordenes/${orden.id}`)}
-              >
-                Cancelar
-              </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                {resultadosExistentes.some((r) => r.itemOrdenId === itemActivo.id) && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setModalCorrectionOpen(true)}
+                    aria-label="Abrir gestión de versiones y repeticiones L08"
+                  >
+                    <History size={16} style={{ marginRight: '6px' }} />
+                    Versiones y Repetición (L08)
+                  </Button>
+                )}
+              </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={!hayMuestraApta || guardando || !puedeAnalizar}
-              >
-                <Save size={16} style={{ marginRight: '6px' }} />
-                {guardando ? 'Guardando Borrador...' : 'Guardar Resultados en Borrador'}
-              </Button>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => navigate(`/laboratorio/ordenes/${orden.id}`)}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!hayMuestraApta || guardando || !puedeAnalizar}
+                >
+                  <Save size={16} style={{ marginRight: '6px' }} />
+                  {guardando ? 'Guardando Borrador...' : 'Guardar Resultados en Borrador'}
+                </Button>
+              </div>
             </div>
+
+            {/* Modal de Corrección vs Repetición L08 */}
+            {modalCorrectionOpen && resultadosExistentes.find((r) => r.itemOrdenId === itemActivo.id) && (
+              <CorrectionRepetitionModal
+                isOpen={modalCorrectionOpen}
+                onClose={() => setModalCorrectionOpen(false)}
+                orden={orden}
+                resultadoActual={resultadosExistentes.find((r) => r.itemOrdenId === itemActivo.id)!}
+                todasLasVersiones={resultadosExistentes.filter((r) => r.itemOrdenId === itemActivo.id)}
+                onExito={async (nuevo) => {
+                  setMensajeExito(
+                    `Operación L08 completada: nueva serie/versión registrada (${nuevo.serieResultadoId} v${nuevo.version}).`
+                  );
+                  const resAct = await laboratoryRepository.obtenerResultadosPorOrden(institucionId, orden.id);
+                  setResultadosExistentes(resAct);
+                }}
+              />
+            )}
           </Panel>
         </form>
       )}
