@@ -354,6 +354,61 @@ export class MockCatalogRepository implements CatalogRepository {
     return [...this.pruebasLab];
   }
 
+  async crearPruebaLaboratorio(_institucionId: InstitucionId, prueba: Omit<PruebaLaboratorioCatalogo, 'id' | 'version'>): Promise<PruebaLaboratorioCatalogo> {
+    await new Promise((res) => setTimeout(res, 40));
+    const nueva: PruebaLaboratorioCatalogo = {
+      ...prueba,
+      id: `lab-${Date.now()}`,
+      version: 1
+    };
+    this.pruebasLab.push(nueva);
+    this.guardarDatos();
+    return nueva;
+  }
+
+  async crearNuevaVersionPruebaLaboratorio(
+    _institucionId: InstitucionId,
+    pruebaId: string,
+    cambios: Partial<Omit<PruebaLaboratorioCatalogo, 'id' | 'version'>>,
+    _motivoCambio: string
+  ): Promise<PruebaLaboratorioCatalogo> {
+    await new Promise((res) => setTimeout(res, 50));
+    const index = this.pruebasLab.findIndex((p) => p.id === pruebaId);
+    if (index === -1) {
+      throw new Error(`Prueba de laboratorio ${pruebaId} no encontrada.`);
+    }
+
+    const anterior = this.pruebasLab[index];
+    const nuevaVersion: PruebaLaboratorioCatalogo = {
+      ...anterior,
+      ...cambios,
+      version: anterior.version + 1
+    };
+
+    this.pruebasLab[index] = nuevaVersion;
+    this.guardarDatos();
+    return nuevaVersion;
+  }
+
+  async cambiarEstadoPruebaLaboratorio(
+    _institucionId: InstitucionId,
+    pruebaId: string,
+    estado: 'ACTIVO' | 'INACTIVO'
+  ): Promise<PruebaLaboratorioCatalogo> {
+    await new Promise((res) => setTimeout(res, 30));
+    const index = this.pruebasLab.findIndex((p) => p.id === pruebaId);
+    if (index === -1) {
+      throw new Error(`Prueba de laboratorio ${pruebaId} no encontrada.`);
+    }
+
+    this.pruebasLab[index] = {
+      ...this.pruebasLab[index],
+      estado
+    };
+    this.guardarDatos();
+    return this.pruebasLab[index];
+  }
+
   async obtenerVacunas(_institucionId: InstitucionId): Promise<VacunaCatalogo[]> {
     await new Promise((res) => setTimeout(res, 30));
     return [...this.vacunas];

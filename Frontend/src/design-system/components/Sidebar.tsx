@@ -135,6 +135,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           path: '/laboratorio/cobros',
           label: 'Cobros y órdenes',
           icon: <CreditCard size={20} />,
+        },
+        {
+          id: 'catalogo-lab',
+          path: '/administracion/catalogos?tab=laboratorio',
+          label: 'Catálogo de pruebas (L10)',
+          icon: <BookOpen size={20} />,
         }
       );
     } else if (sesion.institucionId === 'CENTRO_PEDIATRICO') {

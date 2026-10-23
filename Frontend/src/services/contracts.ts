@@ -158,6 +158,9 @@ export interface CatalogRepository {
   obtenerProcedimientosOdontologicos(institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]>;
   crearProcedimientoOdontologico(institucionId: InstitucionId, proc: Omit<ProcedimientoOdontologico, 'id'>): Promise<ProcedimientoOdontologico>;
   obtenerPruebasLaboratorio(institucionId: InstitucionId): Promise<PruebaLaboratorioCatalogo[]>;
+  crearPruebaLaboratorio(institucionId: InstitucionId, prueba: Omit<PruebaLaboratorioCatalogo, 'id' | 'version'>): Promise<PruebaLaboratorioCatalogo>;
+  crearNuevaVersionPruebaLaboratorio(institucionId: InstitucionId, pruebaId: string, cambios: Partial<Omit<PruebaLaboratorioCatalogo, 'id' | 'version'>>, motivoCambio: string): Promise<PruebaLaboratorioCatalogo>;
+  cambiarEstadoPruebaLaboratorio(institucionId: InstitucionId, pruebaId: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<PruebaLaboratorioCatalogo>;
   obtenerVacunas(institucionId: InstitucionId): Promise<VacunaCatalogo[]>;
 }
 

@@ -10,7 +10,8 @@ import {
   Plus,
   Search,
   CheckCircle2,
-  Clock
+  Clock,
+  History
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -20,6 +21,7 @@ import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { RegistrarMedicoModal } from './RegistrarMedicoModal';
 import { RegistrarProcedimientoOdontoModal } from './RegistrarProcedimientoOdontoModal';
+import { RegistrarPruebaLabModal } from './RegistrarPruebaLabModal';
 import {
   MedicoCatalogo,
   AseguradoraCatalogo,
@@ -60,6 +62,8 @@ export const CatalogosManagementPage: React.FC = () => {
   // Modales
   const [showModalMedico, setShowModalMedico] = useState(false);
   const [showModalOdonto, setShowModalOdonto] = useState(false);
+  const [showModalLab, setShowModalLab] = useState(false);
+  const [pruebaParaVersionar, setPruebaParaVersionar] = useState<PruebaLaboratorioCatalogo | null>(null);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -109,6 +113,32 @@ export const CatalogosManagementPage: React.FC = () => {
     setProcedimientosOdonto((prev) => [...prev, nuevo]);
     setNotificacion(`Procedimiento odontológico ${nuevo.codigo} - ${nuevo.nombre} registrado exitosamente en el catálogo.`);
     setTimeout(() => setNotificacion(null), 5000);
+  };
+
+  const handlePruebaLabGuardada = (pruebaGuardada: PruebaLaboratorioCatalogo) => {
+    setPruebasLab((prev) => {
+      const existeIndex = prev.findIndex((p) => p.id === pruebaGuardada.id);
+      if (existeIndex >= 0) {
+        const clon = [...prev];
+        clon[existeIndex] = pruebaGuardada;
+        return clon;
+      }
+      return [pruebaGuardada, ...prev];
+    });
+    setNotificacion(`Determinación analítica "${pruebaGuardada.nombre}" guardada con éxito (v${pruebaGuardada.version}.0).`);
+    setTimeout(() => setNotificacion(null), 5000);
+  };
+
+  const handleToggleEstadoPrueba = async (prueba: PruebaLaboratorioCatalogo) => {
+    const nuevoEstado = prueba.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    try {
+      const actualizada = await catalogRepository.cambiarEstadoPruebaLaboratorio(institucionId, prueba.id, nuevoEstado);
+      setPruebasLab((prev) => prev.map((p) => (p.id === actualizada.id ? actualizada : p)));
+      setNotificacion(`Determinación ${prueba.codigoPrueba} actualizada a estado ${nuevoEstado}.`);
+      setTimeout(() => setNotificacion(null), 5000);
+    } catch {
+      setNotificacion('Error al cambiar el estado de la prueba.');
+    }
   };
 
   return (
@@ -207,6 +237,19 @@ export const CatalogosManagementPage: React.FC = () => {
           ) : (
             <Badge variant="info">Modo Consulta Clínica (Solo Lectura)</Badge>
           )
+        )}
+
+        {activeTab === 'laboratorio' && (
+          <Button
+            variant="primary"
+            onClick={() => {
+              setPruebaParaVersionar(null);
+              setShowModalLab(true);
+            }}
+            leftIcon={<Plus size={16} />}
+          >
+            Nueva Determinación (L10)
+          </Button>
         )}
       </div>
 
@@ -715,11 +758,33 @@ export const CatalogosManagementPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                         Entrega: <strong>{prueba.tiempoEntregaHoras} h</strong>
                       </span>
-                      <Badge variant="success">ACTIVA</Badge>
+                      {prueba.estado === 'ACTIVO' ? (
+                        <Badge variant="success">ACTIVA</Badge>
+                      ) : (
+                        <Badge variant="neutral">INACTIVA</Badge>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setPruebaParaVersionar(prueba);
+                          setShowModalLab(true);
+                        }}
+                        leftIcon={<History size={14} />}
+                      >
+                        Nueva Versión (CA16)
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleToggleEstadoPrueba(prueba)}
+                      >
+                        {prueba.estado === 'ACTIVO' ? 'Desactivar' : 'Reactivar'}
+                      </Button>
                     </div>
                   </div>
 
@@ -885,6 +950,16 @@ export const CatalogosManagementPage: React.FC = () => {
           isOpen={showModalOdonto}
           onClose={() => setShowModalOdonto(false)}
           onProcedimientoCreado={handleProcedimientoCreado}
+        />
+      )}
+
+      {/* Modal para alta/versionado de prueba de laboratorio (L10, CA16) */}
+      {showModalLab && (
+        <RegistrarPruebaLabModal
+          isOpen={showModalLab}
+          onClose={() => setShowModalLab(false)}
+          onPruebaGuardada={handlePruebaLabGuardada}
+          pruebaExistenteParaVersionar={pruebaParaVersionar}
         />
       )}
     </div>
