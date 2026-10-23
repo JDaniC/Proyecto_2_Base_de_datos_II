@@ -1086,3 +1086,68 @@ export interface InformeLaboratorio {
   conclusionesGenerales?: string;
 }
 
+// -------------------------------------------------------------
+// EQUIPOS Y CONTROL DE CALIDAD ANALÍTICO (L11)
+// -------------------------------------------------------------
+
+export type EstadoEquipoLaboratorio = 'OPERATIVO' | 'EN_MANTENIMIENTO' | 'CALIBRACION_PENDIENTE';
+
+export interface EquipoLaboratorio {
+  id: string;
+  codigo: string; // ej. EQ-ROCHE-01
+  nombre: string; // ej. Analizador Roche Cobas e 411
+  modelo: string;
+  numeroSerie: string;
+  seccion: string; // ej. Inmunología Clínica
+  fabricante: string;
+  estado: EstadoEquipoLaboratorio;
+  fechaInstalacion: string;
+  ultimaCalibracion: string;
+  proximaCalibracion: string;
+  notas?: string;
+}
+
+export type NivelControlCalidad = 'NIVEL_1_NORMAL' | 'NIVEL_2_PATOLOGICO';
+export type EvaluacionControlCalidad = 'ACEPTADO' | 'ADVERTENCIA' | 'RECHAZADO';
+
+export interface RegistroControlCalidad {
+  id: string;
+  codigoCorrida: string; // ej. QC-2026-0492
+  equipoId: string;
+  equipoNombre: string;
+  pruebaId: string;
+  pruebaCodigo: string; // ej. INM-001
+  pruebaNombre: string; // ej. Troponina I de Alta Sensibilidad
+  pruebaVersion: number;
+  parametroId: string;
+  parametroNombre: string;
+  loteMaterialControl: string; // ej. Lote PreciControl 55412
+  nivelControl: NivelControlCalidad;
+  unidadMedida: string;
+  mediaDiana: number; // Target mean
+  desviacionEstandar: number; // SD
+  limiteInferior2SD: number;
+  limiteSuperior2SD: number;
+  limiteInferior3SD: number;
+  limiteSuperior3SD: number;
+  valorMedido: number;
+  zScore: number;
+  evaluacion: EvaluacionControlCalidad;
+  reglaViolada?: string; // ej. Regla 1:3s o Regla 1:2s
+  analistaId: string;
+  analistaNombre: string;
+  fechaHora: string;
+  observaciones?: string;
+}
+
+export interface RegistrarControlCalidadDTO {
+  equipoId: string;
+  pruebaId: string;
+  parametroId: string;
+  loteMaterialControl: string;
+  nivelControl: NivelControlCalidad;
+  valorMedido: number;
+  observaciones?: string;
+}
+
+

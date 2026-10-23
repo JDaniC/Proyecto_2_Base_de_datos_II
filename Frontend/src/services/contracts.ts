@@ -53,7 +53,12 @@ import {
   EstadoMuestraLaboratorio,
   ResultadoLaboratorio,
   GuardarResultadoBorradorDTO,
-  InformeLaboratorio
+  InformeLaboratorio,
+  EquipoLaboratorio,
+  EstadoEquipoLaboratorio,
+  RegistroControlCalidad,
+  RegistrarControlCalidadDTO,
+  EvaluacionControlCalidad
 } from './types';
 
 export interface IniciarSesionParams {
@@ -253,4 +258,16 @@ export interface LaboratoryRepository {
     emisorColegiado: string,
     conclusiones?: string
   ): Promise<InformeLaboratorio>;
+  obtenerEquipos(institucionId: InstitucionId): Promise<EquipoLaboratorio[]>;
+  cambiarEstadoEquipo(institucionId: InstitucionId, equipoId: string, nuevoEstado: EstadoEquipoLaboratorio): Promise<EquipoLaboratorio>;
+  registrarEquipo(institucionId: InstitucionId, equipo: Omit<EquipoLaboratorio, 'id'>): Promise<EquipoLaboratorio>;
+  obtenerControlesCalidad(
+    institucionId: InstitucionId,
+    filtros?: { equipoId?: string; evaluacion?: EvaluacionControlCalidad | 'TODOS'; busqueda?: string }
+  ): Promise<RegistroControlCalidad[]>;
+  registrarControlCalidad(
+    institucionId: InstitucionId,
+    dto: RegistrarControlCalidadDTO,
+    analista: { id: string; nombre: string }
+  ): Promise<RegistroControlCalidad>;
 }

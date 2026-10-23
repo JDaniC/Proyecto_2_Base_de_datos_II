@@ -12,13 +12,20 @@ import {
   ParametroResultadoLab,
   AlertaParametroLab,
   InformeLaboratorio,
-  ItemResultadoInforme
+  ItemResultadoInforme,
+  EquipoLaboratorio,
+  EstadoEquipoLaboratorio,
+  RegistroControlCalidad,
+  RegistrarControlCalidadDTO,
+  EvaluacionControlCalidad
 } from '../services/types';
 
 const STORAGE_KEY_ORDENES = 'clinica_lab_ordenes_v1';
 const STORAGE_KEY_MUESTRAS = 'clinica_lab_muestras_v1';
 const STORAGE_KEY_RESULTADOS = 'clinica_lab_resultados_v1';
 const STORAGE_KEY_INFORMES = 'clinica_lab_informes_v1';
+const STORAGE_KEY_EQUIPOS = 'clinica_lab_equipos_v1';
+const STORAGE_KEY_QC = 'clinica_lab_qc_v1';
 
 export function calcularAlertaParametro(
   valorStr: string,
@@ -108,6 +115,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   private muestras: MuestraLaboratorio[] = [];
   private resultados: ResultadoLaboratorio[] = [];
   private informes: InformeLaboratorio[] = [];
+  private equipos: EquipoLaboratorio[] = [];
+  private controlesCalidad: RegistroControlCalidad[] = [];
 
   constructor() {
     this.cargarDatos();
@@ -119,11 +128,15 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       const rawM = localStorage.getItem(STORAGE_KEY_MUESTRAS);
       const rawR = localStorage.getItem(STORAGE_KEY_RESULTADOS);
       const rawI = localStorage.getItem(STORAGE_KEY_INFORMES);
+      const rawE = localStorage.getItem(STORAGE_KEY_EQUIPOS);
+      const rawQC = localStorage.getItem(STORAGE_KEY_QC);
 
       if (rawO) this.ordenes = JSON.parse(rawO);
       if (rawM) this.muestras = JSON.parse(rawM);
       if (rawR) this.resultados = JSON.parse(rawR);
       if (rawI) this.informes = JSON.parse(rawI);
+      if (rawE) this.equipos = JSON.parse(rawE);
+      if (rawQC) this.controlesCalidad = JSON.parse(rawQC);
     } catch {
       // fallback
     }
@@ -651,6 +664,157 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       ];
     }
 
+    if (this.equipos.length === 0) {
+      this.equipos = [
+        {
+          id: 'eq-01',
+          codigo: 'EQ-ROCHE-01',
+          nombre: 'Analizador Roche Cobas e 411',
+          modelo: 'Cobas e 411 Disc',
+          numeroSerie: 'SN-ROCHE-49120',
+          seccion: 'Inmunología Clínica',
+          fabricante: 'Roche Diagnostics',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2024-03-15T09:00:00Z',
+          ultimaCalibracion: '2026-10-01T10:00:00Z',
+          proximaCalibracion: '2026-11-01T10:00:00Z',
+          notas: 'Mantenimiento preventivo semestral vigente. Calibración fotomultiplicador OK.'
+        },
+        {
+          id: 'eq-02',
+          codigo: 'EQ-SYSMEX-02',
+          nombre: 'Analizador Hematológico Sysmex XN-550',
+          modelo: 'XN-550 Automático',
+          numeroSerie: 'SN-SYS-88210',
+          seccion: 'Hematología y Coagulación',
+          fabricante: 'Sysmex Corporation',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2023-11-20T11:00:00Z',
+          ultimaCalibracion: '2026-10-15T08:30:00Z',
+          proximaCalibracion: '2026-11-15T08:30:00Z',
+          notas: 'Viales de reactivo Cellpack DCL y Fluorocell WDF verificados.'
+        },
+        {
+          id: 'eq-03',
+          codigo: 'EQ-ROCHE-03',
+          nombre: 'Química Clínica Roche Cobas c 311',
+          modelo: 'Cobas c 311 ISE',
+          numeroSerie: 'SN-ROCHE-33104',
+          seccion: 'Bioquímica Clínica',
+          fabricante: 'Roche Diagnostics',
+          estado: 'CALIBRACION_PENDIENTE',
+          fechaInstalacion: '2024-01-10T14:00:00Z',
+          ultimaCalibracion: '2026-09-18T09:00:00Z',
+          proximaCalibracion: '2026-10-18T09:00:00Z',
+          notas: 'Alerta: ciclo de 30 días vencido. Requiere corrida con C.f.a.s. antes de liberar muestras.'
+        },
+        {
+          id: 'eq-04',
+          codigo: 'EQ-SIEMENS-04',
+          nombre: 'Gasómetro Siemens RAPIDPoint 500e',
+          modelo: 'RAPIDPoint 500e Cartridge',
+          numeroSerie: 'SN-SIE-10928',
+          seccion: 'Gases y Electrólitos',
+          fabricante: 'Siemens Healthineers',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2025-05-02T10:00:00Z',
+          ultimaCalibracion: '2026-10-22T06:00:00Z',
+          proximaCalibracion: '2026-10-23T06:00:00Z',
+          notas: 'Calibración automática de cartucho de 24 horas completada.'
+        }
+      ];
+    }
+
+    if (this.controlesCalidad.length === 0) {
+      this.controlesCalidad = [
+        {
+          id: 'qc-run-01',
+          codigoCorrida: 'QC-2026-1022-01',
+          equipoId: 'eq-01',
+          equipoNombre: 'Analizador Roche Cobas e 411',
+          pruebaId: 'lab-trop-01',
+          pruebaCodigo: 'INM-001',
+          pruebaNombre: 'Troponina I de Alta Sensibilidad',
+          pruebaVersion: 2,
+          parametroId: 'p-inm-01',
+          parametroNombre: 'Troponina I (TnI-hs)',
+          loteMaterialControl: 'PreciControl Troponin Lote 88214',
+          nivelControl: 'NIVEL_1_NORMAL',
+          unidadMedida: 'ng/mL',
+          mediaDiana: 0.025,
+          desviacionEstandar: 0.003,
+          limiteInferior2SD: 0.019,
+          limiteSuperior2SD: 0.031,
+          limiteInferior3SD: 0.016,
+          limiteSuperior3SD: 0.034,
+          valorMedido: 0.026,
+          zScore: 0.33,
+          evaluacion: 'ACEPTADO',
+          analistaId: 'usr-lab-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T06:30:00Z',
+          observaciones: 'Corrida matutina de rutina dentro de +/- 1 SD.'
+        },
+        {
+          id: 'qc-run-02',
+          codigoCorrida: 'QC-2026-1022-02',
+          equipoId: 'eq-01',
+          equipoNombre: 'Analizador Roche Cobas e 411',
+          pruebaId: 'lab-trop-01',
+          pruebaCodigo: 'INM-001',
+          pruebaNombre: 'Troponina I de Alta Sensibilidad',
+          pruebaVersion: 2,
+          parametroId: 'p-inm-01',
+          parametroNombre: 'Troponina I (TnI-hs)',
+          loteMaterialControl: 'PreciControl Troponin Lote 88214',
+          nivelControl: 'NIVEL_2_PATOLOGICO',
+          unidadMedida: 'ng/mL',
+          mediaDiana: 0.150,
+          desviacionEstandar: 0.012,
+          limiteInferior2SD: 0.126,
+          limiteSuperior2SD: 0.174,
+          limiteInferior3SD: 0.114,
+          limiteSuperior3SD: 0.186,
+          valorMedido: 0.152,
+          zScore: 0.17,
+          evaluacion: 'ACEPTADO',
+          analistaId: 'usr-lab-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T06:45:00Z',
+          observaciones: 'Corrida patológica aceptada. Equipo habilitado para muestras clínicas.'
+        },
+        {
+          id: 'qc-run-03',
+          codigoCorrida: 'QC-2026-1022-03',
+          equipoId: 'eq-02',
+          equipoNombre: 'Analizador Hematológico Sysmex XN-550',
+          pruebaId: 'lab-hem-01',
+          pruebaCodigo: 'HEM-001',
+          pruebaNombre: 'Hematología Completa Automatizada',
+          pruebaVersion: 2,
+          parametroId: 'p-hem-01',
+          parametroNombre: 'Plaquetas',
+          loteMaterialControl: 'e-CHECK (XE) Lote 6241',
+          nivelControl: 'NIVEL_1_NORMAL',
+          unidadMedida: '10^3/µL',
+          mediaDiana: 220,
+          desviacionEstandar: 10,
+          limiteInferior2SD: 200,
+          limiteSuperior2SD: 240,
+          limiteInferior3SD: 190,
+          limiteSuperior3SD: 250,
+          valorMedido: 245,
+          zScore: 2.5,
+          evaluacion: 'ADVERTENCIA',
+          reglaViolada: 'Regla Westgard 1:2s (Entre +2 SD y +3 SD)',
+          analistaId: 'usr-lab-val-01',
+          analistaNombre: 'Lic. Kevin Estrada',
+          fechaHora: '2026-10-22T07:15:00Z',
+          observaciones: 'Tendencia positiva leve. Se procede a monitorear siguiente corrida de turno.'
+        }
+      ];
+    }
+
     // Unir todas las muestras de las órdenes
     this.muestras = this.ordenes.flatMap((o) => o.muestras);
     this.guardarDatos();
@@ -662,6 +826,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       localStorage.setItem(STORAGE_KEY_MUESTRAS, JSON.stringify(this.muestras));
       localStorage.setItem(STORAGE_KEY_RESULTADOS, JSON.stringify(this.resultados));
       localStorage.setItem(STORAGE_KEY_INFORMES, JSON.stringify(this.informes));
+      localStorage.setItem(STORAGE_KEY_EQUIPOS, JSON.stringify(this.equipos));
+      localStorage.setItem(STORAGE_KEY_QC, JSON.stringify(this.controlesCalidad));
     } catch {
       // ignore
     }
@@ -1363,5 +1529,141 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
 
     this.guardarDatos();
     return nuevoInforme;
+  }
+
+  async obtenerEquipos(_institucionId: InstitucionId): Promise<EquipoLaboratorio[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.equipos];
+  }
+
+  async cambiarEstadoEquipo(
+    _institucionId: InstitucionId,
+    equipoId: string,
+    nuevoEstado: EstadoEquipoLaboratorio
+  ): Promise<EquipoLaboratorio> {
+    await new Promise((res) => setTimeout(res, 40));
+    const eq = this.equipos.find((e) => e.id === equipoId);
+    if (!eq) throw new Error(`Equipo ${equipoId} no encontrado.`);
+    eq.estado = nuevoEstado;
+    this.guardarDatos();
+    return { ...eq };
+  }
+
+  async registrarEquipo(
+    _institucionId: InstitucionId,
+    equipo: Omit<EquipoLaboratorio, 'id'>
+  ): Promise<EquipoLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const nuevo: EquipoLaboratorio = {
+      ...equipo,
+      id: `eq-${Date.now()}`
+    };
+    this.equipos.push(nuevo);
+    this.guardarDatos();
+    return { ...nuevo };
+  }
+
+  async obtenerControlesCalidad(
+    _institucionId: InstitucionId,
+    filtros?: { equipoId?: string; evaluacion?: EvaluacionControlCalidad | 'TODOS'; busqueda?: string }
+  ): Promise<RegistroControlCalidad[]> {
+    await new Promise((res) => setTimeout(res, 40));
+    return this.controlesCalidad.filter((c) => {
+      if (filtros?.equipoId && c.equipoId !== filtros.equipoId) return false;
+      if (filtros?.evaluacion && filtros.evaluacion !== 'TODOS' && c.evaluacion !== filtros.evaluacion) return false;
+      if (filtros?.busqueda) {
+        const q = filtros.busqueda.toLowerCase();
+        const coincide =
+          c.codigoCorrida.toLowerCase().includes(q) ||
+          c.pruebaNombre.toLowerCase().includes(q) ||
+          c.equipoNombre.toLowerCase().includes(q) ||
+          c.loteMaterialControl.toLowerCase().includes(q);
+        if (!coincide) return false;
+      }
+      return true;
+    });
+  }
+
+  async registrarControlCalidad(
+    _institucionId: InstitucionId,
+    dto: RegistrarControlCalidadDTO,
+    analista: { id: string; nombre: string }
+  ): Promise<RegistroControlCalidad> {
+    await new Promise((res) => setTimeout(res, 60));
+    const equipo = this.equipos.find((e) => e.id === dto.equipoId);
+    if (!equipo) throw new Error(`Equipo analítico ${dto.equipoId} no encontrado.`);
+
+    // Referencias estadísticas según prueba y nivel
+    let mediaDiana = 100;
+    let sd = 5;
+    let unidadMedida = 'mg/dL';
+    let pruebaNombre = 'Glucosa Sérica en Ayunas';
+    let pruebaCodigo = 'QUI-010';
+    let parametroNombre = 'Glucosa';
+
+    if (dto.pruebaId.includes('trop') || dto.pruebaId.includes('inm')) {
+      pruebaNombre = 'Troponina I de Alta Sensibilidad';
+      pruebaCodigo = 'INM-001';
+      parametroNombre = 'Troponina I (TnI-hs)';
+      unidadMedida = 'ng/mL';
+      mediaDiana = dto.nivelControl === 'NIVEL_1_NORMAL' ? 0.025 : 0.150;
+      sd = dto.nivelControl === 'NIVEL_1_NORMAL' ? 0.003 : 0.012;
+    } else if (dto.pruebaId.includes('hem') || dto.parametroId.includes('plaqueta')) {
+      pruebaNombre = 'Hematología Completa Automatizada';
+      pruebaCodigo = 'HEM-001';
+      parametroNombre = 'Plaquetas';
+      unidadMedida = '10^3/µL';
+      mediaDiana = dto.nivelControl === 'NIVEL_1_NORMAL' ? 220 : 480;
+      sd = dto.nivelControl === 'NIVEL_1_NORMAL' ? 10 : 25;
+    }
+
+    const valor = dto.valorMedido;
+    const zScore = parseFloat(((valor - mediaDiana) / sd).toFixed(2));
+    const absZ = Math.abs(zScore);
+
+    let evaluacion: EvaluacionControlCalidad = 'ACEPTADO';
+    let reglaViolada: string | undefined = undefined;
+
+    if (absZ > 3) {
+      evaluacion = 'RECHAZADO';
+      reglaViolada = 'Regla Westgard 1:3s (Error analítico crítico. Rechazo inmediato de corrida)';
+    } else if (absZ > 2) {
+      evaluacion = 'ADVERTENCIA';
+      reglaViolada = 'Regla Westgard 1:2s (Valor entre 2 y 3 desviaciones estándar. Monitorear corrida)';
+    }
+
+    const nuevoRegistro: RegistroControlCalidad = {
+      id: `qc-run-${Date.now()}`,
+      codigoCorrida: `QC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      equipoId: equipo.id,
+      equipoNombre: equipo.nombre,
+      pruebaId: dto.pruebaId,
+      pruebaCodigo,
+      pruebaNombre,
+      pruebaVersion: 2,
+      parametroId: dto.parametroId,
+      parametroNombre,
+      loteMaterialControl: dto.loteMaterialControl,
+      nivelControl: dto.nivelControl,
+      unidadMedida,
+      mediaDiana,
+      desviacionEstandar: sd,
+      limiteInferior2SD: parseFloat((mediaDiana - 2 * sd).toFixed(3)),
+      limiteSuperior2SD: parseFloat((mediaDiana + 2 * sd).toFixed(3)),
+      limiteInferior3SD: parseFloat((mediaDiana - 3 * sd).toFixed(3)),
+      limiteSuperior3SD: parseFloat((mediaDiana + 3 * sd).toFixed(3)),
+      valorMedido: valor,
+      zScore,
+      evaluacion,
+      reglaViolada,
+      analistaId: analista.id,
+      analistaNombre: analista.nombre,
+      fechaHora: new Date().toISOString(),
+      observaciones: dto.observaciones
+    };
+
+    this.controlesCalidad.unshift(nuevoRegistro);
+    this.guardarDatos();
+    return { ...nuevoRegistro };
   }
 }
