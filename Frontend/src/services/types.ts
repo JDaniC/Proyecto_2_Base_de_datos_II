@@ -124,6 +124,67 @@ export interface VacunaCatalogo {
   estado: 'ACTIVO' | 'INACTIVO';
 }
 
+export type EstadoDosisVacuna = 'APLICADA' | 'PENDIENTE' | 'FUTURA';
+
+export interface AplicacionVacuna {
+  id: string;
+  claveLogica: string; // `${pacienteId}_${vacunaId}_${dosisId}` (Regla CA11)
+  pacienteId: string;
+  vacunaId: string;
+  nombreVacuna: string;
+  dosisId: string;
+  numeroDosis: number;
+  etiquetaDosis: string;
+  fechaAplicacion: string;
+  horaAplicacion?: string;
+  lote: string;
+  sitioAnatomico: string;
+  viaAdministracion: string;
+  profesionalAplicador: string;
+  reaccionesInmediatas?: string;
+  observaciones?: string;
+  estadoRegistro: 'VIGENTE' | 'CORREGIDO' | 'ANULADO';
+  versionRegistro: number;
+  motivoCorreccion?: string;
+  historialRevisiones?: {
+    version: number;
+    fecha: string;
+    actor: string;
+    motivo: string;
+    datosAnteriores: Partial<AplicacionVacuna>;
+  }[];
+}
+
+export interface RegistrarAplicacionVacunaDTO {
+  vacunaId: string;
+  dosisId: string;
+  fechaAplicacion: string;
+  horaAplicacion?: string;
+  lote: string;
+  sitioAnatomico: string;
+  reaccionesInmediatas?: string;
+  observaciones?: string;
+}
+
+export interface CorregirAplicacionVacunaDTO {
+  lote?: string;
+  sitioAnatomico?: string;
+  reaccionesInmediatas?: string;
+  observaciones?: string;
+  motivo: string;
+}
+
+export interface ItemEsquemaPaciente {
+  vacuna: VacunaCatalogo;
+  dosisId: string;
+  numeroDosis: number;
+  etiquetaDosis: string;
+  edadRecomendadaMeses: number;
+  estado: EstadoDosisVacuna;
+  aplicacionVigente?: AplicacionVacuna;
+  diasRetraso?: number;
+}
+
 export interface CuentaDemo {
   id: string;
   email: string;

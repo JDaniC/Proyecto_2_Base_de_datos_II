@@ -413,4 +413,37 @@ export class MockCatalogRepository implements CatalogRepository {
     await new Promise((res) => setTimeout(res, 30));
     return [...this.vacunas];
   }
+
+  async crearVacuna(
+    _institucionId: InstitucionId,
+    vacuna: Omit<VacunaCatalogo, 'id'>
+  ): Promise<VacunaCatalogo> {
+    await new Promise((res) => setTimeout(res, 50));
+    const nueva: VacunaCatalogo = {
+      ...vacuna,
+      id: `vac-${Date.now()}`
+    };
+    this.vacunas.unshift(nueva);
+    this.guardarDatos();
+    return nueva;
+  }
+
+  async crearVersionEsquemaVacuna(
+    _institucionId: InstitucionId,
+    vacunaId: string,
+    nuevaVersion: string,
+    dosis: VacunaCatalogo['dosis']
+  ): Promise<VacunaCatalogo> {
+    await new Promise((res) => setTimeout(res, 50));
+    const index = this.vacunas.findIndex((v) => v.id === vacunaId);
+    if (index === -1) throw new Error(`Vacuna ${vacunaId} no encontrada.`);
+
+    this.vacunas[index] = {
+      ...this.vacunas[index],
+      esquemaVersion: nuevaVersion,
+      dosis: [...dosis]
+    };
+    this.guardarDatos();
+    return this.vacunas[index];
+  }
 }

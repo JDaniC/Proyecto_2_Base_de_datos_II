@@ -22,6 +22,7 @@ import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { RegistrarMedicoModal } from './RegistrarMedicoModal';
 import { RegistrarProcedimientoOdontoModal } from './RegistrarProcedimientoOdontoModal';
 import { RegistrarPruebaLabModal } from './RegistrarPruebaLabModal';
+import { RegistrarVacunaModal } from './RegistrarVacunaModal';
 import {
   MedicoCatalogo,
   AseguradoraCatalogo,
@@ -63,6 +64,7 @@ export const CatalogosManagementPage: React.FC = () => {
   const [showModalMedico, setShowModalMedico] = useState(false);
   const [showModalOdonto, setShowModalOdonto] = useState(false);
   const [showModalLab, setShowModalLab] = useState(false);
+  const [showModalVacuna, setShowModalVacuna] = useState(false);
   const [pruebaParaVersionar, setPruebaParaVersionar] = useState<PruebaLaboratorioCatalogo | null>(null);
 
   const cargarDatos = async () => {
@@ -126,6 +128,12 @@ export const CatalogosManagementPage: React.FC = () => {
       return [pruebaGuardada, ...prev];
     });
     setNotificacion(`Determinación analítica "${pruebaGuardada.nombre}" guardada con éxito (v${pruebaGuardada.version}.0).`);
+    setTimeout(() => setNotificacion(null), 5000);
+  };
+
+  const handleVacunaCreada = (vacunaGuardada: VacunaCatalogo) => {
+    setVacunas((prev) => [vacunaGuardada, ...prev]);
+    setNotificacion(`Vacuna "${vacunaGuardada.nombreVacuna}" registrada con éxito en el catálogo.`);
     setTimeout(() => setNotificacion(null), 5000);
   };
 
@@ -820,13 +828,23 @@ export const CatalogosManagementPage: React.FC = () => {
       ) : activeTab === 'vacunas' ? (
         /* Pestaña P04: Catálogo de Vacunas y Dosis (P04) */
         <Panel>
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Catálogo Oficial de Inmunizaciones y Esquema Pediátrico (P04)
-            </h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-              Biológicos del esquema nacional MSPAS con versiones inmutables y edades recomendadas para control de niño sano.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
+                Catálogo Oficial de Inmunizaciones y Esquema Pediátrico (P04)
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
+                Biológicos del esquema nacional MSPAS con versiones inmutables y edades recomendadas para control de niño sano.
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowModalVacuna(true)}
+            >
+              <Plus size={15} style={{ marginRight: '6px' }} />
+              Nueva Vacuna / Esquema (P04)
+            </Button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -960,6 +978,15 @@ export const CatalogosManagementPage: React.FC = () => {
           onClose={() => setShowModalLab(false)}
           onPruebaGuardada={handlePruebaLabGuardada}
           pruebaExistenteParaVersionar={pruebaParaVersionar}
+        />
+      )}
+
+      {/* Modal para alta de vacuna/esquema pediátrico (P04) */}
+      {showModalVacuna && (
+        <RegistrarVacunaModal
+          isOpen={showModalVacuna}
+          onClose={() => setShowModalVacuna(false)}
+          onVacunaGuardada={handleVacunaCreada}
         />
       )}
     </div>

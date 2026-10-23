@@ -189,6 +189,13 @@ export interface CatalogRepository {
   crearNuevaVersionPruebaLaboratorio(institucionId: InstitucionId, pruebaId: string, cambios: Partial<Omit<PruebaLaboratorioCatalogo, 'id' | 'version'>>, motivoCambio: string): Promise<PruebaLaboratorioCatalogo>;
   cambiarEstadoPruebaLaboratorio(institucionId: InstitucionId, pruebaId: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<PruebaLaboratorioCatalogo>;
   obtenerVacunas(institucionId: InstitucionId): Promise<VacunaCatalogo[]>;
+  crearVacuna?(institucionId: InstitucionId, vacuna: Omit<VacunaCatalogo, 'id'>): Promise<VacunaCatalogo>;
+  crearVersionEsquemaVacuna?(
+    institucionId: InstitucionId,
+    vacunaId: string,
+    nuevaVersion: string,
+    dosis: VacunaCatalogo['dosis']
+  ): Promise<VacunaCatalogo>;
 }
 
 export interface AuditRepository {
