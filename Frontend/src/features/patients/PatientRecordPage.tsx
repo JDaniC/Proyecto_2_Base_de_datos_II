@@ -36,6 +36,7 @@ import { PatientInsurancesView } from './components/PatientInsurancesView';
 import { PatientExamsView } from './components/PatientExamsView';
 import { PatientProceduresView } from './components/PatientProceduresView';
 import { PediatricGuardiansView } from './components/PediatricGuardiansView';
+import { PediatricGrowthView } from './components/PediatricGrowthView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -71,6 +72,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('PROCEDIMIENTOS');
     } else if (tabParam === 'responsables') {
       setTabActiva('RESPONSABLES');
+    } else if (tabParam === 'crecimiento') {
+      setTabActiva('CRECIMIENTO');
     }
   }, [searchParams]);
 
@@ -149,7 +152,10 @@ export const PatientRecordPage: React.FC = () => {
   const tabsList: TabItem[] = [
     { id: 'GENERAL', label: 'General y antecedentes' },
     ...(esPediatrico
-      ? [{ id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` }]
+      ? [
+          { id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` },
+          { id: 'CRECIMIENTO', label: 'Crecimiento y curvas OMS' }
+        ]
       : []),
     { id: 'CONSULTAS', label: `Consultas (${consultas.length})` },
     { id: 'DIAGNOSTICOS', label: `Diagnósticos (${diagnosticos.length})` },
@@ -524,6 +530,14 @@ export const PatientRecordPage: React.FC = () => {
       {tabActiva === 'RESPONSABLES' && (
         <PediatricGuardiansView
           paciente={paciente}
+          onActualizado={() => cargarExpediente(true)}
+        />
+      )}
+
+      {tabActiva === 'CRECIMIENTO' && (
+        <PediatricGrowthView
+          paciente={paciente}
+          consultas={consultas}
           onActualizado={() => cargarExpediente(true)}
         />
       )}

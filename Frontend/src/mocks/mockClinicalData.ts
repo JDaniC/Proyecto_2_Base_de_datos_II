@@ -91,6 +91,65 @@ export const MOCK_CONSULTAS_DEFECTO: Record<string, ConsultaPaciente[]> = {
       diagnosticoPrincipal: 'K35.8 Apendicitis aguda resuelta',
       estado: 'FINALIZADA'
     }
+  ],
+  'pac-ped-001': [
+    {
+      id: 'con-ped-001-3',
+      fechaHora: '2026-05-10T09:00:00Z',
+      motivo: 'Control integral de crecimiento y desarrollo del niño sano (4 años)',
+      sintomas: 'Paciente acude en compañía de su madre para control anual de 4 años. Asintomático.',
+      profesionalNombre: 'Dra. Marcela Estrada',
+      profesionalRol: 'Pediatra Especialista',
+      diagnosticoPrincipal: 'Z00.1 Control de salud de rutina del niño',
+      estado: 'FINALIZADA',
+      signosVitales: {
+        pesoKg: 16.5,
+        tallaCm: 103.5,
+        temperaturaC: 36.7,
+        presionSistolica: null,
+        presionDiastolica: null,
+        frecuenciaCardiacaLpm: 95,
+        perimetroCefalicoCm: 50.8
+      }
+    },
+    {
+      id: 'con-ped-001-2',
+      fechaHora: '2025-05-15T10:30:00Z',
+      motivo: 'Control de crecimiento y desarrollo del niño sano (3 años)',
+      sintomas: 'Control periódico de 3 años. Adecuado desarrollo psicomotor.',
+      profesionalNombre: 'Dra. Marcela Estrada',
+      profesionalRol: 'Pediatra Especialista',
+      diagnosticoPrincipal: 'Z00.1 Control de salud de rutina del niño',
+      estado: 'FINALIZADA',
+      signosVitales: {
+        pesoKg: 14.6,
+        tallaCm: 96.0,
+        temperaturaC: 36.5,
+        presionSistolica: null,
+        presionDiastolica: null,
+        frecuenciaCardiacaLpm: 98,
+        perimetroCefalicoCm: 49.8
+      }
+    },
+    {
+      id: 'con-ped-001-1',
+      fechaHora: '2024-05-12T08:45:00Z',
+      motivo: 'Control de crecimiento y desarrollo del niño sano (2 años)',
+      sintomas: 'Control de los 2 años cumplidos. Sin antecedentes mórbidos recientes.',
+      profesionalNombre: 'Dra. Marcela Estrada',
+      profesionalRol: 'Pediatra Especialista',
+      diagnosticoPrincipal: 'Z00.1 Control de salud de rutina del niño',
+      estado: 'FINALIZADA',
+      signosVitales: {
+        pesoKg: 12.4,
+        tallaCm: 87.0,
+        temperaturaC: 36.6,
+        presionSistolica: null,
+        presionDiastolica: null,
+        frecuenciaCardiacaLpm: 105,
+        perimetroCefalicoCm: 48.5
+      }
+    }
   ]
 };
 

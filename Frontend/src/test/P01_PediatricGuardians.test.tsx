@@ -64,7 +64,7 @@ describe('P01 — Responsables del Menor y Consentimiento Clínico (P01, CA09)',
     const tarjeta = screen.getByText('Andrea Arrecis de Álvarez').closest('div[class*="rounded-xl"]');
     expect(tarjeta).not.toBeNull();
 
-    const botonEliminar = within(tarjeta!).getByTitle(/Regla CA09: No es posible dar de baja al único responsable principal/i);
+    const botonEliminar = within(tarjeta! as HTMLElement).getByTitle(/Regla CA09: No es posible dar de baja al único responsable principal/i);
     expect(botonEliminar).toBeDisabled();
   });
 
@@ -119,7 +119,7 @@ describe('P01 — Responsables del Menor y Consentimiento Clínico (P01, CA09)',
     expect(await screen.findByText('Andrea Arrecis de Álvarez')).toBeInTheDocument();
 
     const tarjeta = screen.getByText('Andrea Arrecis de Álvarez').closest('div[class*="rounded-xl"]');
-    const botonEditar = within(tarjeta!).getByTitle(/Editar datos y facultades del tutor/i);
+    const botonEditar = within(tarjeta! as HTMLElement).getByTitle(/Editar datos y facultades del tutor/i);
     await user.click(botonEditar);
 
     expect(await screen.findByText(/Editar Datos y Facultades del Tutor/i)).toBeInTheDocument();
