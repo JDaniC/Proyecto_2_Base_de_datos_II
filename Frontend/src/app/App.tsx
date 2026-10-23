@@ -21,6 +21,7 @@ import { HospitalizationAdmissionPage } from '../features/hospital/Hospitalizati
 import { HospitalizationDetailPage } from '../features/hospital/HospitalizationDetailPage';
 import { HospitalBedsMapPage } from '../features/hospital/HospitalBedsMapPage';
 import { HospitalExamOrdersPage } from '../features/hospital/HospitalExamOrdersPage';
+import { WorklistPage } from '../features/laboratory/WorklistPage';
 
 export const App: React.FC = () => {
   return (
@@ -77,6 +78,14 @@ export const App: React.FC = () => {
                 element={
                   <AuthGuard requierePermiso={['usuarios.administrar', 'historial.leer', 'consultas.registrar']}>
                     <CatalogosManagementPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/laboratorio/bandeja"
+                element={
+                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
+                    <WorklistPage />
                   </AuthGuard>
                 }
               />

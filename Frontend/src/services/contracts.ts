@@ -45,7 +45,12 @@ import {
   OrdenExamenHospital,
   ResultadoExamenHospital,
   CrearOrdenExamenDTO,
-  RegistrarResultadoExamenDTO
+  RegistrarResultadoExamenDTO,
+  OrdenLaboratorio,
+  FiltrosBandejaLab,
+  CrearOrdenLabDTO,
+  MuestraLaboratorio,
+  EstadoMuestraLaboratorio
 } from './types';
 
 export interface IniciarSesionParams {
@@ -183,4 +188,24 @@ export interface HospitalExamRepository {
   obtenerResultadoPorId(institucionId: InstitucionId, resultadoId: string): Promise<ResultadoExamenHospital | null>;
   obtenerResultadosPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ResultadoExamenHospital[]>;
   registrarResultado(institucionId: InstitucionId, dto: RegistrarResultadoExamenDTO): Promise<ResultadoExamenHospital>;
+}
+
+export interface LaboratoryRepository {
+  obtenerBandeja(institucionId: InstitucionId, filtros?: FiltrosBandejaLab): Promise<OrdenLaboratorio[]>;
+  obtenerOrdenPorId(institucionId: InstitucionId, ordenId: string): Promise<OrdenLaboratorio | null>;
+  crearOrden(institucionId: InstitucionId, dto: CrearOrdenLabDTO): Promise<OrdenLaboratorio>;
+  obtenerMuestras(institucionId: InstitucionId, ordenId?: string): Promise<MuestraLaboratorio[]>;
+  actualizarEstadoMuestra(
+    institucionId: InstitucionId,
+    muestraId: string,
+    nuevoEstado: EstadoMuestraLaboratorio,
+    motivo?: string,
+    actor?: string
+  ): Promise<MuestraLaboratorio>;
+  registrarRetomaMuestra(
+    institucionId: InstitucionId,
+    muestraRechazadaId: string,
+    motivoRetoma: string,
+    actor: string
+  ): Promise<MuestraLaboratorio>;
 }

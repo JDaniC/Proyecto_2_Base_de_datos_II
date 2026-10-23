@@ -868,3 +868,105 @@ export interface RegistrarEgresoHospitalarioDTO {
   diagnosticoEgresoNombre: string;
   resumenClinico: string;
 }
+
+// -------------------------------------------------------------
+// LABORATORIO CLÍNICO (L01 - L14)
+// -------------------------------------------------------------
+
+export type PrioridadLaboratorio = 'RUTINA' | 'URGENTE' | 'STAT';
+
+export type EstadoOrdenLaboratorio =
+  | 'CREADA'
+  | 'MUESTRA_PENDIENTE'
+  | 'EN_ANALISIS'
+  | 'PARA_VALIDAR'
+  | 'COMPLETADA'
+  | 'CANCELADA';
+
+export type EstadoMuestraLaboratorio =
+  | 'PENDIENTE_TOMA'
+  | 'TOMADA'
+  | 'RECIBIDA'
+  | 'ACEPTADA'
+  | 'RECHAZADA'
+  | 'PROCESADA';
+
+export interface EventoTrazabilidadMuestra {
+  id: string;
+  tipoEvento: 'CREACION' | 'TOMA' | 'RECEPCION' | 'ACEPTACION' | 'RECHAZO' | 'RETOMA' | 'RECTIFICACION';
+  fechaHora: string;
+  actor: string;
+  detalle: string;
+  motivo?: string;
+}
+
+export interface MuestraLaboratorio {
+  id: string;
+  codigoMuestra: string; // ej: MUE-2026-0041
+  ordenId: string;
+  codigoOrden: string;
+  pacienteId: string;
+  pacienteNombre: string;
+  tipoMuestra: string;
+  tuboContenedor: string; // ej: 'Tubo Lila (EDTA)', 'Tubo Oro (Gel separador)', etc.
+  estado: EstadoMuestraLaboratorio;
+  fechaToma?: string;
+  tomadaPor?: string;
+  fechaRecepcion?: string;
+  recibidaPor?: string;
+  motivoRechazo?: string;
+  esRetoma?: boolean;
+  muestraOrigenId?: string;
+  eventosTrazabilidad: EventoTrazabilidadMuestra[];
+}
+
+export interface ItemOrdenLab {
+  id: string;
+  pruebaId: string;
+  codigoPrueba: string;
+  nombrePrueba: string;
+  seccion: string;
+  tipoMuestra: string;
+  versionPrueba: number;
+  arancelGTQ: number;
+  estado: 'PENDIENTE' | 'EN_PROCESO' | 'VALIDADO';
+}
+
+export interface OrdenLaboratorio {
+  id: string;
+  codigoOrden: string; // ej: ORD-LAB-2026-0101
+  institucionId: InstitucionId;
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteDpi: string;
+  pacienteEdad: number;
+  pacienteSexo: 'M' | 'F';
+  medicoSolicitante: string;
+  prioridad: PrioridadLaboratorio;
+  estado: EstadoOrdenLaboratorio;
+  motivoClinico: string;
+  fechaCreacion: string;
+  items: ItemOrdenLab[];
+  muestras: MuestraLaboratorio[];
+  totalArancelGTQ: number;
+}
+
+export interface FiltrosBandejaLab {
+  prioridad?: PrioridadLaboratorio | 'TODAS';
+  estado?: EstadoOrdenLaboratorio | 'TODOS';
+  seccion?: string;
+  busqueda?: string;
+}
+
+export interface CrearOrdenLabDTO {
+  pacienteId: string;
+  pacienteNombre: string;
+  pacienteDpi: string;
+  pacienteEdad: number;
+  pacienteSexo: 'M' | 'F';
+  medicoSolicitante: string;
+  prioridad: PrioridadLaboratorio;
+  motivoClinico: string;
+  pruebasSeleccionadasIds: string[];
+}
+
