@@ -24,6 +24,7 @@ import { HospitalExamOrdersPage } from '../features/hospital/HospitalExamOrdersP
 import { WorklistPage } from '../features/laboratory/WorklistPage';
 import { NewOrderPage } from '../features/laboratory/NewOrderPage';
 import { OrderDetailPage } from '../features/laboratory/OrderDetailPage';
+import { SamplesManagementPage } from '../features/laboratory/SamplesManagementPage';
 
 export const App: React.FC = () => {
   return (
@@ -104,6 +105,14 @@ export const App: React.FC = () => {
                 element={
                   <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
                     <OrderDetailPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/laboratorio/muestras"
+                element={
+                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
+                    <SamplesManagementPage />
                   </AuthGuard>
                 }
               />
