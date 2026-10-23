@@ -141,6 +141,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           path: '/administracion/catalogos?tab=laboratorio',
           label: 'Catálogo de pruebas (L10)',
           icon: <BookOpen size={20} />,
+        },
+        {
+          id: 'personal-lab',
+          path: '/administracion/usuarios?tab=personal-laboratorio',
+          label: 'Personal de laboratorio (L14)',
+          icon: <Users size={20} />,
         }
       );
     } else if (sesion.institucionId === 'CENTRO_PEDIATRICO') {

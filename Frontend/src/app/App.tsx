@@ -160,6 +160,14 @@ export const App: React.FC = () => {
                   </AuthGuard>
                 }
               />
+              <Route
+                path="/laboratorio/personal"
+                element={
+                  <AuthGuard>
+                    <Navigate to="/administracion/usuarios?tab=personal-laboratorio" replace />
+                  </AuthGuard>
+                }
+              />
             </Route>
 
             {/* Redirecciones por defecto */}
