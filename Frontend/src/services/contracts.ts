@@ -37,6 +37,10 @@ import {
   ProcedimientoOdontologico,
   PruebaLaboratorioCatalogo,
   VacunaCatalogo,
+  AplicacionVacuna,
+  ItemEsquemaPaciente,
+  RegistrarAplicacionVacunaDTO,
+  CorregirAplicacionVacunaDTO,
   EventoAuditoria,
   FiltrosAuditoriaQuery,
   HospitalizacionItem,
@@ -196,6 +200,33 @@ export interface CatalogRepository {
     nuevaVersion: string,
     dosis: VacunaCatalogo['dosis']
   ): Promise<VacunaCatalogo>;
+}
+
+export interface VaccineRepository {
+  obtenerAplicaciones(institucionId: InstitucionId, pacienteId: string): Promise<AplicacionVacuna[]>;
+  obtenerEsquemaCompletoPaciente(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    edadMeses: number
+  ): Promise<ItemEsquemaPaciente[]>;
+  registrarAplicacion(
+    institucionId: InstitucionId,
+    pacienteId: string,
+    dto: RegistrarAplicacionVacunaDTO,
+    profesional: string
+  ): Promise<AplicacionVacuna>;
+  corregirAplicacion(
+    institucionId: InstitucionId,
+    aplicacionId: string,
+    dto: CorregirAplicacionVacunaDTO,
+    profesional: string
+  ): Promise<AplicacionVacuna>;
+  anularAplicacion(
+    institucionId: InstitucionId,
+    aplicacionId: string,
+    motivo: string,
+    profesional: string
+  ): Promise<AplicacionVacuna>;
 }
 
 export interface AuditRepository {

@@ -38,6 +38,7 @@ import { PatientProceduresView } from './components/PatientProceduresView';
 import { PediatricGuardiansView } from './components/PediatricGuardiansView';
 import { PediatricGrowthView } from './components/PediatricGrowthView';
 import { PediatricHistoryAllergiesView } from './components/PediatricHistoryAllergiesView';
+import { PediatricVaccinesScheduleView } from './components/PediatricVaccinesScheduleView';
 
 export const PatientRecordPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -64,6 +65,8 @@ export const PatientRecordPage: React.FC = () => {
       ? 'CRECIMIENTO'
       : tabParam === 'antecedentes'
       ? 'ANTECEDENTES'
+      : tabParam === 'vacunacion' || tabParam === 'vacunas'
+      ? 'VACUNACION'
       : 'GENERAL';
   const [tabActiva, setTabActiva] = useState(initialTab);
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
@@ -83,6 +86,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('CRECIMIENTO');
     } else if (tabParam === 'antecedentes') {
       setTabActiva('ANTECEDENTES');
+    } else if (tabParam === 'vacunacion' || tabParam === 'vacunas') {
+      setTabActiva('VACUNACION');
     }
   }, [searchParams]);
 
@@ -164,7 +169,8 @@ export const PatientRecordPage: React.FC = () => {
       ? [
           { id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` },
           { id: 'CRECIMIENTO', label: 'Crecimiento y curvas OMS' },
-          { id: 'ANTECEDENTES', label: 'Antecedentes y alergias' }
+          { id: 'ANTECEDENTES', label: 'Antecedentes y alergias' },
+          { id: 'VACUNACION', label: 'Esquema de vacunación' }
         ]
       : []),
     { id: 'CONSULTAS', label: `Consultas (${consultas.length})` },
@@ -564,6 +570,13 @@ export const PatientRecordPage: React.FC = () => {
           antecedentes={antecedentes}
           institucionId={institucionId}
           onActualizar={() => cargarExpediente(true)}
+        />
+      )}
+
+      {tabActiva === 'VACUNACION' && (
+        <PediatricVaccinesScheduleView
+          paciente={paciente}
+          onActualizado={() => cargarExpediente(true)}
         />
       )}
 
