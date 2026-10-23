@@ -109,6 +109,102 @@ export class MockConsultationRepository implements ConsultationRepository {
           }
         ],
         historialRevisiones: []
+      },
+      // Consulta Odontológica Inicial (C04)
+      {
+        id: 'con-odon-001',
+        institucionId: 'CLINICA_ODONTOLOGICA',
+        pacienteId: 'pac-odon-001',
+        citaId: 'cita-odon-002',
+        fechaHora: '2026-10-15T11:00:00Z',
+        motivo: 'Evaluación de dolor molar e inicio de tratamiento endodóntico',
+        sintomas: 'Dolor punzante al masticar y sensibilidad persistente a cambios térmicos en cuadrante superior izquierdo.',
+        observaciones: 'Pieza 2.1 con caries oclusal profunda y compromiso pulpar. Examen periodontal sin movilidad patológica.',
+        profesionalNombre: 'Dr. Javier Castellanos',
+        profesionalRol: 'Odontólogo General (Col. COG-4812)',
+        estado: 'FINALIZADA',
+        revision: 1,
+        signosVitales: {
+          pesoKg: null,
+          tallaCm: null,
+          temperaturaC: 36.5,
+          presionSistolica: 120,
+          presionDiastolica: 80,
+          frecuenciaCardiacaLpm: 76,
+          frecuenciaRespiratoriaRpm: 16,
+          saturacionOxigenoPct: 99,
+          perimetroCefalicoCm: null
+        },
+        diagnosticos: [
+          {
+            id: 'dx-odon-01',
+            codigoCIE: 'K04.0',
+            nombre: 'Pulpitis aguda irreversible',
+            esPrincipal: true,
+            fechaRegistro: '2026-10-15',
+            registradoPor: 'Dr. Javier Castellanos'
+          },
+          {
+            id: 'dx-odon-02',
+            codigoCIE: 'K02.1',
+            nombre: 'Caries de la dentina',
+            esPrincipal: false,
+            fechaRegistro: '2026-10-15',
+            registradoPor: 'Dr. Javier Castellanos'
+          }
+        ],
+        tratamientos: [
+          {
+            descripcion: 'Biopulpectomía cameral e instrumentación pieza 2.1',
+            indicaciones: 'Aislamiento absoluto con dique de goma, irrigación con hipoclorito de sodio y medicación intraconducto.'
+          },
+          {
+            descripcion: 'Profilaxis dental con ultrasonido',
+            indicaciones: 'Enjuagues bucales diarios con colutorio de clorhexidina al 0.12%.'
+          }
+        ],
+        receta: {
+          id: 'rec-odon-01',
+          codigoReceta: 'REC-ODON-2026-081',
+          fechaEmision: '2026-10-15T11:30:00Z',
+          emitidaPor: 'Dr. Javier Castellanos',
+          rolEmisor: 'Odontólogo General (Col. COG-4812)',
+          estado: 'EMITIDA',
+          medicamentos: [
+            {
+              nombre: 'Amoxicilina',
+              presentacion: 'Cápsula',
+              dosis: '500 mg',
+              frecuencia: 'Cada 8 horas',
+              duracion: '7 días',
+              via: 'Oral',
+              indicaciones: 'Tomar inmediatamente después de los alimentos.'
+            },
+            {
+              nombre: 'Ibuprofeno',
+              presentacion: 'Tableta',
+              dosis: '600 mg',
+              frecuencia: 'Cada 8 horas con alimentos',
+              duracion: '3 días',
+              via: 'Oral',
+              indicaciones: 'Para alivio de molestia e inflamación.'
+            }
+          ]
+        },
+        procedimientos: [
+          {
+            id: 'proc-odon-01',
+            nombre: 'Biopulpectomía cameral e instrumentación pieza 2.1',
+            codigo: 'PROC-ENDO-01',
+            fechaHora: '2026-10-15T11:20:00Z',
+            profesionalNombre: 'Dr. Javier Castellanos',
+            resultado: 'Conducto permeable instrumentado hasta longitud de trabajo 21 mm.',
+            observaciones: 'Curación temporal con ionómero de vidrio.',
+            origen: 'CONSULTA',
+            origenReferencia: 'con-odon-001'
+          }
+        ],
+        historialRevisiones: []
       }
     ];
 
@@ -265,6 +361,7 @@ export class MockConsultationRepository implements ConsultationRepository {
     pacienteId: string,
     consultaId: string
   ): Promise<DetalleConsultaCompleta | null> {
+    this.cargarConsultas();
     await new Promise((res) => setTimeout(res, 40));
     let consulta = this.consultas.find(
       (c) =>

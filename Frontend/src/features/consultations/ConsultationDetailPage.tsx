@@ -99,6 +99,11 @@ export const ConsultationDetailPage: React.FC = () => {
         } else if (!conData) {
           setError(`No se encontró la consulta clínica con identificador ${consultaId}.`);
         } else {
+          // Aislamiento de rol Secretaría (RF-C08, CA18)
+          if (sesion?.rolId === 'SECRETARIA') {
+            setError('403 ACCESO_DENEGADO: El personal de secretaría tiene restringido el acceso a notas clínicas, diagnósticos y recetas médicas (RF-C08, CA18).');
+            return;
+          }
           setPaciente(pacData);
           setConsulta(conData);
         }
@@ -234,6 +239,9 @@ export const ConsultationDetailPage: React.FC = () => {
               <Badge variant="info">
                 v{consulta.revision || 1}
               </Badge>
+              {institucionId === 'CLINICA_ODONTOLOGICA' && (
+                <Badge variant="primary">Odontología (C04)</Badge>
+              )}
             </div>
             <div
               style={{
