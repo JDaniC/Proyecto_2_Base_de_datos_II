@@ -58,7 +58,11 @@ import {
   EstadoEquipoLaboratorio,
   RegistroControlCalidad,
   RegistrarControlCalidadDTO,
-  EvaluacionControlCalidad
+  EvaluacionControlCalidad,
+  LoteReactivo,
+  MovimientoInventario,
+  RegistrarMovimientoDTO,
+  RegistrarNuevoLoteDTO
 } from './types';
 
 export interface IniciarSesionParams {
@@ -270,4 +274,16 @@ export interface LaboratoryRepository {
     dto: RegistrarControlCalidadDTO,
     analista: { id: string; nombre: string }
   ): Promise<RegistroControlCalidad>;
+  obtenerLotesReactivos(institucionId: InstitucionId): Promise<LoteReactivo[]>;
+  obtenerMovimientosInventario(institucionId: InstitucionId, loteId?: string): Promise<MovimientoInventario[]>;
+  registrarMovimientoInventario(
+    institucionId: InstitucionId,
+    dto: RegistrarMovimientoDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<MovimientoInventario>;
+  registrarNuevoLoteReactivo(
+    institucionId: InstitucionId,
+    dto: RegistrarNuevoLoteDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<LoteReactivo>;
 }

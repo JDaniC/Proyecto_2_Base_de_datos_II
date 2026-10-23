@@ -1150,4 +1150,71 @@ export interface RegistrarControlCalidadDTO {
   observaciones?: string;
 }
 
+// -------------------------------------------------------------
+// INVENTARIO DE REACTIVOS Y LOTES (L12, CA15)
+// -------------------------------------------------------------
+
+export type EstadoLoteReactivo = 'DISPONIBLE' | 'AGOTADO' | 'VENCIDO' | 'CUARENTENA' | 'INACTIVO';
+export type TipoMovimientoInventario = 'ENTRADA' | 'CONSUMO' | 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'BAJA';
+
+export interface ReactivoInsumo {
+  id: string;
+  codigo: string;
+  nombre: string;
+  seccion: string;
+  unidadMedida: string;
+  stockMinimoAlerta: number;
+  stockTotalDisponible: number;
+}
+
+export interface LoteReactivo {
+  id: string;
+  reactivoId: string;
+  reactivoNombre: string;
+  reactivoCodigo: string;
+  seccion: string;
+  numeroLote: string;
+  fechaRecepcion: string;
+  fechaVencimiento: string;
+  temperaturaAlmacenamiento: string;
+  estado: EstadoLoteReactivo;
+  revisionStock: number;
+  saldoDisponible: number;
+  unidadMedida: string;
+}
+
+export interface MovimientoInventario {
+  id: string;
+  loteId: string;
+  reactivoNombre: string;
+  numeroLote: string;
+  tipoMovimiento: TipoMovimientoInventario;
+  cantidad: number;
+  saldoAnterior: number;
+  saldoNuevo: number;
+  motivo: string;
+  ordenId?: string;
+  actorId: string;
+  actorNombre: string;
+  fechaHora: string;
+}
+
+export interface RegistrarMovimientoDTO {
+  loteId: string;
+  tipoMovimiento: TipoMovimientoInventario;
+  cantidad: number;
+  motivo: string;
+  ordenId?: string;
+}
+
+export interface RegistrarNuevoLoteDTO {
+  reactivoId: string;
+  numeroLote: string;
+  fechaVencimiento: string;
+  temperaturaAlmacenamiento: string;
+  cantidadInicial: number;
+  motivoRecepcion?: string;
+}
+
+
 

@@ -29,6 +29,7 @@ import { ResultsCapturePage } from '../features/laboratory/ResultsCapturePage';
 import { ResultsValidationPage } from '../features/laboratory/ResultsValidationPage';
 import { LabReportPage } from '../features/laboratory/LabReportPage';
 import { QualityControlPage } from '../features/laboratory/QualityControlPage';
+import { InventoryPage } from '../features/laboratory/InventoryPage';
 
 export const App: React.FC = () => {
   return (
@@ -165,6 +166,14 @@ export const App: React.FC = () => {
                 element={
                   <AuthGuard>
                     <Navigate to="/administracion/usuarios?tab=personal-laboratorio" replace />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/laboratorio/inventario"
+                element={
+                  <AuthGuard requierePermiso={['resultados.analizar', 'usuarios.administrar', 'inventario.administrar']}>
+                    <InventoryPage />
                   </AuthGuard>
                 }
               />

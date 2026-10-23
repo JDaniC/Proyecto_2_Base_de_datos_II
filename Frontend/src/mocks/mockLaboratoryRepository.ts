@@ -17,7 +17,11 @@ import {
   EstadoEquipoLaboratorio,
   RegistroControlCalidad,
   RegistrarControlCalidadDTO,
-  EvaluacionControlCalidad
+  EvaluacionControlCalidad,
+  LoteReactivo,
+  MovimientoInventario,
+  RegistrarMovimientoDTO,
+  RegistrarNuevoLoteDTO
 } from '../services/types';
 
 const STORAGE_KEY_ORDENES = 'clinica_lab_ordenes_v1';
@@ -26,6 +30,8 @@ const STORAGE_KEY_RESULTADOS = 'clinica_lab_resultados_v1';
 const STORAGE_KEY_INFORMES = 'clinica_lab_informes_v1';
 const STORAGE_KEY_EQUIPOS = 'clinica_lab_equipos_v1';
 const STORAGE_KEY_QC = 'clinica_lab_qc_v1';
+const STORAGE_KEY_LOTES = 'clinica_lab_lotes_v1';
+const STORAGE_KEY_MOVIMIENTOS = 'clinica_lab_movs_v1';
 
 export function calcularAlertaParametro(
   valorStr: string,
@@ -117,6 +123,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   private informes: InformeLaboratorio[] = [];
   private equipos: EquipoLaboratorio[] = [];
   private controlesCalidad: RegistroControlCalidad[] = [];
+  private lotesReactivos: LoteReactivo[] = [];
+  private movimientosInventario: MovimientoInventario[] = [];
 
   constructor() {
     this.cargarDatos();
@@ -130,6 +138,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       const rawI = localStorage.getItem(STORAGE_KEY_INFORMES);
       const rawE = localStorage.getItem(STORAGE_KEY_EQUIPOS);
       const rawQC = localStorage.getItem(STORAGE_KEY_QC);
+      const rawL = localStorage.getItem(STORAGE_KEY_LOTES);
+      const rawMov = localStorage.getItem(STORAGE_KEY_MOVIMIENTOS);
 
       if (rawO) this.ordenes = JSON.parse(rawO);
       if (rawM) this.muestras = JSON.parse(rawM);
@@ -137,6 +147,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       if (rawI) this.informes = JSON.parse(rawI);
       if (rawE) this.equipos = JSON.parse(rawE);
       if (rawQC) this.controlesCalidad = JSON.parse(rawQC);
+      if (rawL) this.lotesReactivos = JSON.parse(rawL);
+      if (rawMov) this.movimientosInventario = JSON.parse(rawMov);
     } catch {
       // fallback
     }
@@ -815,6 +827,105 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       ];
     }
 
+    if (this.lotesReactivos.length === 0) {
+      this.lotesReactivos = [
+        {
+          id: 'lote-01',
+          reactivoId: 'rea-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          reactivoCodigo: 'REA-GLU-01',
+          seccion: 'Bioquímica Clínica',
+          numeroLote: 'LOT-GLU-2026-A',
+          fechaRecepcion: '2026-10-01T08:00:00Z',
+          fechaVencimiento: '2027-04-30T00:00:00Z',
+          temperaturaAlmacenamiento: '2°C a 8°C (Refrigeración)',
+          estado: 'DISPONIBLE',
+          revisionStock: 3,
+          saldoDisponible: 1450,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-02',
+          reactivoId: 'rea-02',
+          reactivoNombre: 'Diluente Cellpack DCL Sysmex',
+          reactivoCodigo: 'REA-HEM-02',
+          seccion: 'Hematología y Coagulación',
+          numeroLote: 'LOT-CELL-088',
+          fechaRecepcion: '2026-09-15T10:00:00Z',
+          fechaVencimiento: '2027-02-28T00:00:00Z',
+          temperaturaAlmacenamiento: '15°C a 25°C (Ambiente controlado)',
+          estado: 'DISPONIBLE',
+          revisionStock: 1,
+          saldoDisponible: 450,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-03',
+          reactivoId: 'rea-03',
+          reactivoNombre: 'PreciControl Troponin I Cobas',
+          reactivoCodigo: 'REA-INM-03',
+          seccion: 'Inmunología Clínica',
+          numeroLote: 'LOT-TROP-902',
+          fechaRecepcion: '2026-10-10T09:00:00Z',
+          fechaVencimiento: '2026-12-31T00:00:00Z',
+          temperaturaAlmacenamiento: '2°C a 8°C (Refrigeración)',
+          estado: 'DISPONIBLE',
+          revisionStock: 2,
+          saldoDisponible: 120,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-04',
+          reactivoId: 'rea-04',
+          reactivoNombre: 'Tiras Reactivas Urianálisis Automatizado',
+          reactivoCodigo: 'REA-URI-04',
+          seccion: 'Uroanálisis y Coprología',
+          numeroLote: 'LOT-URI-2025-X',
+          fechaRecepcion: '2025-08-01T08:00:00Z',
+          fechaVencimiento: '2026-09-01T00:00:00Z',
+          temperaturaAlmacenamiento: '15°C a 30°C (Lugar seco)',
+          estado: 'VENCIDO',
+          revisionStock: 1,
+          saldoDisponible: 40,
+          unidadMedida: 'Tiras'
+        }
+      ];
+    }
+
+    if (this.movimientosInventario.length === 0) {
+      this.movimientosInventario = [
+        {
+          id: 'mov-01',
+          loteId: 'lote-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          numeroLote: 'LOT-GLU-2026-A',
+          tipoMovimiento: 'ENTRADA',
+          cantidad: 1500,
+          saldoAnterior: 0,
+          saldoNuevo: 1500,
+          motivo: 'Recepción de pedido mensual de insumos Roche Diagnostics',
+          actorId: 'usr-admin-lab-01',
+          actorNombre: 'Dra. Lucrecia Meléndez',
+          fechaHora: '2026-10-01T08:30:00Z'
+        },
+        {
+          id: 'mov-02',
+          loteId: 'lote-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          numeroLote: 'LOT-GLU-2026-A',
+          tipoMovimiento: 'CONSUMO',
+          cantidad: 50,
+          saldoAnterior: 1500,
+          saldoNuevo: 1450,
+          motivo: 'Consumo analítico en Cobas c 311 (Lote ORD-LAB-2026-0081)',
+          ordenId: 'ord-lab-01',
+          actorId: 'usr-lab-01',
+          actorNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T08:15:00Z'
+        }
+      ];
+    }
+
     // Unir todas las muestras de las órdenes
     this.muestras = this.ordenes.flatMap((o) => o.muestras);
     this.guardarDatos();
@@ -828,6 +939,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       localStorage.setItem(STORAGE_KEY_INFORMES, JSON.stringify(this.informes));
       localStorage.setItem(STORAGE_KEY_EQUIPOS, JSON.stringify(this.equipos));
       localStorage.setItem(STORAGE_KEY_QC, JSON.stringify(this.controlesCalidad));
+      localStorage.setItem(STORAGE_KEY_LOTES, JSON.stringify(this.lotesReactivos));
+      localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(this.movimientosInventario));
     } catch {
       // ignore
     }
@@ -1665,5 +1778,150 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     this.controlesCalidad.unshift(nuevoRegistro);
     this.guardarDatos();
     return { ...nuevoRegistro };
+  }
+
+  async obtenerLotesReactivos(_institucionId: InstitucionId): Promise<LoteReactivo[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.lotesReactivos];
+  }
+
+  async obtenerMovimientosInventario(
+    _institucionId: InstitucionId,
+    loteId?: string
+  ): Promise<MovimientoInventario[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    if (loteId) {
+      return this.movimientosInventario.filter((m) => m.loteId === loteId);
+    }
+    return [...this.movimientosInventario];
+  }
+
+  async registrarMovimientoInventario(
+    _institucionId: InstitucionId,
+    dto: RegistrarMovimientoDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<MovimientoInventario> {
+    await new Promise((res) => setTimeout(res, 40));
+    const lote = this.lotesReactivos.find((l) => l.id === dto.loteId);
+    if (!lote) throw new Error(`Lote de reactivo ${dto.loteId} no encontrado.`);
+
+    if (dto.cantidad <= 0) {
+      throw new Error('La cantidad del movimiento debe ser un número entero positivo mayor a cero.');
+    }
+
+    // Regla CA15: No se permite consumir de un lote VENCIDO o INACTIVO
+    if (dto.tipoMovimiento === 'CONSUMO' && (lote.estado === 'VENCIDO' || lote.estado === 'INACTIVO')) {
+      throw new Error(`Regla CA15: Bloqueo de seguridad analítica. No se permite registrar consumos de un lote en estado ${lote.estado}.`);
+    }
+
+    const saldoAnterior = lote.saldoDisponible;
+    let saldoNuevo = saldoAnterior;
+
+    if (dto.tipoMovimiento === 'ENTRADA' || dto.tipoMovimiento === 'AJUSTE_ENTRADA') {
+      saldoNuevo = saldoAnterior + dto.cantidad;
+    } else {
+      // CONSUMO, AJUSTE_SALIDA, BAJA
+      // Regla CA15: Bloqueo de saldo negativo
+      if (dto.cantidad > saldoAnterior) {
+        throw new Error(
+          `Regla CA15: Saldo insuficiente. El lote ${lote.numeroLote} solo dispone de ${saldoAnterior} ${lote.unidadMedida}. No se permiten saldos negativos.`
+        );
+      }
+      saldoNuevo = saldoAnterior - dto.cantidad;
+    }
+
+    // Incrementar revisionStock para trazabilidad y concurrencia optimista (CA15)
+    lote.revisionStock = (lote.revisionStock || 0) + 1;
+    lote.saldoDisponible = saldoNuevo;
+
+    if (saldoNuevo === 0 && lote.estado === 'DISPONIBLE') {
+      lote.estado = 'AGOTADO';
+    } else if (saldoNuevo > 0 && lote.estado === 'AGOTADO') {
+      lote.estado = 'DISPONIBLE';
+    }
+
+    const movimiento: MovimientoInventario = {
+      id: `mov-${Date.now()}`,
+      loteId: lote.id,
+      reactivoNombre: lote.reactivoNombre,
+      numeroLote: lote.numeroLote,
+      tipoMovimiento: dto.tipoMovimiento,
+      cantidad: dto.cantidad,
+      saldoAnterior,
+      saldoNuevo,
+      motivo: dto.motivo,
+      ordenId: dto.ordenId,
+      actorId: actor.id,
+      actorNombre: actor.nombre,
+      fechaHora: new Date().toISOString()
+    };
+
+    this.movimientosInventario.unshift(movimiento);
+    this.guardarDatos();
+    return { ...movimiento };
+  }
+
+  async registrarNuevoLoteReactivo(
+    _institucionId: InstitucionId,
+    dto: RegistrarNuevoLoteDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<LoteReactivo> {
+    await new Promise((res) => setTimeout(res, 50));
+
+    let reactivoNombre = 'Reactivo General de Laboratorio';
+    let reactivoCodigo = 'REA-GEN-01';
+    let seccion = 'Bioquímica Clínica';
+    let unidadMedida = 'Determinaciones';
+
+    if (dto.reactivoId === 'rea-01') {
+      reactivoNombre = 'Reactivo Hexoquinasa Glucosa Cobas';
+      reactivoCodigo = 'REA-GLU-01';
+      seccion = 'Bioquímica Clínica';
+    } else if (dto.reactivoId === 'rea-02') {
+      reactivoNombre = 'Diluente Cellpack DCL Sysmex';
+      reactivoCodigo = 'REA-HEM-02';
+      seccion = 'Hematología y Coagulación';
+    } else if (dto.reactivoId === 'rea-03') {
+      reactivoNombre = 'PreciControl Troponin I Cobas';
+      reactivoCodigo = 'REA-INM-03';
+      seccion = 'Inmunología Clínica';
+    }
+
+    const nuevoLote: LoteReactivo = {
+      id: `lote-${Date.now()}`,
+      reactivoId: dto.reactivoId,
+      reactivoNombre,
+      reactivoCodigo,
+      seccion,
+      numeroLote: dto.numeroLote,
+      fechaRecepcion: new Date().toISOString(),
+      fechaVencimiento: dto.fechaVencimiento,
+      temperaturaAlmacenamiento: dto.temperaturaAlmacenamiento,
+      estado: 'DISPONIBLE',
+      revisionStock: 1,
+      saldoDisponible: dto.cantidadInicial,
+      unidadMedida
+    };
+
+    this.lotesReactivos.unshift(nuevoLote);
+
+    const movInicial: MovimientoInventario = {
+      id: `mov-init-${Date.now()}`,
+      loteId: nuevoLote.id,
+      reactivoNombre,
+      numeroLote: nuevoLote.numeroLote,
+      tipoMovimiento: 'ENTRADA',
+      cantidad: dto.cantidadInicial,
+      saldoAnterior: 0,
+      saldoNuevo: dto.cantidadInicial,
+      motivo: dto.motivoRecepcion || 'Recepción e ingreso inicial de nuevo lote a bodega',
+      actorId: actor.id,
+      actorNombre: actor.nombre,
+      fechaHora: new Date().toISOString()
+    };
+
+    this.movimientosInventario.unshift(movInicial);
+    this.guardarDatos();
+    return { ...nuevoLote };
   }
 }
