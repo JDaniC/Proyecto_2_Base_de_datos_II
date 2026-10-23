@@ -42,7 +42,13 @@ const CATALOGO_CIE10 = [
   { codigo: 'R51', nombre: 'Cefalea' },
   { codigo: 'Z00.0', nombre: 'Examen médico general de rutina' },
   { codigo: 'K02.1', nombre: 'Caries de la dentina (Odontología)' },
+  { codigo: 'K02.0', nombre: 'Caries limitada al esmalte (Odontología)' },
+  { codigo: 'K04.0', nombre: 'Pulpitis aguda irreversible (Odontología)' },
+  { codigo: 'K04.7', nombre: 'Absceso periapical sin fístula (Odontología)' },
   { codigo: 'K05.0', nombre: 'Gingivitis aguda marginal (Odontología)' },
+  { codigo: 'K05.3', nombre: 'Periodontitis crónica del adulto (Odontología)' },
+  { codigo: 'K08.1', nombre: 'Pérdida de dientes debida a extracción o traumatismo (Odontología)' },
+  { codigo: 'Z01.2', nombre: 'Examen odontológico y profilaxis de rutina (Odontología)' },
   { codigo: 'Z00.1', nombre: 'Control de salud de rutina del niño y desarrollo (Pediatría)' }
 ];
 
@@ -50,10 +56,21 @@ const MEDICAMENTOS_SUGERIDOS = [
   { nombre: 'Losartán Potásico', presentacion: 'Comprimido', concentracion: '50 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
   { nombre: 'Metformina Clorhidrato', presentacion: 'Tableta', concentracion: '850 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
   { nombre: 'Amoxicilina + Ácido Clavulánico', presentacion: 'Tableta', concentracion: '500/125 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
+  { nombre: 'Amoxicilina', presentacion: 'Cápsula', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
   { nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '3 días' },
-  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '400 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
+  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '600 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
+  { nombre: 'Ketorolaco Trometamina', presentacion: 'Tableta sublingual', concentracion: '10 mg', via: 'Sublingual', frecuencia: 'Cada 8 horas', duracion: '2 días' },
+  { nombre: 'Clorhexidina al 0.12%', presentacion: 'Colutorio bucal', concentracion: '15 ml', via: 'Enjuague bucal', frecuencia: 'Cada 12 horas por 1 min', duracion: '10 días' },
   { nombre: 'Omeprazol', presentacion: 'Cápsula', concentracion: '20 mg', via: 'Oral', frecuencia: 'Cada 24 horas en ayunas', duracion: '30 días' },
   { nombre: 'Salbutamol aerosol', presentacion: 'Inhalador', concentracion: '100 mcg/dosis', via: 'Inhalatoria', frecuencia: 'Cada 6 a 8 horas a demanda', duracion: '30 días' }
+];
+
+const TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA = [
+  { nombre: 'Profilaxis dental con ultrasonido y pulido', indicaciones: 'Eliminación mecánica de placa y manchas extrínsecas.' },
+  { nombre: 'Obturación con resina compuesta fotocurable', indicaciones: 'Aislamiento absoluto, grabado ácido y estratificación con resina universal.' },
+  { nombre: 'Endodoncia unirradicular y conductometría', indicaciones: 'Instrumentación rotatoria, desinfección con NaOCl al 2.5% y sellado radicular.' },
+  { nombre: 'Exodoncia dental simple bajo anestesia local', indicaciones: 'Sindesmotomía, luxación y hemostasia con gasa compresiva por 30 minutos.' },
+  { nombre: 'Tartrectomía y alisado radicular por cuadrante', indicaciones: 'Curetaje subgingival y desbridamiento periodontal profundo.' }
 ];
 
 export const NewConsultationWizardPage: React.FC = () => {
@@ -114,6 +131,10 @@ export const NewConsultationWizardPage: React.FC = () => {
 
   // Estados de validación y envío
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
+  const [errorBloqueanteCita, setErrorBloqueanteCita] = useState<{
+    codigo: string;
+    mensaje: string;
+  } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
   // Cargar datos del paciente y de la cita vinculada
@@ -131,6 +152,31 @@ export const NewConsultationWizardPage: React.FC = () => {
         if (!active) return;
         setPaciente(pac);
         if (cita) {
+          // Reglas de negocio CA06: Control de transición Cita -> Consulta
+          if (cita.estado === 'CANCELADA') {
+            setErrorBloqueanteCita({
+              codigo: '409 ESTADO_INVALIDO',
+              mensaje: 'No se puede iniciar una consulta clínica vinculada a una cita en estado CANCELADA (CA06).'
+            });
+            setCargandoInicial(false);
+            return;
+          }
+          if (cita.estado === 'ATENDIDA') {
+            setErrorBloqueanteCita({
+              codigo: '409 CITA_YA_ATENDIDA',
+              mensaje: 'La cita seleccionada ya fue atendida en una consulta previa y no admite duplicidad de atenciones (CA06).'
+            });
+            setCargandoInicial(false);
+            return;
+          }
+          if (cita.pacienteId !== pac?.id) {
+            setErrorBloqueanteCita({
+              codigo: '409 REFERENCIA_INCOMPATIBLE',
+              mensaje: 'La cita seleccionada pertenece a otro paciente y no es compatible con este expediente (CA17).'
+            });
+            setCargandoInicial(false);
+            return;
+          }
           setCitaVinculada(cita);
           if (cita.motivo && !motivo) {
             setMotivo(cita.motivo);
@@ -424,7 +470,9 @@ export const NewConsultationWizardPage: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-                Registro de Consulta Médica (Pantalla 04 Aprobada)
+                {institucionId === 'CLINICA_ODONTOLOGICA'
+                  ? 'Registro de Consulta Odontológica (C03)'
+                  : 'Registro de Consulta Médica (Pantalla 04 Aprobada)'}
               </h1>
               <Badge variant="primary">{sesion?.institucionNombre}</Badge>
             </div>
@@ -462,6 +510,46 @@ export const NewConsultationWizardPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Conflicto Bloqueante de Cita Vinculada (CA06) */}
+      {errorBloqueanteCita && (
+        <div
+          role="alert"
+          style={{
+            backgroundColor: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            borderRadius: 'var(--radius-panel)',
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: 'var(--shadow-panel)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-danger-text)', fontWeight: 700, fontSize: '17px', marginBottom: '8px' }}>
+            <AlertCircle size={22} />
+            <span>Conflicto de Cita Vinculada ({errorBloqueanteCita.codigo})</span>
+          </div>
+          <p style={{ color: 'var(--color-danger-text)', fontSize: '14px', margin: '0 0 16px 0' }}>
+            {errorBloqueanteCita.mensaje}
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/agenda')}
+            >
+              Regresar a la agenda
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setErrorBloqueanteCita(null);
+                setCitaVinculada(null);
+              }}
+            >
+              Continuar consulta sin vincular cita previa
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Componente Stepper de 4 Pasos + Revisión Final (Design System #26) */}
       <div
@@ -592,8 +680,25 @@ export const NewConsultationWizardPage: React.FC = () => {
         {paso === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Paso 1: Motivo y Descripción del Cuadro Clínico
+              {institucionId === 'CLINICA_ODONTOLOGICA'
+                ? 'Paso 1: Motivo de Consulta y Examen Estomatológico (C03)'
+                : 'Paso 1: Motivo y Descripción del Cuadro Clínico'}
             </h2>
+
+            {institucionId === 'CLINICA_ODONTOLOGICA' && (
+              <div
+                style={{
+                  backgroundColor: 'var(--color-selection)',
+                  border: '1px solid var(--color-primary)',
+                  borderRadius: 'var(--radius-input)',
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  color: 'var(--color-strong)'
+                }}
+              >
+                <strong>Atención Odontológica Especializada (C03):</strong> Registro clínico estomatológico, tejidos periodontales y oclusión. Sin odontograma según alcance expreso (§8.3).
+              </div>
+            )}
 
             {/* Selector de responsable en Pediatría */}
             {institucionId === 'CENTRO_PEDIATRICO' && paciente.responsables && paciente.responsables.length > 0 && (
@@ -1004,6 +1109,38 @@ export const NewConsultationWizardPage: React.FC = () => {
               <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-strong)', marginBottom: '8px' }}>
                 Tratamientos y Procedimientos Indicados:
               </div>
+
+              {institucionId === 'CLINICA_ODONTOLOGICA' && (
+                <div style={{ marginBottom: '12px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '6px' }}>
+                    Procedimientos odontológicos sugeridos del catálogo (C05):
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA.map((t) => (
+                      <button
+                        key={t.nombre}
+                        type="button"
+                        onClick={() => {
+                          setNuevoTratamientoDesc(t.nombre);
+                          setNuevoTratamientoIndic(t.indicaciones);
+                        }}
+                        style={{
+                          backgroundColor: 'var(--color-input-bg)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: '16px',
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          color: 'var(--color-primary)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        + {t.nombre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'flex-end' }}>
                 <div>
                   <label htmlFor="trat-desc" style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
@@ -1489,6 +1626,7 @@ export const NewConsultationWizardPage: React.FC = () => {
             {paso < 5 ? (
               <Button
                 variant="primary"
+                disabled={Boolean(errorBloqueanteCita)}
                 onClick={avanzarPaso}
                 rightIcon={<ChevronRight size={16} />}
               >
@@ -1497,6 +1635,7 @@ export const NewConsultationWizardPage: React.FC = () => {
             ) : (
               <Button
                 variant="primary"
+                disabled={Boolean(errorBloqueanteCita)}
                 loading={guardando}
                 onClick={handleConfirmarConsulta}
                 leftIcon={<CheckCircle2 size={16} />}
