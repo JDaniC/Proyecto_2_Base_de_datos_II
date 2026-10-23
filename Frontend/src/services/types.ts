@@ -940,7 +940,7 @@ export interface OrdenLaboratorio {
   pacienteNombre: string;
   pacienteDpi: string;
   pacienteEdad: number;
-  pacienteSexo: 'M' | 'F';
+  pacienteSexo: string;
   medicoSolicitante: string;
   prioridad: PrioridadLaboratorio;
   estado: EstadoOrdenLaboratorio;
@@ -963,7 +963,7 @@ export interface CrearOrdenLabDTO {
   pacienteNombre: string;
   pacienteDpi: string;
   pacienteEdad: number;
-  pacienteSexo: 'M' | 'F';
+  pacienteSexo: string;
   medicoSolicitante: string;
   prioridad: PrioridadLaboratorio;
   motivoClinico: string;
