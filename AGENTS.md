@@ -47,3 +47,9 @@ Inicializador modificado no migra volúmenes. Preparar migración explícita, aj
 Pruebas con datos sintéticos y entornos aislados; sin bases compartidas/proyectos reales. No guardar secretos/datos clínicos en Git, logs, errores o capturas. Evidencia saneada en `plan/evidencias/`; logs crudos pueden quedar ignorados.
 
 Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PASS/FAIL/BLOCKED/NOT_IMPLEMENTED/NOT_APPLICABLE, mock/emulador/motor y prueba histórica/actual. Un test obsoleto requiere justificación/cobertura sustituta. Cierre final: instalación en otro equipo, cuatro motores, comparativo y retroalimentación docente trazable.
+
+## Code Review Rules
+
+- Verificar que institución y permisos procedan de token verificado y cuenta local; nunca confiar en actor, rol o institución enviados por la UI. Dominio y aplicación sin dependencias de HTTP, SDK o motores.
+- Señalar pérdida de historia, escrituras parciales o carreras de saldo/stock. Comandos deben preservar atomicidad por motor, idempotencia y versiones; archivar impide nuevas atenciones pero permite finalizar anteriores con autorización.
+- Exigir migraciones para volúmenes existentes cuando cambien inicializadores. Distinguir pruebas reales, offline y simuladas; no aceptar que un éxito de mocks acredite persistencia ni que se eliminen datos para conseguir pruebas verdes.
