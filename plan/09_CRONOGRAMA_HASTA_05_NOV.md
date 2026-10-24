@@ -1,6 +1,6 @@
 # Cronograma de integración hasta el 5 de noviembre de 2026
 
-Fecha de planificación: 24/10/2026. Zona: America/Guatemala. P1: Daniel (JDaniC); P2: David (Davidix888). Fechas objetivo, no estados de ejecución. El tablero 06_TABLERO.md conserva la autoridad sobre los estados.
+Fecha de planificación: 24/10/2026. Zona: America/Guatemala. Integrantes: Daniel (JDaniC) y David (Davidix888). P1/P2 son lotes intercambiables; no asignan una tarea a una persona. Fechas objetivo, no estados de ejecución. El tablero 06_TABLERO.md conserva la autoridad sobre los estados.
 
 ## 1. Capacidad y compromiso
 
@@ -12,7 +12,7 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 
 ## 2. Calendario diario y resultado integrado
 
-| Fecha | P1 — JDaniC | P2 — Davidix888 | Resultado y puerta |
+| Fecha | Bloque A (lote P1, cualquiera) | Bloque B (lote P2, cualquiera) | Resultado y puerta |
 |---|---|---|---|
 | 24/10 | Preparar PR del flujo e inventario de cambios locales | Aceptar invitación y revisar flujo | Preparación; importar plan/UI mediante PR controlado, sin publicar cambios ajenos |
 | 25/10 | E00: alcance, regresión PG, contrato API | E00: entornos, inventario UI, arnés | Contrato revisado; cuatro entornos verificables; recalibrar capacidad |
@@ -34,63 +34,63 @@ Las secuencias con flechas son obligatorias. Si una dependencia no está revisad
 
 Conservar IDs y orden de los archivos originales. La ventana corresponde a la fase; dentro de ella se respeta la columna de dependencias del tablero. El enlace de cada fila contiene trabajo, éxitos, fallos, excepciones y evidencia exigida.
 
-| N.º | ID / detalle ejecutable | Responsable | Ventana objetivo | Integrar a más tardar |
+| N.º | ID / detalle ejecutable | Lote original, ejecutor libre | Ventana objetivo | Integrar a más tardar |
 |---|---|---|---|---|
-| 01 | [E00-P1-01 — Alinear alcance final y políticas institucionales](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | JDaniC | 25/10–25/10 | 25/10/2026 |
-| 02 | [E00-P1-02 — Corregir el archivo de historiales en PostgreSQL](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | JDaniC | 25/10–25/10 | 25/10/2026 |
-| 03 | [E00-P1-03 — Definir API y puertos comunes versionados](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | JDaniC | 25/10–25/10 | 25/10/2026 |
-| 04 | [E00-P2-01 — Preparar cuatro entornos de ensayo y desbloquear auditorías](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | Davidix888 | 25/10–25/10 | 25/10/2026 |
-| 05 | [E00-P2-02 — Inventariar contratos reales del frontend y sus diferencias](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | Davidix888 | 25/10–25/10 | 25/10/2026 |
-| 06 | [E00-P2-03 — Diseñar fixtures y arnés de aceptación compartido](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | Davidix888 | 25/10–25/10 | 25/10/2026 |
-| 07 | [E01-P1-01 — Crear esqueleto backend, composición y contratos de ejecución](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01) | JDaniC | 26/10–27/10 | 27/10/2026 |
-| 08 | [E01-P1-02 — Implementar valores, políticas y puertos del núcleo](entregas/E01_fundacion_backend/01_P1.md#e01-p1-02) | JDaniC | 26/10–27/10 | 27/10/2026 |
-| 09 | [E01-P1-03 — Autenticar, autorizar y enrutar por institución](entregas/E01_fundacion_backend/01_P1.md#e01-p1-03) | JDaniC | 26/10–27/10 | 27/10/2026 |
-| 10 | [E01-P2-01 — Implementar conexiones y unidades de trabajo SQL](entregas/E01_fundacion_backend/02_P2.md#e01-p2-01) | Davidix888 | 26/10–27/10 | 27/10/2026 |
-| 11 | [E01-P2-02 — Implementar unidades de trabajo MongoDB y Firestore](entregas/E01_fundacion_backend/02_P2.md#e01-p2-02) | Davidix888 | 26/10–27/10 | 27/10/2026 |
-| 12 | [E01-P2-03 — Conectar sesión y transporte HTTP de la interfaz](entregas/E01_fundacion_backend/02_P2.md#e01-p2-03) | Davidix888 | 26/10–27/10 | 27/10/2026 |
-| 13 | [E02-P1-01 — Crear casos comunes de pacientes e identidad](entregas/E02_pacientes_historial/01_P1.md#e02-p1-01) | JDaniC | 28/10–28/10 | 28/10/2026 |
-| 14 | [E02-P1-02 — Persistir pacientes en PostgreSQL y MySQL](entregas/E02_pacientes_historial/01_P1.md#e02-p1-02) | JDaniC | 28/10–28/10 | 28/10/2026 |
-| 15 | [E02-P1-03 — Integrar alta, edición y expediente en React](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) | JDaniC | 28/10–28/10 | 28/10/2026 |
-| 16 | [E02-P2-01 — Persistir pacientes e identidad en MongoDB](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | Davidix888 | 28/10–28/10 | 28/10/2026 |
-| 17 | [E02-P2-02 — Persistir menores y responsables iniciales en Firestore](entregas/E02_pacientes_historial/02_P2.md#e02-p2-02) | Davidix888 | 28/10–28/10 | 28/10/2026 |
-| 18 | [E02-P2-03 — Construir consultas de expediente e historial ordenado](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | Davidix888 | 28/10–28/10 | 28/10/2026 |
-| 19 | [E03-P1-01 — Implementar atención clínica común y comando compuesto](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | JDaniC | 29/10–30/10 | 30/10/2026 |
-| 20 | [E03-P1-02 — Implementar atención clínica en ambos adaptadores SQL](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | JDaniC | 29/10–30/10 | 30/10/2026 |
-| 21 | [E03-P1-03 — Implementar archivo, finalización y corrección histórica](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | JDaniC | 29/10–30/10 | 30/10/2026 |
-| 22 | [E03-P2-01 — Implementar núcleo clínico de laboratorio en MongoDB](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | Davidix888 | 29/10–30/10 | 30/10/2026 |
-| 23 | [E03-P2-02 — Implementar atención pediátrica transaccional](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | Davidix888 | 29/10–30/10 | 30/10/2026 |
-| 24 | [E03-P2-03 — Integrar atención, archivo y prueba común desde la UI](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) | Davidix888 | 29/10–30/10 | 30/10/2026 |
-| 25 | [E04-P1-01 — Completar agenda y atención odontológica](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-01) | JDaniC | 31/10–31/10 | 31/10/2026 |
-| 26 | [E04-P1-02 — Hospitalizaciones y ocupación de camas](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02) | JDaniC | 31/10–31/10 | 31/10/2026 |
-| 27 | [E04-P1-03 — Exámenes, procedimientos y coberturas hospitalarias](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03) | JDaniC | 31/10–31/10 | 31/10/2026 |
-| 28 | [E04-P2-01 — Responsables, antecedentes y crecimiento pediátrico](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-01) | Davidix888 | 31/10–31/10 | 31/10/2026 |
-| 29 | [E04-P2-02 — Versionar vacunas y registrar aplicaciones únicas](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | Davidix888 | 31/10–31/10 | 31/10/2026 |
-| 30 | [E04-P2-03 — Cerrar integración institucional de agendas y pediatría](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | Davidix888 | 31/10–31/10 | 31/10/2026 |
-| 31 | [E05-P1-01 — Catálogos, órdenes y trazabilidad de muestras](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | JDaniC | 01/11–02/11 | 02/11/2026 |
-| 32 | [E05-P1-02 — Generar informes inmutables y descarga autorizada](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | JDaniC | 01/11–02/11 | 02/11/2026 |
-| 33 | [E05-P1-03 — Facturación, pagos y reversiones con saldo consistente](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | JDaniC | 01/11–02/11 | 02/11/2026 |
-| 34 | [E05-P2-01 — Captura, validación, corrección y repetición de resultados](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | Davidix888 | 01/11–02/11 | 02/11/2026 |
-| 35 | [E05-P2-02 — Inventario de reactivos, equipos y control de calidad](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | Davidix888 | 01/11–02/11 | 02/11/2026 |
-| 36 | [E05-P2-03 — Integrar laboratorio y administración mínima de cuentas](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | Davidix888 | 01/11–02/11 | 02/11/2026 |
-| 37 | [E06-P1-01 — Revisar autorización y recuperar fallos de identidad](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | JDaniC | 03/11–03/11 | 03/11/2026 |
-| 38 | [E06-P1-02 — Demostrar equivalencia, atomicidad y concurrencia en cuatro motores](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | JDaniC | 03/11–03/11 | 03/11/2026 |
-| 39 | [E06-P1-03 — Instalación reproducible, respaldo y restauración](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03) | JDaniC | 03/11–03/11 | 03/11/2026 |
-| 40 | [E06-P2-01 — Cerrar todas las fronteras HTTP y eliminar simulación en entrega](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01) | Davidix888 | 03/11–03/11 | 03/11/2026 |
-| 41 | [E06-P2-02 — Actualizar regresiones de UI y ejecutar recorridos completos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) | Davidix888 | 03/11–03/11 | 03/11/2026 |
-| 42 | [E06-P2-03 — Auditar candidato integrado y cerrar defectos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-03) | Davidix888 | 03/11–03/11 | 03/11/2026 |
-| 43 | [E07-P1-01 — Redactar comparativo final y modelos corregidos](entregas/E07_entrega_final/01_P1.md#e07-p1-01) | JDaniC | 04/11–05/11 | 05/11/2026 |
-| 44 | [E07-P1-02 — Preparar paquete instalable desde cero](entregas/E07_entrega_final/01_P1.md#e07-p1-02) | JDaniC | 04/11–05/11 | 05/11/2026 |
-| 45 | [E07-P1-03 — Ensayar defensa y demostración final con ambos integrantes](entregas/E07_entrega_final/01_P1.md#e07-p1-03) | JDaniC | 04/11–05/11 | 05/11/2026 |
-| 46 | [E07-P2-01 — Cerrar retroalimentación docente y trazabilidad académica](entregas/E07_entrega_final/02_P2.md#e07-p2-01) | Davidix888 | 04/11–05/11 | 05/11/2026 |
-| 47 | [E07-P2-02 — Escribir manuales de uso y operación para la entrega](entregas/E07_entrega_final/02_P2.md#e07-p2-02) | Davidix888 | 04/11–05/11 | 05/11/2026 |
-| 48 | [E07-P2-03 — Verificar y cerrar el paquete final](entregas/E07_entrega_final/02_P2.md#e07-p2-03) | Davidix888 | 04/11–05/11 | 05/11/2026 |
+| 01 | [E00-P1-01 — Alinear alcance final y políticas institucionales](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | P1 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 02 | [E00-P1-02 — Corregir el archivo de historiales en PostgreSQL](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | P1 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 03 | [E00-P1-03 — Definir API y puertos comunes versionados](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 04 | [E00-P2-01 — Preparar cuatro entornos de ensayo y desbloquear auditorías](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 05 | [E00-P2-02 — Inventariar contratos reales del frontend y sus diferencias](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | P2 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 06 | [E00-P2-03 — Diseñar fixtures y arnés de aceptación compartido](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | P2 (cualquiera) | 25/10–25/10 | 25/10/2026 |
+| 07 | [E01-P1-01 — Crear esqueleto backend, composición y contratos de ejecución](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01) | P1 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 08 | [E01-P1-02 — Implementar valores, políticas y puertos del núcleo](entregas/E01_fundacion_backend/01_P1.md#e01-p1-02) | P1 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 09 | [E01-P1-03 — Autenticar, autorizar y enrutar por institución](entregas/E01_fundacion_backend/01_P1.md#e01-p1-03) | P1 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 10 | [E01-P2-01 — Implementar conexiones y unidades de trabajo SQL](entregas/E01_fundacion_backend/02_P2.md#e01-p2-01) | P2 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 11 | [E01-P2-02 — Implementar unidades de trabajo MongoDB y Firestore](entregas/E01_fundacion_backend/02_P2.md#e01-p2-02) | P2 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 12 | [E01-P2-03 — Conectar sesión y transporte HTTP de la interfaz](entregas/E01_fundacion_backend/02_P2.md#e01-p2-03) | P2 (cualquiera) | 26/10–27/10 | 27/10/2026 |
+| 13 | [E02-P1-01 — Crear casos comunes de pacientes e identidad](entregas/E02_pacientes_historial/01_P1.md#e02-p1-01) | P1 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 14 | [E02-P1-02 — Persistir pacientes en PostgreSQL y MySQL](entregas/E02_pacientes_historial/01_P1.md#e02-p1-02) | P1 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 15 | [E02-P1-03 — Integrar alta, edición y expediente en React](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) | P1 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 16 | [E02-P2-01 — Persistir pacientes e identidad en MongoDB](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | P2 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 17 | [E02-P2-02 — Persistir menores y responsables iniciales en Firestore](entregas/E02_pacientes_historial/02_P2.md#e02-p2-02) | P2 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 18 | [E02-P2-03 — Construir consultas de expediente e historial ordenado](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | P2 (cualquiera) | 28/10–28/10 | 28/10/2026 |
+| 19 | [E03-P1-01 — Implementar atención clínica común y comando compuesto](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | P1 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 20 | [E03-P1-02 — Implementar atención clínica en ambos adaptadores SQL](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | P1 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 21 | [E03-P1-03 — Implementar archivo, finalización y corrección histórica](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | P1 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 22 | [E03-P2-01 — Implementar núcleo clínico de laboratorio en MongoDB](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | P2 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 23 | [E03-P2-02 — Implementar atención pediátrica transaccional](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | P2 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 24 | [E03-P2-03 — Integrar atención, archivo y prueba común desde la UI](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) | P2 (cualquiera) | 29/10–30/10 | 30/10/2026 |
+| 25 | [E04-P1-01 — Completar agenda y atención odontológica](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-01) | P1 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 26 | [E04-P1-02 — Hospitalizaciones y ocupación de camas](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02) | P1 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 27 | [E04-P1-03 — Exámenes, procedimientos y coberturas hospitalarias](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03) | P1 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 28 | [E04-P2-01 — Responsables, antecedentes y crecimiento pediátrico](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-01) | P2 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 29 | [E04-P2-02 — Versionar vacunas y registrar aplicaciones únicas](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | P2 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 30 | [E04-P2-03 — Cerrar integración institucional de agendas y pediatría](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 (cualquiera) | 31/10–31/10 | 31/10/2026 |
+| 31 | [E05-P1-01 — Catálogos, órdenes y trazabilidad de muestras](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 32 | [E05-P1-02 — Generar informes inmutables y descarga autorizada](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 33 | [E05-P1-03 — Facturación, pagos y reversiones con saldo consistente](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 34 | [E05-P2-01 — Captura, validación, corrección y repetición de resultados](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 35 | [E05-P2-02 — Inventario de reactivos, equipos y control de calidad](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 36 | [E05-P2-03 — Integrar laboratorio y administración mínima de cuentas](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
+| 37 | [E06-P1-01 — Revisar autorización y recuperar fallos de identidad](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 38 | [E06-P1-02 — Demostrar equivalencia, atomicidad y concurrencia en cuatro motores](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 39 | [E06-P1-03 — Instalación reproducible, respaldo y restauración](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 40 | [E06-P2-01 — Cerrar todas las fronteras HTTP y eliminar simulación en entrega](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01) | P2 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 41 | [E06-P2-02 — Actualizar regresiones de UI y ejecutar recorridos completos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) | P2 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 42 | [E06-P2-03 — Auditar candidato integrado y cerrar defectos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-03) | P2 (cualquiera) | 03/11–03/11 | 03/11/2026 |
+| 43 | [E07-P1-01 — Redactar comparativo final y modelos corregidos](entregas/E07_entrega_final/01_P1.md#e07-p1-01) | P1 (cualquiera) | 04/11–05/11 | 05/11/2026 |
+| 44 | [E07-P1-02 — Preparar paquete instalable desde cero](entregas/E07_entrega_final/01_P1.md#e07-p1-02) | P1 (cualquiera) | 04/11–05/11 | 05/11/2026 |
+| 45 | [E07-P1-03 — Ensayar defensa y demostración final con ambos integrantes](entregas/E07_entrega_final/01_P1.md#e07-p1-03) | P1 (cualquiera) | 04/11–05/11 | 05/11/2026 |
+| 46 | [E07-P2-01 — Cerrar retroalimentación docente y trazabilidad académica](entregas/E07_entrega_final/02_P2.md#e07-p2-01) | P2 (cualquiera) | 04/11–05/11 | 05/11/2026 |
+| 47 | [E07-P2-02 — Escribir manuales de uso y operación para la entrega](entregas/E07_entrega_final/02_P2.md#e07-p2-02) | P2 (cualquiera) | 04/11–05/11 | 05/11/2026 |
+| 48 | [E07-P2-03 — Verificar y cerrar el paquete final](entregas/E07_entrega_final/02_P2.md#e07-p2-03) | P2 (cualquiera) | 04/11–05/11 | 05/11/2026 |
 
 ## 4. Rutina de integración (horarios propuestos)
 
 - 09:00: quince minutos para dependencias, bloqueos y archivos compartidos; reservar una tarea por persona.
 - 13:00: primera ventana para atender la revisión de Codex. Revisar primero PR que desbloquea al compañero.
 - 18:00: segunda revisión; atender hallazgos del bot y ejecutar evidencia decisiva.
-- 19:00: integrar PR aprobados; actualizar tablero y probar el flujo conjunto del día. Estos horarios se pueden mover manteniendo dos ventanas.
+- 19:00: integrar PR aprobados; actualizar tablero y probar el flujo conjunto del día. Estos horarios se pueden mover manteniendo dos ventanas. Los bloques del día son intercambiables y una sola persona puede encadenarlos si está disponible; no saltar dependencias.
 
 Límite de trabajo simultáneo: una tarea en implementación y como máximo un PR esperando revisión por integrante. Si un ID es grande, dividir en PR incrementales a/b/c conservando el ID y sin marcar HECHA antes de cubrirlo entero. Un nuevo commit requiere revisión vigente. El autor nunca aprueba su propio PR.
 
@@ -98,7 +98,7 @@ Límite de trabajo simultáneo: una tarea en implementación y como máximo un P
 
 Éxito: dependencia cerrada → rama desde develop → implementación y evidencia → PR con ID → contrato-pr verde → revisión de Codex → validación del responsable → squash merge → comprobación integrada → cierre humano del tablero.
 
-Fallo del contrato: corregir título/rama/ID o destino. Conflicto: actualizar desde develop, resolver con el dueño del archivo y repetir comprobaciones afectadas. Hallazgo de Codex: reproducir, corregir o responder con evidencia; solicitar revisión del commit nuevo. Codex no disponible: registrar bloqueo de revisión y reintentar; una excepción humana explícita debe quedar documentada, no simular respuesta del bot.
+Fallo del contrato: corregir título/rama/ID o destino. Conflicto: actualizar desde develop, coordinar con el ejecutor que tiene reservado el archivo y repetir comprobaciones afectadas. Hallazgo de Codex: reproducir, corregir o responder con evidencia; solicitar revisión del commit nuevo. Codex no disponible: registrar bloqueo de revisión y reintentar; una excepción humana explícita debe quedar documentada, no simular respuesta del bot.
 
 Prueba funcional fallida: mantener tarea EN_CURSO/BLOQUEADA según causa aunque contrato-pr esté verde. Los fallos históricos MySQL/MongoDB en Actions no quedan resueltos al retirar ese workflow del alcance; E00 debe verificar el entorno elegido. No hay pruebas de motores automatizadas en el flujo mínimo de GitHub.
 
@@ -107,3 +107,7 @@ Retraso mayor de media jornada en ruta crítica: reunión de 20 minutos, identif
 ## 6. Entrega final
 
 El 03/11 se congela alcance funcional. El 04/11 probar clon limpio y datos sintéticos desde otro equipo, con cuatro motores y sin fallback a mocks. El 05/11 revisar manuales, comparativo, trazabilidad docente y demostración; abrir PR de entrega desde develop a main. Solo tras revisión automática y comprobaciones aplicables crear la etiqueta de la versión y conservar evidencia asociada al commit. El bot no publica la entrega académica ni marca tareas HECHA.
+
+## Ejecución flexible
+
+Las fechas siguen ligadas a las tareas. Ante ausencia de un integrante, el otro puede tomar tareas libres de ambos lotes siguiendo plan/11, registrar ejecutor/traspaso y actualizar la previsión de capacidad. No asumir que cambiar de ejecutor reduce el esfuerzo pendiente.

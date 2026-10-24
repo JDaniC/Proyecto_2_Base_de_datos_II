@@ -1,7 +1,7 @@
 # Cierre de tarea
 
 - ID y título:
-- Responsable / revisor:
+- Ejecutor actual / revisión automática de Codex:
 - Estado solicitado: EN_REVISION / BLOQUEADA.
 - Fecha, rama y commit:
 - Dependencias verificadas:
@@ -26,6 +26,10 @@ Qué se verificó después de rollback/reintento; qué se conserva al reiniciar;
 
 Causa, evidencia, dependencia, responsable y trabajo independiente. No convertir pruebas bloqueadas en PASS.
 
-## Revisión del compañero
+## Revisión automática e integración
 
-Pendiente hasta que ocurra: fecha, qué reprodujo, observaciones y resultado. Solo entonces tablero a HECHA. No inventar aprobación, firma o ejecución.
+PR, SHA revisado por Codex, enlace y resultado real; correcciones y nueva revisión cuando aplique. Registrar PASS/FAIL/BLOCKED sin inventar aprobación. La revisión del compañero es opcional. HECHA exige criterios y pruebas cumplidos, integración real y verificación posterior por el ejecutor; un PR abierto sigue EN_REVISION.
+
+## Continuidad
+
+Enlazar `plan/seguimiento/ID.md`: último commit, próxima acción, pruebas pendientes y estado de reserva. Si no se pudo terminar, dejar explícito qué falta y cómo reproducir el bloqueo.

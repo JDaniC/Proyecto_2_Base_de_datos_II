@@ -6,8 +6,8 @@ Solo lógica de GitHub: tarea → rama → PR → revisión → merge. No requie
 
 ## 2. Protocolo para ambos integrantes
 
-1. Leer el ID y dependencias en el tablero; reservar tarea EN_CURSO. P1 JDaniC; P2 Davidix888.
-2. Desde develop actualizado crear `codex/e00-p1-01-descripcion` (usar el ID propio). La rama se crea al comenzar la tarea, no automáticamente al terminarla. Un bot revisor no crea tareas ni implementaciones por sí solo.
+1. Leer el ID y dependencias en el tablero; reservar tarea EN_CURSO. Cualquiera de los dos puede tomar P1/P2; registrar al ejecutor actual.
+2. Desde develop actualizado crear `codex/e00-p1-01-descripcion` (usar el ID de la tarea elegida). La rama se crea al comenzar la tarea, no automáticamente al terminarla. Un bot revisor no crea tareas ni implementaciones por sí solo.
 3. Implementar con evidencia de éxito, fallo y excepción; mantener archivos comunes bajo el responsable acordado.
 4. Abrir PR a develop con título `[E00-P1-01] descripción`, alcance y evidencia; pasar a EN_REVISION.
 5. Esperar `contrato-pr`, la revisión nativa de Codex y la revisión automática de Codex. Verificar que Codex revisó el commit actual; si hace falta comentar `@codex review`.
@@ -39,3 +39,7 @@ Fuentes consultadas el 24/10/2026:
 La documentación oficial de novedades identifica GPT-5.6 Sol para revisión de código en Codex Cloud de clientes elegibles y explica que el servicio selecciona el modelo automáticamente. Esto documenta la oferta del servicio, no demuestra el modelo de una ejecución particular de esta cuenta. El workflow de este repositorio no configura un modelo y la selección del modelo de la app local no fija el del bot. No usar `review_model` local como supuesto control de las revisiones alojadas.
 
 Fuente: https://learn.chatgpt.com/docs/whats-new (sección “Use GPT-5.6 Sol for hosted Codex work”).
+
+## Cola compartida
+
+Seguir [continuidad y reservas](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). El prefijo P1/P2 del ID no limita autor, cuenta GitHub ni agente. El validador comprueba ID y rama, sin asignación personal.

@@ -5,9 +5,9 @@ Fecha: 24/10/2026. Alcance: documentos creados para planificar la entrega y actu
 | Comprobación | Resultado |
 |---|---|
 | Ocho fases E00–E07, seis tareas por fase | PASS: 48 IDs únicos |
-| Reparto P1/P2 | PASS: 24 tareas por integrante; 61 y 62 sesiones estimadas, respectivamente |
+| Agrupación P1/P2 | PASS: 24 tareas por lote histórico, ejecutables por cualquiera; 61 y 62 sesiones estimadas, respectivamente |
 | Dependencias internas y puertas de fase | PASS: grafo de 48 nodos sin ciclos |
-| Tarea con responsable/revisor, dependencias, rutas y requisitos | PASS en las 48 |
+| Tarea con ejecutor libre/revisor automático, dependencias, rutas y requisitos | PASS en las 48 |
 | Trabajo, éxito, fallo, excepción/recuperación y aceptación | PASS: secciones presentes en las 48 |
 | Consigna final | PASS documental: EF01–EF11 asignados a tareas |
 | Inventario de requisitos | PASS documental: 69 RF y 40 RNF con asignación |
@@ -19,4 +19,10 @@ Fecha: 24/10/2026. Alcance: documentos creados para planificar la entrega y actu
 
 La comprobación automática revisó IDs, dependencias, secciones, correspondencia de matrices, enlaces, espacios finales y cierres de bloques Markdown. La revisión de contenido contrastó alcance con el PDF final, auditorías, diseño, contratos React y modelos existentes. No es prueba de que la futura implementación cumpla: eso exige ejecutar los casos y registrar evidencias por tarea.
 
-Pendientes reales: fecha límite/horas disponibles, nombre del integrante P2, retroalimentación docente y resolución de bloqueos de entorno. Los dos primeros datos organizativos no impiden iniciar E00; el plan usa asignaciones intercambiables y estimaciones. La falta de retroalimentación no se interpreta como cumplimiento de EF03.
+Pendientes reales: disponibilidad horaria de ambos, retroalimentación docente y resolución de bloqueos de entorno. Fecha objetivo 05/11/2026; integrantes JDaniC y Davidix888. La falta de retroalimentación no se interpreta como cumplimiento de EF03.
+
+## Continuidad y cola compartida (24/10/2026)
+
+Los IDs y dependencias se conservaron; el tablero separa lote histórico y ejecutor actual. Cada integrante puede ejecutar ambos lotes. El helper de cola valida inventario, estados, referencias, ciclos y puertas antes de listar candidatas; no sincroniza ni reserva GitHub. Sus pruebas cubren dependencias pendientes, cambio de persona, fase sin cerrar, tarea reservada, liberación, referencias inválidas y ciclos.
+
+AGENTS.md y .agents/rules/00-continuidad.md proporcionan la entrada persistente de Antigravity, contrastada con documentación oficial. El estado de corte y la plantilla de seguimiento permiten reanudar sin depender del historial de chat. La carga efectiva de una conversación nueva en la instalación del usuario se verifica con la prueba de lectura de plan/11; no se acredita aquí como ejecutada.

@@ -2,7 +2,7 @@
 
 ## 1. Responsables y ramas
 
-P1: **JDaniC**. P2: **Davidix888**. Codex revisa automáticamente el PR; la revisión del compañero es opcional. develop es la rama de integración (en minúsculas); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
+Integrantes: **JDaniC** y **Davidix888**. Cualquiera puede tomar IDs P1/P2; son lotes históricos. Codex revisa automáticamente el PR; la revisión del compañero es opcional. develop es la rama de integración (en minúsculas); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
 
 Antes de empezar, integrar el plan ya preparado mediante un PR documental `[PLAN] Integrar planificación`. No publicar cambios ajenos ni todo el directorio de trabajo por accidente. El validador rechaza tareas que todavía no estén en plan/06_TABLERO.md.
 
@@ -15,7 +15,7 @@ git fetch origin
 git switch -c codex/e00-p1-01-contratos origin/develop
 ```
 
-Leer dependencias y criterios en el plan, actualizar estado a EN_CURSO y trabajar solo en la tarea. Guardar evidencia de éxito/fallo/excepción, ejecutar pruebas y actualizar a EN_REVISION. Publicar la rama y abrir PR a develop con título `[E00-P1-01] Contratos`. David usa IDs P2 y Daniel P1. Los IDs son permanentes.
+Leer dependencias y criterios en el plan, actualizar estado a EN_CURSO y trabajar solo en la tarea. Guardar evidencia de éxito/fallo/excepción, ejecutar pruebas y actualizar a EN_REVISION. Publicar la rama y abrir PR a develop con título `[E00-P1-01] Contratos`. Cualquiera usa IDs P1 o P2 conservando el ID de la tarea. Los IDs son permanentes.
 
 Si hay cambios locales pendientes, usar otro worktree; no usar reset/clean ni borrar volúmenes. Si una dependencia está bloqueada, registrar BLOQUEADA y avanzar solo tareas independientes.
 
@@ -48,3 +48,7 @@ La configuración versionada entra en develop al aprobar y fusionar el PR inicia
 ## Consolidación inicial
 
 El PR `[INTEGRACION-INICIAL] Consolidar frontend y documentación` desde Frontend admite importar el trabajo existente antes de comenzar las tareas. Esta excepción conserva el check; no exige aprobación humana. Al fusionar, eliminar Frontend y las ramas antiguas; quedan main y develop como ramas permanentes. Las ramas nuevas de tareas serán temporales.
+
+## Continuidad entre agentes y personas
+
+Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). Reservar con PR borrador; antes de retomar revisar rama, commits y seguimiento. El cambio de persona no cambia ID ni crea una tarea paralela. Antigravity lee AGENTS.md y la regla .agents/rules/00-continuidad.md al abrir la raíz del proyecto.
