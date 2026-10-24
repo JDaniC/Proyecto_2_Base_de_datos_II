@@ -26,6 +26,6 @@ Resultado: guía raíz creada y guía de Agente actualizada, conservando indepen
 
 Mensaje sugerido para iniciar trabajo:
 
-> Trabaja como responsable P2. Lee AGENTS.md y plan/00_PLAN_MAESTRO.md. Empieza por E00-P2-01 respetando dependencias y criterios. Conserva cambios ajenos y registra evidencia real. No marques HECHA sin revisión del otro integrante. Si hay bloqueo, documenta causa y avanza trabajo independiente autorizado.
+> Lee AGENTS.md, plan/ESTADO_ACTUAL.md y plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md. Continúa la siguiente tarea disponible de cualquiera de los dos lotes respetando dependencias y criterios. Registra ejecutor y seguimiento, conserva cambios ajenos y completa implementación, pruebas, PR, revisión automática e integración cuando sea posible; si existe bloqueo real, deja la próxima acción exacta.
 
 Es una guía de inicio; no envía mensajes ni crea chats automáticamente.

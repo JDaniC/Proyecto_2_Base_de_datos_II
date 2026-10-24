@@ -31,3 +31,6 @@ class ContratoTests(unittest.TestCase):
     def test_consolidacion_no_otra_rama(self):
         with self.assertRaises(ValueError):
             validar('[INTEGRACION-INICIAL] Consolidar frontend y documentación', 'otra', 'develop', ['a'], '')
+
+    def test_config_continuidad_sin_codigo_de_aplicacion(self):
+        validar('[CONFIG-GITHUB] Continuidad', 'codex/continuidad-compartida', 'develop', ['plan/06_TABLERO.md', '.agents/rules/00-continuidad.md', 'scripts/github/cola.py', 'README.md'], '')

@@ -2,7 +2,7 @@
 
 Aplicación académica de historiales clínicos para cuatro instituciones. El repositorio contiene los modelos de persistencia, sus inicializadores, las pruebas, el montaje local de bases de datos y un frontend React con datos simulados. El backend y la integración con persistencia real están pendientes.
 
-El [plan de entrega final](plan/00_PLAN_MAESTRO.md) organiza ocho fases y 48 tareas para dos integrantes, con dependencias, flujos, pruebas y criterios de cierre. Empezar por la cola de [P1 (Daniel)](plan/P1_DANIEL.md) o [P2 (David)](plan/P2_COMPANERO.md). Los agentes deben leer la [guía raíz](AGENTS.md).
+El [plan de entrega final](plan/00_PLAN_MAESTRO.md) organiza ocho fases y 48 tareas para dos integrantes, con dependencias, flujos, pruebas y criterios de cierre. Empezar por la cola compartida, índices [P1](plan/COLA_P1.md) y [P2](plan/COLA_P2.md). Los agentes deben leer la [guía raíz](AGENTS.md).
 
 | Institución | Motor | Modelo |
 |---|---|---|
@@ -69,3 +69,7 @@ Los SQL inicializan bases nuevas y rechazan modelos incompatibles; no reemplazan
 ## Integración y documentación vigente
 
 Ramas permanentes: `main` y `develop`. Consultar [flujo GitHub](docs/FLUJO_GITHUB.md), [cronograma](plan/09_CRONOGRAMA_HASTA_05_NOV.md) y [tablero](plan/06_TABLERO.md). La referencia visual conservada está en [diseño visual](Agente/DISENO_VISUAL.md). La planificación anterior de interfaz/ fue sustituida por el frontend implementado y el plan de integración.
+
+## Empezar un chat nuevo en Antigravity
+
+Abrir esta raíz como proyecto. Las reglas persistentes llevan al [estado actual](plan/ESTADO_ACTUAL.md), [cola compartida](plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y tablero. Escribir «Continúa con la siguiente tarea disponible» o «Retoma E00-P2-01»; cualquiera puede ejecutar ambos lotes. El agente conserva seguimiento para el siguiente chat.

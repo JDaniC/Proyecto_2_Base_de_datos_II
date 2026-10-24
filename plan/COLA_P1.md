@@ -1,8 +1,8 @@
-# Cola de trabajo P1 · Daniel
+# Cola compartida · Lote histórico P1
 
-Asignación inicial intercambiable; conservar IDs. Leer [plan maestro](00_PLAN_MAESTRO.md), [guía del agente](../AGENTS.md) y contrato antes de implementar. El otro integrante revisa cada cierre.
+Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan para los enlaces, no indican propiedad. Leer [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md), [plan maestro](00_PLAN_MAESTRO.md), [tablero](06_TABLERO.md) y contrato. Codex revisa el PR; el compañero puede revisar de forma opcional.
 
-24 tareas; estimación inicial agregada: **61 sesiones de 2–4 horas** (122–244 horas-persona). Es una previsión de trabajo, no plazo calendario ni compromiso; incluye implementación/pruebas de cada tarea y debe recalibrarse en E00. Revisiones cruzadas y bloqueos pueden agregar tiempo.
+24 tareas; estimación inicial agregada: **61 sesiones de 2–4 horas** (122–244 horas-persona). Es una previsión de trabajo, no plazo calendario ni compromiso; incluye implementación/pruebas de cada tarea y debe recalibrarse en E00. Revisión automática y bloqueos pueden agregar tiempo.
 
 | Orden | ID / trabajo detallado | Dependencia interna directa | Sesiones |
 |---|---|---|---|

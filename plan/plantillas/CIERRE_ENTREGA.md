@@ -25,4 +25,4 @@ Versiones de contrato/esquema, migración, configuración sin secretos, rutas y 
 
 ## Decisión
 
-Registrar revisión real de ambos. Si falla criterio obligatorio, listar tarea reabierta, responsable y resolución; no cerrar por porcentaje de avance ni fecha.
+Registrar revisión automática real y verificación de criterios por el ejecutor; no exige aprobación del compañero. Si falla criterio obligatorio, listar tarea reabierta, responsable y resolución; no cerrar por porcentaje de avance ni fecha.
