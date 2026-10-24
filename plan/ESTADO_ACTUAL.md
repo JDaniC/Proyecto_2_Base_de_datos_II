@@ -18,14 +18,15 @@ Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; v
 ## Git e integración observados al preparar estas reglas
 
 - Ramas permanentes deseadas: main y develop. Ramas de tarea temporales.
-- La consolidación de frontend/documentación está en PR #2: https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/2. En el corte estaba OPEN; develop local contenía los cambios y origin/develop aún no. No asumir que el PR se fusionó desde entonces; consultar GitHub.
-- PR #1 quedó sustituido/cerrado. Backend y codex/flujo-github-tareas se retiraron de remoto; Frontend se conserva mientras el PR #2 esté abierto para evitar perder la fuente de integración.
+- La consolidación de frontend/documentación PR #2 fue fusionada en GitHub el 24/10/2026 a las 17:46 (America/Guatemala), commit `92ba015`. Fuente: https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/2. develop remoto ya contiene esa consolidación; obtener su versión actual antes de iniciar tareas.
+- Las reglas de continuidad/cola compartida se publican después de esa consolidación desde la rama temporal codex/continuidad-compartida. Confirmar su integración y obtener esos commits en el otro equipo. Frontend ya no debe utilizarse como rama de trabajo; solo main y develop permanecen de forma estable.
+- PR #1 quedó sustituido/cerrado. Backend y codex/flujo-github-tareas se retiraron del remoto.
 - GitHub exige PR y contrato-pr; cero aprobaciones humanas obligatorias. Codex es el revisor automático elegido. El propietario confirmó activar su configuración; en el último corte no había respuesta del bot en PR #2. Verificar el estado actual antes de marcar revisión completa.
 - El check contrato-pr no fuerza técnicamente que Codex haya terminado ni acredita funcionalidad. No asumir que verde significa revisión automática aprobada.
 
 ## Próxima entrada de trabajo
 
-Primero verificar si la consolidación inicial se integró. Hasta entonces no crear trabajo dependiente suponiendo que origin/develop contiene el frontend/plan. Puede prepararse trabajo independiente con estado real documentado.
+La consolidación inicial ya se integró en el corte indicado; verificar referencias remotas y obtener también la actualización de continuidad. No iniciar desde una copia anterior a esos cambios.
 
 Las 48 tareas siguen sin ejecución acreditada en el tablero al preparar este corte. En una base consolidada, el helper debe mostrar inicialmente E00-P1-01 y E00-P2-01 disponibles, sujetas a revisar reservas remotas. No hay seguimientos de implementación creados artificialmente.
 

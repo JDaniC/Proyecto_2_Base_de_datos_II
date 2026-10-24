@@ -14,7 +14,7 @@ def validar(title, branch, base, paths, board):
     if title == "[INTEGRACION-INICIAL] Consolidar frontend y documentación" and branch == "Frontend":
         return  # Consolidación inicial autorizada; conserva el check y la política de revisión automática.
     if title.startswith("[CONFIG-GITHUB] "):
-        if not paths or any(not (p.startswith((".github/", "scripts/github/")) or p in {"docs/FLUJO_GITHUB.md", "AGENTS.md"}) for p in paths):
+        if not paths or any(not (p.startswith((".github/", "scripts/github/", "plan/", ".agents/rules/")) or p in {"docs/FLUJO_GITHUB.md", "AGENTS.md", "README.md"}) for p in paths):
             raise ValueError("CONFIG-GITHUB solo permite configuración del flujo y guía de agentes")
         return
     if title.startswith("[PLAN] "):

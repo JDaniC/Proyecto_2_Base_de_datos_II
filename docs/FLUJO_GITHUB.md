@@ -39,7 +39,7 @@ Tras completar la revisión automática y comprobar su resultado, usar Squash an
 
 ## 5. Excepciones limitadas
 
-`[CONFIG-GITHUB] descripción` solo admite .github/, scripts/github/, docs/FLUJO_GITHUB.md y AGENTS.md. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan el check y la revisión automática. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
+`[CONFIG-GITHUB] descripción` solo admite .github/, scripts/github/, plan/, .agents/rules/, docs/FLUJO_GITHUB.md, README.md y AGENTS.md; no código de aplicación. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan el check y la revisión automática. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
 
 ## 6. Activación y diagnóstico
 
