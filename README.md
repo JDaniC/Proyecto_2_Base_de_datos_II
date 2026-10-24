@@ -1,6 +1,8 @@
 # Proyecto final — Bases de Datos II
 
-Aplicación académica de historiales clínicos para cuatro instituciones. El repositorio contiene los modelos de persistencia, sus inicializadores, las pruebas y el montaje local de bases de datos. Backend y frontend están pendientes de implementación.
+Aplicación académica de historiales clínicos para cuatro instituciones. El repositorio contiene los modelos de persistencia, sus inicializadores, las pruebas, el montaje local de bases de datos y un frontend React con datos simulados. El backend y la integración con persistencia real están pendientes.
+
+El [plan de entrega final](plan/00_PLAN_MAESTRO.md) organiza ocho fases y 48 tareas para dos integrantes, con dependencias, flujos, pruebas y criterios de cierre. Empezar por la cola de [P1 (Daniel)](plan/P1_DANIEL.md) o [P2 (compañero)](plan/P2_COMPANERO.md). Los agentes deben leer la [guía raíz](AGENTS.md).
 
 | Institución | Motor | Modelo |
 |---|---|---|
@@ -57,7 +59,9 @@ Para comprobar los cuatro motores con herramientas nativas: `python3 Database/te
 - `compose.yaml`: servicios PostgreSQL, MySQL, MongoDB y tarea auxiliar de inicialización MongoDB.
 - `Database/`: scripts, modelos, diccionario SQL, pruebas y documentación de persistencia.
 - `Database/docker/`: Dockerfiles, preparación de credenciales y configuración de arranque.
-- `Backend/` y `Frontend/`: espacios para la siguiente fase de implementación.
+- `Backend/`: espacio para el servidor hexagonal pendiente.
+- `Frontend/`: interfaz React con repositorios simulados; integración HTTP planificada.
+- `plan/`: fases, tareas por integrante, arquitectura, contratos y seguimiento.
 - `Agente/`: contexto y diseño del proyecto.
 
 Los SQL inicializan bases nuevas y rechazan modelos incompatibles; no reemplazan una migración de datos existentes. La documentación técnica vigente está en [Database](Database/README.md), el [diccionario SQL](Database/DICCIONARIO_SQL.md) y las guías de [MongoDB](Database/ANALISIS_MONGODB.md) y [Firestore](Database/ANALISIS_FIREBASE.md).

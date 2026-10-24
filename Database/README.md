@@ -2,6 +2,21 @@
 
 Modelos, inicializadores y validadores de las cuatro instituciones. PostgreSQL, MySQL y MongoDB tienen montaje local con Docker; Firestore se configura por separado. Las pruebas usan procesos nuevos y datos sintéticos.
 
+## Resúmenes por base de datos
+
+Cada archivo reúne entidades, atributos, relaciones, tablas o colecciones y operaciones de la primera entrega. Las ampliaciones de los scripts actuales se identifican por separado.
+
+| Institución | Resumen junto al script |
+|---|---|
+| Hospital General / PostgreSQL | [Entidades, relaciones y operaciones](hospital_general_postgresql.md) |
+| Clínica Odontológica / MySQL | [Entidades, relaciones y operaciones](clinica_odontologica_mysql.md) |
+| Laboratorio Clínico / MongoDB | [Entidades, relaciones y operaciones](laboratorio_clinico_mongodb.md) |
+| Centro Médico Pediátrico / Firestore | [Entidades, relaciones y operaciones](centro_pediatrico_firestore.md) |
+
+## Auditoría de los scripts
+
+La [auditoría del 24 de octubre de 2026](auditoria/2026-10-24/informe.md) contrasta los modelos y sus mejoras con los requisitos, e incluye trazabilidad, resultados, bloqueos y una reproducción del fallo confirmado.
+
 ## Motores y contenido
 
 | Institución | Motor mínimo | Modelo final |

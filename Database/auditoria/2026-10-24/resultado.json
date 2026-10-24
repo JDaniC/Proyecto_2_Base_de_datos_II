@@ -1,0 +1,109 @@
+{
+  "fecha": "2026-10-24",
+  "archivos_auditados_sha256": {
+    "Database/hospital_general_postgresql.sql": "ad26ff040407d9debadcc4b1d962d2c285882c4d86990ebe7749391c1632a16d",
+    "Database/clinica_odontologica_mysql.sql": "b8e0d5b9132e2173aaff65d3cf1052e4cc18cc4f052278f88a0f8f23baa066f3",
+    "Database/laboratorio_clinico_mongodb.js": "39a020577fd58f99939f13b82b33d96d3ff08a2f8b288ba1e7c61fc63f2e18e7",
+    "Database/centro_pediatrico_firestore.mjs": "48d8c80e007e1b4d5311ef7d08a181877a27653ec50853d8327d9cf4e6c6f305",
+    "Database/firebase/modelo_pediatrico.mjs": "d85b2c02f55d9317e45ece22a5793a4390bf09e00c77b6ab5d481ad17fdac960"
+  },
+  "unidades_inventariadas": 256,
+  "requisitos_trazados": 109,
+  "rf": 69,
+  "rnf": 40,
+  "casos_ejecutados": 234,
+  "pass": 232,
+  "fail": 2,
+  "causas_raiz_funcionales": 1,
+  "postgres_casos_adicionales": {
+    "estado": "FAIL",
+    "casos": [
+      {
+        "id": "AUD-PG-01",
+        "caso": "finalizar consulta con historial activo",
+        "estado": "PASS",
+        "esperado": "OPERACION_PERMITIDA",
+        "codigo_salida": 0,
+        "observado": "OPERACION_PERMITIDA"
+      },
+      {
+        "id": "AUD-PG-02",
+        "caso": "finalizar atencion iniciada antes del archivo",
+        "estado": "FAIL",
+        "esperado": "OPERACION_PERMITIDA",
+        "codigo_salida": 3,
+        "observado": "ERROR:  HISTORIAL_INACTIVO\nCONTEXT:  PL/pgSQL function validar_relaciones_clinicas() line 6 at RAISE"
+      },
+      {
+        "id": "AUD-PG-03",
+        "caso": "corregir consulta finalizada con revision tras archivo",
+        "estado": "FAIL",
+        "esperado": "OPERACION_PERMITIDA",
+        "codigo_salida": 3,
+        "observado": "ERROR:  HISTORIAL_INACTIVO\nCONTEXT:  PL/pgSQL function validar_relaciones_clinicas() line 6 at RAISE"
+      },
+      {
+        "id": "AUD-PG-04",
+        "caso": "rechazar una nueva consulta despues del archivo",
+        "estado": "PASS",
+        "esperado": "HISTORIAL_INACTIVO",
+        "codigo_salida": 3,
+        "observado": "ERROR:  HISTORIAL_INACTIVO\nCONTEXT:  PL/pgSQL function validar_relaciones_clinicas() line 6 at RAISE"
+      },
+      {
+        "id": "AUD-PG-05",
+        "caso": "cuenta de aplicacion puede registrar paciente",
+        "estado": "PASS",
+        "esperado": "OPERACION_PERMITIDA",
+        "codigo_salida": 0,
+        "observado": "OPERACION_PERMITIDA"
+      },
+      {
+        "id": "AUD-PG-06",
+        "caso": "cuenta de aplicacion no tiene DDL",
+        "estado": "PASS",
+        "esperado": "permission denied",
+        "codigo_salida": 3,
+        "observado": "ERROR:  permission denied for schema hospital_general\nLINE 1: CREATE TABLE hospital_general.auditoria_no_permitida(id inte...\n                     ^"
+      },
+      {
+        "id": "AUD-PG-07",
+        "caso": "cuenta de aplicacion no modifica auditoria",
+        "estado": "PASS",
+        "esperado": "permission denied",
+        "codigo_salida": 3,
+        "observado": "ERROR:  permission denied for table auditoria"
+      },
+      {
+        "id": "AUD-PG-08",
+        "caso": "cuenta de aplicacion no borra revisiones",
+        "estado": "PASS",
+        "esperado": "permission denied",
+        "codigo_salida": 3,
+        "observado": "ERROR:  permission denied for table revisiones"
+      },
+      {
+        "id": "AUD-PG-09",
+        "caso": "cuenta de aplicacion no modifica operaciones",
+        "estado": "PASS",
+        "esperado": "permission denied",
+        "codigo_salida": 3,
+        "observado": "ERROR:  permission denied for table operaciones"
+      },
+      {
+        "id": "AUD-PG-10",
+        "caso": "cuenta de aplicacion no accede al manifiesto",
+        "estado": "PASS",
+        "esperado": "permission denied",
+        "codigo_salida": 3,
+        "observado": "ERROR:  permission denied for table modelo_database"
+      }
+    ],
+    "cluster_temporal_eliminado": true
+  },
+  "bloqueados": [
+    "MySQL nativo y Docker no disponibles",
+    "Firestore: emulador de 136707194 bytes no descargado completamente"
+  ],
+  "modificaciones_a_scripts_auditados": false
+}

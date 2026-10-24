@@ -1,0 +1,69 @@
+# Tablero de ejecución
+
+Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige revisión del otro integrante.
+
+| ID | Responsable | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
+|---|---|---|---|---|
+| [E00-P1-01](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | P1 | PENDIENTE | E00-P1-01 | Sin ejecución registrada |
+| [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | PENDIENTE | E00-P1-01, E00-P2-02 | Sin ejecución registrada |
+| [E00-P2-01](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E00-P2-02](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | P2 | PENDIENTE | E00-P1-01 | Sin ejecución registrada |
+| [E00-P2-03](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | P2 | PENDIENTE | E00-P1-03, E00-P2-01 | Sin ejecución registrada |
+| [E01-P1-01](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E01-P1-02](entregas/E01_fundacion_backend/01_P1.md#e01-p1-02) | P1 | PENDIENTE | E01-P1-01 | Sin ejecución registrada |
+| [E01-P1-03](entregas/E01_fundacion_backend/01_P1.md#e01-p1-03) | P1 | PENDIENTE | E01-P1-02, E01-P2-01, E01-P2-02 | Sin ejecución registrada |
+| [E01-P2-01](entregas/E01_fundacion_backend/02_P2.md#e01-p2-01) | P2 | PENDIENTE | E01-P1-02 | Sin ejecución registrada |
+| [E01-P2-02](entregas/E01_fundacion_backend/02_P2.md#e01-p2-02) | P2 | PENDIENTE | E01-P1-02 | Sin ejecución registrada |
+| [E01-P2-03](entregas/E01_fundacion_backend/02_P2.md#e01-p2-03) | P2 | PENDIENTE | E01-P1-03 | Sin ejecución registrada |
+| [E02-P1-01](entregas/E02_pacientes_historial/01_P1.md#e02-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E02-P1-02](entregas/E02_pacientes_historial/01_P1.md#e02-p1-02) | P1 | PENDIENTE | E02-P1-01 | Sin ejecución registrada |
+| [E02-P1-03](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) | P1 | PENDIENTE | E02-P1-02, E02-P2-01, E02-P2-02, E02-P2-03 | Sin ejecución registrada |
+| [E02-P2-01](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | P2 | PENDIENTE | E02-P1-01 | Sin ejecución registrada |
+| [E02-P2-02](entregas/E02_pacientes_historial/02_P2.md#e02-p2-02) | P2 | PENDIENTE | E02-P1-01 | Sin ejecución registrada |
+| [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | P2 | PENDIENTE | E02-P1-02, E02-P2-01, E02-P2-02 | Sin ejecución registrada |
+| [E03-P1-01](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E03-P1-02](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | P1 | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
+| [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | P1 | PENDIENTE | E03-P1-02, E03-P2-01, E03-P2-02 | Sin ejecución registrada |
+| [E03-P2-01](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | P2 | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
+| [E03-P2-02](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | P2 | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
+| [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) | P2 | PENDIENTE | E03-P1-03 | Sin ejecución registrada |
+| [E04-P1-01](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E04-P1-02](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E04-P1-03](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03) | P1 | PENDIENTE | E04-P1-02 | Sin ejecución registrada |
+| [E04-P2-01](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-01) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E04-P2-02](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | P2 | PENDIENTE | E04-P2-01 | Sin ejecución registrada |
+| [E04-P2-03](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 | PENDIENTE | E04-P1-01, E04-P1-03, E04-P2-02 | Sin ejecución registrada |
+| [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
+| [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
+| [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
+| [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
+| [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | PENDIENTE | E05-P1-02, E05-P1-03, E05-P2-02 | Sin ejecución registrada |
+| [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 | PENDIENTE | E06-P1-01, E06-P2-01, E06-P2-02 | Sin ejecución registrada |
+| [E06-P1-03](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E06-P2-01](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E06-P2-02](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E06-P2-03](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-03) | P2 | PENDIENTE | E06-P1-02, E06-P1-03 | Sin ejecución registrada |
+| [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01) | P1 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E07-P1-02](entregas/E07_entrega_final/01_P1.md#e07-p1-02) | P1 | PENDIENTE | E07-P1-01, E07-P2-01, E07-P2-02 | Sin ejecución registrada |
+| [E07-P1-03](entregas/E07_entrega_final/01_P1.md#e07-p1-03) | P1 | PENDIENTE | E07-P1-02 | Sin ejecución registrada |
+| [E07-P2-01](entregas/E07_entrega_final/02_P2.md#e07-p2-01) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E07-P2-02](entregas/E07_entrega_final/02_P2.md#e07-p2-02) | P2 | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E07-P2-03](entregas/E07_entrega_final/02_P2.md#e07-p2-03) | P2 | PENDIENTE | E07-P1-03 | Sin ejecución registrada |
+
+## Cierres de entrega
+
+| Fase | Estado | Evidencia prevista |
+|---|---|---|
+| E00 | PENDIENTE | `plan/evidencias/E00/CIERRE.md` por crear al ejecutar |
+| E01 | PENDIENTE | `plan/evidencias/E01/CIERRE.md` por crear al ejecutar |
+| E02 | PENDIENTE | `plan/evidencias/E02/CIERRE.md` por crear al ejecutar |
+| E03 | PENDIENTE | `plan/evidencias/E03/CIERRE.md` por crear al ejecutar |
+| E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
+| E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
+| E06 | PENDIENTE | `plan/evidencias/E06/CIERRE.md` por crear al ejecutar |
+| E07 | PENDIENTE | `plan/evidencias/E07/CIERRE.md` por crear al ejecutar |
+
+No cambiar estos estados por el conteo de pruebas históricas. Los IDs, dependencias y responsables son estables; cualquier reasignación se documenta con fecha. Los archivos detallados contienen el trabajo y criterios, este tablero contiene el estado.
