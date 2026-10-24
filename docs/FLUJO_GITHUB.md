@@ -29,9 +29,9 @@ Documentación: https://developers.openai.com/codex/integrations/github
 
 ## 4. Comprobaciones e integración
 
-CI ejecuta contrato-pr, firestore-offline y motores-docker (PostgreSQL/MySQL/MongoDB, recursos aislados). Estas comprobaciones no acreditan el emulador Firestore ni backend/frontend: no están implementados en Develop al preparar este flujo. Al integrar cada componente, añadir sus pruebas y compilación como requisitos antes de darlo por validado.
+CI ejecuta únicamente contrato-pr: valida identificador, rama, destino y las excepciones documentales. Este flujo no instala MCP ni levanta bases de datos. Las pruebas funcionales y compilaciones de cada tarea se adjuntan como evidencia y las verifica el compañero; no se certifican automáticamente con este check.
 
-Protecciones previstas: PR obligatorio, una aprobación del compañero, descartar aprobaciones tras nuevos commits, conversaciones resueltas, comprobaciones verdes con rama actualizada, sin force push ni borrado de ramas protegidas. Codex no es por sí solo un estado obligatorio de CI: el revisor humano debe revisar sus resultados; no hay un bloqueo automático que certifique que Codex terminó.
+Protecciones previstas: PR obligatorio, una aprobación del compañero, descartar aprobaciones tras nuevos commits, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. Codex no es por sí solo un estado obligatorio de CI: el revisor humano debe revisar sus resultados; no hay un bloqueo automático que certifique que Codex terminó.
 
 Si CI falla, corregir o documentar un bloqueo real; no desactivar la comprobación. Si Codex encuentra un error, corregir y volver a revisar. Desacuerdos se resuelven con evidencia en el PR. No marcar HECHA automáticamente al fusionar: verificar criterios y cierre humano en el tablero.
 
