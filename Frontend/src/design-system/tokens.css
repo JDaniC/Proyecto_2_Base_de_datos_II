@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Design System Clínico v1.1 — Tokens CSS
+   Exclusivamente Light Mode — Prohibido Modo Oscuro
+   ========================================================================== */
+
+:root {
+  /* Color Scheme */
+  color-scheme: light;
+
+  /* Colores Principales */
+  --color-primary: #20666B;
+  --color-primary-hover: #185256;
+  --color-primary-active: #134246;
+  --color-primary-focus: rgba(32, 102, 107, 0.25);
+  
+  --color-strong: #0C3B45;
+  --color-text: #0C3B45;
+  --color-text-secondary: #466462;
+  --color-text-muted: #6B8784;
+  --color-text-inverse: #FFFFFF;
+  --color-accent: #3E9B94;
+
+  /* Superficies y Fondos */
+  --color-background: #FFFFFF;
+  --color-background-alt: #F7FAF9;
+  --color-panel: #F8FBF9;
+  --color-control: #EDF5F1;
+  --color-control-hover: #E3EDE8;
+  --color-selection: #DDEFE9;
+
+  /* Bordes y Divisores */
+  --color-border: #DEEAE5;
+  --color-border-panel: #E0EAE6;
+  --color-border-focus: #20666B;
+  --color-divider: #E5EEEA;
+
+  /* Estados Funcionales (Texto / Fondo Suave / Borde Opcional) */
+  --color-info-text: #20666B;
+  --color-info-bg: #E8F6F3;
+  --color-info-border: #B5DEDA;
+
+  --color-success-text: #17613C;
+  --color-success-bg: #EAF7EE;
+  --color-success-border: #BEDFCA;
+
+  --color-warning-text: #825600;
+  --color-warning-bg: #FFF8E9;
+  --color-warning-border: #EDD9A4;
+
+  --color-danger-text: #A5281D;
+  --color-danger-bg: #FFF0EE;
+  --color-danger-border: #F4CBC6;
+
+  --color-neutral-text: #4B605C;
+  --color-neutral-bg: #EDF0EF;
+  --color-neutral-border: #DEEAE5;
+
+  /* Carga y Progreso */
+  --color-skeleton: #E7EFEC;
+  --color-skeleton-soft: #F0F5F3;
+  --color-progress-track: #DCEBE6;
+  --color-progress-bar: #20666B;
+
+  /* Radios Aprobados */
+  --radius-button: 16px;
+  --radius-input: 12px;
+  --radius-panel: 16px;
+  --radius-modal: 20px;
+  --radius-toast: 14px;
+  --radius-tooltip: 10px;
+  --radius-pill: 9999px;
+  --radius-circle: 50%;
+
+  /* Alturas y Espaciados Clave */
+  --height-button-sm: 36px;
+  --height-button-md: 40px;
+  --height-button-lg: 48px;
+  --height-input: 48px;
+  --height-header: 64px;
+  --width-sidebar-expanded: 240px;
+  --width-sidebar-compact: 72px;
+
+  /* Tipografía */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Sombras Sutiles */
+  --shadow-sm: 0 1px 2px rgba(12, 59, 69, 0.05);
+  --shadow-md: 0 4px 12px rgba(12, 59, 69, 0.08);
+  --shadow-lg: 0 12px 32px rgba(12, 59, 69, 0.12);
+
+  /* Transiciones */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Forzar modo claro aún en navegadores con preferencia oscura */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light !important;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enfoque accesible consistente */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

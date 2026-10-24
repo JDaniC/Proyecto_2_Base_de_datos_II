@@ -1,0 +1,1390 @@
+{
+  "hospitalScopeEvidence": {
+    "results": [
+      {
+        "route": "/panel",
+        "width": 1440,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/panel",
+        "width": 375,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes",
+        "width": 1440,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes",
+        "width": 375,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 1440,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 375,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001",
+        "width": 1440,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001",
+        "width": 375,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/editar",
+        "width": 1440,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/editar",
+        "width": 375,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=seguros",
+        "width": 1440,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=seguros",
+        "width": 375,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=examenes",
+        "width": 1440,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=examenes",
+        "width": 375,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=procedimientos",
+        "width": 1440,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001?tab=procedimientos",
+        "width": 375,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/consultas/nueva",
+        "width": 1440,
+        "title": "Registro de Consulta Médica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/consultas/nueva",
+        "width": 375,
+        "title": "Registro de Consulta Médica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/consultas/con-0104-1",
+        "width": 1440,
+        "title": "Evaluación y control de hipertensión arterial y cifras glucémicas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20,
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-hosp-001/consultas/con-0104-1",
+        "width": 375,
+        "title": "Evaluación y control de hipertensión arterial y cifras glucémicas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/agenda",
+        "width": 1440,
+        "title": "Agenda médica institucional",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/agenda",
+        "width": 375,
+        "title": "Agenda médica institucional",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones",
+        "width": 1440,
+        "title": "Hospitalizaciones Activas e Históricas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones",
+        "width": 375,
+        "title": "Hospitalizaciones Activas e Históricas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones/nueva",
+        "width": 1440,
+        "title": "Registro de Ingreso Hospitalario",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones/nueva",
+        "width": 375,
+        "title": "Registro de Ingreso Hospitalario",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones/hosp-001",
+        "width": 1440,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/hospitalizaciones/hosp-001",
+        "width": 375,
+        "title": "Roberto Estrada Morales",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/camas",
+        "width": 1440,
+        "title": "Habitaciones, Camas y Ocupación",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/camas",
+        "width": 375,
+        "title": "Habitaciones, Camas y Ocupación",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/examenes",
+        "width": 1440,
+        "title": "Órdenes de examen",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/hospital/examenes",
+        "width": 375,
+        "title": "Órdenes de examen",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      }
+    ],
+    "boundaries": [
+      {
+        "route": "/laboratorio/bandeja",
+        "blocked": true
+      },
+      {
+        "route": "/administracion/catalogos",
+        "blocked": true
+      },
+      {
+        "route": "/administracion/usuarios",
+        "blocked": true
+      }
+    ],
+    "tabs": [
+      "General y antecedentes",
+      "Consultas (3)",
+      "Diagnósticos (3)",
+      "Recetas emitidas (1)",
+      "Seguros y cobertura (1)",
+      "Exámenes y resultados",
+      "Procedimientos realizados",
+      "Actividad e historial (5)"
+    ]
+  },
+  "dentalScopeEvidence": {
+    "results": [
+      {
+        "route": "/panel",
+        "width": 1440,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/panel",
+        "width": 375,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes",
+        "width": 1440,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes",
+        "width": 375,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 1440,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 375,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001",
+        "width": 1440,
+        "title": "María Fernanda López Barillas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001",
+        "width": 375,
+        "title": "María Fernanda López Barillas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001/editar",
+        "width": 1440,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001/editar",
+        "width": 375,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001/consultas/nueva",
+        "width": 1440,
+        "title": "Registro de Consulta Odontológica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-odon-001/consultas/nueva",
+        "width": 375,
+        "title": "Registro de Consulta Odontológica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-odon-001/consultas/con-odon-001",
+        "width": 1440,
+        "title": "Evaluación de dolor molar e inicio de tratamiento endodóntico",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-odon-001/consultas/con-odon-001",
+        "width": 375,
+        "title": "Evaluación de dolor molar e inicio de tratamiento endodóntico",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/agenda",
+        "width": 1440,
+        "title": "Agenda odontológica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/agenda",
+        "width": 375,
+        "title": "Agenda odontológica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      }
+    ],
+    "boundaries": [
+      {
+        "route": "/administracion/catalogos",
+        "blocked": true
+      },
+      {
+        "route": "/administracion/usuarios?tab=roles",
+        "blocked": true
+      },
+      {
+        "route": "/laboratorio/calidad",
+        "blocked": true
+      },
+      {
+        "route": "/hospital/camas",
+        "blocked": true
+      }
+    ],
+    "tabs": [
+      "General y antecedentes",
+      "Consultas (1)",
+      "Diagnósticos (2)",
+      "Recetas emitidas (1)",
+      "Actividad e historial (1)"
+    ]
+  },
+  "labScopeEvidence": {
+    "results": [
+      {
+        "route": "/panel",
+        "width": 1440,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/panel",
+        "width": 375,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes",
+        "width": 1440,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes",
+        "width": 375,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 1440,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 375,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-lab-001",
+        "width": 1440,
+        "title": "Eduardo René Fuentes Maldonado",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-lab-001",
+        "width": 375,
+        "title": "Eduardo René Fuentes Maldonado",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-lab-001/editar",
+        "width": 1440,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-lab-001/editar",
+        "width": 375,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/laboratorio/bandeja",
+        "width": 1440,
+        "title": "Bandeja de trabajo",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/bandeja",
+        "width": 375,
+        "title": "Bandeja de trabajo",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/ordenes/nueva",
+        "width": 1440,
+        "title": "Crear Orden de Laboratorio Clínico",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/laboratorio/ordenes/nueva",
+        "width": 375,
+        "title": "Crear Orden de Laboratorio Clínico",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/laboratorio/ordenes/ord-lab-01",
+        "width": 1440,
+        "title": "Orden ORD-LAB-2026-0081",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/laboratorio/ordenes/ord-lab-01",
+        "width": 375,
+        "title": "Orden ORD-LAB-2026-0081",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/laboratorio/muestras",
+        "width": 1440,
+        "title": "Registro y Recepción de Muestras",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/muestras",
+        "width": 375,
+        "title": "Registro y Recepción de Muestras",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/resultados/captura/ord-lab-04",
+        "width": 1440,
+        "title": "Captura de Resultados Analíticos",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/laboratorio/resultados/captura/ord-lab-04",
+        "width": 375,
+        "title": "Captura de Resultados Analíticos",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/laboratorio/resultados/validacion",
+        "width": 1440,
+        "title": "Revisión y Validación de Resultados",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/laboratorio/resultados/validacion",
+        "width": 375,
+        "title": "Revisión y Validación de Resultados",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/laboratorio/informes/ord-lab-05",
+        "width": 1440,
+        "title": "Informe Analítico de Laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/informes/ord-lab-05",
+        "width": 375,
+        "title": "Informe Analítico de Laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/calidad",
+        "width": 1440,
+        "title": "Control de calidad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/calidad",
+        "width": 375,
+        "title": "Control de calidad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/inventario",
+        "width": 1440,
+        "title": "Inventario de Reactivos, Lotes y Kardex",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/inventario",
+        "width": 375,
+        "title": "Inventario de Reactivos, Lotes y Kardex",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/cobros",
+        "width": 1440,
+        "title": "Cobros y Facturación de Laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/laboratorio/cobros",
+        "width": 375,
+        "title": "Cobros y Facturación de Laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/usuarios",
+        "width": 1440,
+        "title": "Administración de Usuarios y Cuentas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/administracion/usuarios",
+        "width": 375,
+        "title": "Administración de Usuarios y Cuentas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/administracion/usuarios?tab=roles",
+        "width": 1440,
+        "title": "Administración de Usuarios y Cuentas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/administracion/usuarios?tab=roles",
+        "width": 375,
+        "title": "Administración de Usuarios y Cuentas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/administracion/catalogos",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=solicitantes",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=solicitantes",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=tipos-muestra",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=tipos-muestra",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=metodos",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=metodos",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=proveedores",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=proveedores",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=reactivos",
+        "width": 1440,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos?tab=reactivos",
+        "width": 375,
+        "title": "Catálogos de laboratorio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/auditoria",
+        "width": 1440,
+        "title": "Registro de actividad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/auditoria",
+        "width": 375,
+        "title": "Registro de actividad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      }
+    ],
+    "boundaries": [
+      {
+        "route": "/agenda",
+        "blocked": true
+      },
+      {
+        "route": "/hospital/camas",
+        "blocked": true
+      }
+    ]
+  },
+  "pediatricScopeEvidence": {
+    "results": [
+      {
+        "route": "/panel",
+        "width": 1440,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/panel",
+        "width": 375,
+        "title": "Inicio",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes",
+        "width": 1440,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes",
+        "width": 375,
+        "title": "Pacientes del centro",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 1440,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/nuevo",
+        "width": 375,
+        "title": "Alta administrativa de paciente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001",
+        "width": 1440,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001",
+        "width": 375,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001/editar",
+        "width": 1440,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001/editar",
+        "width": 375,
+        "title": "Modificación de expediente",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=responsables",
+        "width": 1440,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=responsables",
+        "width": 375,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=crecimiento",
+        "width": 1440,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=crecimiento",
+        "width": 375,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=antecedentes",
+        "width": 1440,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=antecedentes",
+        "width": 375,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=vacunacion",
+        "width": 1440,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-ped-001?tab=vacunacion",
+        "width": 375,
+        "title": "Mateo Nicolás Álvarez Arrecis",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-ped-001/consultas/nueva",
+        "width": 1440,
+        "title": "Registro de Consulta Médica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-ped-001/consultas/nueva",
+        "width": 375,
+        "title": "Registro de Consulta Médica",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/pacientes/pac-ped-001/consultas/con-ped-001-3",
+        "width": 1440,
+        "title": "Control integral de crecimiento y desarrollo del niño sano (4 años)",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          20,
+          20,
+          20,
+          20,
+          20
+        ]
+      },
+      {
+        "route": "/pacientes/pac-ped-001/consultas/con-ped-001-3",
+        "width": 375,
+        "title": "Control integral de crecimiento y desarrollo del niño sano (4 años)",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": [
+          16,
+          16,
+          16,
+          16,
+          16
+        ]
+      },
+      {
+        "route": "/agenda",
+        "width": 1440,
+        "title": "Agenda médica institucional",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/agenda",
+        "width": 375,
+        "title": "Agenda médica institucional",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos",
+        "width": 1440,
+        "title": "Catálogo de vacunas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/catalogos",
+        "width": 375,
+        "title": "Catálogo de vacunas",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/auditoria",
+        "width": 1440,
+        "title": "Registro de actividad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      },
+      {
+        "route": "/administracion/auditoria",
+        "width": 375,
+        "title": "Registro de actividad",
+        "outside": [],
+        "clipped": [],
+        "leaks": [],
+        "headers": []
+      }
+    ],
+    "vaccine": {
+      "title": "Actualizar dosis y edades",
+      "nameDisabled": true,
+      "hasDoses": 2
+    },
+    "buttons": [],
+    "canModify": 0
+  },
+  "labActionsEvidence": {
+    "catalogCreateEditDeactivate": true,
+    "text": "Solicitante de auditoría\tReferencia de prueba\tInactivo\t\nEditar\nReactivar",
+    "priceFields": 1,
+    "noStatClaim": true,
+    "transferDialog": "Registrar traslado de muestra\n\nMUE-2026-0081-01\n\nDestino de la muestra\n*\nGuardar traslado",
+    "transferDialogOverflow": false
+  }
+}

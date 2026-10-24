@@ -1,0 +1,533 @@
+.app-shell {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.app-main {
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+}
+
+.app-main .panel,
+.app-main .tabs-nav {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-main [role="tablist"] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.app-main [role="tab"] {
+  flex-shrink: 0;
+  white-space: nowrap;
+  max-width: none !important;
+}
+
+.order-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inline-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.inline-filter select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+}
+
+.billing-summary > div {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 12px;
+}
+
+.billing-summary > div > :last-child {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.header-institution,
+.header-profile,
+.header-actions {
+  min-width: 0;
+}
+
+.header-institution > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  align-items: stretch;
+}
+
+.metric-strip-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px;
+}
+
+.metric-strip-item:first-child {
+  padding-left: 0;
+}
+
+.metric-strip-label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.metric-strip-value {
+  font-size: 24px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-strip-detail {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboard-appointment {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-appointment:hover {
+  background: var(--color-control-hover);
+}
+
+.dashboard-appointment-time,
+.dashboard-appointment-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-appointment-details {
+  min-width: 0;
+}
+
+.dashboard-appointment-patient {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 14px;
+}
+
+.dashboard-appointment-code {
+  color: var(--color-text-secondary);
+  font: 12px ui-monospace, monospace;
+}
+
+.dashboard-appointment-reason {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dashboard-appointment-status {
+  gap: 8px;
+}
+
+.exam-order-filters {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+@media (max-width: 1279px) {
+  .dashboard-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .sidebar-container {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    width: var(--width-sidebar-expanded) !important;
+    height: 100vh !important;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-normal) !important;
+  }
+
+  .sidebar-container.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    border: 0;
+    background: rgba(12, 59, 69, 0.28);
+  }
+
+  .app-main {
+    padding: 20px !important;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .order-header-actions,
+  .inline-filter {
+    width: 100%;
+  }
+
+  .order-header-actions > button {
+    flex: 1 1 140px;
+  }
+
+  .order-summary-title {
+    flex-wrap: wrap;
+  }
+
+  .order-summary-title h1 {
+    flex-basis: 100%;
+  }
+
+  #hoja-informe-oficial {
+    padding: 20px 16px !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+  }
+  .exam-order-filters {
+    width: 100%;
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .exam-order-filters > span {
+    margin: 0 !important;
+  }
+  .panel-header {
+    padding: 16px !important;
+    flex-wrap: wrap;
+  }
+
+  .panel-header-action {
+    max-width: 100%;
+  }
+
+  .panel-header > div:first-child {
+    flex-basis: 100% !important;
+  }
+
+  .dashboard-appointment {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+
+  .dashboard-appointment-time {
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .dashboard-appointment-status {
+    grid-column: 2;
+  }
+  .header-container {
+    height: 56px !important;
+    gap: 8px;
+    padding: 0 12px !important;
+  }
+
+  .header-container > div:first-child {
+    gap: 8px !important;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .header-institution > span {
+    max-width: 36vw;
+    font-size: 13px !important;
+  }
+
+  .header-profile {
+    gap: 8px !important;
+  }
+
+  .header-user-info {
+    display: none !important;
+  }
+
+  .header-actions {
+    gap: 4px !important;
+  }
+
+  .app-main {
+    padding: 12px !important;
+  }
+
+  .app-main > div[style*="padding: 32px"] {
+    padding: 16px 4px !important;
+  }
+
+  .app-main [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-main [style*="grid-template-columns"] > * {
+    min-width: 0;
+  }
+
+  .app-main [style*="grid-template-columns"] > [style*="grid-column: span"] {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-main [style*="justify-content: space-between"] {
+    flex-wrap: wrap;
+  }
+
+  .modal-header {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding: 16px !important;
+  }
+
+  .modal-header > div:first-child {
+    min-width: 0;
+  }
+
+  .modal-header h2 {
+    font-size: 18px !important;
+    line-height: 1.3;
+  }
+
+  .modal-footer {
+    padding: 12px 16px !important;
+    gap: 8px !important;
+  }
+
+  .app-main input,
+  .app-main select,
+  .app-main textarea,
+  .app-main button {
+    max-width: 100%;
+  }
+
+  .app-main .panel > div {
+    min-width: 0;
+  }
+
+  .tabs-nav {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+  }
+
+  .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .patients-list-table-scroll {
+    overflow-x: visible !important;
+  }
+
+  .patients-list-table {
+    display: block;
+    width: 100%;
+  }
+
+  .patients-list-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .patients-list-table tbody {
+    display: grid;
+  }
+
+  .patients-list-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "patient patient" "record status" "actions actions";
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px !important;
+  }
+
+  .patients-list-table tbody tr > td {
+    min-width: 0;
+    padding: 0 !important;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(1) {
+    grid-area: patient;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(2) {
+    grid-area: record;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(3) {
+    grid-area: status;
+    justify-self: end;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(4) {
+    grid-area: actions;
+    justify-self: stretch;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(4) > div {
+    flex-wrap: nowrap;
+    gap: 4px !important;
+  }
+
+  .patients-list-table tbody tr > td:nth-child(4) button {
+    white-space: nowrap;
+    padding-inline: 8px !important;
+  }
+
+  .metric-strip-item {
+    border-left: 0 !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--color-divider);
+    padding-top: 12px;
+  }
+
+  .metric-strip-item:nth-child(-n + 2) {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-institution > span {
+    max-width: 28vw;
+  }
+
+  .app-main {
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .metric-strip {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .metric-strip-item {
+    border-top: 1px solid var(--color-divider) !important;
+    padding-top: 12px !important;
+  }
+
+  .metric-strip-item:first-child {
+    border-top: 0 !important;
+    padding-top: 0 !important;
+  }
+}
+
+.consultation-stepper {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  gap: 8px;
+}
+
+.consultation-stepper > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.consultation-stepper > div {
+  min-width: 16px;
+}
+
+@media (max-width: 767px) {
+  .consultation-step-content {
+    padding: 20px 16px !important;
+  }
+
+  .agenda-days {
+    grid-template-columns: repeat(6, minmax(64px, 1fr)) !important;
+    overflow-x: auto;
+  }
+}
+
+/* Identifiers and amounts are read as one value, even inside scrolling tables. */
+.app-main table .table-identifier {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}

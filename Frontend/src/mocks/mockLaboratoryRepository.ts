@@ -1,0 +1,2183 @@
+import { MockCatalogRepository } from './mockCatalogRepository';
+import { LaboratoryRepository } from '../services/contracts';
+import {
+  InstitucionId,
+  OrdenLaboratorio,
+  FiltrosBandejaLab,
+  CrearOrdenLabDTO,
+  MuestraLaboratorio,
+  EstadoMuestraLaboratorio,
+  EventoTrazabilidadMuestra,
+  ResultadoLaboratorio,
+  GuardarResultadoBorradorDTO,
+  ParametroResultadoLab,
+  AlertaParametroLab,
+  InformeLaboratorio,
+  ItemResultadoInforme,
+  EquipoLaboratorio,
+  EstadoEquipoLaboratorio,
+  RegistroControlCalidad,
+  RegistrarControlCalidadDTO,
+  EvaluacionControlCalidad,
+  LoteReactivo,
+  MovimientoInventario,
+  RegistrarMovimientoDTO,
+  RegistrarNuevoLoteDTO,
+  FacturaLaboratorio,
+  PagoLaboratorio,
+  RegistrarPagoDTO,
+  RevertirPagoDTO,
+  AnularFacturaDTO
+} from '../services/types';
+
+const STORAGE_KEY_ORDENES = 'clinica_lab_ordenes_v1';
+const STORAGE_KEY_MUESTRAS = 'clinica_lab_muestras_v1';
+const STORAGE_KEY_RESULTADOS = 'clinica_lab_resultados_v1';
+const STORAGE_KEY_INFORMES = 'clinica_lab_informes_v1';
+const STORAGE_KEY_EQUIPOS = 'clinica_lab_equipos_v1';
+const STORAGE_KEY_QC = 'clinica_lab_qc_v1';
+const STORAGE_KEY_LOTES = 'clinica_lab_lotes_v1';
+const STORAGE_KEY_MOVIMIENTOS = 'clinica_lab_movs_v1';
+const STORAGE_KEY_FACTURAS = 'clinica_lab_facturas_v1';
+
+export function calcularAlertaParametro(
+  valorStr: string,
+  min?: number,
+  max?: number,
+  panicoMin?: number,
+  panicoMax?: number
+): AlertaParametroLab {
+  const num = parseFloat(valorStr);
+  if (isNaN(num)) return 'NORMAL';
+  if (panicoMin !== undefined && num <= panicoMin) return 'CRITICO';
+  if (panicoMax !== undefined && num >= panicoMax) return 'CRITICO';
+  if (min !== undefined && num < min) return 'DISMINUIDO';
+  if (max !== undefined && num > max) return 'ELEVADO';
+  return 'NORMAL';
+}
+
+export function obtenerParametrosDefecto(codigoPrueba: string): ParametroResultadoLab[] {
+  const c = codigoPrueba.toUpperCase();
+  if (c.includes('GAS')) {
+    return [
+      { id: 'p-gas-01', codigoParametro: 'PH', nombre: 'pH arterial', valor: '', unidad: 'pH', rangoReferenciaMin: 7.35, rangoReferenciaMax: 7.45, rangoTexto: '7.35 - 7.45', alerta: 'NORMAL', valorPanicoMin: 7.20, valorPanicoMax: 7.60 },
+      { id: 'p-gas-02', codigoParametro: 'PCO2', nombre: 'Presión parcial CO2 (pCO2)', valor: '', unidad: 'mmHg', rangoReferenciaMin: 35.0, rangoReferenciaMax: 45.0, rangoTexto: '35.0 - 45.0', alerta: 'NORMAL' },
+      { id: 'p-gas-03', codigoParametro: 'PO2', nombre: 'Presión parcial O2 (pO2)', valor: '', unidad: 'mmHg', rangoReferenciaMin: 80.0, rangoReferenciaMax: 100.0, rangoTexto: '80.0 - 100.0', alerta: 'NORMAL', valorPanicoMin: 60.0 },
+      { id: 'p-gas-04', codigoParametro: 'HCO3', nombre: 'Bicarbonato estándar (HCO3-)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: 22.0, rangoReferenciaMax: 26.0, rangoTexto: '22.0 - 26.0', alerta: 'NORMAL', valorPanicoMin: 15.0, valorPanicoMax: 40.0 },
+      { id: 'p-gas-05', codigoParametro: 'SATO2', nombre: 'Saturación de oxígeno (SatO2)', valor: '', unidad: '%', rangoReferenciaMin: 95.0, rangoReferenciaMax: 100.0, rangoTexto: '95.0 - 100.0', alerta: 'NORMAL', valorPanicoMin: 88.0 },
+      { id: 'p-gas-06', codigoParametro: 'BE', nombre: 'Exceso de base (BE)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: -2.0, rangoReferenciaMax: 2.0, rangoTexto: '-2.0 a +2.0', alerta: 'NORMAL' }
+    ];
+  }
+  if (c.includes('BIO-004') || c.includes('ELEC')) {
+    return [
+      { id: 'p-elec-01', codigoParametro: 'NA', nombre: 'Sodio sérico (Na+)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: 135.0, rangoReferenciaMax: 145.0, rangoTexto: '135.0 - 145.0', alerta: 'NORMAL', valorPanicoMin: 120.0, valorPanicoMax: 160.0 },
+      { id: 'p-elec-02', codigoParametro: 'K', nombre: 'Potasio sérico (K+)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: 3.5, rangoReferenciaMax: 5.1, rangoTexto: '3.5 - 5.1', alerta: 'NORMAL', valorPanicoMin: 2.8, valorPanicoMax: 6.2 },
+      { id: 'p-elec-03', codigoParametro: 'CL', nombre: 'Cloro sérico (Cl-)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: 98.0, rangoReferenciaMax: 107.0, rangoTexto: '98.0 - 107.0', alerta: 'NORMAL' },
+      { id: 'p-elec-04', codigoParametro: 'CA', nombre: 'Calcio iónico (Ca++)', valor: '', unidad: 'mmol/L', rangoReferenciaMin: 1.12, rangoReferenciaMax: 1.32, rangoTexto: '1.12 - 1.32', alerta: 'NORMAL', valorPanicoMin: 0.90, valorPanicoMax: 1.60 }
+    ];
+  }
+  if (c.includes('BIO-001') || c.includes('GLU')) {
+    return [
+      { id: 'p-glu-01', codigoParametro: 'GLU', nombre: 'Glucosa en ayunas', valor: '', unidad: 'mg/dL', rangoReferenciaMin: 70.0, rangoReferenciaMax: 105.0, rangoTexto: '70.0 - 105.0', alerta: 'NORMAL', valorPanicoMin: 45.0, valorPanicoMax: 400.0 }
+    ];
+  }
+  if (c.includes('BIO-002') || c.includes('LIP')) {
+    return [
+      { id: 'p-lip-01', codigoParametro: 'COL_TOT', nombre: 'Colesterol Total', valor: '', unidad: 'mg/dL', rangoReferenciaMax: 200.0, rangoTexto: '< 200.0', alerta: 'NORMAL' },
+      { id: 'p-lip-02', codigoParametro: 'TRIG', nombre: 'Triglicéridos', valor: '', unidad: 'mg/dL', rangoReferenciaMax: 150.0, rangoTexto: '< 150.0', alerta: 'NORMAL' },
+      { id: 'p-lip-03', codigoParametro: 'HDL', nombre: 'Colesterol HDL (Bueno)', valor: '', unidad: 'mg/dL', rangoReferenciaMin: 40.0, rangoTexto: '> 40.0', alerta: 'NORMAL' },
+      { id: 'p-lip-04', codigoParametro: 'LDL', nombre: 'Colesterol LDL (Malo)', valor: '', unidad: 'mg/dL', rangoReferenciaMax: 100.0, rangoTexto: '< 100.0', alerta: 'NORMAL' },
+      { id: 'p-lip-05', codigoParametro: 'VLDL', nombre: 'Colesterol VLDL', valor: '', unidad: 'mg/dL', rangoReferenciaMin: 2.0, rangoReferenciaMax: 30.0, rangoTexto: '2.0 - 30.0', alerta: 'NORMAL' }
+    ];
+  }
+  if (c.includes('HEM-001') || c.includes('HEM')) {
+    return [
+      { id: 'p-hem-01', codigoParametro: 'LEUC', nombre: 'Leucocitos totales', valor: '', unidad: '10^3/µL', rangoReferenciaMin: 4.5, rangoReferenciaMax: 11.0, rangoTexto: '4.5 - 11.0', alerta: 'NORMAL', valorPanicoMin: 2.0, valorPanicoMax: 30.0 },
+      { id: 'p-hem-02', codigoParametro: 'ERIT', nombre: 'Eritrocitos', valor: '', unidad: '10^6/µL', rangoReferenciaMin: 4.2, rangoReferenciaMax: 5.8, rangoTexto: '4.2 - 5.8', alerta: 'NORMAL' },
+      { id: 'p-hem-03', codigoParametro: 'HB', nombre: 'Hemoglobina', valor: '', unidad: 'g/dL', rangoReferenciaMin: 12.0, rangoReferenciaMax: 16.5, rangoTexto: '12.0 - 16.5', alerta: 'NORMAL', valorPanicoMin: 7.0, valorPanicoMax: 20.0 },
+      { id: 'p-hem-04', codigoParametro: 'HTO', nombre: 'Hematocrito', valor: '', unidad: '%', rangoReferenciaMin: 37.0, rangoReferenciaMax: 48.0, rangoTexto: '37.0 - 48.0', alerta: 'NORMAL', valorPanicoMin: 20.0, valorPanicoMax: 60.0 },
+      { id: 'p-hem-05', codigoParametro: 'PLAQ', nombre: 'Plaquetas', valor: '', unidad: '10^3/µL', rangoReferenciaMin: 150.0, rangoReferenciaMax: 450.0, rangoTexto: '150.0 - 450.0', alerta: 'NORMAL', valorPanicoMin: 50.0, valorPanicoMax: 1000.0 }
+    ];
+  }
+  if (c.includes('HEM-002') || c.includes('COAG')) {
+    return [
+      { id: 'p-coag-01', codigoParametro: 'TP', nombre: 'Tiempo de Protrombina (TP)', valor: '', unidad: 's', rangoReferenciaMin: 11.0, rangoReferenciaMax: 13.5, rangoTexto: '11.0 - 13.5', alerta: 'NORMAL' },
+      { id: 'p-coag-02', codigoParametro: 'INR', nombre: 'INR', valor: '', unidad: 'ratio', rangoReferenciaMin: 0.8, rangoReferenciaMax: 1.2, rangoTexto: '0.8 - 1.2', alerta: 'NORMAL', valorPanicoMax: 4.5 },
+      { id: 'p-coag-03', codigoParametro: 'TPT', nombre: 'Tiempo de Tromboplastina Parcial (TPT)', valor: '', unidad: 's', rangoReferenciaMin: 25.0, rangoReferenciaMax: 35.0, rangoTexto: '25.0 - 35.0', alerta: 'NORMAL', valorPanicoMax: 70.0 }
+    ];
+  }
+  if (c.includes('MIC-001') || c.includes('URO')) {
+    return [
+      { id: 'p-mic-01', codigoParametro: 'COLONIAS', nombre: 'Recuento de Colonias', valor: '', unidad: 'UFC/mL', rangoReferenciaMax: 10000, rangoTexto: '< 10,000 UFC/mL', alerta: 'NORMAL' },
+      { id: 'p-mic-02', codigoParametro: 'AISLAMIENTO', nombre: 'Microorganismo Aislado', valor: '', unidad: 'texto', rangoTexto: 'Sin desarrollo patógeno', alerta: 'NORMAL' },
+      { id: 'p-mic-03', codigoParametro: 'ANTIBIOGRAMA', nombre: 'Perfil de Sensibilidad', valor: '', unidad: 'texto', rangoTexto: 'No aplica si < 10,000', alerta: 'NORMAL' }
+    ];
+  }
+  if (c.includes('INM-001') || c.includes('TROP')) {
+    return [
+      { id: 'p-inm-01', codigoParametro: 'TROP_I', nombre: 'Troponina I de Alta Sensibilidad', valor: '', unidad: 'ng/mL', rangoReferenciaMax: 0.04, rangoTexto: '< 0.040', alerta: 'NORMAL', valorPanicoMax: 0.100 }
+    ];
+  }
+  return [
+    { id: 'p-gen-01', codigoParametro: 'RESULT', nombre: 'Resultado Cuantitativo', valor: '', unidad: 'unidades', rangoTexto: 'Referencia institucional', alerta: 'NORMAL' }
+  ];
+}
+
+export class MockLaboratoryRepository implements LaboratoryRepository {
+  private ordenes: OrdenLaboratorio[] = [];
+  private muestras: MuestraLaboratorio[] = [];
+  private resultados: ResultadoLaboratorio[] = [];
+  private informes: InformeLaboratorio[] = [];
+  private equipos: EquipoLaboratorio[] = [];
+  private controlesCalidad: RegistroControlCalidad[] = [];
+  private lotesReactivos: LoteReactivo[] = [];
+  private movimientosInventario: MovimientoInventario[] = [];
+  private facturas: FacturaLaboratorio[] = [];
+
+  constructor() {
+    this.cargarDatos();
+  }
+
+  private cargarDatos(): void {
+    try {
+      const rawO = localStorage.getItem(STORAGE_KEY_ORDENES);
+      const rawM = localStorage.getItem(STORAGE_KEY_MUESTRAS);
+      const rawR = localStorage.getItem(STORAGE_KEY_RESULTADOS);
+      const rawI = localStorage.getItem(STORAGE_KEY_INFORMES);
+      const rawE = localStorage.getItem(STORAGE_KEY_EQUIPOS);
+      const rawQC = localStorage.getItem(STORAGE_KEY_QC);
+      const rawL = localStorage.getItem(STORAGE_KEY_LOTES);
+      const rawMov = localStorage.getItem(STORAGE_KEY_MOVIMIENTOS);
+      const rawF = localStorage.getItem(STORAGE_KEY_FACTURAS);
+
+      if (rawO) this.ordenes = JSON.parse(rawO);
+      if (rawM) this.muestras = JSON.parse(rawM);
+      if (rawR) this.resultados = JSON.parse(rawR);
+      if (rawI) this.informes = JSON.parse(rawI);
+      if (rawE) this.equipos = JSON.parse(rawE);
+      if (rawQC) this.controlesCalidad = JSON.parse(rawQC);
+      if (rawL) this.lotesReactivos = JSON.parse(rawL);
+      if (rawMov) this.movimientosInventario = JSON.parse(rawMov);
+      if (rawF) this.facturas = JSON.parse(rawF);
+    } catch {
+      // fallback
+    }
+
+    if (this.ordenes.length === 0) {
+      this.ordenes = [
+        {
+          id: 'ord-lab-01',
+          codigoOrden: 'ORD-LAB-2026-0081',
+          institucionId: 'LABORATORIO_CLINICO',
+          pacienteId: 'pac-01',
+          pacienteNombre: 'Ana Lucía Morales',
+          pacienteDpi: '2456 78901 0101',
+          pacienteEdad: 34,
+          pacienteSexo: 'F',
+          medicoSolicitante: 'Dr. Fernando Arévalo (Colegiado CMG-7819)',
+          prioridad: 'STAT',
+          estado: 'EN_ANALISIS',
+          motivoClinico: 'Sospecha de cetoacidosis diabética y desequilibrio hidroelectrolítico agudo',
+          fechaCreacion: '2026-10-22T07:30:00Z',
+          totalArancelGTQ: 420,
+          items: [
+            {
+              id: 'item-01',
+              pruebaId: 'lab-gas-01',
+              codigoPrueba: 'GAS-001',
+              nombrePrueba: 'Gasometría Arterial Completa',
+              seccion: 'Hematología y Gases',
+              tipoMuestra: 'Sangre Arterial Heparinizada',
+              versionPrueba: 2,
+              arancelGTQ: 240,
+              estado: 'EN_PROCESO'
+            },
+            {
+              id: 'item-02',
+              pruebaId: 'lab-elec-01',
+              codigoPrueba: 'BIO-004',
+              nombrePrueba: 'Electrólitos Séricos (Na, K, Cl, Ca)',
+              seccion: 'Bioquímica Clínica',
+              tipoMuestra: 'Suero (Tubo Oro)',
+              versionPrueba: 1,
+              arancelGTQ: 180,
+              estado: 'EN_PROCESO'
+            }
+          ],
+          muestras: [
+            {
+              id: 'mue-01',
+              codigoMuestra: 'MUE-2026-0081-01',
+              ordenId: 'ord-lab-01',
+              codigoOrden: 'ORD-LAB-2026-0081',
+              pacienteId: 'pac-01',
+              pacienteNombre: 'Ana Lucía Morales',
+              tipoMuestra: 'Sangre Arterial Heparinizada',
+              tuboContenedor: 'Jeringa Heparinizada (Tapa hermética)',
+              estado: 'ACEPTADA',
+              fechaToma: '2026-10-22T07:45:00Z',
+              tomadaPor: 'Licda. Carmen Valladares (Enfermera Flebotomista)',
+              fechaRecepcion: '2026-10-22T07:55:00Z',
+              recibidaPor: 'Lic. Kevin Estrada (Analista de Laboratorio)',
+              eventosTrazabilidad: [
+                {
+                  id: 'evt-01',
+                  tipoEvento: 'CREACION',
+                  fechaHora: '2026-10-22T07:30:00Z',
+                  actor: 'Recepción Central',
+                  detalle: 'Orden generada con prioridad STAT'
+                },
+                {
+                  id: 'evt-02',
+                  tipoEvento: 'TOMA',
+                  fechaHora: '2026-10-22T07:45:00Z',
+                  actor: 'Licda. Carmen Valladares',
+                  detalle: 'Punción en arteria radial izquierda sin hematoma'
+                },
+                {
+                  id: 'evt-03',
+                  tipoEvento: 'RECEPCION',
+                  fechaHora: '2026-10-22T07:55:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Muestra ingresada a cabina con hielo y verificación de rótulo unívoco'
+                },
+                {
+                  id: 'evt-04',
+                  tipoEvento: 'ACEPTACION',
+                  fechaHora: '2026-10-22T08:00:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Criterios preanalíticos cumplidos; sin coágulos ni burbujas'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'ord-lab-02',
+          codigoOrden: 'ORD-LAB-2026-0082',
+          institucionId: 'LABORATORIO_CLINICO',
+          pacienteId: 'pac-02',
+          pacienteNombre: 'Carlos Fernando López',
+          pacienteDpi: '1987 65432 0101',
+          pacienteEdad: 48,
+          pacienteSexo: 'M',
+          medicoSolicitante: 'Dra. Elena Morales (Colegiado CMG-10421)',
+          prioridad: 'URGENTE',
+          estado: 'MUESTRA_PENDIENTE',
+          motivoClinico: 'Control metabólico y evaluación de riesgo cardiovascular por síndrome metabólico',
+          fechaCreacion: '2026-10-22T08:15:00Z',
+          totalArancelGTQ: 310,
+          items: [
+            {
+              id: 'item-03',
+              pruebaId: 'lab-glu-01',
+              codigoPrueba: 'BIO-001',
+              nombrePrueba: 'Glucosa en Ayunas',
+              seccion: 'Bioquímica Clínica',
+              tipoMuestra: 'Suero (Tubo Rojo/Oro)',
+              versionPrueba: 2,
+              arancelGTQ: 60,
+              estado: 'PENDIENTE'
+            },
+            {
+              id: 'item-04',
+              pruebaId: 'lab-lip-01',
+              codigoPrueba: 'BIO-002',
+              nombrePrueba: 'Perfil Lipídico Completo (Col total, HDL, LDL, VLDL, Triglicéridos)',
+              seccion: 'Bioquímica Clínica',
+              tipoMuestra: 'Suero (Tubo Rojo/Oro)',
+              versionPrueba: 3,
+              arancelGTQ: 250,
+              estado: 'PENDIENTE'
+            }
+          ],
+          muestras: [
+            {
+              id: 'mue-02',
+              codigoMuestra: 'MUE-2026-0082-01',
+              ordenId: 'ord-lab-02',
+              codigoOrden: 'ORD-LAB-2026-0082',
+              pacienteId: 'pac-02',
+              pacienteNombre: 'Carlos Fernando López',
+              tipoMuestra: 'Suero Sanguíneo',
+              tuboContenedor: 'Tubo Oro con Gel Separador',
+              estado: 'PENDIENTE_TOMA',
+              eventosTrazabilidad: [
+                {
+                  id: 'evt-05',
+                  tipoEvento: 'CREACION',
+                  fechaHora: '2026-10-22T08:15:00Z',
+                  actor: 'Recepción Central',
+                  detalle: 'Etiqueta preimpresa y orden registrada con 12 h de ayuno referidas'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'ord-lab-03',
+          codigoOrden: 'ORD-LAB-2026-0083',
+          institucionId: 'LABORATORIO_CLINICO',
+          pacienteId: 'pac-03',
+          pacienteNombre: 'Sofía Daniela Reyes',
+          pacienteDpi: '3012 45678 0101',
+          pacienteEdad: 22,
+          pacienteSexo: 'F',
+          medicoSolicitante: 'Dra. Gabriela Fuentes (Colegiado CMG-11540)',
+          prioridad: 'RUTINA',
+          estado: 'CREADA',
+          motivoClinico: 'Evaluación preoperatoria para rinoseptoplastia funcional',
+          fechaCreacion: '2026-10-22T08:45:00Z',
+          totalArancelGTQ: 325,
+          items: [
+            {
+              id: 'item-05',
+              pruebaId: 'lab-01',
+              codigoPrueba: 'HEM-001',
+              nombrePrueba: 'Hematología Completa Automatizada',
+              seccion: 'Hematología y Coagulación',
+              tipoMuestra: 'Sangre total con EDTA (Tubo lila)',
+              versionPrueba: 2,
+              arancelGTQ: 125,
+              estado: 'PENDIENTE'
+            },
+            {
+              id: 'item-06',
+              pruebaId: 'lab-coag-01',
+              codigoPrueba: 'HEM-002',
+              nombrePrueba: 'Tiempos de Coagulación (TP / TPT / INR)',
+              seccion: 'Hematología y Coagulación',
+              tipoMuestra: 'Plasma Citratado (Tubo Azul Celeste)',
+              versionPrueba: 1,
+              arancelGTQ: 200,
+              estado: 'PENDIENTE'
+            }
+          ],
+          muestras: [
+            {
+              id: 'mue-03',
+              codigoMuestra: 'MUE-2026-0083-01',
+              ordenId: 'ord-lab-03',
+              codigoOrden: 'ORD-LAB-2026-0083',
+              pacienteId: 'pac-03',
+              pacienteNombre: 'Sofía Daniela Reyes',
+              tipoMuestra: 'Sangre Total EDTA',
+              tuboContenedor: 'Tubo Lila (EDTA K2)',
+              estado: 'PENDIENTE_TOMA',
+              eventosTrazabilidad: [
+                {
+                  id: 'evt-06',
+                  tipoEvento: 'CREACION',
+                  fechaHora: '2026-10-22T08:45:00Z',
+                  actor: 'Recepción Central',
+                  detalle: 'Orden de rutina ambulatoria creada'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'ord-lab-04',
+          codigoOrden: 'ORD-LAB-2026-0084',
+          institucionId: 'LABORATORIO_CLINICO',
+          pacienteId: 'pac-04',
+          pacienteNombre: 'María Elena Estrada',
+          pacienteDpi: '1789 12345 0101',
+          pacienteEdad: 59,
+          pacienteSexo: 'F',
+          medicoSolicitante: 'Dr. Roberto Mendoza (Colegiado CMG-8921)',
+          prioridad: 'RUTINA',
+          estado: 'PARA_VALIDAR',
+          motivoClinico: 'Seguimiento de infección urinaria recurrente y ajuste de antibiótico guiado',
+          fechaCreacion: '2026-10-20T10:00:00Z',
+          totalArancelGTQ: 280,
+          items: [
+            {
+              id: 'item-07',
+              pruebaId: 'lab-uro-01',
+              codigoPrueba: 'MIC-001',
+              nombrePrueba: 'Urocultivo con Antibiograma Automatizado',
+              seccion: 'Microbiología Clínica',
+              tipoMuestra: 'Orina fresca chorro medio (Frasco estéril)',
+              versionPrueba: 2,
+              arancelGTQ: 280,
+              estado: 'EN_PROCESO'
+            }
+          ],
+          muestras: [
+            {
+              id: 'mue-04',
+              codigoMuestra: 'MUE-2026-0084-01',
+              ordenId: 'ord-lab-04',
+              codigoOrden: 'ORD-LAB-2026-0084',
+              pacienteId: 'pac-04',
+              pacienteNombre: 'María Elena Estrada',
+              tipoMuestra: 'Orina chorro medio',
+              tuboContenedor: 'Frasco Estéril 60 mL',
+              estado: 'PROCESADA',
+              fechaToma: '2026-10-20T10:30:00Z',
+              tomadaPor: 'Paciente en sala de tomas (instructivo entregado)',
+              fechaRecepcion: '2026-10-20T10:45:00Z',
+              recibidaPor: 'Lic. Kevin Estrada',
+              eventosTrazabilidad: [
+                {
+                  id: 'evt-07',
+                  tipoEvento: 'CREACION',
+                  fechaHora: '2026-10-20T10:00:00Z',
+                  actor: 'Recepción Central',
+                  detalle: 'Orden registrada'
+                },
+                {
+                  id: 'evt-08',
+                  tipoEvento: 'TOMA',
+                  fechaHora: '2026-10-20T10:30:00Z',
+                  actor: 'Toma de Muestras',
+                  detalle: 'Recolección higiénica confirmada'
+                },
+                {
+                  id: 'evt-09',
+                  tipoEvento: 'RECEPCION',
+                  fechaHora: '2026-10-20T10:45:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Sembrado en agar sangre y MacConkey antes de 30 min'
+                },
+                {
+                  id: 'evt-10',
+                  tipoEvento: 'ACEPTACION',
+                  fechaHora: '2026-10-20T11:00:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Criterios cumplidos para incubación a 37°C por 48 h'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          institucionId: 'LABORATORIO_CLINICO',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteDpi: '2234 56789 0101',
+          pacienteEdad: 63,
+          pacienteSexo: 'M',
+          medicoSolicitante: 'Dr. Alejandro Morales (Colegiado CMG-6540)',
+          prioridad: 'URGENTE',
+          estado: 'COMPLETADA',
+          motivoClinico: 'Descarte de síndrome coronario agudo / dolor torácico opresivo',
+          fechaCreacion: '2026-10-21T18:00:00Z',
+          totalArancelGTQ: 380,
+          items: [
+            {
+              id: 'item-08',
+              pruebaId: 'lab-trop-01',
+              codigoPrueba: 'INM-001',
+              nombrePrueba: 'Troponina I de Alta Sensibilidad',
+              seccion: 'Inmunología Clínica',
+              tipoMuestra: 'Suero (Tubo Rojo)',
+              versionPrueba: 2,
+              arancelGTQ: 380,
+              estado: 'VALIDADO'
+            }
+          ],
+          muestras: [
+            {
+              id: 'mue-05',
+              codigoMuestra: 'MUE-2026-0085-01',
+              ordenId: 'ord-lab-05',
+              codigoOrden: 'ORD-LAB-2026-0085',
+              pacienteId: 'pac-05',
+              pacienteNombre: 'Jorge Mario Castillo',
+              tipoMuestra: 'Suero Sanguíneo',
+              tuboContenedor: 'Tubo Rojo con Activador de Coágulo',
+              estado: 'PROCESADA',
+              fechaToma: '2026-10-21T18:15:00Z',
+              tomadaPor: 'Licda. Carmen Valladares',
+              fechaRecepcion: '2026-10-21T18:25:00Z',
+              recibidaPor: 'Lic. Kevin Estrada',
+              eventosTrazabilidad: [
+                {
+                  id: 'evt-11',
+                  tipoEvento: 'CREACION',
+                  fechaHora: '2026-10-21T18:00:00Z',
+                  actor: 'Urgencias',
+                  detalle: 'Orden de emergencia'
+                },
+                {
+                  id: 'evt-12',
+                  tipoEvento: 'TOMA',
+                  fechaHora: '2026-10-21T18:15:00Z',
+                  actor: 'Licda. Carmen Valladares',
+                  detalle: 'Punción venosa exitosa al primer intento'
+                },
+                {
+                  id: 'evt-13',
+                  tipoEvento: 'RECEPCION',
+                  fechaHora: '2026-10-21T18:25:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Centrifugada a 3000 rpm durante 10 min'
+                },
+                {
+                  id: 'evt-14',
+                  tipoEvento: 'ACEPTACION',
+                  fechaHora: '2026-10-21T18:35:00Z',
+                  actor: 'Lic. Kevin Estrada',
+                  detalle: 'Suero límpido sin hemólisis'
+                }
+              ]
+            }
+          ]
+        }
+      ];
+    }
+
+    if (this.resultados.length === 0) {
+      this.resultados = [
+        {
+          id: 'res-lab-seed-01',
+          serieResultadoId: 'SER-2026-0084-1',
+          version: 1,
+          ordenId: 'ord-lab-04',
+          codigoOrden: 'ORD-LAB-2026-0084',
+          pacienteId: 'pac-04',
+          pacienteNombre: 'María Elena Estrada',
+          pacienteDpi: '1789 12345 0101',
+          itemOrdenId: 'item-07',
+          pruebaId: 'lab-uro-01',
+          codigoPrueba: 'MIC-001',
+          nombrePrueba: 'Urocultivo con Antibiograma Automatizado',
+          seccion: 'Microbiología Clínica',
+          muestraId: 'mue-04',
+          codigoMuestra: 'MUE-2026-0084-01',
+          equipoAnalitico: 'Sistema Automatizado VITEK 2 Compact',
+          metodoAnalitico: 'Turbidimetría y Microdilución en Caldo Automatizada',
+          loteReactivo: 'LOTE-VIT-2026-09',
+          estado: 'BORRADOR',
+          analistaId: 'usr-lab-ana-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaAnalisis: '2026-10-22T08:30:00Z',
+          observaciones: 'Aislamiento de bacilo gram negativo con recuento significativo.',
+          parametros: [
+            {
+              id: 'p-mic-01',
+              codigoParametro: 'COLONIAS',
+              nombre: 'Recuento de Colonias',
+              valor: '100000',
+              unidad: 'UFC/mL',
+              rangoReferenciaMax: 10000,
+              rangoTexto: '< 10,000 UFC/mL',
+              alerta: 'ELEVADO'
+            },
+            {
+              id: 'p-mic-02',
+              codigoParametro: 'AISLAMIENTO',
+              nombre: 'Microorganismo Aislado',
+              valor: 'Escherichia coli (cepa sensible)',
+              unidad: 'texto',
+              rangoTexto: 'Sin desarrollo patógeno',
+              alerta: 'NORMAL'
+            },
+            {
+              id: 'p-mic-03',
+              codigoParametro: 'ANTIBIOGRAMA',
+              nombre: 'Perfil de Sensibilidad',
+              valor: 'Sensible a Nitrofurantoína, Ceftriaxona y Ciprofloxacino',
+              unidad: 'texto',
+              rangoTexto: 'No aplica si < 10,000',
+              alerta: 'NORMAL'
+            }
+          ]
+        },
+        {
+          id: 'res-lab-seed-02',
+          serieResultadoId: 'SER-2026-0085-1',
+          version: 1,
+          ordenId: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteDpi: '2234 56789 0101',
+          itemOrdenId: 'item-08',
+          pruebaId: 'lab-trop-01',
+          codigoPrueba: 'INM-001',
+          nombrePrueba: 'Troponina I de Alta Sensibilidad',
+          seccion: 'Inmunología Clínica',
+          muestraId: 'mue-05',
+          codigoMuestra: 'MUE-2026-0085-01',
+          equipoAnalitico: 'Analizador Roche Cobas e 411',
+          metodoAnalitico: 'Inmunoensayo por Electroquimioluminiscencia (ECLIA)',
+          loteReactivo: 'LOTE-ECL-2026-44',
+          estado: 'VALIDADO',
+          analistaId: 'usr-lab-ana-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaAnalisis: '2026-10-21T18:50:00Z',
+          validadorId: 'usr-lab-val-01',
+          validadorNombre: 'Lic. Kevin Estrada',
+          fechaValidacion: '2026-10-21T19:05:00Z',
+          observaciones: 'Curva de troponina concordante con cuadro coronario agudo en seguimiento.',
+          parametros: [
+            {
+              id: 'p-inm-01',
+              codigoParametro: 'TROP_I',
+              nombre: 'Troponina I de Alta Sensibilidad',
+              valor: '0.145',
+              unidad: 'ng/mL',
+              rangoReferenciaMax: 0.04,
+              rangoTexto: '< 0.040',
+              alerta: 'CRITICO',
+              valorPanicoMax: 0.100
+            }
+          ]
+        }
+      ];
+    }
+
+    if (this.informes.length === 0) {
+      this.informes = [
+        {
+          id: 'inf-lab-01',
+          codigoInforme: 'INF-LAB-2026-0085',
+          ordenId: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteDpi: '2234 56789 0101',
+          pacienteEdad: 63,
+          pacienteSexo: 'M',
+          medicoSolicitante: 'Dr. Alejandro Morales (Colegiado CMG-6540)',
+          fechaEmision: '2026-10-21T19:15:00Z',
+          estado: 'EMITIDO',
+          hashVerificacion: 'SHA256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+          emisorId: 'usr-lab-val-01',
+          emisorNombre: 'Lic. Kevin Estrada (Validador Técnico)',
+          emisorColegiado: 'QB-4912',
+          conclusionesGenerales: 'Valores concordantes con evento coronario agudo en seguimiento. Se recomienda correlación electrocardiográfica urgente.',
+          resultadosIncluidos: [
+            {
+              resultadoId: 'res-lab-seed-02',
+              serieResultadoId: 'SER-2026-0085-1',
+              version: 1,
+              pruebaId: 'lab-trop-01',
+              codigoPrueba: 'INM-001',
+              nombrePrueba: 'Troponina I de Alta Sensibilidad',
+              seccion: 'Inmunología Clínica',
+              muestraCodigo: 'MUE-2026-0085-01',
+              equipoAnalitico: 'Analizador Roche Cobas e 411',
+              metodoAnalitico: 'Inmunoensayo por Electroquimioluminiscencia (ECLIA)',
+              parametros: [
+                {
+                  id: 'p-inm-01',
+                  codigoParametro: 'TROP_I',
+                  nombre: 'Troponina I de Alta Sensibilidad',
+                  valor: '0.145',
+                  unidad: 'ng/mL',
+                  rangoReferenciaMax: 0.04,
+                  rangoTexto: '< 0.040',
+                  alerta: 'CRITICO',
+                  valorPanicoMax: 0.100
+                }
+              ],
+              analistaNombre: 'Licda. Sofía Paniagua',
+              validadorNombre: 'Lic. Kevin Estrada',
+              fechaValidacion: '2026-10-21T19:05:00Z'
+            }
+          ]
+        }
+      ];
+    }
+
+    if (this.equipos.length === 0) {
+      this.equipos = [
+        {
+          id: 'eq-01',
+          codigo: 'EQ-ROCHE-01',
+          nombre: 'Analizador Roche Cobas e 411',
+          modelo: 'Cobas e 411 Disc',
+          numeroSerie: 'SN-ROCHE-49120',
+          seccion: 'Inmunología Clínica',
+          fabricante: 'Roche Diagnostics',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2024-03-15T09:00:00Z',
+          ultimaCalibracion: '2026-10-01T10:00:00Z',
+          proximaCalibracion: '2026-11-01T10:00:00Z',
+          notas: 'Mantenimiento preventivo semestral vigente. Calibración fotomultiplicador OK.'
+        },
+        {
+          id: 'eq-02',
+          codigo: 'EQ-SYSMEX-02',
+          nombre: 'Analizador Hematológico Sysmex XN-550',
+          modelo: 'XN-550 Automático',
+          numeroSerie: 'SN-SYS-88210',
+          seccion: 'Hematología y Coagulación',
+          fabricante: 'Sysmex Corporation',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2023-11-20T11:00:00Z',
+          ultimaCalibracion: '2026-10-15T08:30:00Z',
+          proximaCalibracion: '2026-11-15T08:30:00Z',
+          notas: 'Viales de reactivo Cellpack DCL y Fluorocell WDF verificados.'
+        },
+        {
+          id: 'eq-03',
+          codigo: 'EQ-ROCHE-03',
+          nombre: 'Química Clínica Roche Cobas c 311',
+          modelo: 'Cobas c 311 ISE',
+          numeroSerie: 'SN-ROCHE-33104',
+          seccion: 'Bioquímica Clínica',
+          fabricante: 'Roche Diagnostics',
+          estado: 'CALIBRACION_PENDIENTE',
+          fechaInstalacion: '2024-01-10T14:00:00Z',
+          ultimaCalibracion: '2026-09-18T09:00:00Z',
+          proximaCalibracion: '2026-10-18T09:00:00Z',
+          notas: 'Alerta: ciclo de 30 días vencido. Requiere corrida con C.f.a.s. antes de liberar muestras.'
+        },
+        {
+          id: 'eq-04',
+          codigo: 'EQ-SIEMENS-04',
+          nombre: 'Gasómetro Siemens RAPIDPoint 500e',
+          modelo: 'RAPIDPoint 500e Cartridge',
+          numeroSerie: 'SN-SIE-10928',
+          seccion: 'Gases y Electrólitos',
+          fabricante: 'Siemens Healthineers',
+          estado: 'OPERATIVO',
+          fechaInstalacion: '2025-05-02T10:00:00Z',
+          ultimaCalibracion: '2026-10-22T06:00:00Z',
+          proximaCalibracion: '2026-10-23T06:00:00Z',
+          notas: 'Calibración automática de cartucho de 24 horas completada.'
+        }
+      ];
+    }
+
+    if (this.controlesCalidad.length === 0) {
+      this.controlesCalidad = [
+        {
+          id: 'qc-run-01',
+          codigoCorrida: 'QC-2026-1022-01',
+          equipoId: 'eq-01',
+          equipoNombre: 'Analizador Roche Cobas e 411',
+          pruebaId: 'lab-trop-01',
+          pruebaCodigo: 'INM-001',
+          pruebaNombre: 'Troponina I de Alta Sensibilidad',
+          pruebaVersion: 2,
+          parametroId: 'p-inm-01',
+          parametroNombre: 'Troponina I (TnI-hs)',
+          loteMaterialControl: 'PreciControl Troponin Lote 88214',
+          nivelControl: 'NIVEL_1_NORMAL',
+          unidadMedida: 'ng/mL',
+          mediaDiana: 0.025,
+          desviacionEstandar: 0.003,
+          limiteInferior2SD: 0.019,
+          limiteSuperior2SD: 0.031,
+          limiteInferior3SD: 0.016,
+          limiteSuperior3SD: 0.034,
+          valorMedido: 0.026,
+          zScore: 0.33,
+          evaluacion: 'ACEPTADO',
+          analistaId: 'usr-lab-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T06:30:00Z',
+          observaciones: 'Corrida matutina de rutina dentro de +/- 1 SD.'
+        },
+        {
+          id: 'qc-run-02',
+          codigoCorrida: 'QC-2026-1022-02',
+          equipoId: 'eq-01',
+          equipoNombre: 'Analizador Roche Cobas e 411',
+          pruebaId: 'lab-trop-01',
+          pruebaCodigo: 'INM-001',
+          pruebaNombre: 'Troponina I de Alta Sensibilidad',
+          pruebaVersion: 2,
+          parametroId: 'p-inm-01',
+          parametroNombre: 'Troponina I (TnI-hs)',
+          loteMaterialControl: 'PreciControl Troponin Lote 88214',
+          nivelControl: 'NIVEL_2_PATOLOGICO',
+          unidadMedida: 'ng/mL',
+          mediaDiana: 0.150,
+          desviacionEstandar: 0.012,
+          limiteInferior2SD: 0.126,
+          limiteSuperior2SD: 0.174,
+          limiteInferior3SD: 0.114,
+          limiteSuperior3SD: 0.186,
+          valorMedido: 0.152,
+          zScore: 0.17,
+          evaluacion: 'ACEPTADO',
+          analistaId: 'usr-lab-01',
+          analistaNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T06:45:00Z',
+          observaciones: 'Corrida patológica aceptada. Equipo habilitado para muestras clínicas.'
+        },
+        {
+          id: 'qc-run-03',
+          codigoCorrida: 'QC-2026-1022-03',
+          equipoId: 'eq-02',
+          equipoNombre: 'Analizador Hematológico Sysmex XN-550',
+          pruebaId: 'lab-hem-01',
+          pruebaCodigo: 'HEM-001',
+          pruebaNombre: 'Hematología Completa Automatizada',
+          pruebaVersion: 2,
+          parametroId: 'p-hem-01',
+          parametroNombre: 'Plaquetas',
+          loteMaterialControl: 'e-CHECK (XE) Lote 6241',
+          nivelControl: 'NIVEL_1_NORMAL',
+          unidadMedida: '10^3/µL',
+          mediaDiana: 220,
+          desviacionEstandar: 10,
+          limiteInferior2SD: 200,
+          limiteSuperior2SD: 240,
+          limiteInferior3SD: 190,
+          limiteSuperior3SD: 250,
+          valorMedido: 245,
+          zScore: 2.5,
+          evaluacion: 'ADVERTENCIA',
+          reglaViolada: 'Regla Westgard 1:2s (Entre +2 SD y +3 SD)',
+          analistaId: 'usr-lab-val-01',
+          analistaNombre: 'Lic. Kevin Estrada',
+          fechaHora: '2026-10-22T07:15:00Z',
+          observaciones: 'Tendencia positiva leve. Se procede a monitorear siguiente corrida de turno.'
+        }
+      ];
+    }
+
+    if (this.lotesReactivos.length === 0) {
+      this.lotesReactivos = [
+        {
+          id: 'lote-01',
+          reactivoId: 'rea-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          reactivoCodigo: 'REA-GLU-01',
+          seccion: 'Bioquímica Clínica',
+          numeroLote: 'LOT-GLU-2026-A',
+          fechaRecepcion: '2026-10-01T08:00:00Z',
+          fechaVencimiento: '2027-04-30T00:00:00Z',
+          temperaturaAlmacenamiento: '2°C a 8°C (Refrigeración)',
+          estado: 'DISPONIBLE',
+          revisionStock: 3,
+          saldoDisponible: 1450,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-02',
+          reactivoId: 'rea-02',
+          reactivoNombre: 'Diluente Cellpack DCL Sysmex',
+          reactivoCodigo: 'REA-HEM-02',
+          seccion: 'Hematología y Coagulación',
+          numeroLote: 'LOT-CELL-088',
+          fechaRecepcion: '2026-09-15T10:00:00Z',
+          fechaVencimiento: '2027-02-28T00:00:00Z',
+          temperaturaAlmacenamiento: '15°C a 25°C (Ambiente controlado)',
+          estado: 'DISPONIBLE',
+          revisionStock: 1,
+          saldoDisponible: 450,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-03',
+          reactivoId: 'rea-03',
+          reactivoNombre: 'PreciControl Troponin I Cobas',
+          reactivoCodigo: 'REA-INM-03',
+          seccion: 'Inmunología Clínica',
+          numeroLote: 'LOT-TROP-902',
+          fechaRecepcion: '2026-10-10T09:00:00Z',
+          fechaVencimiento: '2026-12-31T00:00:00Z',
+          temperaturaAlmacenamiento: '2°C a 8°C (Refrigeración)',
+          estado: 'DISPONIBLE',
+          revisionStock: 2,
+          saldoDisponible: 120,
+          unidadMedida: 'Determinaciones'
+        },
+        {
+          id: 'lote-04',
+          reactivoId: 'rea-04',
+          reactivoNombre: 'Tiras Reactivas Urianálisis Automatizado',
+          reactivoCodigo: 'REA-URI-04',
+          seccion: 'Uroanálisis y Coprología',
+          numeroLote: 'LOT-URI-2025-X',
+          fechaRecepcion: '2025-08-01T08:00:00Z',
+          fechaVencimiento: '2026-09-01T00:00:00Z',
+          temperaturaAlmacenamiento: '15°C a 30°C (Lugar seco)',
+          estado: 'VENCIDO',
+          revisionStock: 1,
+          saldoDisponible: 40,
+          unidadMedida: 'Tiras'
+        }
+      ];
+    }
+
+    if (this.movimientosInventario.length === 0) {
+      this.movimientosInventario = [
+        {
+          id: 'mov-01',
+          loteId: 'lote-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          numeroLote: 'LOT-GLU-2026-A',
+          tipoMovimiento: 'ENTRADA',
+          cantidad: 1500,
+          saldoAnterior: 0,
+          saldoNuevo: 1500,
+          motivo: 'Recepción de pedido mensual de insumos Roche Diagnostics',
+          actorId: 'usr-admin-lab-01',
+          actorNombre: 'Dra. Lucrecia Meléndez',
+          fechaHora: '2026-10-01T08:30:00Z'
+        },
+        {
+          id: 'mov-02',
+          loteId: 'lote-01',
+          reactivoNombre: 'Reactivo Hexoquinasa Glucosa Cobas',
+          numeroLote: 'LOT-GLU-2026-A',
+          tipoMovimiento: 'CONSUMO',
+          cantidad: 50,
+          saldoAnterior: 1500,
+          saldoNuevo: 1450,
+          motivo: 'Consumo analítico en Cobas c 311 (Lote ORD-LAB-2026-0081)',
+          ordenId: 'ord-lab-01',
+          actorId: 'usr-lab-01',
+          actorNombre: 'Licda. Sofía Paniagua',
+          fechaHora: '2026-10-22T08:15:00Z'
+        }
+      ];
+    }
+
+    if (this.facturas.length === 0) {
+      this.facturas = [
+        {
+          id: 'fact-01',
+          codigoFactura: 'FACT-LAB-2026-0081',
+          ordenId: 'ord-lab-01',
+          codigoOrden: 'ORD-LAB-2026-0081',
+          pacienteId: 'pac-01',
+          pacienteNombre: 'Ana Lucía Morales',
+          pacienteNit: '491204-1',
+          fechaEmision: '2026-10-22T08:00:00Z',
+          estado: 'PAGADA_PARCIAL',
+          totalCentavos: 42000,
+          totalPagadoCentavos: 20000,
+          saldoPendienteCentavos: 22000,
+          items: [
+            { id: 'it-f-01', pruebaId: 'lab-gas-01', codigoPrueba: 'GAS-001', nombrePrueba: 'Gasometría Arterial Completa', arancelCentavos: 24000 },
+            { id: 'it-f-02', pruebaId: 'lab-elec-01', codigoPrueba: 'BIO-004', nombrePrueba: 'Electrólitos Séricos', arancelCentavos: 18000 }
+          ],
+          pagos: [
+            {
+              id: 'pago-01',
+              facturaId: 'fact-01',
+              codigoRecibo: 'REC-2026-0042',
+              montoCentavos: 20000,
+              metodoPago: 'TARJETA_CREDITO',
+              idempotencyKey: 'idemp-fact-01-pago-01',
+              fechaHora: '2026-10-22T08:05:00Z',
+              cajeroId: 'usr-caja-01',
+              cajeroNombre: 'Recepción Central',
+              estado: 'CONFIRMADO'
+            }
+          ]
+        },
+        {
+          id: 'fact-02',
+          codigoFactura: 'FACT-LAB-2026-0085',
+          ordenId: 'ord-lab-05',
+          codigoOrden: 'ORD-LAB-2026-0085',
+          pacienteId: 'pac-05',
+          pacienteNombre: 'Jorge Mario Castillo',
+          pacienteNit: 'CF',
+          fechaEmision: '2026-10-21T18:00:00Z',
+          estado: 'PAGADA_TOTAL',
+          totalCentavos: 38000,
+          totalPagadoCentavos: 38000,
+          saldoPendienteCentavos: 0,
+          items: [
+            { id: 'it-f-03', pruebaId: 'lab-trop-01', codigoPrueba: 'INM-001', nombrePrueba: 'Troponina I de Alta Sensibilidad', arancelCentavos: 38000 }
+          ],
+          pagos: [
+            {
+              id: 'pago-02',
+              facturaId: 'fact-02',
+              codigoRecibo: 'REC-2026-0039',
+              montoCentavos: 38000,
+              metodoPago: 'EFECTIVO',
+              idempotencyKey: 'idemp-fact-02-pago-01',
+              fechaHora: '2026-10-21T18:10:00Z',
+              cajeroId: 'usr-caja-01',
+              cajeroNombre: 'Recepción Central',
+              estado: 'CONFIRMADO'
+            }
+          ]
+        },
+        {
+          id: 'fact-03',
+          codigoFactura: 'FACT-LAB-2026-0082',
+          ordenId: 'ord-lab-02',
+          codigoOrden: 'ORD-LAB-2026-0082',
+          pacienteId: 'pac-02',
+          pacienteNombre: 'Carlos Humberto Gómez',
+          pacienteNit: '781299-4',
+          fechaEmision: '2026-10-22T08:30:00Z',
+          estado: 'EMITIDA',
+          totalCentavos: 13000,
+          totalPagadoCentavos: 0,
+          saldoPendienteCentavos: 13000,
+          items: [
+            { id: 'it-f-04', pruebaId: 'lab-hem-01', codigoPrueba: 'HEM-001', nombrePrueba: 'Hematología Completa', arancelCentavos: 13000 }
+          ],
+          pagos: []
+        }
+      ];
+    }
+
+    // Unir todas las muestras de las órdenes
+    this.muestras = this.ordenes.flatMap((o) => o.muestras);
+    this.guardarDatos();
+  }
+
+  private guardarDatos(): void {
+    try {
+      localStorage.setItem(STORAGE_KEY_ORDENES, JSON.stringify(this.ordenes));
+      localStorage.setItem(STORAGE_KEY_MUESTRAS, JSON.stringify(this.muestras));
+      localStorage.setItem(STORAGE_KEY_RESULTADOS, JSON.stringify(this.resultados));
+      localStorage.setItem(STORAGE_KEY_INFORMES, JSON.stringify(this.informes));
+      localStorage.setItem(STORAGE_KEY_EQUIPOS, JSON.stringify(this.equipos));
+      localStorage.setItem(STORAGE_KEY_QC, JSON.stringify(this.controlesCalidad));
+      localStorage.setItem(STORAGE_KEY_LOTES, JSON.stringify(this.lotesReactivos));
+      localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(this.movimientosInventario));
+      localStorage.setItem(STORAGE_KEY_FACTURAS, JSON.stringify(this.facturas));
+    } catch {
+      // ignore
+    }
+  }
+
+  async obtenerBandeja(
+    _institucionId: InstitucionId,
+    filtros?: FiltrosBandejaLab
+  ): Promise<OrdenLaboratorio[]> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 40));
+
+    let resultado = [...this.ordenes];
+
+    if (filtros) {
+      if (filtros.prioridad && filtros.prioridad !== 'TODAS') {
+        resultado = resultado.filter((o) => o.prioridad === filtros.prioridad);
+      }
+
+      if (filtros.estado && filtros.estado !== 'TODOS') {
+        resultado = resultado.filter((o) => o.estado === filtros.estado);
+      }
+
+      if (filtros.seccion && filtros.seccion !== 'TODAS') {
+        resultado = resultado.filter((o) =>
+          o.items.some((item) => item.seccion.toLowerCase().includes(filtros.seccion!.toLowerCase()))
+        );
+      }
+
+      if (filtros.busqueda && filtros.busqueda.trim() !== '') {
+        const q = filtros.busqueda.toLowerCase();
+        resultado = resultado.filter(
+          (o) =>
+            o.codigoOrden.toLowerCase().includes(q) ||
+            o.pacienteNombre.toLowerCase().includes(q) ||
+            o.pacienteDpi.toLowerCase().includes(q) ||
+            o.medicoSolicitante.toLowerCase().includes(q) ||
+            o.items.some((item) => item.nombrePrueba.toLowerCase().includes(q))
+        );
+      }
+    }
+
+    // Ordenar STAT y URGENTE primero, luego por fecha descendente
+    resultado.sort((a, b) => {
+      const pesoPrioridad = { STAT: 3, URGENTE: 2, RUTINA: 1 };
+      const diffPrio = pesoPrioridad[b.prioridad] - pesoPrioridad[a.prioridad];
+      if (diffPrio !== 0) return diffPrio;
+      return new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime();
+    });
+
+    return resultado;
+  }
+
+  async obtenerOrdenPorId(
+    _institucionId: InstitucionId,
+    ordenId: string
+  ): Promise<OrdenLaboratorio | null> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    const orden = this.ordenes.find((o) => o.id === ordenId || o.codigoOrden === ordenId);
+    return orden ? { ...orden } : null;
+  }
+
+  async crearOrden(
+    institucionId: InstitucionId,
+    dto: CrearOrdenLabDTO
+  ): Promise<OrdenLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const nuevoNumero = this.ordenes.length + 86;
+    const codigoOrden = `ORD-LAB-2026-00${nuevoNumero}`;
+    const id = `ord-lab-${Date.now()}`;
+    const fechaActual = new Date().toISOString();
+
+    const catalogo = await new MockCatalogRepository().obtenerPruebasLaboratorio(institucionId);
+    const items: OrdenLaboratorio['items'] = dto.pruebasSeleccionadasIds.map((pid, idx) => {
+      const prueba = catalogo.find(p => p.id === pid && p.estado === 'ACTIVO');
+      if (!prueba) throw new Error('Una de las pruebas seleccionadas ya no está disponible.');
+      const precio = dto.preciosAcordados?.[pid] ?? 150;
+      if (!Number.isFinite(precio) || precio < 0) throw new Error('El precio acordado no es válido.');
+      return { id: `item-${Date.now()}-${idx}`, pruebaId: pid, codigoPrueba: prueba.codigoPrueba,
+        nombrePrueba: prueba.nombre, seccion: prueba.seccion, tipoMuestra: prueba.tipoMuestra,
+        versionPrueba: prueba.version, parametros: structuredClone(prueba.parametros), metodoAnalitico: prueba.metodoAnalitico, arancelGTQ: Math.round(precio * 100) / 100, estado: 'PENDIENTE' };
+    });
+    const nuevasMuestras: MuestraLaboratorio[] = Array.from(new Set(items.map(i => i.tipoMuestra))).map((tipo, index) => ({
+      id: `mue-${Date.now()}-${index}`, codigoMuestra: `MUE-2026-${nuevoNumero}-${index + 1}`,
+      ordenId: id, codigoOrden, pacienteId: dto.pacienteId, pacienteNombre: dto.pacienteNombre,
+      tipoMuestra: tipo, tuboContenedor: 'Por confirmar en toma', estado: 'PENDIENTE_TOMA',
+      eventosTrazabilidad: [{ id: `evt-${Date.now()}-${index}`, tipoEvento: 'CREACION', fechaHora: fechaActual,
+        actor: 'Recepción', detalle: 'Muestra requerida por las pruebas de la orden' }]
+    }));
+
+    items.forEach(item => { item.muestraIds = nuevasMuestras.filter(m => m.tipoMuestra === item.tipoMuestra).map(m => m.id); });
+
+    const nuevaOrden: OrdenLaboratorio = {
+      id,
+      codigoOrden,
+      institucionId,
+      pacienteId: dto.pacienteId,
+      pacienteNombre: dto.pacienteNombre,
+      pacienteDpi: dto.pacienteDpi,
+      pacienteEdad: dto.pacienteEdad,
+      pacienteSexo: dto.pacienteSexo,
+      medicoSolicitante: dto.medicoSolicitante,
+      prioridad: dto.prioridad,
+      estado: 'CREADA',
+      motivoClinico: dto.motivoClinico,
+      fechaCreacion: fechaActual,
+      totalArancelGTQ: items.reduce((acc, i) => acc + i.arancelGTQ, 0),
+      items,
+      muestras: nuevasMuestras
+    };
+
+    this.ordenes.unshift(nuevaOrden);
+    this.muestras.unshift(...nuevasMuestras);
+    const totalCentavos = Math.round(nuevaOrden.totalArancelGTQ * 100);
+    this.facturas.unshift({
+      id: `fac-${id}`, codigoFactura: `FAC-${codigoOrden}`, ordenId: id, codigoOrden,
+      pacienteId: dto.pacienteId, pacienteNombre: dto.pacienteNombre, pacienteNit: dto.pacienteDpi || 'CF',
+      fechaEmision: fechaActual, estado: 'EMITIDA', totalCentavos, totalPagadoCentavos: 0,
+      saldoPendienteCentavos: totalCentavos, pagos: [],
+      items: items.map(i => ({ id: `fac-${i.id}`, pruebaId: i.pruebaId, codigoPrueba: i.codigoPrueba, nombrePrueba: i.nombrePrueba, arancelCentavos: Math.round(i.arancelGTQ * 100) }))
+    });
+    this.guardarDatos();
+    return nuevaOrden;
+  }
+
+  async registrarTrasladoMuestra(_institucionId: InstitucionId, muestraId: string, destino: string, actor: string): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    const muestra = this.muestras.find(m => m.id === muestraId);
+    if (!muestra || ['PENDIENTE_TOMA', 'RECHAZADA', 'PROCESADA'].includes(muestra.estado)) throw new Error('La muestra no admite traslados en su estado actual.');
+    if (!destino.trim()) throw new Error('Indica el destino de la muestra.');
+    muestra.eventosTrazabilidad.push({ id: `evt-${Date.now()}`, tipoEvento: 'TRASLADO', fechaHora: new Date().toISOString(), actor, detalle: `Traslado a ${destino.trim()}` });
+    const orden = this.ordenes.find(o => o.id === muestra.ordenId);
+    if (orden) orden.muestras = orden.muestras.map(m => m.id === muestra.id ? muestra : m);
+    this.guardarDatos();
+    return structuredClone(muestra);
+  }
+
+  async obtenerMuestras(
+    _institucionId: InstitucionId,
+    ordenId?: string
+  ): Promise<MuestraLaboratorio[]> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    if (ordenId) {
+      return this.muestras.filter((m) => m.ordenId === ordenId || m.codigoOrden === ordenId);
+    }
+    return [...this.muestras];
+  }
+
+  async actualizarEstadoMuestra(
+    _institucionId: InstitucionId,
+    muestraId: string,
+    nuevoEstado: EstadoMuestraLaboratorio,
+    motivo?: string,
+    actor: string = 'Personal de Laboratorio'
+  ): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 40));
+
+    const idx = this.muestras.findIndex((m) => m.id === muestraId || m.codigoMuestra === muestraId);
+    if (idx === -1) throw new Error('No se encontró la muestra. Actualiza la vista e inténtalo de nuevo.');
+
+    const m = this.muestras[idx];
+    const ahora = new Date().toISOString();
+
+    let tipoEvento: EventoTrazabilidadMuestra['tipoEvento'] = 'RECTIFICACION';
+    if (nuevoEstado === 'TOMADA') {
+      tipoEvento = 'TOMA';
+      m.fechaToma = ahora;
+      m.tomadaPor = actor;
+    } else if (nuevoEstado === 'RECIBIDA') {
+      tipoEvento = 'RECEPCION';
+      m.fechaRecepcion = ahora;
+      m.recibidaPor = actor;
+    } else if (nuevoEstado === 'ACEPTADA') {
+      tipoEvento = 'ACEPTACION';
+    } else if (nuevoEstado === 'PROCESADA') {
+      tipoEvento = 'PROCESAMIENTO';
+    } else if (nuevoEstado === 'RECHAZADA') {
+      tipoEvento = 'RECHAZO';
+      m.motivoRechazo = motivo || 'Muestra no apta por criterios preanalíticos';
+    }
+
+    m.estado = nuevoEstado;
+    m.eventosTrazabilidad.push({
+      id: `evt-${Date.now()}`,
+      tipoEvento,
+      fechaHora: ahora,
+      actor,
+      detalle: `Muestra en estado ${nuevoEstado}`,
+      motivo
+    });
+
+    // Sincronizar en la orden correspondiente
+    const ordIdx = this.ordenes.findIndex((o) => o.id === m.ordenId);
+    if (ordIdx !== -1) {
+      const mIdx = this.ordenes[ordIdx].muestras.findIndex((x) => x.id === m.id);
+      if (mIdx !== -1) {
+        this.ordenes[ordIdx].muestras[mIdx] = { ...m };
+      }
+      if (nuevoEstado === 'ACEPTADA') {
+        this.ordenes[ordIdx].estado = 'EN_ANALISIS';
+      }
+    }
+
+    this.guardarDatos();
+    return { ...m };
+  }
+
+  async registrarRetomaMuestra(
+    _institucionId: InstitucionId,
+    muestraRechazadaId: string,
+    motivoRetoma: string,
+    actor: string
+  ): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const idx = this.muestras.findIndex((m) => m.id === muestraRechazadaId);
+    if (idx === -1) throw new Error('Muestra original no encontrada para generar retoma');
+
+    const original = this.muestras[idx];
+    const ahora = new Date().toISOString();
+
+    const retomaId = `mue-retoma-${Date.now()}`;
+    const numeroRetoma = this.muestras.filter(m => m.muestraOrigenId === original.id).length + 1;
+    const codigoRetoma = `${original.codigoMuestra}-R${numeroRetoma}`;
+
+    const nuevaMuestra: MuestraLaboratorio = {
+      id: retomaId,
+      codigoMuestra: codigoRetoma,
+      ordenId: original.ordenId,
+      codigoOrden: original.codigoOrden,
+      pacienteId: original.pacienteId,
+      pacienteNombre: original.pacienteNombre,
+      tipoMuestra: original.tipoMuestra,
+      tuboContenedor: original.tuboContenedor,
+      estado: 'PENDIENTE_TOMA',
+      esRetoma: true,
+      muestraOrigenId: original.id,
+      eventosTrazabilidad: [
+        {
+          id: `evt-${Date.now()}`,
+          tipoEvento: 'RETOMA',
+          fechaHora: ahora,
+          actor,
+          detalle: `Retoma generada tras rechazo de ${original.codigoMuestra}`,
+          motivo: motivoRetoma
+        }
+      ]
+    };
+
+    this.muestras.push(nuevaMuestra);
+
+    // Agregar a la orden
+    const ordIdx = this.ordenes.findIndex((o) => o.id === original.ordenId);
+    if (ordIdx !== -1) {
+      this.ordenes[ordIdx].muestras.push(nuevaMuestra);
+      this.ordenes[ordIdx].estado = 'MUESTRA_PENDIENTE';
+    }
+
+    this.guardarDatos();
+    return nuevaMuestra;
+  }
+
+  async rectificarDatoMuestra(
+    _institucionId: InstitucionId,
+    muestraId: string,
+    campo: 'tuboContenedor' | 'tipoMuestra',
+    nuevoValor: string,
+    motivo: string,
+    actor: string
+  ): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 40));
+
+    const idx = this.muestras.findIndex((m) => m.id === muestraId || m.codigoMuestra === muestraId);
+    if (idx === -1) throw new Error('Muestra no encontrada para rectificación');
+
+    const m = this.muestras[idx];
+    const valorAnterior = m[campo];
+    m[campo] = nuevoValor;
+
+    const ahora = new Date().toISOString();
+    m.eventosTrazabilidad.push({
+      id: `evt-${Date.now()}`,
+      tipoEvento: 'RECTIFICACION',
+      fechaHora: ahora,
+      actor,
+      detalle: `Corrección de ${campo === 'tuboContenedor' ? 'contenedor' : 'tipo de muestra'}: de «${valorAnterior}» a «${nuevoValor}»`,
+      motivo
+    });
+
+    // Sincronizar en la orden
+    const ordIdx = this.ordenes.findIndex((o) => o.id === m.ordenId);
+    if (ordIdx !== -1) {
+      const mIdx = this.ordenes[ordIdx].muestras.findIndex((x) => x.id === m.id);
+      if (mIdx !== -1) {
+        this.ordenes[ordIdx].muestras[mIdx] = { ...m };
+      }
+    }
+
+    this.guardarDatos();
+    return { ...m };
+  }
+
+  async obtenerResultadosPorOrden(
+    _institucionId: InstitucionId,
+    ordenId: string
+  ): Promise<ResultadoLaboratorio[]> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    return this.resultados.filter((r) => r.ordenId === ordenId || r.codigoOrden === ordenId);
+  }
+
+  async obtenerResultadoPorId(
+    _institucionId: InstitucionId,
+    resultadoId: string
+  ): Promise<ResultadoLaboratorio | null> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    const r = this.resultados.find((resItem) => resItem.id === resultadoId);
+    return r ? { ...r } : null;
+  }
+
+  async guardarResultadoBorrador(
+    _institucionId: InstitucionId,
+    dto: GuardarResultadoBorradorDTO
+  ): Promise<ResultadoLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const orden = this.ordenes.find((o) => o.id === dto.ordenId || o.codigoOrden === dto.ordenId);
+    if (!orden) throw new Error('No se encontró la orden. Actualiza la vista e inténtalo de nuevo.');
+
+    const muestra = this.muestras.find((m) => m.id === dto.muestraId || m.codigoMuestra === dto.muestraId);
+    if (!muestra) throw new Error('No se encontró la muestra. Actualiza la vista e inténtalo de nuevo.');
+
+    // Regla crítica de negocio: solo muestras ACEPTADA o PROCESADA pueden ser analizadas
+    if (muestra.estado !== 'ACEPTADA' && muestra.estado !== 'PROCESADA') {
+      throw new Error(
+        `Criterio preanalítico no cumplido: La muestra ${muestra.codigoMuestra} se encuentra en estado «${muestra.estado}». Solo se permite capturar resultados sobre muestras en estado ACEPTADA o PROCESADA.`
+      );
+    }
+
+    const item = orden.items.find((i) => i.id === dto.itemOrdenId);
+    if (!item) throw new Error('No se encontró la prueba. Actualiza la vista e inténtalo de nuevo.');
+
+    if (muestra.ordenId !== orden.id || muestra.pacienteId !== orden.pacienteId || (item.muestraIds && !item.muestraIds.includes(muestra.id) && !item.muestraIds.includes(muestra.muestraOrigenId || ''))) throw new Error('La muestra no corresponde a esta orden y prueba.');
+
+    const parametrosMapeados: ParametroResultadoLab[] = dto.parametros.map((p) => ({
+      id: p.parametroId || `param-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      codigoParametro: p.codigoParametro,
+      nombre: p.nombre,
+      valor: p.valor,
+      unidad: p.unidad,
+      rangoReferenciaMin: p.rangoReferenciaMin,
+      rangoReferenciaMax: p.rangoReferenciaMax,
+      rangoTexto: p.rangoTexto,
+      alerta: p.alerta,
+      valorPanicoMin: p.valorPanicoMin,
+      valorPanicoMax: p.valorPanicoMax
+    }));
+
+    const ahora = new Date().toISOString();
+    let resultadoFinal: ResultadoLaboratorio;
+
+    const existingIdx = this.resultados.findIndex(
+      (r) => r.ordenId === orden.id && r.itemOrdenId === dto.itemOrdenId && r.estado === 'BORRADOR'
+    );
+
+    if (existingIdx !== -1) {
+      // Actualizar borrador existente
+      const existing = this.resultados[existingIdx];
+      existing.equipoAnalitico = dto.equipoAnalitico;
+      existing.metodoAnalitico = dto.metodoAnalitico;
+      existing.loteReactivo = dto.loteReactivo;
+      existing.parametros = parametrosMapeados;
+      existing.observaciones = dto.observaciones;
+      existing.analistaId = dto.analistaId;
+      existing.analistaNombre = dto.analistaNombre;
+      existing.fechaAnalisis = ahora;
+      resultadoFinal = { ...existing };
+      this.resultados[existingIdx] = resultadoFinal;
+    } else {
+      // Crear nuevo borrador (versión 1 de la serie)
+      const itemIndex = orden.items.findIndex((i) => i.id === dto.itemOrdenId);
+      const codigoSufijo = orden.codigoOrden.replace('ORD-LAB-', '');
+      const serieResultadoId = `SER-${codigoSufijo}-${itemIndex >= 0 ? itemIndex + 1 : 1}`;
+
+      resultadoFinal = {
+        id: `res-lab-${Date.now()}`,
+        serieResultadoId,
+        version: 1,
+        ordenId: orden.id,
+        codigoOrden: orden.codigoOrden,
+        pacienteId: orden.pacienteId,
+        pacienteNombre: orden.pacienteNombre,
+        pacienteDpi: orden.pacienteDpi,
+        itemOrdenId: dto.itemOrdenId,
+        pruebaId: item.pruebaId,
+        codigoPrueba: item.codigoPrueba,
+        nombrePrueba: item.nombrePrueba,
+        seccion: item.seccion,
+        muestraId: muestra.id,
+        codigoMuestra: muestra.codigoMuestra,
+        equipoAnalitico: dto.equipoAnalitico,
+        metodoAnalitico: dto.metodoAnalitico,
+        loteReactivo: dto.loteReactivo,
+        parametros: parametrosMapeados,
+        observaciones: dto.observaciones,
+        estado: 'BORRADOR',
+        analistaId: dto.analistaId,
+        analistaNombre: dto.analistaNombre,
+        fechaAnalisis: ahora
+      };
+      this.resultados.push(resultadoFinal);
+    }
+
+    // Actualizar estado del ítem y de la orden
+    item.estado = 'EN_PROCESO';
+
+    // Si todos los ítems tienen resultados registrados, la orden pasa a PARA_VALIDAR
+    const itemsConResultados = orden.items.filter((it) =>
+      this.resultados.some((r) => r.ordenId === orden.id && r.itemOrdenId === it.id)
+    );
+
+    if (itemsConResultados.length === orden.items.length) {
+      orden.estado = 'PARA_VALIDAR';
+    } else {
+      orden.estado = 'EN_ANALISIS';
+    }
+
+    this.guardarDatos();
+    return resultadoFinal;
+  }
+
+  async validarResultado(
+    _institucionId: InstitucionId,
+    resultadoId: string,
+    validadorId: string,
+    validadorNombre: string
+  ): Promise<ResultadoLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const idx = this.resultados.findIndex((r) => r.id === resultadoId);
+    if (idx === -1) throw new Error('No se encontró el resultado. Actualiza la vista e inténtalo de nuevo.');
+
+    const res = this.resultados[idx];
+    const ordenRelacionada = this.ordenes.find(o => o.id === res.ordenId);
+    const itemRelacionado = ordenRelacionada?.items.find(i => i.id === res.itemOrdenId && i.pruebaId === res.pruebaId);
+    const muestraRelacionada = this.muestras.find(m => m.id === res.muestraId);
+    if (!ordenRelacionada || !itemRelacionado || !muestraRelacionada || muestraRelacionada.ordenId !== ordenRelacionada.id || muestraRelacionada.pacienteId !== ordenRelacionada.pacienteId || (itemRelacionado.muestraIds && !itemRelacionado.muestraIds.includes(muestraRelacionada.id) && !itemRelacionado.muestraIds.includes(muestraRelacionada.muestraOrigenId || ''))) throw new Error('La muestra y la prueba deben pertenecer a la misma orden.');
+    res.estado = 'VALIDADO';
+    res.validadorId = validadorId;
+    res.validadorNombre = validadorNombre;
+    res.fechaValidacion = new Date().toISOString();
+
+    // Actualizar ítem en la orden
+    const ordIdx = this.ordenes.findIndex((o) => o.id === res.ordenId);
+    if (ordIdx !== -1) {
+      const it = this.ordenes[ordIdx].items.find((i) => i.id === res.itemOrdenId);
+      if (it) it.estado = 'VALIDADO';
+
+      // Si todos los ítems están validados, orden COMPLETADA
+      const todosValidados = this.ordenes[ordIdx].items.every((i) => i.estado === 'VALIDADO');
+      if (todosValidados) {
+        this.ordenes[ordIdx].estado = 'COMPLETADA';
+      }
+    }
+
+    this.guardarDatos();
+    return { ...res };
+  }
+
+  async corregirResultado(
+    _institucionId: InstitucionId,
+    resultadoId: string,
+    dto: GuardarResultadoBorradorDTO,
+    motivo: string
+  ): Promise<ResultadoLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const originalIdx = this.resultados.findIndex((r) => r.id === resultadoId);
+    if (originalIdx === -1) throw new Error('No se encontró el resultado original. Actualiza la vista e inténtalo de nuevo.');
+
+    const original = this.resultados[originalIdx];
+    original.estado = 'CORREGIDO';
+
+    const parametrosMapeados: ParametroResultadoLab[] = dto.parametros.map((p) => ({
+      id: p.parametroId || `param-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      codigoParametro: p.codigoParametro,
+      nombre: p.nombre,
+      valor: p.valor,
+      unidad: p.unidad,
+      rangoReferenciaMin: p.rangoReferenciaMin,
+      rangoReferenciaMax: p.rangoReferenciaMax,
+      rangoTexto: p.rangoTexto,
+      alerta: p.alerta,
+      valorPanicoMin: p.valorPanicoMin,
+      valorPanicoMax: p.valorPanicoMax
+    }));
+
+    const ahora = new Date().toISOString();
+    const nuevaVersion: ResultadoLaboratorio = {
+      id: `res-lab-v${original.version + 1}-${Date.now()}`,
+      serieResultadoId: original.serieResultadoId,
+      version: original.version + 1,
+      ordenId: original.ordenId,
+      codigoOrden: original.codigoOrden,
+      pacienteId: original.pacienteId,
+      pacienteNombre: original.pacienteNombre,
+      pacienteDpi: original.pacienteDpi,
+      itemOrdenId: original.itemOrdenId,
+      pruebaId: original.pruebaId,
+      codigoPrueba: original.codigoPrueba,
+      nombrePrueba: original.nombrePrueba,
+      seccion: original.seccion,
+      muestraId: dto.muestraId || original.muestraId,
+      codigoMuestra: original.codigoMuestra,
+      equipoAnalitico: dto.equipoAnalitico,
+      metodoAnalitico: dto.metodoAnalitico,
+      loteReactivo: dto.loteReactivo,
+      parametros: parametrosMapeados,
+      observaciones: dto.observaciones,
+      estado: 'BORRADOR',
+      analistaId: dto.analistaId,
+      analistaNombre: dto.analistaNombre,
+      fechaAnalisis: ahora,
+      motivoModificacion: motivo
+    };
+
+    this.resultados.push(nuevaVersion);
+    this.guardarDatos();
+    return nuevaVersion;
+  }
+
+  async repetirAnalisis(
+    _institucionId: InstitucionId,
+    ordenId: string,
+    itemOrdenId: string,
+    nuevaMuestraId: string,
+    dto: GuardarResultadoBorradorDTO
+  ): Promise<ResultadoLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 50));
+
+    const orden = this.ordenes.find((o) => o.id === ordenId);
+    if (!orden) throw new Error('Orden no encontrada');
+
+    const nuevaMuestra = this.muestras.find((m) => m.id === nuevaMuestraId);
+    if (!nuevaMuestra) throw new Error('Nueva muestra no encontrada');
+
+    const item = orden.items.find((i) => i.id === itemOrdenId);
+    if (!item) throw new Error('Ítem no encontrado');
+
+    const parametrosMapeados: ParametroResultadoLab[] = dto.parametros.map((p) => ({
+      id: p.parametroId || `param-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      codigoParametro: p.codigoParametro,
+      nombre: p.nombre,
+      valor: p.valor,
+      unidad: p.unidad,
+      rangoReferenciaMin: p.rangoReferenciaMin,
+      rangoReferenciaMax: p.rangoReferenciaMax,
+      rangoTexto: p.rangoTexto,
+      alerta: p.alerta,
+      valorPanicoMin: p.valorPanicoMin,
+      valorPanicoMax: p.valorPanicoMax
+    }));
+
+    const ahora = new Date().toISOString();
+    const nuevaSerie: ResultadoLaboratorio = {
+      id: `res-lab-serie-${Date.now()}`,
+      serieResultadoId: `SER-${orden.codigoOrden.replace('ORD-LAB-', '')}-REP-${Date.now().toString().slice(-4)}`,
+      version: 1,
+      ordenId: orden.id,
+      codigoOrden: orden.codigoOrden,
+      pacienteId: orden.pacienteId,
+      pacienteNombre: orden.pacienteNombre,
+      pacienteDpi: orden.pacienteDpi,
+      itemOrdenId,
+      pruebaId: item.pruebaId,
+      codigoPrueba: item.codigoPrueba,
+      nombrePrueba: item.nombrePrueba,
+      seccion: item.seccion,
+      muestraId: nuevaMuestra.id,
+      codigoMuestra: nuevaMuestra.codigoMuestra,
+      equipoAnalitico: dto.equipoAnalitico,
+      metodoAnalitico: dto.metodoAnalitico,
+      loteReactivo: dto.loteReactivo,
+      parametros: parametrosMapeados,
+      observaciones: dto.observaciones,
+      estado: 'BORRADOR',
+      analistaId: dto.analistaId,
+      analistaNombre: dto.analistaNombre,
+      fechaAnalisis: ahora,
+      motivoModificacion: 'Repetición técnica de análisis por nueva serie'
+    };
+
+    this.resultados.push(nuevaSerie);
+    this.guardarDatos();
+    return nuevaSerie;
+  }
+
+  async obtenerInformePorOrden(
+    _institucionId: InstitucionId,
+    ordenId: string
+  ): Promise<InformeLaboratorio | null> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 30));
+    const inf = this.informes.find((i) => i.ordenId === ordenId || i.codigoOrden === ordenId);
+    return inf ? { ...inf } : null;
+  }
+
+  async emitirInforme(
+    _institucionId: InstitucionId,
+    ordenId: string,
+    emisorId: string,
+    emisorNombre: string,
+    emisorColegiado: string,
+    conclusiones?: string
+  ): Promise<InformeLaboratorio> {
+    this.cargarDatos();
+    await new Promise((res) => setTimeout(res, 60));
+
+    const orden = this.ordenes.find((o) => o.id === ordenId || o.codigoOrden === ordenId);
+    if (!orden) throw new Error('No se encontró la orden. Actualiza la vista e inténtalo de nuevo.');
+
+    // Regla crítica CA13: Todos los resultados incluidos deben estar en estado VALIDADO
+    const resultadosOrden = this.resultados.filter((r) => r.ordenId === orden.id);
+
+    const itemsNoValidados = orden.items.filter((item) => {
+      const res = resultadosOrden.find((r) => r.itemOrdenId === item.id);
+      return !res || res.estado !== 'VALIDADO';
+    });
+
+    if (itemsNoValidados.length > 0) {
+      const nombresFaltantes = itemsNoValidados.map((i) => `«${i.nombrePrueba}»`).join(', ');
+      throw new Error(
+        `No se puede emitir el informe porque faltan resultados por validar: ${nombresFaltantes}. Revisa estas pruebas en la bandeja de validación.`
+      );
+    }
+
+    // Armar instantánea inmutable de resultados con series y versiones exactas
+    const resultadosIncluidos: ItemResultadoInforme[] = orden.items.map((item) => {
+      // Buscar la versión activa validada (mayor versión en caso de correcciones)
+      const resValidados = resultadosOrden.filter((r) => r.itemOrdenId === item.id && r.estado === 'VALIDADO');
+      resValidados.sort((a, b) => b.version - a.version);
+      const res = resValidados[0];
+
+      return {
+        resultadoId: res.id,
+        serieResultadoId: res.serieResultadoId,
+        version: res.version,
+        pruebaId: item.pruebaId,
+        codigoPrueba: item.codigoPrueba,
+        nombrePrueba: item.nombrePrueba,
+        seccion: item.seccion,
+        muestraCodigo: res.codigoMuestra,
+        equipoAnalitico: res.equipoAnalitico,
+        metodoAnalitico: res.metodoAnalitico,
+        parametros: res.parametros,
+        analistaNombre: res.analistaNombre,
+        validadorNombre: res.validadorNombre || emisorNombre,
+        fechaValidacion: res.fechaValidacion || new Date().toISOString()
+      };
+    });
+
+    const ahora = new Date().toISOString();
+    const codigoSufijo = orden.codigoOrden.replace('ORD-LAB-', '');
+    const codigoInforme = `INF-LAB-${codigoSufijo}`;
+
+    // Hash criptográfico simulado de integridad
+    const pseudoHashHex = Array.from({ length: 48 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    const hashVerificacion = `SHA256:${pseudoHashHex}`;
+
+    // Si ya existía informe, actualizar a emitido
+    const idxExistente = this.informes.findIndex((i) => i.ordenId === orden.id);
+    const nuevoInforme: InformeLaboratorio = {
+      id: idxExistente !== -1 ? this.informes[idxExistente].id : `inf-lab-${Date.now()}`,
+      codigoInforme,
+      ordenId: orden.id,
+      codigoOrden: orden.codigoOrden,
+      pacienteId: orden.pacienteId,
+      pacienteNombre: orden.pacienteNombre,
+      pacienteDpi: orden.pacienteDpi,
+      pacienteEdad: orden.pacienteEdad,
+      pacienteSexo: orden.pacienteSexo,
+      medicoSolicitante: orden.medicoSolicitante,
+      fechaEmision: ahora,
+      estado: 'EMITIDO',
+      hashVerificacion,
+      emisorId,
+      emisorNombre,
+      emisorColegiado,
+      resultadosIncluidos,
+      conclusionesGenerales: conclusiones || 'Resultados analíticos validados conforme al estándar de calidad de Laboratorio Clínico Central.'
+    };
+
+    if (idxExistente !== -1) {
+      this.informes[idxExistente] = nuevoInforme;
+    } else {
+      this.informes.unshift(nuevoInforme);
+    }
+
+    // Orden pasa a COMPLETADA
+    orden.estado = 'COMPLETADA';
+
+    this.guardarDatos();
+    return nuevoInforme;
+  }
+
+  async obtenerEquipos(_institucionId: InstitucionId): Promise<EquipoLaboratorio[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.equipos];
+  }
+
+  async cambiarEstadoEquipo(
+    _institucionId: InstitucionId,
+    equipoId: string,
+    nuevoEstado: EstadoEquipoLaboratorio
+  ): Promise<EquipoLaboratorio> {
+    await new Promise((res) => setTimeout(res, 40));
+    const eq = this.equipos.find((e) => e.id === equipoId);
+    if (!eq) throw new Error('No se encontró el equipo. Actualiza la vista e inténtalo de nuevo.');
+    eq.estado = nuevoEstado;
+    this.guardarDatos();
+    return { ...eq };
+  }
+
+  async registrarEquipo(
+    _institucionId: InstitucionId,
+    equipo: Omit<EquipoLaboratorio, 'id'>
+  ): Promise<EquipoLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const nuevo: EquipoLaboratorio = {
+      ...equipo,
+      id: `eq-${Date.now()}`
+    };
+    this.equipos.push(nuevo);
+    this.guardarDatos();
+    return { ...nuevo };
+  }
+
+  async obtenerControlesCalidad(
+    _institucionId: InstitucionId,
+    filtros?: { equipoId?: string; evaluacion?: EvaluacionControlCalidad | 'TODOS'; busqueda?: string }
+  ): Promise<RegistroControlCalidad[]> {
+    await new Promise((res) => setTimeout(res, 40));
+    return this.controlesCalidad.filter((c) => {
+      if (filtros?.equipoId && c.equipoId !== filtros.equipoId) return false;
+      if (filtros?.evaluacion && filtros.evaluacion !== 'TODOS' && c.evaluacion !== filtros.evaluacion) return false;
+      if (filtros?.busqueda) {
+        const q = filtros.busqueda.toLowerCase();
+        const coincide =
+          c.codigoCorrida.toLowerCase().includes(q) ||
+          c.pruebaNombre.toLowerCase().includes(q) ||
+          c.equipoNombre.toLowerCase().includes(q) ||
+          c.loteMaterialControl.toLowerCase().includes(q);
+        if (!coincide) return false;
+      }
+      return true;
+    });
+  }
+
+  async registrarControlCalidad(
+    _institucionId: InstitucionId,
+    dto: RegistrarControlCalidadDTO,
+    analista: { id: string; nombre: string }
+  ): Promise<RegistroControlCalidad> {
+    await new Promise((res) => setTimeout(res, 60));
+    const equipo = this.equipos.find((e) => e.id === dto.equipoId);
+    if (!equipo) throw new Error('No se encontró el equipo analítico. Actualiza la vista e inténtalo de nuevo.');
+
+    // Referencias estadísticas según prueba y nivel
+    let mediaDiana = 100;
+    let sd = 5;
+    let unidadMedida = 'mg/dL';
+    let pruebaNombre = 'Glucosa Sérica en Ayunas';
+    let pruebaCodigo = 'QUI-010';
+    let parametroNombre = 'Glucosa';
+
+    if (dto.pruebaId.includes('trop') || dto.pruebaId.includes('inm')) {
+      pruebaNombre = 'Troponina I de Alta Sensibilidad';
+      pruebaCodigo = 'INM-001';
+      parametroNombre = 'Troponina I (TnI-hs)';
+      unidadMedida = 'ng/mL';
+      mediaDiana = dto.nivelControl === 'NIVEL_1_NORMAL' ? 0.025 : 0.150;
+      sd = dto.nivelControl === 'NIVEL_1_NORMAL' ? 0.003 : 0.012;
+    } else if (dto.pruebaId.includes('hem') || dto.parametroId.includes('plaqueta')) {
+      pruebaNombre = 'Hematología Completa Automatizada';
+      pruebaCodigo = 'HEM-001';
+      parametroNombre = 'Plaquetas';
+      unidadMedida = '10^3/µL';
+      mediaDiana = dto.nivelControl === 'NIVEL_1_NORMAL' ? 220 : 480;
+      sd = dto.nivelControl === 'NIVEL_1_NORMAL' ? 10 : 25;
+    }
+
+    const valor = dto.valorMedido;
+    const zScore = parseFloat(((valor - mediaDiana) / sd).toFixed(2));
+    const absZ = Math.abs(zScore);
+
+    let evaluacion: EvaluacionControlCalidad = 'ACEPTADO';
+    let reglaViolada: string | undefined = undefined;
+
+    if (absZ > 3) {
+      evaluacion = 'RECHAZADO';
+      reglaViolada = 'Regla Westgard 1:3s (Error analítico crítico. Rechazo inmediato de corrida)';
+    } else if (absZ > 2) {
+      evaluacion = 'ADVERTENCIA';
+      reglaViolada = 'Regla Westgard 1:2s (Valor entre 2 y 3 desviaciones estándar. Monitorear corrida)';
+    }
+
+    const nuevoRegistro: RegistroControlCalidad = {
+      id: `qc-run-${Date.now()}`,
+      codigoCorrida: `QC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      equipoId: equipo.id,
+      equipoNombre: equipo.nombre,
+      pruebaId: dto.pruebaId,
+      pruebaCodigo,
+      pruebaNombre,
+      pruebaVersion: 2,
+      parametroId: dto.parametroId,
+      parametroNombre,
+      loteMaterialControl: dto.loteMaterialControl,
+      nivelControl: dto.nivelControl,
+      unidadMedida,
+      mediaDiana,
+      desviacionEstandar: sd,
+      limiteInferior2SD: parseFloat((mediaDiana - 2 * sd).toFixed(3)),
+      limiteSuperior2SD: parseFloat((mediaDiana + 2 * sd).toFixed(3)),
+      limiteInferior3SD: parseFloat((mediaDiana - 3 * sd).toFixed(3)),
+      limiteSuperior3SD: parseFloat((mediaDiana + 3 * sd).toFixed(3)),
+      valorMedido: valor,
+      zScore,
+      evaluacion,
+      reglaViolada,
+      analistaId: analista.id,
+      analistaNombre: analista.nombre,
+      fechaHora: new Date().toISOString(),
+      observaciones: dto.observaciones
+    };
+
+    this.controlesCalidad.unshift(nuevoRegistro);
+    this.guardarDatos();
+    return { ...nuevoRegistro };
+  }
+
+  async obtenerLotesReactivos(_institucionId: InstitucionId): Promise<LoteReactivo[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.lotesReactivos];
+  }
+
+  async obtenerMovimientosInventario(
+    _institucionId: InstitucionId,
+    loteId?: string
+  ): Promise<MovimientoInventario[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    if (loteId) {
+      return this.movimientosInventario.filter((m) => m.loteId === loteId);
+    }
+    return [...this.movimientosInventario];
+  }
+
+  async registrarMovimientoInventario(
+    _institucionId: InstitucionId,
+    dto: RegistrarMovimientoDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<MovimientoInventario> {
+    await new Promise((res) => setTimeout(res, 40));
+    const lote = this.lotesReactivos.find((l) => l.id === dto.loteId);
+    if (!lote) throw new Error('No se encontró el lote de reactivo. Actualiza la vista e inténtalo de nuevo.');
+
+    if (dto.cantidad <= 0) {
+      throw new Error('La cantidad del movimiento debe ser un número entero positivo mayor a cero.');
+    }
+
+    // Regla CA15: No se permite consumir de un lote VENCIDO o INACTIVO
+    if (dto.tipoMovimiento === 'CONSUMO' && (lote.estado === 'VENCIDO' || lote.estado === 'INACTIVO')) {
+      throw new Error(`No se puede registrar el consumo porque el lote está ${lote.estado.toLowerCase()}.`);
+    }
+
+    const saldoAnterior = lote.saldoDisponible;
+    let saldoNuevo = saldoAnterior;
+
+    if (dto.tipoMovimiento === 'ENTRADA' || dto.tipoMovimiento === 'AJUSTE_ENTRADA') {
+      saldoNuevo = saldoAnterior + dto.cantidad;
+    } else {
+      // CONSUMO, AJUSTE_SALIDA, BAJA
+      // Regla CA15: Bloqueo de saldo negativo
+      if (dto.cantidad > saldoAnterior) {
+        throw new Error(
+          `El lote ${lote.numeroLote} tiene ${saldoAnterior} ${lote.unidadMedida} disponibles. Ajusta la cantidad para continuar.`
+        );
+      }
+      saldoNuevo = saldoAnterior - dto.cantidad;
+    }
+
+    // Incrementar revisionStock para trazabilidad y concurrencia optimista (CA15)
+    lote.revisionStock = (lote.revisionStock || 0) + 1;
+    lote.saldoDisponible = saldoNuevo;
+
+    if (saldoNuevo === 0 && lote.estado === 'DISPONIBLE') {
+      lote.estado = 'AGOTADO';
+    } else if (saldoNuevo > 0 && lote.estado === 'AGOTADO') {
+      lote.estado = 'DISPONIBLE';
+    }
+
+    const movimiento: MovimientoInventario = {
+      id: `mov-${Date.now()}`,
+      loteId: lote.id,
+      reactivoNombre: lote.reactivoNombre,
+      numeroLote: lote.numeroLote,
+      tipoMovimiento: dto.tipoMovimiento,
+      cantidad: dto.cantidad,
+      saldoAnterior,
+      saldoNuevo,
+      motivo: dto.motivo,
+      ordenId: dto.ordenId,
+      actorId: actor.id,
+      actorNombre: actor.nombre,
+      fechaHora: new Date().toISOString()
+    };
+
+    this.movimientosInventario.unshift(movimiento);
+    this.guardarDatos();
+    return { ...movimiento };
+  }
+
+  async registrarNuevoLoteReactivo(
+    _institucionId: InstitucionId,
+    dto: RegistrarNuevoLoteDTO,
+    actor: { id: string; nombre: string }
+  ): Promise<LoteReactivo> {
+    await new Promise((res) => setTimeout(res, 50));
+
+    let reactivoNombre = dto.reactivoNombre || 'Reactivo General de Laboratorio';
+    let reactivoCodigo = 'REA-GEN-01';
+    let seccion = 'Bioquímica Clínica';
+    let unidadMedida = 'Determinaciones';
+
+    if (dto.reactivoId === 'rea-01') {
+      reactivoNombre = 'Reactivo Hexoquinasa Glucosa Cobas';
+      reactivoCodigo = 'REA-GLU-01';
+      seccion = 'Bioquímica Clínica';
+    } else if (dto.reactivoId === 'rea-02') {
+      reactivoNombre = 'Diluente Cellpack DCL Sysmex';
+      reactivoCodigo = 'REA-HEM-02';
+      seccion = 'Hematología y Coagulación';
+    } else if (dto.reactivoId === 'rea-03') {
+      reactivoNombre = 'PreciControl Troponin I Cobas';
+      reactivoCodigo = 'REA-INM-03';
+      seccion = 'Inmunología Clínica';
+    }
+
+    const nuevoLote: LoteReactivo = {
+      id: `lote-${Date.now()}`,
+      reactivoId: dto.reactivoId,
+      proveedorId: dto.proveedorId,
+      proveedorNombre: dto.proveedorNombre,
+      reactivoNombre,
+      reactivoCodigo,
+      seccion,
+      numeroLote: dto.numeroLote,
+      fechaRecepcion: new Date().toISOString(),
+      fechaVencimiento: dto.fechaVencimiento,
+      temperaturaAlmacenamiento: dto.temperaturaAlmacenamiento,
+      estado: 'DISPONIBLE',
+      revisionStock: 1,
+      saldoDisponible: dto.cantidadInicial,
+      unidadMedida
+    };
+
+    this.lotesReactivos.unshift(nuevoLote);
+
+    const movInicial: MovimientoInventario = {
+      id: `mov-init-${Date.now()}`,
+      loteId: nuevoLote.id,
+      reactivoNombre,
+      numeroLote: nuevoLote.numeroLote,
+      tipoMovimiento: 'ENTRADA',
+      cantidad: dto.cantidadInicial,
+      saldoAnterior: 0,
+      saldoNuevo: dto.cantidadInicial,
+      motivo: dto.motivoRecepcion || 'Recepción e ingreso inicial de nuevo lote a bodega',
+      actorId: actor.id,
+      actorNombre: actor.nombre,
+      fechaHora: new Date().toISOString()
+    };
+
+    this.movimientosInventario.unshift(movInicial);
+    this.guardarDatos();
+    return { ...nuevoLote };
+  }
+
+  async obtenerFacturas(_institucionId: InstitucionId): Promise<FacturaLaboratorio[]> {
+    await new Promise((res) => setTimeout(res, 30));
+    return [...this.facturas];
+  }
+
+  async obtenerFacturaPorId(_institucionId: InstitucionId, facturaId: string): Promise<FacturaLaboratorio | null> {
+    await new Promise((res) => setTimeout(res, 30));
+    const f = this.facturas.find((x) => x.id === facturaId || x.codigoFactura === facturaId);
+    return f ? { ...f } : null;
+  }
+
+  async obtenerFacturaPorOrden(_institucionId: InstitucionId, ordenId: string): Promise<FacturaLaboratorio | null> {
+    await new Promise((res) => setTimeout(res, 30));
+    const f = this.facturas.find((x) => x.ordenId === ordenId || x.codigoOrden === ordenId);
+    return f ? { ...f } : null;
+  }
+
+  async registrarPagoFactura(
+    _institucionId: InstitucionId,
+    dto: RegistrarPagoDTO,
+    cajero: { id: string; nombre: string }
+  ): Promise<{ factura: FacturaLaboratorio; pago: PagoLaboratorio }> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
+
+    if (factura.estado === 'ANULADA') {
+      throw new Error('No se pueden registrar cobros en una factura anulada.');
+    }
+
+    if (dto.montoCentavos <= 0) {
+      throw new Error('El monto a pagar debe ser mayor a cero.');
+    }
+
+    // Regla CA14: Idempotencia - si ya existe un pago confirmado con la misma Idempotency-Key
+    const pagoExistente = factura.pagos.find(
+      (p) => p.idempotencyKey === dto.idempotencyKey && p.estado === 'CONFIRMADO'
+    );
+    if (pagoExistente) {
+      return { factura: { ...factura }, pago: { ...pagoExistente } };
+    }
+
+    // Regla CA14: Bloqueo de sobrepago
+    if (dto.montoCentavos > factura.saldoPendienteCentavos) {
+      const montoQ = (dto.montoCentavos / 100).toFixed(2);
+      const saldoQ = (factura.saldoPendienteCentavos / 100).toFixed(2);
+      throw new Error(
+        `El monto del cobro (Q ${montoQ}) supera el saldo pendiente (Q ${saldoQ}). Ajusta el monto para continuar.`
+      );
+    }
+
+    // Cálculo exacto en centavos enteros sin coma flotante (CA14)
+    factura.totalPagadoCentavos += dto.montoCentavos;
+    factura.saldoPendienteCentavos = factura.totalCentavos - factura.totalPagadoCentavos;
+
+    if (factura.saldoPendienteCentavos === 0) {
+      factura.estado = 'PAGADA_TOTAL';
+    } else {
+      factura.estado = 'PAGADA_PARCIAL';
+    }
+
+    const nuevoPago: PagoLaboratorio = {
+      id: `pago-${Date.now()}`,
+      facturaId: factura.id,
+      codigoRecibo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      montoCentavos: dto.montoCentavos,
+      metodoPago: dto.metodoPago,
+      idempotencyKey: dto.idempotencyKey,
+      fechaHora: new Date().toISOString(),
+      cajeroId: cajero.id,
+      cajeroNombre: cajero.nombre,
+      estado: 'CONFIRMADO'
+    };
+
+    factura.pagos.push(nuevoPago);
+    this.guardarDatos();
+    return { factura: { ...factura }, pago: { ...nuevoPago } };
+  }
+
+  async revertirPagoFactura(
+    _institucionId: InstitucionId,
+    dto: RevertirPagoDTO,
+    _actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
+
+    const pago = factura.pagos.find((p) => p.id === dto.pagoId);
+    if (!pago) throw new Error('No se encontró el pago. Actualiza la vista e inténtalo de nuevo.');
+    if (pago.estado === 'REVERTIDO') {
+      throw new Error('El pago ya se encuentra revertido.');
+    }
+
+    if (!dto.motivo.trim()) {
+      throw new Error('Debe especificar el motivo justificado de la reversión del pago.');
+    }
+
+    pago.estado = 'REVERTIDO';
+    pago.motivoReversion = dto.motivo.trim();
+    pago.fechaReversion = new Date().toISOString();
+
+    // Reabrir saldo
+    factura.totalPagadoCentavos -= pago.montoCentavos;
+    factura.saldoPendienteCentavos = factura.totalCentavos - factura.totalPagadoCentavos;
+
+    if (factura.totalPagadoCentavos === 0) {
+      factura.estado = 'EMITIDA';
+    } else {
+      factura.estado = 'PAGADA_PARCIAL';
+    }
+
+    this.guardarDatos();
+    return { ...factura };
+  }
+
+  async anularFactura(
+    _institucionId: InstitucionId,
+    dto: AnularFacturaDTO,
+    _actor: { id: string; nombre: string }
+  ): Promise<FacturaLaboratorio> {
+    await new Promise((res) => setTimeout(res, 50));
+    const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
+
+    // Regla CA14: No se anula una factura con pagos confirmados sin registrar antes sus reversiones
+    const tienePagosConfirmados = factura.pagos.some((p) => p.estado === 'CONFIRMADO');
+    if (tienePagosConfirmados) {
+      throw new Error(
+        'Esta factura tiene cobros vigentes. Reviértelos antes de anularla.'
+      );
+    }
+
+    if (!dto.motivo.trim()) {
+      throw new Error('Debe especificar el motivo justificado de la anulación de la factura.');
+    }
+
+    factura.estado = 'ANULADA';
+    factura.motivoAnulacion = dto.motivo.trim();
+    this.guardarDatos();
+    return { ...factura };
+  }
+}

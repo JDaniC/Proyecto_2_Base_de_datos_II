@@ -1,0 +1,2342 @@
+{
+  "date": "2026-10-23",
+  "scope": "Frontend: vistas, navegación, contratos y simuladores locales",
+  "routes": [
+    "/acceso",
+    "/panel",
+    "/pacientes",
+    "/pacientes/nuevo",
+    "/pacientes/:pacienteId/editar",
+    "/pacientes/:pacienteId",
+    "/pacientes/:pacienteId/consultas/nueva",
+    "/pacientes/:pacienteId/consultas/:consultaId",
+    "/agenda",
+    "/hospital/hospitalizaciones",
+    "/hospital/hospitalizaciones/nueva",
+    "/hospital/hospitalizaciones/:ingresoId",
+    "/hospital/camas",
+    "/hospital/examenes",
+    "/acceso-restringido",
+    "/sesion-activa",
+    "/administracion/auditoria",
+    "/administracion/usuarios",
+    "/administracion/catalogos",
+    "/laboratorio/bandeja",
+    "/laboratorio/ordenes/nueva",
+    "/laboratorio/ordenes/:ordenId",
+    "/laboratorio/muestras",
+    "/laboratorio/resultados/captura/:ordenId",
+    "/laboratorio/resultados/validacion",
+    "/laboratorio/informes/:ordenId",
+    "/laboratorio/catalogo",
+    "/laboratorio/calidad",
+    "/laboratorio/personal",
+    "/laboratorio/inventario",
+    "/laboratorio/cobros",
+    "/",
+    "*"
+  ],
+  "files": [
+    {
+      "file": "Frontend/src/app/App.tsx",
+      "units": [
+        {
+          "name": "App",
+          "line": 35
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/app/AuthGuard.tsx",
+      "units": [
+        {
+          "name": "AuthGuard",
+          "line": 14
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/app/AuthSessionContext.tsx",
+      "units": [
+        {
+          "name": "AuthSessionProvider",
+          "line": 15
+        },
+        {
+          "name": "iniciarSesion",
+          "line": 39
+        },
+        {
+          "name": "cerrarSesion",
+          "line": 45
+        },
+        {
+          "name": "useAuthSession",
+          "line": 57
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/app/ServiceContext.tsx",
+      "units": [
+        {
+          "name": "ServiceProvider",
+          "line": 62
+        },
+        {
+          "name": "useServices",
+          "line": 110
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/app/productScope.ts",
+      "units": [
+        {
+          "name": "isRouteInInstitution",
+          "line": 3
+        },
+        {
+          "name": "patientTabs",
+          "line": 13
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Accordion.tsx",
+      "units": [
+        {
+          "name": "Accordion",
+          "line": 21
+        },
+        {
+          "name": "toggleItem",
+          "line": 31
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Alert.tsx",
+      "units": [
+        {
+          "name": "Alert",
+          "line": 14
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Badge.tsx",
+      "units": [
+        {
+          "name": "Badge",
+          "line": 11
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Button.tsx",
+      "units": [
+        {
+          "name": "Button",
+          "line": 11
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/EmptyState.tsx",
+      "units": [
+        {
+          "name": "EmptyState",
+          "line": 15
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/design-system/components/ErrorState.tsx",
+      "units": [
+        {
+          "name": "ErrorState",
+          "line": 17
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/design-system/components/Header.tsx",
+      "units": [
+        {
+          "name": "Header",
+          "line": 13
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/design-system/components/Input.tsx",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/MetricStrip.tsx",
+      "units": [
+        {
+          "name": "MetricStrip",
+          "line": 27
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Modal.tsx",
+      "units": [
+        {
+          "name": "Modal",
+          "line": 14
+        },
+        {
+          "name": "getFocusableElements",
+          "line": 50
+        },
+        {
+          "name": "handleKeyDown",
+          "line": 60
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Panel.tsx",
+      "units": [
+        {
+          "name": "Panel",
+          "line": 14
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/ProgressBar.tsx",
+      "units": [
+        {
+          "name": "ProgressBar",
+          "line": 11
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Radio.tsx",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Select.tsx",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Sidebar.tsx",
+      "units": [
+        {
+          "name": "Sidebar",
+          "line": 41
+        },
+        {
+          "name": "getNavItems",
+          "line": 48
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/SkeletonLoader.tsx",
+      "units": [
+        {
+          "name": "SkeletonLoader",
+          "line": 12
+        },
+        {
+          "name": "getDefaultStyles",
+          "line": 20
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Switch.tsx",
+      "units": [
+        {
+          "name": "Switch",
+          "line": 12
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Tabs.tsx",
+      "units": [
+        {
+          "name": "Tabs",
+          "line": 17
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/components/Toast.tsx",
+      "units": [
+        {
+          "name": "Toast",
+          "line": 16
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/feature-utilities.css",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/responsive.css",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/tokens.css",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/design-system/tokens.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/features/admin/AuditSearchPage.tsx",
+      "units": [
+        {
+          "name": "AuditSearchPage",
+          "line": 19
+        },
+        {
+          "name": "cargarEventos",
+          "line": 39
+        },
+        {
+          "name": "handleLimpiarFiltros",
+          "line": 55
+        },
+        {
+          "name": "handleBuscar",
+          "line": 68
+        },
+        {
+          "name": "handleAbrirDetalle",
+          "line": 73
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/admin/CatalogosManagementPage.tsx",
+      "units": [
+        {
+          "name": "CatalogosManagementPage",
+          "line": 19
+        },
+        {
+          "name": "load",
+          "line": 44
+        },
+        {
+          "name": "handlePruebaLabGuardada",
+          "line": 53
+        },
+        {
+          "name": "handleVacunaCreada",
+          "line": 57
+        },
+        {
+          "name": "handleToggleEstadoPrueba",
+          "line": 58
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/admin/CrearUsuarioModal.tsx",
+      "units": [
+        {
+          "name": "CrearUsuarioModal",
+          "line": 16
+        },
+        {
+          "name": "handleSubmit",
+          "line": 61
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/admin/DetalleEventoAuditoriaModal.tsx",
+      "units": [
+        {
+          "name": "DetalleEventoAuditoriaModal",
+          "line": 16
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/features/admin/LaboratoryReferencesView.tsx",
+      "units": [
+        {
+          "name": "LaboratoryReferencesView",
+          "line": 13
+        },
+        {
+          "name": "save",
+          "line": 26
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/admin/RegistrarPruebaLabModal.tsx",
+      "units": [
+        {
+          "name": "RegistrarPruebaLabModal",
+          "line": 34
+        },
+        {
+          "name": "handleAgregarParametro",
+          "line": 95
+        },
+        {
+          "name": "handleQuitarParametro",
+          "line": 99
+        },
+        {
+          "name": "handleParametroChange",
+          "line": 107
+        },
+        {
+          "name": "handleSubmit",
+          "line": 113
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/admin/RegistrarVacunaModal.tsx",
+      "units": [
+        {
+          "name": "RegistrarVacunaModal",
+          "line": 27
+        },
+        {
+          "name": "agregarDosis",
+          "line": 55
+        },
+        {
+          "name": "eliminarDosis",
+          "line": 68
+        },
+        {
+          "name": "actualizarDosis",
+          "line": 82
+        },
+        {
+          "name": "handleSubmit",
+          "line": 88
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/admin/UsersManagementPage.tsx",
+      "units": [
+        {
+          "name": "UsersManagementPage",
+          "line": 22
+        },
+        {
+          "name": "cargarUsuarios",
+          "line": 37
+        },
+        {
+          "name": "handleCambiarEstado",
+          "line": 53
+        },
+        {
+          "name": "handleUsuarioCreado",
+          "line": 67
+        }
+      ],
+      "buttons": 4
+    },
+    {
+      "file": "Frontend/src/features/admin/auditLabels.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/features/appointments/AppointmentsCalendarPage.tsx",
+      "units": [
+        {
+          "name": "AppointmentsCalendarPage",
+          "line": 45
+        },
+        {
+          "name": "mostrarToast",
+          "line": 116
+        },
+        {
+          "name": "getBadgeEstado",
+          "line": 123
+        },
+        {
+          "name": "getBordeColor",
+          "line": 136
+        }
+      ],
+      "buttons": 11
+    },
+    {
+      "file": "Frontend/src/features/appointments/CancelarCitaModal.tsx",
+      "units": [
+        {
+          "name": "CancelarCitaModal",
+          "line": 17
+        },
+        {
+          "name": "handleSubmit",
+          "line": 34
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/appointments/CrearCitaModal.tsx",
+      "units": [
+        {
+          "name": "CrearCitaModal",
+          "line": 30
+        },
+        {
+          "name": "handleSubmit",
+          "line": 76
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/appointments/ReprogramarCitaModal.tsx",
+      "units": [
+        {
+          "name": "ReprogramarCitaModal",
+          "line": 18
+        },
+        {
+          "name": "handleSubmit",
+          "line": 37
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/auth/AccessRestrictedPage.tsx",
+      "units": [
+        {
+          "name": "AccessRestrictedPage",
+          "line": 15
+        },
+        {
+          "name": "handleCambiarCuenta",
+          "line": 19
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/auth/LoginPage.tsx",
+      "units": [
+        {
+          "name": "LoginPage",
+          "line": 21
+        },
+        {
+          "name": "handleLogin",
+          "line": 42
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/features/consultations/AgregarDiagnosticoModal.tsx",
+      "units": [
+        {
+          "name": "AgregarDiagnosticoModal",
+          "line": 19
+        },
+        {
+          "name": "handleSeleccionar",
+          "line": 48
+        },
+        {
+          "name": "handleSubmit",
+          "line": 55
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/consultations/ConsultationDetailPage.tsx",
+      "units": [
+        {
+          "name": "ConsultationDetailPage",
+          "line": 25
+        },
+        {
+          "name": "handleRegistrarProcedimiento",
+          "line": 50
+        },
+        {
+          "name": "loadData",
+          "line": 81
+        },
+        {
+          "name": "handleConsultaActualizada",
+          "line": 126
+        }
+      ],
+      "buttons": 6
+    },
+    {
+      "file": "Frontend/src/features/consultations/DiagnosticosTratamientosView.tsx",
+      "units": [
+        {
+          "name": "DiagnosticosTratamientosView",
+          "line": 16
+        },
+        {
+          "name": "handleDiagnosticoAgregado",
+          "line": 41
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/features/consultations/EmitirRecetaModal.tsx",
+      "units": [
+        {
+          "name": "EmitirRecetaModal",
+          "line": 18
+        },
+        {
+          "name": "agregarMedicamento",
+          "line": 45
+        },
+        {
+          "name": "eliminarMedicamento",
+          "line": 61
+        },
+        {
+          "name": "actualizarMedicamento",
+          "line": 66
+        },
+        {
+          "name": "aplicarSugerido",
+          "line": 72
+        },
+        {
+          "name": "handleSubmit",
+          "line": 91
+        }
+      ],
+      "buttons": 4
+    },
+    {
+      "file": "Frontend/src/features/consultations/ImprimirRecetaModal.tsx",
+      "units": [
+        {
+          "name": "ImprimirRecetaModal",
+          "line": 15
+        },
+        {
+          "name": "handlePrint",
+          "line": 24
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/consultations/ModificarConsultaModal.tsx",
+      "units": [
+        {
+          "name": "ModificarConsultaModal",
+          "line": 19
+        },
+        {
+          "name": "handleSubmit",
+          "line": 45
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/consultations/NewConsultationWizardPage.tsx",
+      "units": [
+        {
+          "name": "NewConsultationWizardPage",
+          "line": 77
+        },
+        {
+          "name": "agregarDiagnostico",
+          "line": 228
+        },
+        {
+          "name": "marcarComoPrincipal",
+          "line": 242
+        },
+        {
+          "name": "eliminarDiagnostico",
+          "line": 251
+        },
+        {
+          "name": "agregarTratamiento",
+          "line": 260
+        },
+        {
+          "name": "eliminarTratamiento",
+          "line": 273
+        },
+        {
+          "name": "agregarMedicamento",
+          "line": 278
+        },
+        {
+          "name": "eliminarMedicamento",
+          "line": 303
+        },
+        {
+          "name": "autocompletarMedicamento",
+          "line": 307
+        },
+        {
+          "name": "avanzarPaso",
+          "line": 317
+        },
+        {
+          "name": "handleConfirmarConsulta",
+          "line": 363
+        }
+      ],
+      "buttons": 17
+    },
+    {
+      "file": "Frontend/src/features/consultations/RecetasPrescripcionesView.tsx",
+      "units": [
+        {
+          "name": "RecetasPrescripcionesView",
+          "line": 18
+        },
+        {
+          "name": "handleRecetaEmitida",
+          "line": 28
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/dashboard/DashboardPage.tsx",
+      "units": [
+        {
+          "name": "DashboardPage",
+          "line": 7
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/features/hospital/AsignarCamaModal.tsx",
+      "units": [
+        {
+          "name": "AsignarCamaModal",
+          "line": 17
+        },
+        {
+          "name": "handleSubmit",
+          "line": 41
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/hospital/HospitalBedsMapPage.tsx",
+      "units": [
+        {
+          "name": "HospitalBedsMapPage",
+          "line": 33
+        },
+        {
+          "name": "cargarDatos",
+          "line": 61
+        },
+        {
+          "name": "handleAbrirTraslado",
+          "line": 120
+        },
+        {
+          "name": "handleConfirmarTraslado",
+          "line": 128
+        },
+        {
+          "name": "handleConfirmarLiberarCama",
+          "line": 137
+        }
+      ],
+      "buttons": 8
+    },
+    {
+      "file": "Frontend/src/features/hospital/HospitalExamOrdersPage.tsx",
+      "units": [
+        {
+          "name": "HospitalExamOrdersPage",
+          "line": 28
+        },
+        {
+          "name": "handleCancelarOrden",
+          "line": 64
+        },
+        {
+          "name": "getPrioridadBadge",
+          "line": 101
+        },
+        {
+          "name": "getEstadoBadge",
+          "line": 112
+        }
+      ],
+      "buttons": 6
+    },
+    {
+      "file": "Frontend/src/features/hospital/HospitalizationAdmissionPage.tsx",
+      "units": [
+        {
+          "name": "HospitalizationAdmissionPage",
+          "line": 27
+        },
+        {
+          "name": "cargarCatalogos",
+          "line": 59
+        },
+        {
+          "name": "handleCieChange",
+          "line": 101
+        },
+        {
+          "name": "handleSubmit",
+          "line": 116
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/hospital/HospitalizationDetailPage.tsx",
+      "units": [
+        {
+          "name": "HospitalizationDetailPage",
+          "line": 31
+        },
+        {
+          "name": "cargarDatos",
+          "line": 62
+        },
+        {
+          "name": "handleEgresoConfirm",
+          "line": 83
+        },
+        {
+          "name": "handleAsignarCamaConfirm",
+          "line": 93
+        },
+        {
+          "name": "handleAgregarNota",
+          "line": 103
+        },
+        {
+          "name": "handleAgregarProc",
+          "line": 126
+        },
+        {
+          "name": "calcularEstanciaDias",
+          "line": 173
+        }
+      ],
+      "buttons": 10
+    },
+    {
+      "file": "Frontend/src/features/hospital/HospitalizationsListPage.tsx",
+      "units": [
+        {
+          "name": "HospitalizationsListPage",
+          "line": 26
+        },
+        {
+          "name": "cargarDatos",
+          "line": 40
+        },
+        {
+          "name": "calcularEstanciaDias",
+          "line": 85
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/hospital/RegistrarEgresoModal.tsx",
+      "units": [
+        {
+          "name": "RegistrarEgresoModal",
+          "line": 17
+        },
+        {
+          "name": "handleCieSelect",
+          "line": 33
+        },
+        {
+          "name": "handleSubmit",
+          "line": 44
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/hospital/components/DetalleOrdenResultadosModal.tsx",
+      "units": [
+        {
+          "name": "DetalleOrdenResultadosModal",
+          "line": 26
+        },
+        {
+          "name": "getAlertaBadge",
+          "line": 60
+        },
+        {
+          "name": "getPrioridadBadge",
+          "line": 75
+        },
+        {
+          "name": "getEstadoBadge",
+          "line": 86
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/hospital/components/NuevaOrdenExamenModal.tsx",
+      "units": [
+        {
+          "name": "NuevaOrdenExamenModal",
+          "line": 27
+        },
+        {
+          "name": "handleTogglePrueba",
+          "line": 72
+        },
+        {
+          "name": "handleSubmit",
+          "line": 78
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/hospital/components/RegistrarResultadosModal.tsx",
+      "units": [
+        {
+          "name": "RegistrarResultadosModal",
+          "line": 27
+        },
+        {
+          "name": "handleParamValueChange",
+          "line": 81
+        },
+        {
+          "name": "handleParamAlertaChange",
+          "line": 91
+        },
+        {
+          "name": "handleSubmit",
+          "line": 101
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/laboratory/BillingPaymentsPage.tsx",
+      "units": [
+        {
+          "name": "BillingPaymentsPage",
+          "line": 31
+        },
+        {
+          "name": "cargarDatos",
+          "line": 74
+        },
+        {
+          "name": "formatearGTQ",
+          "line": 94
+        },
+        {
+          "name": "parsearACentavos",
+          "line": 99
+        },
+        {
+          "name": "generarClaveIdempotencia",
+          "line": 107
+        },
+        {
+          "name": "handleAbrirPago",
+          "line": 113
+        },
+        {
+          "name": "handleAbrirRevertir",
+          "line": 123
+        },
+        {
+          "name": "handleAbrirAnular",
+          "line": 132
+        },
+        {
+          "name": "handleAbrirDetalle",
+          "line": 140
+        },
+        {
+          "name": "handleConfirmarPago",
+          "line": 151
+        },
+        {
+          "name": "handleConfirmarReversion",
+          "line": 211
+        },
+        {
+          "name": "handleConfirmarAnulacion",
+          "line": 257
+        },
+        {
+          "name": "getBadgeEstadoFactura",
+          "line": 358
+        },
+        {
+          "name": "getBadgeMetodoPago",
+          "line": 371
+        }
+      ],
+      "buttons": 13
+    },
+    {
+      "file": "Frontend/src/features/laboratory/InventoryPage.tsx",
+      "units": [
+        {
+          "name": "InventoryPage",
+          "line": 31
+        },
+        {
+          "name": "cargarDatos",
+          "line": 77
+        },
+        {
+          "name": "handleGuardarMovimiento",
+          "line": 101
+        },
+        {
+          "name": "handleGuardarNuevoLote",
+          "line": 158
+        }
+      ],
+      "buttons": 7
+    },
+    {
+      "file": "Frontend/src/features/laboratory/LabReportPage.tsx",
+      "units": [
+        {
+          "name": "LabReportPage",
+          "line": 23
+        },
+        {
+          "name": "cargarDatos",
+          "line": 40
+        },
+        {
+          "name": "handleEmitirInforme",
+          "line": 92
+        },
+        {
+          "name": "handleImprimir",
+          "line": 124
+        }
+      ],
+      "buttons": 4
+    },
+    {
+      "file": "Frontend/src/features/laboratory/NewOrderPage.tsx",
+      "units": [
+        {
+          "name": "NewOrderPage",
+          "line": 25
+        },
+        {
+          "name": "cargar",
+          "line": 56
+        },
+        {
+          "name": "handleTogglePrueba",
+          "line": 121
+        },
+        {
+          "name": "handleSubmit",
+          "line": 130
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/laboratory/OrderDetailPage.tsx",
+      "units": [
+        {
+          "name": "OrderDetailPage",
+          "line": 28
+        },
+        {
+          "name": "cargar",
+          "line": 40
+        },
+        {
+          "name": "renderBadgePrioridad",
+          "line": 79
+        },
+        {
+          "name": "getPasoIndex",
+          "line": 149
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/laboratory/QualityControlPage.tsx",
+      "units": [
+        {
+          "name": "QualityControlPage",
+          "line": 29
+        },
+        {
+          "name": "cargarDatos",
+          "line": 73
+        },
+        {
+          "name": "handleGuardarQC",
+          "line": 97
+        },
+        {
+          "name": "handleGuardarEquipo",
+          "line": 147
+        },
+        {
+          "name": "handleCambiarEstadoEquipo",
+          "line": 187
+        }
+      ],
+      "buttons": 8
+    },
+    {
+      "file": "Frontend/src/features/laboratory/ResultsCapturePage.tsx",
+      "units": [
+        {
+          "name": "ResultsCapturePage",
+          "line": 36
+        },
+        {
+          "name": "cargarDatos",
+          "line": 66
+        },
+        {
+          "name": "handleCambioValorParametro",
+          "line": 155
+        },
+        {
+          "name": "handleGuardarBorrador",
+          "line": 187
+        }
+      ],
+      "buttons": 7
+    },
+    {
+      "file": "Frontend/src/features/laboratory/ResultsValidationPage.tsx",
+      "units": [
+        {
+          "name": "ResultsValidationPage",
+          "line": 26
+        },
+        {
+          "name": "cargarDatos",
+          "line": 49
+        },
+        {
+          "name": "handleValidarResultado",
+          "line": 115
+        }
+      ],
+      "buttons": 6
+    },
+    {
+      "file": "Frontend/src/features/laboratory/SamplesManagementPage.tsx",
+      "units": [
+        {
+          "name": "SamplesManagementPage",
+          "line": 28
+        },
+        {
+          "name": "cargarMuestras",
+          "line": 60
+        },
+        {
+          "name": "handleAvanzarEstado",
+          "line": 107
+        },
+        {
+          "name": "handleConfirmarRechazo",
+          "line": 131
+        },
+        {
+          "name": "handleConfirmarRetoma",
+          "line": 157
+        },
+        {
+          "name": "handleConfirmarRectificacion",
+          "line": 181
+        },
+        {
+          "name": "renderBadgeMuestra",
+          "line": 212
+        }
+      ],
+      "buttons": 18
+    },
+    {
+      "file": "Frontend/src/features/laboratory/WorklistPage.tsx",
+      "units": [
+        {
+          "name": "WorklistPage",
+          "line": 26
+        },
+        {
+          "name": "cargarBandeja",
+          "line": 41
+        },
+        {
+          "name": "renderBadgePrioridad",
+          "line": 72
+        },
+        {
+          "name": "renderBadgeEstado",
+          "line": 135
+        }
+      ],
+      "buttons": 4
+    },
+    {
+      "file": "Frontend/src/features/laboratory/components/CorrectionRepetitionModal.tsx",
+      "units": [
+        {
+          "name": "CorrectionRepetitionModal",
+          "line": 31
+        },
+        {
+          "name": "handleCambioParametro",
+          "line": 64
+        },
+        {
+          "name": "handleEjecutar",
+          "line": 84
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/patients/PatientFormPage.tsx",
+      "units": [
+        {
+          "name": "PatientFormPage",
+          "line": 21
+        },
+        {
+          "name": "handleSubmit",
+          "line": 122
+        }
+      ],
+      "buttons": 4
+    },
+    {
+      "file": "Frontend/src/features/patients/PatientRecordPage.tsx",
+      "units": [
+        {
+          "name": "PatientRecordPage",
+          "line": 44
+        },
+        {
+          "name": "handleArchivar",
+          "line": 119
+        },
+        {
+          "name": "handleReactivar",
+          "line": 126
+        },
+        {
+          "name": "handleDiagnosticosActualizados",
+          "line": 159
+        },
+        {
+          "name": "handleRecetasActualizadas",
+          "line": 163
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/patients/PatientsListPage.tsx",
+      "units": [
+        {
+          "name": "PatientsListPage",
+          "line": 26
+        },
+        {
+          "name": "handleBuscar",
+          "line": 77
+        },
+        {
+          "name": "handleLimpiarFiltros",
+          "line": 89
+        },
+        {
+          "name": "handleSiguientePagina",
+          "line": 99
+        },
+        {
+          "name": "handleAnteriorPagina",
+          "line": 107
+        }
+      ],
+      "buttons": 7
+    },
+    {
+      "file": "Frontend/src/features/patients/components/AfiliarPolizaModal.tsx",
+      "units": [
+        {
+          "name": "AfiliarPolizaModal",
+          "line": 18
+        },
+        {
+          "name": "handleAseguradoraChange",
+          "line": 61
+        },
+        {
+          "name": "handleEsTitularChange",
+          "line": 72
+        },
+        {
+          "name": "handleSubmit",
+          "line": 88
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/patients/components/ArchivePatientModal.tsx",
+      "units": [
+        {
+          "name": "ArchivePatientModal",
+          "line": 18
+        },
+        {
+          "name": "handleSubmit",
+          "line": 34
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/patients/components/ClinicalTimeline.tsx",
+      "units": [
+        {
+          "name": "ClinicalTimeline",
+          "line": 21
+        },
+        {
+          "name": "getIconoEvento",
+          "line": 38
+        },
+        {
+          "name": "getBadgeVariante",
+          "line": 55
+        }
+      ],
+      "buttons": 1
+    },
+    {
+      "file": "Frontend/src/features/patients/components/CorregirAplicacionVacunaModal.tsx",
+      "units": [
+        {
+          "name": "CorregirAplicacionVacunaModal",
+          "line": 20
+        },
+        {
+          "name": "handleSubmit",
+          "line": 46
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PatientExamsView.tsx",
+      "units": [
+        {
+          "name": "PatientExamsView",
+          "line": 31
+        },
+        {
+          "name": "getPrioridadBadge",
+          "line": 63
+        },
+        {
+          "name": "getEstadoBadge",
+          "line": 74
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PatientInsurancesView.tsx",
+      "units": [
+        {
+          "name": "PatientInsurancesView",
+          "line": 31
+        },
+        {
+          "name": "handleAfiliarPoliza",
+          "line": 68
+        },
+        {
+          "name": "handleCambiarEstado",
+          "line": 75
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PatientProceduresView.tsx",
+      "units": [
+        {
+          "name": "PatientProceduresView",
+          "line": 23
+        },
+        {
+          "name": "handleRegistrar",
+          "line": 62
+        }
+      ],
+      "buttons": 3
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PediatricGrowthView.tsx",
+      "units": [
+        {
+          "name": "PediatricGrowthView",
+          "line": 36
+        },
+        {
+          "name": "calcularEdadMeses",
+          "line": 42
+        },
+        {
+          "name": "formatearEdad",
+          "line": 52
+        },
+        {
+          "name": "renderVariacionBadge",
+          "line": 154
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PediatricGuardiansView.tsx",
+      "units": [
+        {
+          "name": "PediatricGuardiansView",
+          "line": 33
+        },
+        {
+          "name": "abrirModalNuevo",
+          "line": 70
+        },
+        {
+          "name": "abrirModalEditar",
+          "line": 81
+        },
+        {
+          "name": "handleCrearResponsable",
+          "line": 93
+        },
+        {
+          "name": "handleActualizarResponsable",
+          "line": 124
+        },
+        {
+          "name": "handleEliminarResponsable",
+          "line": 164
+        },
+        {
+          "name": "handleHacerPrincipalDirecto",
+          "line": 186
+        }
+      ],
+      "buttons": 10
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PediatricHistoryAllergiesView.tsx",
+      "units": [
+        {
+          "name": "PediatricHistoryAllergiesView",
+          "line": 40
+        },
+        {
+          "name": "handleConfirmarSinAlergias",
+          "line": 92
+        },
+        {
+          "name": "handleGuardarAlergia",
+          "line": 109
+        },
+        {
+          "name": "handleEliminarAlergia",
+          "line": 149
+        },
+        {
+          "name": "handleGuardarPerinatales",
+          "line": 167
+        }
+      ],
+      "buttons": 11
+    },
+    {
+      "file": "Frontend/src/features/patients/components/PediatricVaccinesScheduleView.tsx",
+      "units": [
+        {
+          "name": "PediatricVaccinesScheduleView",
+          "line": 33
+        },
+        {
+          "name": "handleAbrirAplicarParaItem",
+          "line": 112
+        },
+        {
+          "name": "handleAbrirAplicarGeneral",
+          "line": 117
+        },
+        {
+          "name": "handleAbrirCorregir",
+          "line": 122
+        },
+        {
+          "name": "handleAbrirAnular",
+          "line": 128
+        },
+        {
+          "name": "handleAplicacionCompletada",
+          "line": 134
+        },
+        {
+          "name": "handleRevisionCompletada",
+          "line": 141
+        }
+      ],
+      "buttons": 5
+    },
+    {
+      "file": "Frontend/src/features/patients/components/RegistrarAplicacionVacunaModal.tsx",
+      "units": [
+        {
+          "name": "RegistrarAplicacionVacunaModal",
+          "line": 21
+        },
+        {
+          "name": "handleVacunaChange",
+          "line": 67
+        },
+        {
+          "name": "handleSubmit",
+          "line": 80
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/layouts/AuthenticatedLayout.tsx",
+      "units": [
+        {
+          "name": "AuthenticatedLayout",
+          "line": 10
+        },
+        {
+          "name": "handleCerrarSesion",
+          "line": 23
+        }
+      ],
+      "buttons": 2
+    },
+    {
+      "file": "Frontend/src/main.tsx",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/demoAccounts.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockAppointmentRepository.ts",
+      "units": [
+        {
+          "name": "cargarCitas",
+          "line": 22
+        },
+        {
+          "name": "guardarEnStorage",
+          "line": 36
+        },
+        {
+          "name": "obtenerCitas",
+          "line": 44
+        },
+        {
+          "name": "obtenerPorId",
+          "line": 93
+        },
+        {
+          "name": "obtenerPacientesDisponibles",
+          "line": 100
+        },
+        {
+          "name": "crear",
+          "line": 112
+        },
+        {
+          "name": "reprogramar",
+          "line": 197
+        },
+        {
+          "name": "cancelar",
+          "line": 265
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockAppointmentsData.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockAuditRepository.ts",
+      "units": [
+        {
+          "name": "cargarEventos",
+          "line": 149
+        },
+        {
+          "name": "guardarEventos",
+          "line": 162
+        },
+        {
+          "name": "consultarEventos",
+          "line": 170
+        },
+        {
+          "name": "obtenerEventoPorId",
+          "line": 211
+        },
+        {
+          "name": "registrarEvento",
+          "line": 216
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockAuthRepository.ts",
+      "units": [
+        {
+          "name": "generarCorrelacion",
+          "line": 10
+        },
+        {
+          "name": "esperar",
+          "line": 16
+        },
+        {
+          "name": "obtenerCuentasDemo",
+          "line": 20
+        },
+        {
+          "name": "iniciarSesion",
+          "line": 24
+        },
+        {
+          "name": "cerrarSesion",
+          "line": 145
+        },
+        {
+          "name": "obtenerSesionActual",
+          "line": 153
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockCatalogRepository.ts",
+      "units": [
+        {
+          "name": "cargarReferenciasLab",
+          "line": 22
+        },
+        {
+          "name": "obtenerReferenciasLaboratorio",
+          "line": 37
+        },
+        {
+          "name": "guardarReferenciaLaboratorio",
+          "line": 42
+        },
+        {
+          "name": "cargarDatos",
+          "line": 65
+        },
+        {
+          "name": "guardarDatos",
+          "line": 321
+        },
+        {
+          "name": "obtenerMedicos",
+          "line": 333
+        },
+        {
+          "name": "crearMedico",
+          "line": 338
+        },
+        {
+          "name": "cambiarEstadoMedico",
+          "line": 354
+        },
+        {
+          "name": "obtenerAseguradoras",
+          "line": 363
+        },
+        {
+          "name": "obtenerProcedimientosOdontologicos",
+          "line": 368
+        },
+        {
+          "name": "crearProcedimientoOdontologico",
+          "line": 374
+        },
+        {
+          "name": "obtenerPruebasLaboratorio",
+          "line": 389
+        },
+        {
+          "name": "crearPruebaLaboratorio",
+          "line": 394
+        },
+        {
+          "name": "crearNuevaVersionPruebaLaboratorio",
+          "line": 406
+        },
+        {
+          "name": "cambiarEstadoPruebaLaboratorio",
+          "line": 430
+        },
+        {
+          "name": "obtenerVacunas",
+          "line": 449
+        },
+        {
+          "name": "crearVacuna",
+          "line": 454
+        },
+        {
+          "name": "crearVersionEsquemaVacuna",
+          "line": 468
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockClinicalData.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockConsultationRepository.ts",
+      "units": [
+        {
+          "name": "cargarConsultas",
+          "line": 27
+        },
+        {
+          "name": "guardarEnStorage",
+          "line": 215
+        },
+        {
+          "name": "registrarConsultaCompleta",
+          "line": 223
+        },
+        {
+          "name": "obtenerPorId",
+          "line": 360
+        },
+        {
+          "name": "actualizarConsultaFinalizada",
+          "line": 421
+        },
+        {
+          "name": "agregarProcedimiento",
+          "line": 474
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockDashboardData.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockDashboardRepository.ts",
+      "units": [
+        {
+          "name": "obtenerDashboard",
+          "line": 6
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockHospitalExamRepository.ts",
+      "units": [
+        {
+          "name": "cargarDeStorage",
+          "line": 198
+        },
+        {
+          "name": "guardarEnStorage",
+          "line": 211
+        },
+        {
+          "name": "listarOrdenes",
+          "line": 220
+        },
+        {
+          "name": "obtenerOrdenPorId",
+          "line": 231
+        },
+        {
+          "name": "obtenerOrdenesPorPaciente",
+          "line": 240
+        },
+        {
+          "name": "crearOrden",
+          "line": 248
+        },
+        {
+          "name": "cancelarOrden",
+          "line": 295
+        },
+        {
+          "name": "obtenerResultadosPorOrden",
+          "line": 308
+        },
+        {
+          "name": "obtenerResultadoPorId",
+          "line": 316
+        },
+        {
+          "name": "obtenerResultadosPorPaciente",
+          "line": 325
+        },
+        {
+          "name": "registrarResultado",
+          "line": 333
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockHospitalizationRepository.ts",
+      "units": [
+        {
+          "name": "cargarDatos",
+          "line": 247
+        },
+        {
+          "name": "guardarDatos",
+          "line": 265
+        },
+        {
+          "name": "listarHospitalizaciones",
+          "line": 274
+        },
+        {
+          "name": "obtenerHospitalizacionPorId",
+          "line": 285
+        },
+        {
+          "name": "obtenerHospitalizacionesPorPaciente",
+          "line": 290
+        },
+        {
+          "name": "listarCamas",
+          "line": 295
+        },
+        {
+          "name": "crearIngreso",
+          "line": 300
+        },
+        {
+          "name": "registrarEgreso",
+          "line": 369
+        },
+        {
+          "name": "asignarCama",
+          "line": 406
+        },
+        {
+          "name": "liberarCama",
+          "line": 465
+        },
+        {
+          "name": "cambiarEstadoCama",
+          "line": 488
+        },
+        {
+          "name": "agregarNotaEvolucion",
+          "line": 501
+        },
+        {
+          "name": "agregarProcedimiento",
+          "line": 521
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockLaboratoryRepository.ts",
+      "units": [
+        {
+          "name": "calcularAlertaParametro",
+          "line": 43
+        },
+        {
+          "name": "obtenerParametrosDefecto",
+          "line": 59
+        },
+        {
+          "name": "cargarDatos",
+          "line": 141
+        },
+        {
+          "name": "guardarDatos",
+          "line": 1030
+        },
+        {
+          "name": "obtenerBandeja",
+          "line": 1046
+        },
+        {
+          "name": "obtenerOrdenPorId",
+          "line": 1094
+        },
+        {
+          "name": "crearOrden",
+          "line": 1104
+        },
+        {
+          "name": "registrarTrasladoMuestra",
+          "line": 1169
+        },
+        {
+          "name": "obtenerMuestras",
+          "line": 1181
+        },
+        {
+          "name": "actualizarEstadoMuestra",
+          "line": 1193
+        },
+        {
+          "name": "registrarRetomaMuestra",
+          "line": 1253
+        },
+        {
+          "name": "rectificarDatoMuestra",
+          "line": 1309
+        },
+        {
+          "name": "obtenerResultadosPorOrden",
+          "line": 1350
+        },
+        {
+          "name": "obtenerResultadoPorId",
+          "line": 1359
+        },
+        {
+          "name": "guardarResultadoBorrador",
+          "line": 1369
+        },
+        {
+          "name": "validarResultado",
+          "line": 1481
+        },
+        {
+          "name": "corregirResultado",
+          "line": 1520
+        },
+        {
+          "name": "repetirAnalisis",
+          "line": 1583
+        },
+        {
+          "name": "obtenerInformePorOrden",
+          "line": 1650
+        },
+        {
+          "name": "emitirInforme",
+          "line": 1660
+        },
+        {
+          "name": "obtenerEquipos",
+          "line": 1758
+        },
+        {
+          "name": "cambiarEstadoEquipo",
+          "line": 1763
+        },
+        {
+          "name": "registrarEquipo",
+          "line": 1776
+        },
+        {
+          "name": "obtenerControlesCalidad",
+          "line": 1790
+        },
+        {
+          "name": "registrarControlCalidad",
+          "line": 1811
+        },
+        {
+          "name": "obtenerLotesReactivos",
+          "line": 1894
+        },
+        {
+          "name": "obtenerMovimientosInventario",
+          "line": 1899
+        },
+        {
+          "name": "registrarMovimientoInventario",
+          "line": 1910
+        },
+        {
+          "name": "registrarNuevoLoteReactivo",
+          "line": 1975
+        },
+        {
+          "name": "obtenerFacturas",
+          "line": 2041
+        },
+        {
+          "name": "obtenerFacturaPorId",
+          "line": 2046
+        },
+        {
+          "name": "obtenerFacturaPorOrden",
+          "line": 2052
+        },
+        {
+          "name": "registrarPagoFactura",
+          "line": 2058
+        },
+        {
+          "name": "revertirPagoFactura",
+          "line": 2120
+        },
+        {
+          "name": "anularFactura",
+          "line": 2157
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockPatientRepository.ts",
+      "units": [
+        {
+          "name": "cargarPacientes",
+          "line": 135
+        },
+        {
+          "name": "guardarEnStorage",
+          "line": 172
+        },
+        {
+          "name": "buscar",
+          "line": 183
+        },
+        {
+          "name": "obtenerPorId",
+          "line": 259
+        },
+        {
+          "name": "obtenerExpedienteCompleto",
+          "line": 268
+        },
+        {
+          "name": "crear",
+          "line": 328
+        },
+        {
+          "name": "actualizar",
+          "line": 397
+        },
+        {
+          "name": "archivar",
+          "line": 467
+        },
+        {
+          "name": "reactivar",
+          "line": 490
+        },
+        {
+          "name": "agregarDiagnostico",
+          "line": 513
+        },
+        {
+          "name": "emitirReceta",
+          "line": 543
+        },
+        {
+          "name": "obtenerPolizasSeguro",
+          "line": 568
+        },
+        {
+          "name": "afiliarPolizaSeguro",
+          "line": 576
+        },
+        {
+          "name": "cambiarEstadoPoliza",
+          "line": 610
+        },
+        {
+          "name": "obtenerProcedimientosPaciente",
+          "line": 625
+        },
+        {
+          "name": "registrarProcedimientoPaciente",
+          "line": 633
+        },
+        {
+          "name": "agregarResponsable",
+          "line": 652
+        },
+        {
+          "name": "actualizarResponsable",
+          "line": 676
+        },
+        {
+          "name": "eliminarResponsable",
+          "line": 731
+        },
+        {
+          "name": "obtenerAntecedentes",
+          "line": 759
+        },
+        {
+          "name": "actualizarAntecedentes",
+          "line": 777
+        },
+        {
+          "name": "confirmarSinAlergias",
+          "line": 789
+        },
+        {
+          "name": "registrarAlergia",
+          "line": 826
+        },
+        {
+          "name": "eliminarAlergia",
+          "line": 878
+        },
+        {
+          "name": "actualizarPerinatales",
+          "line": 901
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockPatientsData.ts",
+      "units": [
+        {
+          "name": "calcularEdadAnios",
+          "line": 371
+        },
+        {
+          "name": "normalizarIdentificacion",
+          "line": 382
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockUserRepository.ts",
+      "units": [
+        {
+          "name": "cargarRoles",
+          "line": 244
+        },
+        {
+          "name": "guardarRolesEnStorage",
+          "line": 257
+        },
+        {
+          "name": "cargarUsuarios",
+          "line": 265
+        },
+        {
+          "name": "guardarEnStorage",
+          "line": 322
+        },
+        {
+          "name": "listarUsuarios",
+          "line": 330
+        },
+        {
+          "name": "crearUsuario",
+          "line": 335
+        },
+        {
+          "name": "cambiarEstado",
+          "line": 376
+        },
+        {
+          "name": "obtenerRolesInstitucionales",
+          "line": 398
+        },
+        {
+          "name": "obtenerCatalogoPermisos",
+          "line": 414
+        },
+        {
+          "name": "actualizarPermisosRol",
+          "line": 419
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/mocks/mockVaccineRepository.ts",
+      "units": [
+        {
+          "name": "cargarDatos",
+          "line": 109
+        },
+        {
+          "name": "guardarDatos",
+          "line": 123
+        },
+        {
+          "name": "obtenerAplicaciones",
+          "line": 131
+        },
+        {
+          "name": "obtenerEsquemaCompletoPaciente",
+          "line": 142
+        },
+        {
+          "name": "registrarAplicacion",
+          "line": 201
+        },
+        {
+          "name": "corregirAplicacion",
+          "line": 256
+        },
+        {
+          "name": "anularAplicacion",
+          "line": 303
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/services/clinicalCatalogs.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/services/contracts.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/services/displayLabels.ts",
+      "units": [
+        {
+          "name": "getDisplayLabel",
+          "line": 35
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/services/errors.ts",
+      "units": [
+        {
+          "name": "getErrorMessage",
+          "line": 2
+        }
+      ],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/services/types.ts",
+      "units": [],
+      "buttons": 0
+    },
+    {
+      "file": "Frontend/src/vite-env.d.ts",
+      "units": [],
+      "buttons": 0
+    }
+  ]
+}
