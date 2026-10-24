@@ -1,8 +1,10 @@
+> Referencia visual v1.1 conservada tras la depuración del 24/10/2026. Para alcance y estado vigentes consultar plan/; los catálogos de vistas originales son históricos.
+
 # Design System — Plataforma de Historiales Clínicos
 
-**Versión:** 1.0 — especificaciones visuales aprobadas en revisión interactiva  
+**Versión:** 1.1 — vistas contrastadas con el diseño funcional y la consigna; componentes visuales aprobados sin cambios  
 **Fecha de actualización:** 19 de octubre de 2026  
-**Estado:** diseño de referencia aprobado; **implementación y pruebas técnicas pendientes**  
+**Estado:** diseño visual aprobado; catálogo de vistas verificado. **Implementación, decisiones abiertas y pruebas técnicas pendientes**  
 **Formato:** documento maestro para diseñadores, frontend, backend, QA y agentes de desarrollo
 
 > **Decisión esencial:** sistema **exclusivamente Light Mode**. No implementar ni activar una variante oscura, aunque el navegador o el sistema operativo del usuario estén configurados en modo oscuro. Todos los ejemplos deben usar fondos blancos, verde menta muy suave y texto de alto contraste.
@@ -548,3 +550,163 @@ Cada componente reutilizable debe tener ficha con:
 ---
 
 **Fin de Design System v1.0 — listo como base de implementación y auditoría visual.**
+
+---
+
+## 14. Auditoría de cobertura y mapa de vistas — revisión 1.1
+
+**Fecha de revisión:** 19 de octubre de 2026. **Fuentes:** `Diseño principal del proyecto` (documento proporcionado por el equipo), `Proyecto final bases II (1) (4).pdf` (consigna final), `Primera Entrega Proyecto (1).pdf` (levantamiento de las cuatro instituciones) y las pantallas visuales aprobadas en este documento.
+
+### 14.1 Veredicto y alcance
+
+- El catálogo funcional de la sección 8 del documento principal **contiene 53 entradas**: 19 comunes, 8 de hospital, 5 de clínica odontológica, 14 de laboratorio y 7 de pediatría. Son **vistas o flujos**, no 53 rutas ni 53 páginas distintas.
+- El catálogo cubre los procesos importantes del **alcance ampliado adoptado por el equipo**, sujeto a las brechas y decisiones explícitas de 14.3 y 14.4.
+- La **consigna académica final es más acotada**: exige cuatro motores asignados por institución, enrutamiento por identidad, interfaz consistente, alta y mantenimiento de expedientes, consultas/diagnósticos/tratamientos/recetas, archivo y comparación de motores. No exige por sí sola un panel administrativo de inventario, cobros y calidad de laboratorio con todos los detalles. Estos aparecen en el levantamiento/modelo del equipo y en su diseño adoptado. No atribuir esas ampliaciones al PDF de la consigna.
+- Las cinco pantallas visualmente aprobadas —Dashboard, Administración de pacientes, Expediente, Registro de consulta, Agenda— son una **base compartida**; no sustituyen las vistas especiales de hospital, laboratorio y pediatría.
+- Mantener la identidad visual v1.0 sin rediseñar componentes. El problema que se corrige es **arquitectura de información, cobertura de flujos y coherencia con API**.
+
+**Tipos de superficie** usados a continuación: `Página` = área de navegación importante; `Subvista` = pestaña/sección del expediente, consulta o módulo; `Formulario` = paso, modal, drawer o página de captura según longitud; `Estado` = tratamiento de acceso/carga/error sin nueva página de negocio. Son **recomendaciones de agrupación visual**, no una restricción nueva sobre backend.
+
+### 14.2 Correspondencia de las 53 entradas del documento principal
+
+#### Comunes — 19
+
+| ID | Vista original | Superficie recomendada | Cobertura visual actual / decisión |
+|---|---|---|---|
+| V01 | Inicio de sesión | Página | Pendiente de diseño; incluir entrada y recuperación de acceso. |
+| V02 | Acceso restringido / inactiva | Estado o página de acceso | Pendiente; distinguir 401 de 403 sin revelar datos. |
+| V03 | Panel inicial | Página | **Aprobada: Pantalla 01**; widgets por institución y rol. |
+| V04 | Búsqueda/listado de pacientes | Página | **Aprobada: Pantalla 02**; reconciliar API de búsqueda. |
+| V05 | Registro/edición administrativa | Formulario/flujo | Demostración básica en Pantalla 02; falta alta completa especializada, deduplicación y responsable pediátrico. |
+| V06 | Perfil del paciente | Página | **Aprobada: Pantalla 03**; separar datos administrativos y clínicos por permiso. |
+| V07 | Historial clínico cronológico | Subvista de V06 | Timeline aprobada; definir orden y paginación consistentes. |
+| V08 | Agenda de citas | Página | **Aprobada: Pantalla 05**. |
+| V09 | Crear/editar cita | Formulario desde V08 | Prototipo aprobado; ajustar estados, motivo de cancelación y concurrencia. |
+| V10 | Registro de consulta | Página/formulario por pasos | **Aprobada: Pantalla 04**; adaptarla por institución. |
+| V11 | Detalle de consulta | Página o subvista desde V06 | Resumen aproximado en Pantalla 03; detalle persistido, estado y revisión pendientes. |
+| V12 | Diagnósticos y tratamientos | Pasos/subvista V10-V11 | Parcialmente aprobada; varios diagnósticos, principal y catálogo deben existir. |
+| V13 | Crear/ver receta | Paso V10 y detalle/imprimible en V11 | Parcialmente aprobada; múltiples fármacos y atributos históricos completos pendientes. |
+| V14 | Archivo/reactivación | Confirmación desde V06 | Parcialmente aprobada en Pantalla 02; **exigir motivo y causa**, versión y trazabilidad. |
+| V15 | Administración de usuarios | Página de administración | Pendiente; provisión, vinculación, estado y baja. |
+| V16 | Administración de roles y permisos | Pestaña/subvista de administración | Pendiente; permisos efectivos por institución. |
+| V17 | Catálogos institucionales | Página de administración con pestañas | Pendiente; no construir una página distinta por cada catálogo. |
+| V18 | Búsqueda de auditoría | Página de administración | Pendiente; actor, fecha, recurso, cambios, acceso autorizado. |
+| V19 | Carga, error, sin resultados | **Estados reutilizables, no ruta** | Componentes aprobados; deben integrarse en todas las páginas. |
+
+#### Hospital General — 8
+
+| ID | Vista original | Superficie recomendada | Cobertura |
+|---|---|---|---|
+| H01 | Lista de hospitalizaciones | Página especializada | Pendiente. |
+| H02 | Ingreso/detalle de hospitalización | Página especializada + formulario | Pendiente; estados, egreso, diagnósticos vinculados. |
+| H03 | Habitaciones, camas, ocupación | Página especializada | Pendiente; ocupación actual e historial. |
+| H04 | Asignar/liberar cama | Formulario desde H02/H03 | Pendiente; no exige ruta propia, sí exclusión de solapamientos. |
+| H05 | Seguros y cobertura | Subvista en V06; catálogos en V17 | Pendiente; vigencias, planes, titular, afiliación. |
+| H06 | Orden de examen/resultados | Página especializada y enlace en expediente | Pendiente; distinguir solicitud, orden y resultados. |
+| H07 | Procedimientos realizados | Subvista de consulta/hospitalización | Pendiente; registrar profesional, fecha y resultado. |
+| H08 | Personal médico/especialidades | Pestaña del catálogo V17 | Pendiente; colegiación, especialidades y estado. |
+
+#### Clínica odontológica — 5
+
+| ID | Vista original | Superficie recomendada | Cobertura |
+|---|---|---|---|
+| C01 | Agenda de secretaría | **Variante de V08**, no página distinta | Pantalla 05 visualmente aprobada; incorporar secretaría gestora. |
+| C02 | Detalle de cita odontológica | Detalle/panel de V08-V09 | Parcial; relación con odontólogo, secretaría y atención. |
+| C03 | Consulta odontológica | **Variante de V10** | Pantalla 04 visualmente aprobada; políticas de cita y odontólogo pendientes. |
+| C04 | Diagnósticos/tratamientos/receta odontológica | Subvista de V11–V13 | UI común ya aprobada parcialmente; catálogos propios. |
+| C05 | Catálogos odontológicos | Pestañas de V17 | Pendiente. **No añadir odontograma:** no está en el alcance declarado. |
+
+#### Laboratorio clínico — 14
+
+| ID | Vista original | Superficie recomendada | Cobertura |
+|---|---|---|---|
+| L01 | Bandeja de trabajo | Página especializada | Pendiente; estados/prioridad/responsables. |
+| L02 | Crear/editar orden | Página/formulario especializado | Pendiente; pruebas versionadas, ítems, precios. |
+| L03 | Detalle/seguimiento de orden | Página especializada | Pendiente; trazabilidad integral de orden. |
+| L04 | Registro/recepción de muestras | Página/formulario especializado | Pendiente; códigos únicos, rechazo y retoma. |
+| L05 | Trazabilidad de muestra | Subvista de L03/L04 | Pendiente; conservar eventos y rectificaciones. |
+| L06 | Captura de resultados | Página/formulario dinámico | Pendiente; parámetros de versión, equipos y analista. |
+| L07 | Revisión/validación de resultados | Página/flujo específico por permiso | Pendiente; **analizar y validar son acciones diferentes**. |
+| L08 | Corrección/repetición y versiones | Subvista/flujos de L06-L07 | Pendiente; preservar versiones y distinguir repetición. |
+| L09 | Vista previa/emisión informe | Página/subvista de L03 | Pendiente; resultados validados y versiones exactas. |
+| L10 | Catálogo de laboratorio | Pestañas de V17 | Pendiente; pruebas, métodos, muestras y versiones. |
+| L11 | Equipos/control de calidad | Página especializada; equipo maestro en V17 | Pendiente; controles y evaluación histórica. |
+| L12 | Reactivos, lotes, inventario | Página especializada | Pendiente; movimientos y saldo coherente. |
+| L13 | Facturas/pagos | Página especializada | Pendiente; facturas, pagos, reversión y saldos. |
+| L14 | Personal/permisos de laboratorio | V15–V16 especializados | Pendiente; no duplicar administración de usuarios. |
+
+#### Centro médico pediátrico — 7
+
+| ID | Vista original | Superficie recomendada | Cobertura |
+|---|---|---|---|
+| P01 | Responsables del menor | **Paso obligatorio del alta** + pestaña V06 | Pendiente; uno o más principales y autorización **independiente**. |
+| P02 | Seguimiento de crecimiento | Subvista de expediente V06 | Pendiente; comparación longitudinal y captura por consulta. |
+| P03 | Antecedentes y alergias | Subvista de V06 | Parcial; falta alta/edición con versiones; no confundir desconocido con negativo. |
+| P04 | Catálogo de vacunas/dosis | Pestaña de V17 | Pendiente; esquema/versiones. |
+| P05 | Esquema/dosis pendientes | Subvista de V06 | Pendiente; distinguir futuras, pendientes y aplicadas. |
+| P06 | Registrar aplicación de vacuna | Formulario desde P05 | Pendiente; paciente, dosis, lote, sitio, profesional y no duplicación. |
+| P07 | Historial de vacunación | Subvista cronológica de P05/V07 | Pendiente; corrección/versiones auditadas. |
+
+**Total comprobado:** V01–V19 (19), H01–H08 (8), C01–C05 (5), L01–L14 (14), P01–P07 (7) = **53**. No se eliminan operaciones aunque varias dejen de ser páginas independientes.
+
+### 14.3 Hallazgos que deben resolverse antes de implementar el frontend
+
+| Prioridad | Hallazgo verificado | Desajuste y acción requerida |
+|---|---|---|
+| **Alta** | Estados de citas | Pantalla 05 usa «Pendiente/Confirmada/Cancelada»; `Diseño principal` §5.7 establece `PROGRAMADA → ATENDIDA/CANCELADA`. Unificar etiqueta, filtro, estado y transiciones; no inventar un estado «CONFIRMADA» sin actualizar contrato. |
+| **Alta** | Archivo de expediente | La maqueta confirma archivo sin pedir motivo. API §5.6/5.7 exige causa `TRASLADO`, `FALLECIMIENTO` u `OTRA_ADMINISTRATIVA`, observación/motivo, versión y permiso. Incorporar formulario y evitar atención nueva si está archivado. |
+| **Alta** | Alta pediátrica incompleta | La demostración de «Nuevo paciente» contiene solo datos generales y área. §3.5.2 exige al menos un responsable principal y comprobar autorización específica antes de atender; no equiparar «principal» con «autoriza». |
+| **Alta** | Ciclo de vida de consulta | La maqueta trata «Finalizar» como una confirmación única; diseño §5.6–5.7 distingue registro completo, consulta ABIERTA, finalización, receta EMITIDA y correcciones versionadas. Mostrar acciones compatibles con el backend, revisar estado y aplicar permisos. |
+| **Alta** | Resultados de laboratorio | La pantalla común de consultas NO sustituye la cadena de orden→muestra→captura→validación→informe. Analista no recibe derecho a emitir receta ni a validar resultados por defecto. Diseñar L01–L09 antes de declarar cobertura de laboratorio. |
+| **Media** | Cronología con orden incompatible | Design System §7 Pantalla 03/Timeline prevé descendente, pero contrato §5.6 del documento principal exige ascendente + ID público como desempate. Elegir un orden único, hacerlo explícito en backend/UI y cursor estable; **pendiente de decisión, no corregido automáticamente**. |
+| **Media** | Búsqueda/listado incompatible | Pantalla 02 muestra pacientes al cargar y búsqueda libre nombre/CUI; API §5.6 rechaza búsqueda vacía y define identificación exacta o prefijo de nombre, con cursor opaco. Implementar estado inicial sin listado, **o** ampliar el contrato para listado inicial autorizado/paginado. Mantener coincidencias exactas y evitar exposición masiva. |
+| **Media** | Paginación incompatible | Mockup de pacientes muestra «Página X de Y»; contrato actual define cursor y `siguiente_cursor` sin conteo total. Sustituir por «Cargar más/Anterior» con cursor, o documentar un endpoint de conteo/paginación adicional. |
+| **Media** | Receta y diagnóstico incompletos | UI de consulta demuestra un fármaco y diagnóstico en texto libre; backend requiere varios medicamentos y diagnósticos, uno principal cuando hay diagnósticos, vía, presentación, concentración, fecha y correcciones históricas. Extender campos preservando el Stepper de 4 pasos aprobado. |
+| **Media** | Reserva de profesional y permisos | En citas, comprobar disponibilidad/solapamientos y rol de gestión; el profesional que firma una consulta o receta se deriva de la cuenta, no del ID enviado por el cliente. Evitar opciones de suplantación. |
+| **Media** | Identificación y duplicados | La demo usa códigos `HC-001` y CUI ficticios; contrato de API usa UUID público. Se puede mostrar un código legible distinto del ID público; las reglas de unicidad, coincidencias potenciales y idempotencia dependen del servidor. |
+| **Baja** | Vistas redundantes | V19 es estado, C01/C03/C04/C05 son variantes; H04, H05, H07, H08, L05, L08, L10, L14 y la mayoría de P01–P07 funcionan mejor integradas como subflujos. No crear menús/rutas independientes innecesarios. |
+
+**Estas son divergencias entre documentos/prototipos, no errores de ejecución verificados**; la implementación aún no existe o no se ha revisado como parte de esta auditoría.
+
+### 14.4 Cobertura académica mínima frente al alcance ampliado
+
+La **consigna de Entrega II** exige probar con los cuatro motores: inicio de sesión/enrutamiento por institución, paciente nuevo e historial, búsqueda/consulta de historial, nueva consulta, diagnóstico, tratamiento, medicamento recetado, archivo/desactivación y consistencia de visualización; además, justificar modelado, consistencia y seguridad. Los estados de acceso denegado son necesarios para implementar autorización segura, aunque no cuenten como páginas de negocio separadas.
+
+El **alcance ampliado que el equipo adoptó** incorpora la operativa institucional detallada. Para cubrirlo visualmente:
+
+| Institución | Flujo distintivo prioritario | Extensiones después del flujo central |
+|---|---|---|
+| Hospital | Hospitalizaciones, camas, orden de examen y resultados; consultas y antecedentes | Seguros, procedimientos, personal/especialidades; catálogos y auditoría. |
+| Odontología | Agenda de secretaría → cita odontológica → consulta/diagnóstico/receta | Catálogos, historial, permisos y casos especiales. **Sin odontograma**. |
+| Laboratorio | Orden → muestra → captura de resultados → validación → informe, con trazabilidad | Catálogos versionados, control de calidad, reactivos/inventario, facturación/pagos. |
+| Pediatría | Alta del menor + responsables/autorización → consulta/control de crecimiento → vacuna/esquema | Gestión de versiones, correcciones, vistas comparativas, catálogos. |
+
+Priorizar el flujo básico para demostrar equivalencia y después los módulos especializados que el equipo comprometió en su levantamiento. No declarar «terminado» todo el diseño institucional cuando solo estén implementadas las cinco pantallas comunes.
+
+### 14.5 Propuesta de navegación sin 53 páginas
+
+**Navegación común visible, filtrada por rol:** Inicio, Pacientes, Agenda, Consultas/Historial (cuando corresponda) y Administración (Usuarios, Roles, Catálogos, Auditoría). `Inicio de sesión` queda fuera del menú autenticado; `Acceso denegado` y estados de error son estados de aplicación, no secciones principales. Un expediente se abre desde Pacientes, Citas y módulos especializados y contiene datos generales, historia, alergias, consulta, recetas y pestañas exclusivas por institución.
+
+**Secciones institucionales añadidas sin alterar el diseño compartido:**
+
+- Hospital: Hospitalizaciones, Camas, Órdenes de examen; seguro y procedimientos como pestañas contextuales.
+- Clínica odontológica: agenda, consulta y catálogos adaptados, sin duplicar la navegación común.
+- Laboratorio: Bandeja, Órdenes, Muestras, Resultados, Informes, Calidad, Inventario y Cobros. Las acciones de validar/corregir/emitir se permiten solo con sus permisos, y pueden ser subflujos.
+- Pediatría: Responsable(s), Crecimiento y Vacunación como pestañas del paciente; formularios de captura vinculados a la consulta, esquema y dosis.
+
+**Acciones contextuales comunes:** crear/editar, archivar/reactivar con causa y motivo, corregir con revisión, reprogramar/cancelar cita con motivo, confirmar/cerrar formularios, recuperar errores sin duplicar operaciones.
+
+**Regla de diseño aprobada:** no añadir más tarjetas, colores, efectos o páginas por esta auditoría; reutilizar componentes 01–27, tabs de subrayado, paneles sutiles, Sidebar blanco y Light Mode.
+
+### 14.6 Estado de las pantallas
+
+| Pantalla | Estado visual | Cobertura real frente al proyecto completo |
+|---|---|---|
+| 01 Dashboard | APROBADA | Es estructura general; ajustar tarjetas/resúmenes por rol e institución. |
+| 02 Administración de pacientes | APROBADA | Faltan reglas especializadas de alta, archivo y búsqueda. |
+| 03 Expediente clínico | APROBADA | Faltan subpestañas y operaciones por institución/versiones. |
+| 04 Registro de consulta | APROBADA | Faltan campos completos de receta, diagnósticos y estados de finalización. |
+| 05 Agenda/citas | APROBADA | Falta alinear los estados, motivo de cancelación y disponibilidad real. |
+| Login, administración, hospital, laboratorio, pediatría especializada | **PENDIENTES DE DISEÑO VISUAL** | El documento principal especifica la funcionalidad, no constituye un prototipo aprobado de estas vistas. |
+
+**Conclusión de esta auditoría:** El documento principal **sí identifica las áreas necesarias para el alcance que el equipo diseñó**; no hay que fabricar 53 páginas. La ejecución queda condicionada a corregir las incompatibilidades de 14.3 y construir los módulos especializados según prioridades académicas, permisos y casos de uso. Mantener por separado lo exigido expresamente por la consigna de Entrega II y las extensiones elegidas en la primera entrega/diseño del equipo.

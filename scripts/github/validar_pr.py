@@ -8,9 +8,11 @@ import subprocess
 
 def validar(title, branch, base, paths, board):
     if base == "main":
-        if branch != "Develop" or not re.fullmatch(r"\[ENTREGA-E0[0-7]\] .+", title):
-            raise ValueError("main recibe entregas desde Develop: [ENTREGA-E00] descripción")
+        if branch != "develop" or not re.fullmatch(r"\[ENTREGA-E0[0-7]\] .+", title):
+            raise ValueError("main recibe entregas desde develop: [ENTREGA-E00] descripción")
         return
+    if title == "[INTEGRACION-INICIAL] Consolidar frontend y documentación" and branch == "Frontend":
+        return  # Consolidación inicial autorizada; sigue exigiendo revisión humana.
     if title.startswith("[CONFIG-GITHUB] "):
         if not paths or any(not (p.startswith((".github/", "scripts/github/")) or p in {"docs/FLUJO_GITHUB.md", "AGENTS.md"}) for p in paths):
             raise ValueError("CONFIG-GITHUB solo permite configuración del flujo y guía de agentes")

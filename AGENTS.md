@@ -21,7 +21,7 @@ Consigna: `Proyecto final bases II (1) (5).pdf`, resumida en plan/01 para no dep
 
 ## Dos integrantes
 
-- P1 inicialmente Daniel, P2 compañero; IDs `EXX-PX-NN` permanentes. El otro integrante revisa.
+- P1 Daniel (JDaniC), P2 David (Davidix888); IDs `EXX-PX-NN` permanentes. El otro integrante revisa.
 - Estado único en `plan/06_TABLERO.md`: PENDIENTE, EN_CURSO, EN_REVISION, HECHA, BLOQUEADA.
 - Respetar dependencias y puertas; bloqueo permite avanzar trabajo independiente, no simular aprobación.
 - P1 integra dominio/puertos/OpenAPI/composición; P2 integra ServiceContext/configuración UI/arnés. Coordinar archivos comunes antes de editar simultáneamente.
@@ -53,3 +53,7 @@ Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PAS
 - Verificar que institución y permisos procedan de token verificado y cuenta local; nunca confiar en actor, rol o institución enviados por la UI. Dominio y aplicación sin dependencias de HTTP, SDK o motores.
 - Señalar pérdida de historia, escrituras parciales o carreras de saldo/stock. Comandos deben preservar atomicidad por motor, idempotencia y versiones; archivar impide nuevas atenciones pero permite finalizar anteriores con autorización.
 - Exigir migraciones para volúmenes existentes cuando cambien inicializadores. Distinguir pruebas reales, offline y simuladas; no aceptar que un éxito de mocks acredite persistencia ni que se eliminen datos para conseguir pruebas verdes.
+
+## Ramas y documentación vigentes
+
+Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se eliminan al integrar. El plan/ es la fuente de ejecución; Agente/DISENO_VISUAL.md conserva la referencia visual v1.1. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.

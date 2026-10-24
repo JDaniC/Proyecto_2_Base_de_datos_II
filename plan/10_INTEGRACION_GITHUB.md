@@ -7,21 +7,21 @@ Solo lógica de GitHub: tarea → rama → PR → revisión → merge. No requie
 ## 2. Protocolo para ambos integrantes
 
 1. Leer el ID y dependencias en el tablero; reservar tarea EN_CURSO. P1 JDaniC; P2 Davidix888.
-2. Desde Develop actualizado crear `codex/e00-p1-01-descripcion` (usar el ID propio). La rama se crea al comenzar la tarea, no automáticamente al terminarla. Un bot revisor no crea tareas ni implementaciones por sí solo.
+2. Desde develop actualizado crear `codex/e00-p1-01-descripcion` (usar el ID propio). La rama se crea al comenzar la tarea, no automáticamente al terminarla. Un bot revisor no crea tareas ni implementaciones por sí solo.
 3. Implementar con evidencia de éxito, fallo y excepción; mantener archivos comunes bajo el responsable acordado.
-4. Abrir PR a Develop con título `[E00-P1-01] descripción`, alcance y evidencia; pasar a EN_REVISION.
+4. Abrir PR a develop con título `[E00-P1-01] descripción`, alcance y evidencia; pasar a EN_REVISION.
 5. Esperar `contrato-pr`, la revisión nativa de Codex y la aprobación del compañero. Verificar que Codex revisó el commit actual; si hace falta comentar `@codex review`.
 6. Resolver observaciones con código o evidencia, actualizar rama ante conflictos y repetir pruebas afectadas. El verde del contrato solo acredita el formato/ID/destino, no corrección funcional.
 7. El compañero autoriza integración mediante revisión; squash merge o auto-merge por PR espera requisitos de GitHub. Codex no decide por sí solo el cierre humano. Después verificar integración y actualizar HECHA con evidencia real.
-8. Por fase, cerrar su demostración; para entrega final usar PR Develop → main `[ENTREGA-E07] Entrega final`.
+8. Por fase, cerrar su demostración; para entrega final usar PR develop → main `[ENTREGA-E07] Entrega final`.
 
 ## 3. Protecciones y límites
 
-Develop y main requieren PR, una aprobación vigente del otro integrante, revisión de propietarios cuando aplique, conversaciones resueltas y contrato-pr verde con rama actualizada; se impiden force push y eliminación. CODEOWNERS identifica a JDaniC y Davidix888. La invitación del segundo debe estar aceptada para que pueda aprobar.
+develop y main requieren PR, una aprobación vigente del otro integrante, revisión de propietarios cuando aplique, conversaciones resueltas y contrato-pr verde con rama actualizada; se impiden force push y eliminación. CODEOWNERS identifica a JDaniC y Davidix888. La invitación del segundo debe estar aceptada para que pueda aprobar.
 
 La revisión de Codex se configura en la cuenta, no con una API key del repositorio. El usuario confirmó haber activado la configuración. La prueba de funcionamiento es una respuesta del bot en el PR; activar el ajuste no prueba retrospectivamente una revisión. El flujo actual no implementa un check adicional que obligue técnicamente a que Codex haya terminado: el compañero verifica ese paso. No interpretar ausencia de hallazgos como autorización para fusionar.
 
-Para importar el plan local usar `[PLAN] descripción`; el validador limita esa excepción a plan/ y AGENTS. Conservar la guía completa local al reconciliarla con las Code Review Rules del PR inicial. La planificación local aún no acredita que esos archivos existan en Develop.
+Para importar el plan local usar `[PLAN] descripción`; el validador limita esa excepción a plan/ y AGENTS. Conservar la guía completa local al reconciliarla con las Code Review Rules del PR inicial. La consolidación inicial incorpora el plan; verificar que su PR esté fusionado antes de iniciar tareas.
 
 ## 4. Revisores recomendados
 

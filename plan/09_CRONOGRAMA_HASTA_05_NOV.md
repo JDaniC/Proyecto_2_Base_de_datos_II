@@ -24,9 +24,9 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 | 31/10 | E04 dental, hospitalización → coberturas | E04 responsables → vacunas → UI tras módulos | Tres instituciones demostrables |
 | 01/11 | E05-P1-01 → E05-P1-03 | E05-P2-01/02 después de órdenes | Órdenes, muestras, resultados e inventario |
 | 02/11 | E05-P1-02 después de resultados; cerrar cobros | E05-P2-03 después de informes/cobros/inventario | Laboratorio completo; congelar funciones nuevas |
-| 03/11 | E06 seguridad, restauración y equivalencia | E06 integración UI, regresiones y auditoría final | Candidato integrado en Develop; sin defectos críticos/altos ni pruebas requeridas bloqueadas |
+| 03/11 | E06 seguridad, restauración y equivalencia | E06 integración UI, regresiones y auditoría final | Candidato integrado en develop; sin defectos críticos/altos ni pruebas requeridas bloqueadas |
 | 04/11 | E07 comparativo; instalación después de manuales/trazabilidad | E07 trazabilidad y manuales | Ambos reproducen instalación; candidato de entrega |
-| 05/11 | E07 ensayo final después de instalación | E07 checklist después del ensayo | PR Develop → main aprobado; etiqueta de versión y paquete de entrega |
+| 05/11 | E07 ensayo final después de instalación | E07 checklist después del ensayo | PR develop → main aprobado; etiqueta de versión y paquete de entrega |
 
 Las secuencias con flechas son obligatorias. Si una dependencia no está revisada, solo se preparan fixtures/documentación independientes; no se integra una tarea dependiente como terminada. Una fecha no sustituye una puerta.
 
@@ -96,9 +96,9 @@ Límite de trabajo simultáneo: una tarea en implementación y como máximo un P
 
 ## 5. Éxito, fallo y excepción del proceso
 
-Éxito: dependencia cerrada → rama desde Develop → implementación y evidencia → PR con ID → contrato-pr verde → revisión de Codex → revisión del compañero → squash merge → comprobación integrada → cierre humano del tablero.
+Éxito: dependencia cerrada → rama desde develop → implementación y evidencia → PR con ID → contrato-pr verde → revisión de Codex → revisión del compañero → squash merge → comprobación integrada → cierre humano del tablero.
 
-Fallo del contrato: corregir título/rama/ID o destino. Conflicto: actualizar desde Develop, resolver con el dueño del archivo y repetir comprobaciones afectadas. Hallazgo de Codex: reproducir, corregir o responder con evidencia; solicitar revisión del commit nuevo. Codex no disponible: registrar bloqueo de revisión y reintentar; una excepción humana explícita debe quedar documentada, no simular respuesta del bot.
+Fallo del contrato: corregir título/rama/ID o destino. Conflicto: actualizar desde develop, resolver con el dueño del archivo y repetir comprobaciones afectadas. Hallazgo de Codex: reproducir, corregir o responder con evidencia; solicitar revisión del commit nuevo. Codex no disponible: registrar bloqueo de revisión y reintentar; una excepción humana explícita debe quedar documentada, no simular respuesta del bot.
 
 Prueba funcional fallida: mantener tarea EN_CURSO/BLOQUEADA según causa aunque contrato-pr esté verde. Los fallos históricos MySQL/MongoDB en Actions no quedan resueltos al retirar ese workflow del alcance; E00 debe verificar el entorno elegido. No hay pruebas de motores automatizadas en el flujo mínimo de GitHub.
 
@@ -106,4 +106,4 @@ Retraso mayor de media jornada en ruta crítica: reunión de 20 minutos, identif
 
 ## 6. Entrega final
 
-El 03/11 se congela alcance funcional. El 04/11 probar clon limpio y datos sintéticos desde otro equipo, con cuatro motores y sin fallback a mocks. El 05/11 revisar manuales, comparativo, trazabilidad docente y demostración; abrir PR de entrega desde Develop a main. Solo tras aprobación y comprobaciones aplicables crear la etiqueta de la versión y conservar evidencia asociada al commit. El bot no publica la entrega académica ni marca tareas HECHA.
+El 03/11 se congela alcance funcional. El 04/11 probar clon limpio y datos sintéticos desde otro equipo, con cuatro motores y sin fallback a mocks. El 05/11 revisar manuales, comparativo, trazabilidad docente y demostración; abrir PR de entrega desde develop a main. Solo tras aprobación y comprobaciones aplicables crear la etiqueta de la versión y conservar evidencia asociada al commit. El bot no publica la entrega académica ni marca tareas HECHA.
