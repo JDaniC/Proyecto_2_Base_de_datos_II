@@ -88,7 +88,7 @@ Conservar IDs y orden de los archivos originales. La ventana corresponde a la fa
 ## 4. Rutina de integración (horarios propuestos)
 
 - 09:00: quince minutos para dependencias, bloqueos y archivos compartidos; reservar una tarea por persona.
-- 13:00: primera ventana de revisión cruzada. Revisar primero PR que desbloquea al compañero.
+- 13:00: primera ventana para atender la revisión de Codex. Revisar primero PR que desbloquea al compañero.
 - 18:00: segunda revisión; atender hallazgos del bot y ejecutar evidencia decisiva.
 - 19:00: integrar PR aprobados; actualizar tablero y probar el flujo conjunto del día. Estos horarios se pueden mover manteniendo dos ventanas.
 
@@ -96,7 +96,7 @@ Límite de trabajo simultáneo: una tarea en implementación y como máximo un P
 
 ## 5. Éxito, fallo y excepción del proceso
 
-Éxito: dependencia cerrada → rama desde develop → implementación y evidencia → PR con ID → contrato-pr verde → revisión de Codex → revisión del compañero → squash merge → comprobación integrada → cierre humano del tablero.
+Éxito: dependencia cerrada → rama desde develop → implementación y evidencia → PR con ID → contrato-pr verde → revisión de Codex → validación del responsable → squash merge → comprobación integrada → cierre humano del tablero.
 
 Fallo del contrato: corregir título/rama/ID o destino. Conflicto: actualizar desde develop, resolver con el dueño del archivo y repetir comprobaciones afectadas. Hallazgo de Codex: reproducir, corregir o responder con evidencia; solicitar revisión del commit nuevo. Codex no disponible: registrar bloqueo de revisión y reintentar; una excepción humana explícita debe quedar documentada, no simular respuesta del bot.
 
@@ -106,4 +106,4 @@ Retraso mayor de media jornada en ruta crítica: reunión de 20 minutos, identif
 
 ## 6. Entrega final
 
-El 03/11 se congela alcance funcional. El 04/11 probar clon limpio y datos sintéticos desde otro equipo, con cuatro motores y sin fallback a mocks. El 05/11 revisar manuales, comparativo, trazabilidad docente y demostración; abrir PR de entrega desde develop a main. Solo tras aprobación y comprobaciones aplicables crear la etiqueta de la versión y conservar evidencia asociada al commit. El bot no publica la entrega académica ni marca tareas HECHA.
+El 03/11 se congela alcance funcional. El 04/11 probar clon limpio y datos sintéticos desde otro equipo, con cuatro motores y sin fallback a mocks. El 05/11 revisar manuales, comparativo, trazabilidad docente y demostración; abrir PR de entrega desde develop a main. Solo tras revisión automática y comprobaciones aplicables crear la etiqueta de la versión y conservar evidencia asociada al commit. El bot no publica la entrega académica ni marca tareas HECHA.

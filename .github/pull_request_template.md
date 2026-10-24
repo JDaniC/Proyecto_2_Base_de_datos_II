@@ -10,8 +10,8 @@ Distinguir motor real, emulador y mock. Indicar bloqueos y requisitos pendientes
 
 ## Revisión
 - [ ] Se revisaron los hallazgos de Codex sobre la versión actual.
-- [ ] El compañero revisó criterios, alcance y evidencia.
+- [ ] El responsable verificó criterios, alcance y evidencia.
 - [ ] No hay secretos ni datos clínicos reales.
-- [ ] El tablero refleja el estado real; HECHA requiere cierre y revisión humana.
+- [ ] El tablero refleja el estado real; HECHA requiere cierre con evidencia verificada por el responsable.
 
-P1 JDaniC → revisión P2 Davidix888; P2 → revisión P1.
+Revisión automática: Codex. La participación del compañero es opcional.

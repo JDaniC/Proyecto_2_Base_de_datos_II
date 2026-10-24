@@ -12,7 +12,7 @@ La [base de alcance](01_ALCANCE_Y_DECISIONES.md) resume la consigna suministrada
 
 - **P1: Daniel**, asignación inicial intercambiable. Lidera dominio común, API, SQL y hospital/odontología; también toma informes y cobros de laboratorio para repartir carga.
 - **P2: David (Davidix888)**. Lidera infraestructura de pruebas, MongoDB/Firestore, integración React y procesos pediátricos; toma resultados e inventario de laboratorio.
-- Cada tarea tiene un único ejecutor y el otro integrante es revisor. Ambos pueden usar sus agentes, pero una tarea tiene una sola rama y un responsable humano.
+- Cada tarea tiene un único ejecutor y Codex revisa el PR; la revisión del compañero es opcional. Ambos pueden usar sus agentes, pero una tarea tiene una sola rama y un responsable humano.
 - Los IDs `E03-P2-02`, por ejemplo, indican fase 03, persona 2 y tarea 02. Son permanentes aunque cambie la persona. Las tareas se leen en orden numérico dentro del archivo de cada integrante.
 
 ## 3. Entregas y puertas de cierre
@@ -45,7 +45,7 @@ Si un entorno sigue bloqueado, avanzar tareas no dependientes y documentar el bl
 3. Crear una rama `codex/eXX-pX-NN-descripcion` desde la integración acordada, si se trabaja con ramas. Mantener cambios ajenos intactos.
 4. Implementar el alcance de la tarea y sus pruebas de éxito, rechazo y excepciones. Ejecutar con datos sintéticos y motores aislados.
 5. Guardar evidencia y actualizar la fila del tablero a `EN_REVISION`, con commit/rama, resultados y limitaciones. Usar [la plantilla](plantillas/CIERRE_TAREA.md).
-6. El otro integrante verifica el diff y reproduce los casos decisivos. Solo entonces marcar `HECHA`.
+6. Codex revisa el PR y el responsable verifica criterios y reproduce los casos decisivos. Solo entonces marcar `HECHA`; el compañero puede revisar de forma opcional.
 7. Al cerrar las seis tareas de la fase, ejecutar su demostración integrada y llenar [CIERRE_ENTREGA](plantillas/CIERRE_ENTREGA.md). Una prueba fallida devuelve la tarea al responsable; no se oculta cambiando el criterio.
 
 ## 6. Reglas para impedir retrabajo

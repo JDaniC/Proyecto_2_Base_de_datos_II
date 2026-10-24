@@ -2,7 +2,7 @@
 
 ## 1. Responsables y ramas
 
-P1: **JDaniC**. P2: **Davidix888**. El compañero aprueba el PR; Codex aporta revisión adicional. develop es la rama de integración (respetar mayúscula); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
+P1: **JDaniC**. P2: **Davidix888**. Codex revisa automáticamente el PR; la revisión del compañero es opcional. develop es la rama de integración (en minúsculas); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
 
 Antes de empezar, integrar el plan ya preparado mediante un PR documental `[PLAN] Integrar planificación`. No publicar cambios ajenos ni todo el directorio de trabajo por accidente. El validador rechaza tareas que todavía no estén en plan/06_TABLERO.md.
 
@@ -31,15 +31,15 @@ Documentación: https://developers.openai.com/codex/integrations/github
 
 CI ejecuta únicamente contrato-pr: valida identificador, rama, destino y las excepciones documentales. Este flujo no instala MCP ni levanta bases de datos. Las pruebas funcionales y compilaciones de cada tarea se adjuntan como evidencia y las verifica el compañero; no se certifican automáticamente con este check.
 
-Protecciones previstas: PR obligatorio, una aprobación del compañero, descartar aprobaciones tras nuevos commits, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. Codex no es por sí solo un estado obligatorio de CI: el revisor humano debe revisar sus resultados; no hay un bloqueo automático que certifique que Codex terminó.
+Protecciones previstas: PR obligatorio, cero aprobaciones humanas obligatorias, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. Codex no es por sí solo un estado obligatorio de CI: el responsable debe comprobar sus resultados; no hay un bloqueo automático que certifique que Codex terminó.
 
 Si CI falla, corregir o documentar un bloqueo real; no desactivar la comprobación. Si Codex encuentra un error, corregir y volver a revisar. Desacuerdos se resuelven con evidencia en el PR. No marcar HECHA automáticamente al fusionar: verificar criterios y cierre humano en el tablero.
 
-Tras la aprobación usar Squash and merge o habilitar auto-merge para ese PR. Auto-merge espera las reglas de GitHub; no genera código ni resuelve hallazgos por sí mismo. Para una entrega abrir PR desde develop a main con título `[ENTREGA-E00] descripción` y evidencia de la fase.
+Tras completar la revisión automática y comprobar su resultado, usar Squash and merge o habilitar auto-merge para ese PR. Auto-merge espera las reglas de GitHub; no genera código ni resuelve hallazgos por sí mismo. Para una entrega abrir PR desde develop a main con título `[ENTREGA-E00] descripción` y evidencia de la fase.
 
 ## 5. Excepciones limitadas
 
-`[CONFIG-GITHUB] descripción` solo admite .github/, scripts/github/, docs/FLUJO_GITHUB.md y AGENTS.md. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan pruebas y revisión humana. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
+`[CONFIG-GITHUB] descripción` solo admite .github/, scripts/github/, docs/FLUJO_GITHUB.md y AGENTS.md. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan el check y la revisión automática. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
 
 ## 6. Activación y diagnóstico
 
@@ -47,4 +47,4 @@ La configuración versionada entra en develop al aprobar y fusionar el PR inicia
 
 ## Consolidación inicial
 
-El PR `[INTEGRACION-INICIAL] Consolidar frontend y documentación` desde Frontend admite importar el trabajo existente antes de comenzar las tareas. Esta excepción conserva la aprobación humana y el check. Al fusionar, eliminar Frontend y las ramas antiguas; quedan main y develop como ramas permanentes. Las ramas nuevas de tareas serán temporales.
+El PR `[INTEGRACION-INICIAL] Consolidar frontend y documentación` desde Frontend admite importar el trabajo existente antes de comenzar las tareas. Esta excepción conserva el check; no exige aprobación humana. Al fusionar, eliminar Frontend y las ramas antiguas; quedan main y develop como ramas permanentes. Las ramas nuevas de tareas serán temporales.

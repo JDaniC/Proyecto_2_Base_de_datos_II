@@ -21,7 +21,7 @@ Consigna: `Proyecto final bases II (1) (5).pdf`, resumida en plan/01 para no dep
 
 ## Dos integrantes
 
-- P1 Daniel (JDaniC), P2 David (Davidix888); IDs `EXX-PX-NN` permanentes. El otro integrante revisa.
+- P1 Daniel (JDaniC), P2 David (Davidix888); IDs `EXX-PX-NN` permanentes. La revisión de PR es automática con Codex; la revisión del compañero es opcional.
 - Estado único en `plan/06_TABLERO.md`: PENDIENTE, EN_CURSO, EN_REVISION, HECHA, BLOQUEADA.
 - Respetar dependencias y puertas; bloqueo permite avanzar trabajo independiente, no simular aprobación.
 - P1 integra dominio/puertos/OpenAPI/composición; P2 integra ServiceContext/configuración UI/arnés. Coordinar archivos comunes antes de editar simultáneamente.
@@ -57,3 +57,7 @@ Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PAS
 ## Ramas y documentación vigentes
 
 Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se eliminan al integrar. El plan/ es la fuente de ejecución; Agente/DISENO_VISUAL.md conserva la referencia visual v1.1. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.
+
+## Política de integración vigente
+
+Por decisión humana del 24/10/2026 no se requieren aprobaciones del compañero para fusionar. Codex es el revisor automático. El responsable valida pruebas y criterios y registra cierre real; puede solicitar revisión cruzada opcional. Esta política sustituye cualquier referencia anterior a revisión humana obligatoria.

@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige revisión del otro integrante.
+Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere revisión automática de Codex.
 
 | ID | Responsable | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|
