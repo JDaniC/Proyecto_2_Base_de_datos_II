@@ -1,12 +1,12 @@
+import { Alert } from '../../design-system/components/Alert';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BedDouble,
+  Wrench,  BedDouble,
   Search,
   Filter,
   CheckCircle2,
-  Wrench,
-  User,
   ArrowRightLeft,
   LogOut,
   Building2,
@@ -17,6 +17,7 @@ import {
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import { Panel } from '../../design-system/components/Panel';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
@@ -55,6 +56,7 @@ export const HospitalBedsMapPage: React.FC = () => {
 
   // Notificación de éxito
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -114,20 +116,6 @@ export const HospitalBedsMapPage: React.FC = () => {
     habitacionesMap.get(key)!.push(cama);
   });
 
-  const handleToggleMantenimiento = async (cama: CamaHospitalaria) => {
-    const nuevoEstado: EstadoCama = cama.estado === 'MANTENIMIENTO' ? 'DISPONIBLE' : 'MANTENIMIENTO';
-    try {
-      await hospitalizationRepository.cambiarEstadoCama(institucionId, cama.id, nuevoEstado);
-      const camasActualizadas = await hospitalizationRepository.listarCamas(institucionId);
-      setCamas(camasActualizadas);
-      setMensajeExito(
-        `Cama ${cama.codigoCama} actualizada a estado ${nuevoEstado === 'DISPONIBLE' ? 'DISPONIBLE' : 'EN MANTENIMIENTO'}.`
-      );
-      setTimeout(() => setMensajeExito(null), 3500);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al cambiar estado de cama');
-    }
-  };
 
   const handleAbrirTraslado = (cama: CamaHospitalaria) => {
     const hosp = hospitalizaciones.find((h) => h.id === cama.hospitalizacionActivaId);
@@ -140,7 +128,7 @@ export const HospitalBedsMapPage: React.FC = () => {
   const handleConfirmarTraslado = async (nuevaCamaId: string, fechaInicio: string, motivo: string) => {
     if (!hospParaTraslado) return;
     await hospitalizationRepository.asignarCama(institucionId, hospParaTraslado.id, nuevaCamaId, fechaInicio, motivo);
-    setMensajeExito('Traslado de cama registrado exitosamente bajo intervalo semiabierto [inicio, fin) (CA17).');
+    setMensajeExito('Traslado de cama registrado correctamente.');
     await cargarDatos();
     setModalTrasladoAbierto(false);
     setTimeout(() => setMensajeExito(null), 3500);
@@ -172,34 +160,17 @@ export const HospitalBedsMapPage: React.FC = () => {
         <span style={{ margin: '0 8px' }}>/</span>
         <span>Hospitalización</span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Habitaciones y Camas (H03)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Habitaciones y Camas</strong>
       </nav>
 
       {/* Banner de éxito */}
-      {mensajeExito && (
-        <div
-          role="status"
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#ecfdf5',
-            border: '1px solid #10b981',
-            borderRadius: 'var(--radius-panel)',
-            color: '#065f46',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontSize: '14px'
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>{mensajeExito}</span>
-        </div>
-      )}
+      {errorAccion && <Alert variant="danger" title="No se pudo actualizar la cama." onClose={() => setErrorAccion(null)}>{errorAccion}</Alert>}
+      {mensajeExito && <Alert variant="success" onClose={() => setMensajeExito(null)}>{mensajeExito}</Alert>}
 
       {/* Cabecera Principal H03 */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px',
@@ -227,13 +198,11 @@ export const HospitalBedsMapPage: React.FC = () => {
               <BedDouble size={20} />
             </div>
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              Habitaciones, Camas y Ocupación (H03)
+              Habitaciones, Camas y Ocupación
             </h1>
-            <Badge variant="primary">{sesion?.institucionNombre || 'Hospital General'}</Badge>
           </div>
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '780px', lineHeight: 1.5 }}>
-            Distribución física y operativa de camas por habitación y sala de internamiento. Asignación y traslados
-            auditados bajo semántica de intervalo semiabierto `[inicio, fin)` sin solapamiento temporal (`CA17`).
+            Camas por habitación y unidad de internamiento. Consulta disponibilidad, asigna, traslada o libera camas.
           </p>
         </div>
 
@@ -243,128 +212,27 @@ export const HospitalBedsMapPage: React.FC = () => {
             onClick={() => navigate('/hospital/hospitalizaciones')}
             leftIcon={<BedDouble size={16} />}
           >
-            Hospitalizaciones (H01)
+            Hospitalizaciones
           </Button>
           <Button
             variant="primary"
             onClick={() => navigate('/hospital/hospitalizaciones/nueva')}
             leftIcon={<Plus size={16} />}
           >
-            Nuevo Ingreso (H02)
+            Nuevo Ingreso
           </Button>
         </div>
       </div>
 
-      {/* Tarjetas de Resumen / KPIs de Camas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-selection)',
-                color: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Building2 size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Total de Camas
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                {totalCamas}
-              </div>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#dc2626',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <User size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Camas Ocupadas
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                {ocupadas} <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>({porcentajeOcupacion}%)</span>
-              </div>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Camas Disponibles
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: '#059669' }}>
-                {disponibles}
-              </div>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                color: '#d97706',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Wrench size={20} />
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                En Mantenimiento
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: '#d97706' }}>
-                {mantenimiento}
-              </div>
-            </div>
-          </div>
-        </Panel>
-      </div>
+      <MetricStrip
+        label="Resumen de camas"
+        items={[
+          { id: 'total', label: 'Total de camas', value: totalCamas },
+          { id: 'ocupadas', label: 'Ocupadas', value: ocupadas, detail: `${porcentajeOcupacion}% del total` },
+          { id: 'disponibles', label: 'Disponibles', value: disponibles, tone: 'success' },
+          { id: 'mantenimiento', label: 'En mantenimiento', value: mantenimiento, tone: 'warning' },
+        ]}
+      />
 
       {/* Controles de Búsqueda y Filtros */}
       <Panel>
@@ -395,7 +263,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                   width: '100%',
                   padding: '9px 12px 9px 36px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -413,7 +281,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                 style={{
                   padding: '8px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
@@ -438,7 +306,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                 style={{
                   padding: '8px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
@@ -467,8 +335,8 @@ export const HospitalBedsMapPage: React.FC = () => {
                   borderRadius: '16px',
                   border: '1px solid',
                   borderColor: filtroEstado === est ? 'var(--color-primary)' : 'var(--color-border)',
-                  backgroundColor: filtroEstado === est ? 'var(--color-selection)' : 'var(--color-surface)',
-                  color: filtroEstado === est ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                  backgroundColor: filtroEstado === est ? 'var(--color-selection)' : 'var(--color-background)',
+                  color: filtroEstado === est ? 'var(--color-primary)' : 'var(--color-strong)',
                   fontSize: '12px',
                   fontWeight: filtroEstado === est ? 700 : 500,
                   cursor: 'pointer'
@@ -551,7 +419,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                             : cama.estado === 'MANTENIMIENTO'
                             ? '#f59e0b'
                             : 'var(--color-border)',
-                        borderRadius: 'var(--radius-field)',
+                        borderRadius: 'var(--radius-input)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
@@ -572,7 +440,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                                 : 'warning'
                             }
                           >
-                            {cama.estado}
+                            {getDisplayLabel(cama.estado)}
                           </Badge>
                         </div>
 
@@ -642,29 +510,11 @@ export const HospitalBedsMapPage: React.FC = () => {
                             >
                               Asignar Ingreso
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              aria-label={`Mantenimiento cama ${cama.codigoCama}`}
-                              onClick={() => handleToggleMantenimiento(cama)}
-                              leftIcon={<Wrench size={13} />}
-                            >
-                              Mantenimiento
-                            </Button>
+
                           </>
                         )}
 
-                        {cama.estado === 'MANTENIMIENTO' && (
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            aria-label={`Habilitar cama ${cama.codigoCama}`}
-                            onClick={() => handleToggleMantenimiento(cama)}
-                            leftIcon={<CheckCircle2 size={13} />}
-                          >
-                            Habilitar Cama
-                          </Button>
-                        )}
+
                       </div>
                     </div>
                   ))}
@@ -691,7 +541,7 @@ export const HospitalBedsMapPage: React.FC = () => {
         <Modal
           isOpen={modalLiberarAbierto}
           onClose={() => setModalLiberarAbierto(false)}
-          title="Liberar Cama Hospitalaria (H04)"
+          title="Liberar Cama Hospitalaria"
           maxWidth="480px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -705,7 +555,7 @@ export const HospitalBedsMapPage: React.FC = () => {
                 padding: '10px 12px',
                 backgroundColor: 'var(--color-selection)',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '12px',
                 color: 'var(--color-text-secondary)',
                 display: 'flex',
@@ -715,7 +565,7 @@ export const HospitalBedsMapPage: React.FC = () => {
             >
               <ShieldCheck size={16} color="var(--color-primary)" />
               <span>
-                La cama quedará en estado DISPONIBLE y la asignación registrará la fecha/hora de término semiabierta (CA17).
+                La cama quedará en estado DISPONIBLE y la asignación registrará la fecha/hora de término semiabierta.
               </span>
             </div>
 

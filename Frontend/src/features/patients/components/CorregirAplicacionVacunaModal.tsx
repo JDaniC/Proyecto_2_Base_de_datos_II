@@ -1,5 +1,7 @@
+import { Modal } from '../../../design-system/components/Modal';
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState } from 'react';
-import { X, History, AlertCircle, AlertTriangle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useServices } from '../../../app/ServiceContext';
 import { useAuthSession } from '../../../app/AuthSessionContext';
 import { Button } from '../../../design-system/components/Button';
@@ -77,7 +79,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
       await onActualizado();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al guardar la revisión auditada.';
+      const msg = getErrorMessage(err, 'Error al guardar la revisión auditada.');
       setErrorMsg(msg);
     } finally {
       setGuardando(false);
@@ -85,38 +87,8 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
-        {/* Cabecera */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {esAnulacion ? (
-              <AlertTriangle className="text-red-600" size={20} />
-            ) : (
-              <History className="text-[#20666B]" size={20} />
-            )}
-            <div>
-              <h3 className="font-semibold text-slate-800 text-sm">
-                {esAnulacion
-                  ? 'Anular Registro de Vacunación (P07)'
-                  : `Corregir Registro de Vacunación (P07, versión v${aplicacion.versionRegistro + 1})`}
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                {aplicacion.nombreVacuna} — {aplicacion.etiquetaDosis} (Fecha: {aplicacion.fechaAplicacion})
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+    <Modal isOpen={isOpen} onClose={onClose} title={esAnulacion ? 'Anular registro de vacunación' : 'Corregir aplicación de vacuna'} description={`${aplicacion.nombreVacuna} · ${aplicacion.etiquetaDosis}`} maxWidth="520px">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
               <AlertCircle size={16} className="flex-shrink-0" />
@@ -173,7 +145,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
                 </label>
                 <textarea
                   rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#20666B] focus:border-[#20666B] outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-clinic-primary focus:border-clinic-primary outline-none"
                   value={observaciones}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setObservaciones(e.target.value)}
                 />
@@ -187,7 +159,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
             </label>
             <textarea
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#20666B] focus:border-[#20666B] outline-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-clinic-primary focus:border-clinic-primary outline-none"
               placeholder="ej. Enmienda de número de lote por error tipográfico de transcripción..."
               value={motivo}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMotivo(e.target.value)}
@@ -209,13 +181,12 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
               type="submit"
               variant={esAnulacion ? 'danger' : 'primary'}
               loading={guardando}
-              className={esAnulacion ? '' : 'bg-[#20666B] text-white'}
+              className={esAnulacion ? '' : 'bg-clinic-primary text-white'}
             >
               {esAnulacion ? 'Confirmar Anulación' : 'Guardar Revisión v' + (aplicacion.versionRegistro + 1)}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

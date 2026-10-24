@@ -1,3 +1,6 @@
+import { getDisplayLabel } from '../../../services/displayLabels';
+import { Modal } from '../../../design-system/components/Modal';
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState } from 'react';
 import {
   AlertTriangle,
@@ -9,8 +12,7 @@ import {
   Edit2,
   HeartPulse,
   Activity,
-  Pill,
-  Sparkles
+  Pill
 } from 'lucide-react';
 import { useAuthSession } from '../../../app/AuthSessionContext';
 import { useServices } from '../../../app/ServiceContext';
@@ -48,6 +50,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const [modalPerinatalesAbierto, setModalPerinatalesAbierto] = useState(false);
   const [procesando, setProcesando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [alergiaParaEliminar, setAlergiaParaEliminar] = useState<string | null>(null);
 
   // Formulario de nueva alergia
   const [sustancia, setSustancia] = useState('');
@@ -95,7 +98,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       }
       await onActualizar();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al confirmar ausencia de alergias.';
+      const msg = getErrorMessage(err, 'Error al confirmar ausencia de alergias.');
       setErrorAccion(msg);
     } finally {
       setProcesando(false);
@@ -135,7 +138,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setModalAlergiaAbierto(false);
       await onActualizar();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al registrar la alergia.';
+      const msg = getErrorMessage(err, 'Error al registrar la alergia.');
       setErrorAccion(msg);
     } finally {
       setProcesando(false);
@@ -144,9 +147,6 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
 
   // Manejador: Eliminar Alergia
   const handleEliminarAlergia = async (sustanciaEliminar: string) => {
-    if (!window.confirm(`¿Confirma eliminar el registro de alergia a "${sustanciaEliminar}"?`)) {
-      return;
-    }
     try {
       setProcesando(true);
       setErrorAccion(null);
@@ -154,8 +154,9 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
         await patientRepository.eliminarAlergia(institucionId, paciente.id, sustanciaEliminar);
       }
       await onActualizar();
+      setAlergiaParaEliminar(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al eliminar la alergia.';
+      const msg = getErrorMessage(err, 'Error al eliminar la alergia.');
       setErrorAccion(msg);
     } finally {
       setProcesando(false);
@@ -185,7 +186,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setModalPerinatalesAbierto(false);
       await onActualizar();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al actualizar antecedentes perinatales.';
+      const msg = getErrorMessage(err, 'Error al actualizar antecedentes perinatales.');
       setErrorAccion(msg);
     } finally {
       setProcesando(false);
@@ -213,8 +214,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           {paciente.estadoAlergias === 'SIN_VERIFICAR' && (
             <div
               style={{
-                backgroundColor: '#FEF3C7',
-                border: '1px solid #FDE68A',
+                backgroundColor: 'var(--color-warning-bg)',
+                border: '1px solid var(--color-warning-border)',
                 borderRadius: '8px',
                 padding: '16px',
                 display: 'flex',
@@ -222,13 +223,12 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 gap: '12px'
               }}
             >
-              <AlertTriangle size={24} color="#D97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <AlertTriangle size={24} color="var(--color-warning-text)" style={{ flexShrink: 0, marginTop: '2px' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <strong style={{ color: '#92400E', fontSize: '15px' }}>
+                  <strong style={{ color: 'var(--color-warning-text)', fontSize: '15px' }}>
                     ALERTA CLÍNICA PRIORITARIA: Alergias sin verificar clínicamente
                   </strong>
-                  <Badge variant="warning">SIN_VERIFICAR</Badge>
                 </div>
                 <p style={{ margin: 0, fontSize: '13px', color: '#78350F', lineHeight: '1.4' }}>
                   El menor no cuenta con anamnesis de hipersensibilidad documentada por el pediatra tratante.
@@ -266,8 +266,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           {paciente.estadoAlergias === 'SIN_ALERGIAS_CONOCIDAS' && (
             <div
               style={{
-                backgroundColor: '#EDF5F1',
-                border: '1px solid #A3C2B8',
+                backgroundColor: 'var(--color-success-bg)',
+                border: '1px solid var(--color-success-border)',
                 borderRadius: '8px',
                 padding: '16px',
                 display: 'flex',
@@ -281,7 +281,6 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                   <strong style={{ color: '#20666B', fontSize: '15px' }}>
                     Verificado: Sin alergias conocidas documentadas
                   </strong>
-                  <Badge variant="success">SIN_ALERGIAS_CONOCIDAS</Badge>
                 </div>
                 <p style={{ margin: 0, fontSize: '13px', color: '#134E48', lineHeight: '1.4' }}>
                   Anamnesis farmacológica y alimentaria negativa para hipersensibilidad o anafilaxia.
@@ -315,8 +314,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           {paciente.estadoAlergias === 'CON_ALERGIAS' && (
             <div
               style={{
-                backgroundColor: '#FEE2E2',
-                border: '1px solid #FECACA',
+                backgroundColor: 'var(--color-danger-bg)',
+                border: '1px solid var(--color-danger-border)',
                 borderRadius: '8px',
                 padding: '16px',
                 display: 'flex',
@@ -324,13 +323,12 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 gap: '12px'
               }}
             >
-              <ShieldAlert size={24} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <ShieldAlert size={24} color="var(--color-danger-text)" style={{ flexShrink: 0, marginTop: '2px' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <strong style={{ color: '#991B1B', fontSize: '15px' }}>
                     ALERTA CLÍNICA: Menor con alergias y reacciones documentadas
                   </strong>
-                  <Badge variant="danger">CON_ALERGIAS</Badge>
                 </div>
                 <p style={{ margin: 0, fontSize: '13px', color: '#7F1D1D', lineHeight: '1.4' }}>
                   Se registran sustancias con reactividad inmune. Verifique contraindicaciones cruzadas
@@ -374,7 +372,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 style={{
                   padding: '24px',
                   textAlign: 'center',
-                  backgroundColor: 'var(--color-bg-subtle)',
+                  backgroundColor: 'var(--color-background-alt)',
                   borderRadius: '6px',
                   color: 'var(--color-text-secondary)',
                   fontSize: '13px'
@@ -383,10 +381,10 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 No se registran alérgenos activos para este paciente.
               </div>
             ) : (
-              <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+                    <tr style={{ backgroundColor: 'var(--color-background-alt)', textAlign: 'left' }}>
                       <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Sustancia / Alérgeno</th>
                       <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Severidad</th>
                       <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Reacción Manifestada</th>
@@ -399,7 +397,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                         key={idx}
                         style={{
                           borderTop: '1px solid var(--color-border)',
-                          backgroundColor: idx % 2 === 0 ? '#FFFFFF' : 'var(--color-bg-subtle)'
+                          backgroundColor: idx % 2 === 0 ? '#FFFFFF' : 'var(--color-background-alt)'
                         }}
                       >
                         <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--color-strong)' }}>
@@ -415,7 +413,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                                 : 'neutral'
                             }
                           >
-                            {al.severidad}
+                            {getDisplayLabel(al.severidad)}
                           </Badge>
                         </td>
                         <td style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>
@@ -424,7 +422,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           <button
                             type="button"
-                            onClick={() => handleEliminarAlergia(al.sustancia)}
+                            onClick={() => { setErrorAccion(null); setAlergiaParaEliminar(al.sustancia); }}
                             disabled={procesando}
                             title="Eliminar alergia"
                             style={{
@@ -435,7 +433,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                               borderRadius: '4px'
                             }}
                           >
-                            <Trash2 size={15} color="#DC2626" />
+                            <Trash2 size={15} color="var(--color-danger-text)" />
                           </button>
                         </td>
                       </tr>
@@ -484,7 +482,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           <div
             style={{
               padding: '14px',
-              backgroundColor: 'var(--color-bg-subtle)',
+              backgroundColor: 'var(--color-background-alt)',
               borderRadius: '6px',
               border: '1px solid var(--color-border)'
             }}
@@ -512,7 +510,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           <div
             style={{
               padding: '14px',
-              backgroundColor: 'var(--color-bg-subtle)',
+              backgroundColor: 'var(--color-background-alt)',
               borderRadius: '6px',
               border: '1px solid var(--color-border)'
             }}
@@ -538,7 +536,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           <div
             style={{
               padding: '14px',
-              backgroundColor: 'var(--color-bg-subtle)',
+              backgroundColor: 'var(--color-background-alt)',
               borderRadius: '6px',
               border: '1px solid var(--color-border)'
             }}
@@ -562,7 +560,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           <div
             style={{
               padding: '14px',
-              backgroundColor: 'var(--color-bg-subtle)',
+              backgroundColor: 'var(--color-background-alt)',
               borderRadius: '6px',
               border: '1px solid var(--color-border)'
             }}
@@ -693,26 +691,28 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       </div>
 
       {/* MODAL 1: REGISTRAR ALERGIA */}
-      {modalAlergiaAbierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="text-[#20666B]" size={20} />
-                <h3 className="font-semibold text-slate-800 text-sm">
-                  Registrar Alergia o Hipersensibilidad Pediátrica
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalAlergiaAbierto(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={Boolean(alergiaParaEliminar)}
+        onClose={() => { if (!procesando) setAlergiaParaEliminar(null); }}
+        title="Eliminar registro de alergia"
+        footer={<>
+          <Button variant="secondary" disabled={procesando} onClick={() => setAlergiaParaEliminar(null)}>Volver</Button>
+          <Button variant="danger" loading={procesando} onClick={() => alergiaParaEliminar && handleEliminarAlergia(alergiaParaEliminar)}>Eliminar registro</Button>
+        </>}
+      >
+        {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
+        <p>Se eliminará el registro de alergia a <strong>{alergiaParaEliminar}</strong>. Confirma que el dato es incorrecto antes de continuar.</p>
+      </Modal>
 
-            <form onSubmit={handleGuardarAlergia} className="p-6 space-y-4 text-xs">
+      {modalAlergiaAbierto && (
+      <Modal
+        isOpen={modalAlergiaAbierto}
+        onClose={() => setModalAlergiaAbierto(false)}
+        title="Registrar alergia"
+        maxWidth="520px"
+      >
+        <form onSubmit={handleGuardarAlergia} className="space-y-4">
+              {errorAccion && <Alert variant="danger">{errorAccion}</Alert>}
               <Input
                 label="Sustancia, Medicamento o Alimento *"
                 placeholder="ej. Amoxicilina / Clavulanato, Proteína de vaca, Huevo"
@@ -740,7 +740,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#20666B] focus:border-[#20666B] outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-clinic-primary focus:border-clinic-primary outline-none"
                   placeholder="Describa síntomas: tiempo transcurrido desde la exposición, manifestaciones dermatológicas, respiratorias o gastrointestinales..."
                   value={reaccion}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReaccion(e.target.value)}
@@ -761,37 +761,25 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                   type="submit"
                   variant="primary"
                   loading={procesando}
-                  className="bg-[#20666B] text-white"
+                  className="bg-clinic-primary text-white"
                 >
                   Guardar Alergia
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
 
       {/* MODAL 2: EDITAR ANTECEDENTES PERINATALES */}
       {modalPerinatalesAbierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <Sparkles className="text-[#20666B]" size={20} />
-                <h3 className="font-semibold text-slate-800 text-sm">
-                  Editar Antecedentes Perinatales y de Nacimiento
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalPerinatalesAbierto(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleGuardarPerinatales} className="p-6 space-y-4 text-xs">
+      <Modal
+        isOpen={modalPerinatalesAbierto}
+        onClose={() => setModalPerinatalesAbierto(false)}
+        title="Editar antecedentes perinatales"
+        maxWidth="600px"
+      >
+        <form onSubmit={handleGuardarPerinatales} className="space-y-4">
+              {errorAccion && <Alert variant="danger">{errorAccion}</Alert>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Edad Gestacional (semanas)"
@@ -861,7 +849,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 </label>
                 <textarea
                   rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#20666B] focus:border-[#20666B] outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-clinic-primary focus:border-clinic-primary outline-none"
                   placeholder="ej. Circular simple de cordón, ictericia fisiológica sin fototerapia, etc."
                   value={complicaciones}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComplicaciones(e.target.value)}
@@ -881,14 +869,13 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                   type="submit"
                   variant="primary"
                   loading={procesando}
-                  className="bg-[#20666B] text-white"
+                  className="bg-clinic-primary text-white"
                 >
                   Guardar Cambios
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
     </div>
   );

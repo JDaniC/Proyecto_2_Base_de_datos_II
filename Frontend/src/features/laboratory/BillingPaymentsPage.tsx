@@ -1,3 +1,6 @@
+import { Alert } from '../../design-system/components/Alert';
+import { Modal } from '../../design-system/components/Modal';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
@@ -7,18 +10,14 @@ import {
   AlertTriangle,
   RefreshCw,
   FileText,
-  DollarSign,
   Receipt,
-  XCircle,
-  ArrowDownLeft,
   RotateCcw,
   ShieldCheck,
-  Eye,
-  KeyRound
+  Eye
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
-import { Panel } from '../../design-system/components/Panel';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
@@ -160,7 +159,7 @@ export const BillingPaymentsPage: React.FC = () => {
 
     if (esSobrepago) {
       setErrorPago(
-        `Regla CA14: Bloqueo de sobrepago. El monto ingresado (${formatearGTQ(
+        `El monto ingresado (${formatearGTQ(
           montoCentavosActual
         )}) supera el saldo pendiente (${formatearGTQ(saldoPendienteActual)}).`
       );
@@ -168,7 +167,7 @@ export const BillingPaymentsPage: React.FC = () => {
     }
 
     if (!idempotencyKey.trim()) {
-      setErrorPago('Se requiere una clave de idempotencia para garantizar la integridad contable.');
+      setErrorPago('No se pudo iniciar el cobro. Inténtalo de nuevo.');
       return;
     }
 
@@ -201,7 +200,7 @@ export const BillingPaymentsPage: React.FC = () => {
       setFacturaSeleccionada(null);
       await cargarDatos();
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Error inesperado al registrar el cobro.';
+      const errorMsg = getErrorMessage(err, 'Error inesperado al registrar el cobro.');
       setErrorPago(errorMsg);
     } finally {
       setProcesandoPago(false);
@@ -247,7 +246,7 @@ export const BillingPaymentsPage: React.FC = () => {
       setPagoSeleccionado(null);
       await cargarDatos();
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Error al revertir el pago.';
+      const errorMsg = getErrorMessage(err, 'Error al revertir el pago.');
       setErrorReversion(errorMsg);
     } finally {
       setProcesandoReversion(false);
@@ -291,7 +290,7 @@ export const BillingPaymentsPage: React.FC = () => {
       setFacturaSeleccionada(null);
       await cargarDatos();
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Error al anular la factura.';
+      const errorMsg = getErrorMessage(err, 'Error al anular la factura.');
       setErrorAnulacion(errorMsg);
     } finally {
       setProcesandoAnulacion(false);
@@ -352,7 +351,7 @@ export const BillingPaymentsPage: React.FC = () => {
       item.pago.codigoRecibo.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.factura.codigoFactura.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.factura.pacienteNombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.pago.idempotencyKey.toLowerCase().includes(busqueda.toLowerCase());
+      item.factura.pacienteNit.toLowerCase().includes(busqueda.toLowerCase());
     return matchBusqueda;
   });
 
@@ -388,7 +387,7 @@ export const BillingPaymentsPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#20666B]/10 rounded-lg text-[#20666B]">
+            <div className="p-2.5 bg-clinic-primary-soft rounded-lg text-clinic-primary">
               <CreditCard size={26} />
             </div>
             <div>
@@ -396,7 +395,7 @@ export const BillingPaymentsPage: React.FC = () => {
                 Cobros y Facturación de Laboratorio
               </h1>
               <p className="text-sm text-slate-600">
-                Liquidación de órdenes analíticas en unidades enteras GTQ, bloqueo de sobrepago y recibos auditados (CA14).
+                Consulta facturas y registra pagos de laboratorio.
               </p>
             </div>
           </div>
@@ -440,84 +439,15 @@ export const BillingPaymentsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tarjetas de Métricas Contables */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Panel className="bg-white border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Total Facturado
-              </p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
-                {formatearGTQ(metricas.totalFacturadoCentavos)}
-              </p>
-              <p className="text-xs text-slate-500 mt-1">
-                Órdenes activas no anuladas
-              </p>
-            </div>
-            <div className="p-3 bg-blue-50 text-blue-700 rounded-lg">
-              <DollarSign size={24} />
-            </div>
-          </div>
-        </Panel>
-
-        <Panel className="bg-white border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Total Cobrado
-              </p>
-              <p className="text-2xl font-bold text-emerald-700 mt-1">
-                {formatearGTQ(metricas.totalCobradoCentavos)}
-              </p>
-              <p className="text-xs text-emerald-600 mt-1">
-                Recaudado en caja
-              </p>
-            </div>
-            <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg">
-              <Receipt size={24} />
-            </div>
-          </div>
-        </Panel>
-
-        <Panel className="bg-white border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Saldo Pendiente
-              </p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">
-                {formatearGTQ(metricas.totalSaldoCentavos)}
-              </p>
-              <p className="text-xs text-amber-600 mt-1">
-                Por liquidar
-              </p>
-            </div>
-            <div className="p-3 bg-amber-50 text-amber-700 rounded-lg">
-              <ArrowDownLeft size={24} />
-            </div>
-          </div>
-        </Panel>
-
-        <Panel className="bg-white border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Facturas Pendientes
-              </p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
-                {metricas.pendientesCount}
-              </p>
-              <p className="text-xs text-slate-500 mt-1">
-                Con balance por cobrar
-              </p>
-            </div>
-            <div className="p-3 bg-[#20666B]/10 text-[#20666B] rounded-lg">
-              <FileText size={24} />
-            </div>
-          </div>
-        </Panel>
-      </div>
+      <MetricStrip
+        label="Resumen de cobros"
+        items={[
+          { id: 'facturado', label: 'Total facturado', value: formatearGTQ(metricas.totalFacturadoCentavos) },
+          { id: 'cobrado', label: 'Total cobrado', value: formatearGTQ(metricas.totalCobradoCentavos), tone: 'success' },
+          { id: 'saldo', label: 'Saldo pendiente', value: formatearGTQ(metricas.totalSaldoCentavos), tone: 'warning' },
+          { id: 'facturas', label: 'Facturas pendientes', value: metricas.pendientesCount },
+        ]}
+      />
 
       {/* Tabs de Navegación y Filtros */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
@@ -527,7 +457,7 @@ export const BillingPaymentsPage: React.FC = () => {
               onClick={() => setActiveTab('facturas')}
               className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors border-b-2 ${
                 activeTab === 'facturas'
-                  ? 'border-[#20666B] text-[#20666B] bg-slate-50'
+                  ? 'border-clinic-primary text-clinic-primary bg-slate-50'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -537,11 +467,11 @@ export const BillingPaymentsPage: React.FC = () => {
               onClick={() => setActiveTab('recibos')}
               className={`px-4 py-2 text-sm font-semibold rounded-t-md transition-colors border-b-2 ${
                 activeTab === 'recibos'
-                  ? 'border-[#20666B] text-[#20666B] bg-slate-50'
+                  ? 'border-clinic-primary text-clinic-primary bg-slate-50'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
-              Recibos y Auditoría de Pagos ({todosLosPagos.length})
+              Recibos ({todosLosPagos.length})
             </button>
           </div>
 
@@ -554,10 +484,10 @@ export const BillingPaymentsPage: React.FC = () => {
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder={
                   activeTab === 'facturas'
-                    ? 'Buscar factura, orden, paciente, NIT...'
+                    ? 'Buscar factura, orden o paciente...'
                     : 'Buscar recibo, factura o paciente...'
                 }
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-md focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#20666B]"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-md focus:bg-white focus:outline-none focus:ring-1 focus:ring-clinic-primary"
               />
             </div>
 
@@ -568,7 +498,7 @@ export const BillingPaymentsPage: React.FC = () => {
                   value={filtroEstado}
                   onChange={(e) => setFiltroEstado(e.target.value as EstadoFacturaLab | 'TODOS')}
                   aria-label="Filtrar por estado de factura"
-                  className="text-xs bg-slate-50 border border-slate-300 rounded-md py-1.5 px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#20666B]"
+                  className="text-xs bg-slate-50 border border-slate-300 rounded-md py-1.5 px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-clinic-primary"
                 >
                   <option value="TODOS">Todos los estados</option>
                   <option value="EMITIDA">Emitida (Pendiente)</option>
@@ -620,14 +550,14 @@ export const BillingPaymentsPage: React.FC = () => {
                     return (
                       <tr key={factura.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3 px-4 font-semibold text-slate-900">
-                          {factura.codigoFactura}
+                          <span className="table-identifier">{factura.codigoFactura}</span>
                         </td>
                         <td className="py-3 px-4">
                           <p className="font-medium text-slate-900">{factura.pacienteNombre}</p>
-                          <p className="text-[11px] text-slate-500">{factura.codigoOrden}</p>
+                          <p className="text-[11px] text-slate-500"><span className="table-identifier">{factura.codigoOrden}</span></p>
                         </td>
                         <td className="py-3 px-4 text-slate-600 font-mono">
-                          {factura.pacienteNit}
+                          <span className="table-identifier">{factura.pacienteNit}</span>
                         </td>
                         <td className="py-3 px-4 text-slate-600">
                           {new Date(factura.fechaEmision).toLocaleDateString('es-GT', {
@@ -637,13 +567,13 @@ export const BillingPaymentsPage: React.FC = () => {
                           })}
                         </td>
                         <td className="py-3 px-4 text-right font-medium text-slate-900">
-                          {formatearGTQ(factura.totalCentavos)}
+                          <span className="table-identifier">{formatearGTQ(factura.totalCentavos)}</span>
                         </td>
                         <td className="py-3 px-4 text-right font-medium text-emerald-700">
-                          {formatearGTQ(factura.totalPagadoCentavos)}
+                          <span className="table-identifier">{formatearGTQ(factura.totalPagadoCentavos)}</span>
                         </td>
                         <td className="py-3 px-4 text-right font-semibold text-amber-700">
-                          {formatearGTQ(factura.saldoPendienteCentavos)}
+                          <span className="table-identifier">{formatearGTQ(factura.saldoPendienteCentavos)}</span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           {getBadgeEstadoFactura(factura.estado)}
@@ -655,14 +585,14 @@ export const BillingPaymentsPage: React.FC = () => {
                               size="sm"
                               disabled={!puedePagar}
                               onClick={() => handleAbrirPago(factura)}
-                              className="text-xs px-2.5 py-1 bg-[#20666B] hover:bg-[#184d50] text-white"
+                              className="text-xs px-2.5 py-1 bg-clinic-primary hover:bg-clinic-primary-dark text-white"
                               title={
                                 !puedePagar
                                   ? 'La factura ya está totalmente liquidada o anulada'
-                                  : 'Registrar pago (Regla CA14)'
+                                  : 'Registrar pago'
                               }
                             >
-                              Registrar Pago (CA14)
+                              Cobrar
                             </Button>
 
                             <Button
@@ -683,7 +613,7 @@ export const BillingPaymentsPage: React.FC = () => {
                               className="text-xs px-2 py-1"
                               title={
                                 tienePagosConfirmados
-                                  ? 'Regla CA14: No se puede anular porque posee pagos activos. Debe revertirlos primero.'
+                                  ? 'Revierte los pagos antes de anular esta factura.'
                                   : factura.estado === 'ANULADA'
                                   ? 'Factura ya anulada'
                                   : 'Anular factura'
@@ -728,7 +658,6 @@ export const BillingPaymentsPage: React.FC = () => {
                     <th className="py-3 px-4 font-semibold">Cajero</th>
                     <th className="py-3 px-4 font-semibold text-right">Monto GTQ</th>
                     <th className="py-3 px-4 font-semibold text-center">Estado</th>
-                    <th className="py-3 px-4 font-semibold">Idempotency-Key</th>
                     <th className="py-3 px-4 font-semibold text-center">Acciones</th>
                   </tr>
                 </thead>
@@ -743,7 +672,7 @@ export const BillingPaymentsPage: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <p className="font-medium text-slate-900">{factura.pacienteNombre}</p>
-                          <p className="text-[11px] text-slate-500 font-mono">{factura.codigoFactura}</p>
+                          <p className="text-[11px] text-slate-500 font-mono"><span className="table-identifier">{factura.codigoFactura}</span></p>
                         </td>
                         <td className="py-3 px-4 text-slate-600">
                           {new Date(pago.fechaHora).toLocaleString('es-GT', {
@@ -761,7 +690,7 @@ export const BillingPaymentsPage: React.FC = () => {
                           {pago.cajeroNombre}
                         </td>
                         <td className="py-3 px-4 text-right font-bold text-slate-900">
-                          {formatearGTQ(pago.montoCentavos)}
+                          <span className="table-identifier">{formatearGTQ(pago.montoCentavos)}</span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           {pago.estado === 'CONFIRMADO' ? (
@@ -769,9 +698,6 @@ export const BillingPaymentsPage: React.FC = () => {
                           ) : (
                             <Badge variant="neutral">Revertido</Badge>
                           )}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-[10px] text-slate-500 truncate max-w-[140px]" title={pago.idempotencyKey}>
-                          {pago.idempotencyKey}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <Button
@@ -802,32 +728,13 @@ export const BillingPaymentsPage: React.FC = () => {
 
       {/* MODAL 1: Registrar Pago (CA14) */}
       {showModalPago && facturaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#20666B]/10 rounded-md text-[#20666B]">
-                  <CreditCard size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Registrar Cobro de Factura</h3>
-                  <p className="text-xs text-slate-500">Validación contable en unidades enteras GTQ (CA14)</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowModalPago(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmarPago} className="p-6 space-y-4 text-xs">
+        <Modal isOpen onClose={() => setShowModalPago(false)} title="Registrar pago" description={facturaSeleccionada.codigoFactura}>
+          <form onSubmit={handleConfirmarPago} className="space-y-4 text-sm">
               {/* Resumen Factura */}
-              <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-1.5">
+              <div className="billing-summary bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Factura:</span>
-                  <span className="font-bold text-slate-900">{facturaSeleccionada.codigoFactura}</span>
+                  <span className="font-bold text-slate-900"><span className="table-identifier">{facturaSeleccionada.codigoFactura}</span></span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Paciente:</span>
@@ -835,11 +742,11 @@ export const BillingPaymentsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Total Factura:</span>
-                  <span className="font-medium text-slate-900">{formatearGTQ(facturaSeleccionada.totalCentavos)}</span>
+                  <span className="font-medium text-slate-900"><span className="table-identifier">{formatearGTQ(facturaSeleccionada.totalCentavos)}</span></span>
                 </div>
                 <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm">
                   <span className="font-bold text-slate-700">Saldo Pendiente Actual:</span>
-                  <span className="font-bold text-amber-700">{formatearGTQ(facturaSeleccionada.saldoPendienteCentavos)}</span>
+                  <span className="font-bold text-amber-700"><span className="table-identifier">{formatearGTQ(facturaSeleccionada.saldoPendienteCentavos)}</span></span>
                 </div>
               </div>
 
@@ -849,13 +756,13 @@ export const BillingPaymentsPage: React.FC = () => {
                   <label className="font-semibold text-slate-700">
                     Monto a Pagar (Quetzales GTQ) <span className="text-rose-500">*</span>
                   </label>
-                  <button
+                  <Button variant="ghost" size="sm"
                     type="button"
                     onClick={() => setMontoIngresadoQ((facturaSeleccionada.saldoPendienteCentavos / 100).toFixed(2))}
-                    className="text-xs text-[#20666B] hover:underline font-semibold"
+                    className="text-xs text-clinic-primary hover:underline font-semibold"
                   >
-                    Liquidar Saldo Total
-                  </button>
+                    Usar saldo total
+                  </Button>
                 </div>
                 <div className="relative">
                   <span className="absolute left-3 top-2 font-bold text-slate-500">Q</span>
@@ -866,26 +773,18 @@ export const BillingPaymentsPage: React.FC = () => {
                     required
                     value={montoIngresadoQ}
                     onChange={(e) => setMontoIngresadoQ(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 text-sm font-bold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20666B]"
+                    className="w-full pl-8 pr-3 py-2 text-sm font-bold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-clinic-primary"
                     placeholder="0.00"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Equivalente a <strong className="font-mono text-slate-700">{montoCentavosActual} centavos</strong> exactos sin coma flotante.
-                </p>
+
               </div>
 
               {/* Advertencia reactiva de sobrepago (CA14) */}
               {esSobrepago && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2 text-rose-800">
-                  <AlertTriangle size={16} className="text-rose-600 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-bold text-xs">Bloqueo de Sobrepago (Regla CA14)</p>
-                    <p className="text-[11px] mt-0.5">
-                      El monto ingresado ({formatearGTQ(montoCentavosActual)}) supera el saldo pendiente ({formatearGTQ(saldoPendienteActual)}). No se admiten pagos excesivos.
-                    </p>
-                  </div>
-                </div>
+                <Alert variant="warning" title="El monto supera el saldo pendiente">
+                  Ingresa un monto de hasta {formatearGTQ(saldoPendienteActual)}.
+                </Alert>
               )}
 
               {/* Método de Pago */}
@@ -894,7 +793,7 @@ export const BillingPaymentsPage: React.FC = () => {
                 <select
                   value={metodoPago}
                   onChange={(e) => setMetodoPago(e.target.value as MetodoPagoLab)}
-                  className="w-full py-2 px-3 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20666B] text-xs"
+                  className="w-full py-2 px-3 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-clinic-primary text-xs"
                 >
                   <option value="EFECTIVO">Efectivo</option>
                   <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
@@ -903,40 +802,8 @@ export const BillingPaymentsPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Idempotency Key */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-slate-700 flex items-center gap-1">
-                    <KeyRound size={13} className="text-[#20666B]" />
-                    Clave de Idempotencia (Idempotency-Key)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIdempotencyKey(generarClaveIdempotencia(facturaSeleccionada.id))}
-                    className="text-[11px] text-[#20666B] hover:underline"
-                  >
-                    Generar Nueva
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={idempotencyKey}
-                  onChange={(e) => setIdempotencyKey(e.target.value)}
-                  className="w-full py-1.5 px-3 font-mono text-[11px] bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#20666B]"
-                />
-                <p className="text-[10px] text-slate-500">
-                  Previene la duplicación inadvertida del cobro ante reintentos de red o doble clic accidental.
-                </p>
-              </div>
-
               {/* Error Backend */}
-              {errorPago && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-2">
-                  <XCircle size={15} className="shrink-0" />
-                  <span>{errorPago}</span>
-                </div>
-              )}
+              {errorPago && <Alert variant="danger">{errorPago}</Alert>}
 
               {/* Acciones */}
               <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
@@ -952,34 +819,19 @@ export const BillingPaymentsPage: React.FC = () => {
                   variant="primary"
                   loading={procesandoPago}
                   disabled={procesandoPago || esSobrepago || montoCentavosActual <= 0}
-                  className="bg-[#20666B] hover:bg-[#184d50] text-white"
+                  className="bg-clinic-primary hover:bg-clinic-primary-dark text-white"
                 >
-                  Confirmar Pago (CA14)
+                  Confirmar Pago
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL 2: Revertir Pago (CA14) */}
       {showModalRevertir && facturaSeleccionada && pagoSeleccionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-rose-50/50">
-              <div className="flex items-center gap-2 text-rose-800">
-                <RotateCcw size={20} />
-                <h3 className="text-base font-bold text-slate-900">Revertir Recibo de Pago</h3>
-              </div>
-              <button
-                onClick={() => setShowModalRevertir(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmarReversion} className="p-6 space-y-4 text-xs">
+        <Modal isOpen onClose={() => setShowModalRevertir(false)} title="Revertir pago" description={facturaSeleccionada.codigoFactura}>
+          <form onSubmit={handleConfirmarReversion} className="space-y-4 text-sm">
               <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Recibo:</span>
@@ -987,11 +839,11 @@ export const BillingPaymentsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Factura:</span>
-                  <span className="font-medium text-slate-900">{facturaSeleccionada.codigoFactura}</span>
+                  <span className="font-medium text-slate-900"><span className="table-identifier">{facturaSeleccionada.codigoFactura}</span></span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Monto del Recibo:</span>
-                  <span className="font-bold text-rose-700">{formatearGTQ(pagoSeleccionado.montoCentavos)}</span>
+                  <span className="font-bold text-rose-700"><span className="table-identifier">{formatearGTQ(pagoSeleccionado.montoCentavos)}</span></span>
                 </div>
               </div>
 
@@ -1012,16 +864,11 @@ export const BillingPaymentsPage: React.FC = () => {
                   value={motivoReversion}
                   onChange={(e) => setMotivoReversion(e.target.value)}
                   placeholder="Detalle la causa (ej. error de digitación en caja, rechazo bancario posterior, cobro duplicado)..."
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20666B]"
+                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-clinic-primary"
                 />
               </div>
 
-              {errorReversion && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-2">
-                  <XCircle size={15} className="shrink-0" />
-                  <span>{errorReversion}</span>
-                </div>
-              )}
+              {errorReversion && <Alert variant="danger">{errorReversion}</Alert>}
 
               <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <Button
@@ -1041,32 +888,17 @@ export const BillingPaymentsPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL 3: Anular Factura (CA14) */}
       {showModalAnular && facturaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-rose-50/50">
-              <div className="flex items-center gap-2 text-rose-800">
-                <XCircle size={20} />
-                <h3 className="text-base font-bold text-slate-900">Anulación Fiscal de Factura</h3>
-              </div>
-              <button
-                onClick={() => setShowModalAnular(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmarAnulacion} className="p-6 space-y-4 text-xs">
+        <Modal isOpen onClose={() => setShowModalAnular(false)} title="Anular factura" description={facturaSeleccionada.codigoFactura}>
+          <form onSubmit={handleConfirmarAnulacion} className="space-y-4 text-sm">
               <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Factura:</span>
-                  <span className="font-bold text-slate-900">{facturaSeleccionada.codigoFactura}</span>
+                  <span className="font-bold text-slate-900"><span className="table-identifier">{facturaSeleccionada.codigoFactura}</span></span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Paciente:</span>
@@ -1074,12 +906,12 @@ export const BillingPaymentsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Monto Total:</span>
-                  <span className="font-bold text-slate-900">{formatearGTQ(facturaSeleccionada.totalCentavos)}</span>
+                  <span className="font-bold text-slate-900"><span className="table-identifier">{formatearGTQ(facturaSeleccionada.totalCentavos)}</span></span>
                 </div>
               </div>
 
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px]">
-                <p className="font-semibold">Regla CA14:</p>
+                <p className="font-semibold">:</p>
                 <p className="mt-0.5">
                   Una factura con pagos confirmados vigentes no puede anularse directamente; se deben revertir previamente sus comprobantes de pago.
                 </p>
@@ -1095,16 +927,11 @@ export const BillingPaymentsPage: React.FC = () => {
                   value={motivoAnulacion}
                   onChange={(e) => setMotivoAnulacion(e.target.value)}
                   placeholder="Detalle el motivo fiscal o administrativo para la anulación..."
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20666B]"
+                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-clinic-primary"
                 />
               </div>
 
-              {errorAnulacion && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-2">
-                  <XCircle size={15} className="shrink-0" />
-                  <span>{errorAnulacion}</span>
-                </div>
-              )}
+              {errorAnulacion && <Alert variant="danger">{errorAnulacion}</Alert>}
 
               <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <Button
@@ -1124,35 +951,20 @@ export const BillingPaymentsPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* MODAL 4: Detalle de Factura y Recibos */}
       {showModalDetalle && facturaSeleccionada && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#20666B]/10 rounded-md text-[#20666B]">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Detalle de Factura {facturaSeleccionada.codigoFactura}
-                  </h3>
-                  <p className="text-xs text-slate-500">Orden asociada: {facturaSeleccionada.codigoOrden}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowModalDetalle(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6 overflow-y-auto text-xs">
+        <Modal
+          isOpen
+          onClose={() => setShowModalDetalle(false)}
+          title={`Detalle de factura ${facturaSeleccionada.codigoFactura}`}
+          description={`Orden: ${facturaSeleccionada.codigoOrden}`}
+          maxWidth="680px"
+          footer={<Button variant="secondary" onClick={() => setShowModalDetalle(false)}>Cerrar</Button>}
+        >
+          <div className="space-y-6 text-sm">
               {/* Información general */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
                 <div>
@@ -1161,7 +973,7 @@ export const BillingPaymentsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-slate-500">NIT:</p>
-                  <p className="font-mono font-medium text-slate-900">{facturaSeleccionada.pacienteNit}</p>
+                  <p className="font-mono font-medium text-slate-900"><span className="table-identifier">{facturaSeleccionada.pacienteNit}</span></p>
                 </div>
                 <div>
                   <p className="text-slate-500">Fecha Emisión:</p>
@@ -1195,7 +1007,7 @@ export const BillingPaymentsPage: React.FC = () => {
                           <td className="py-2 px-3 font-mono text-slate-600">{it.codigoPrueba}</td>
                           <td className="py-2 px-3 font-medium text-slate-900">{it.nombrePrueba}</td>
                           <td className="py-2 px-3 text-right font-medium text-slate-900">
-                            {formatearGTQ(it.arancelCentavos)}
+                            <span className="table-identifier">{formatearGTQ(it.arancelCentavos)}</span>
                           </td>
                         </tr>
                       ))}
@@ -1204,7 +1016,7 @@ export const BillingPaymentsPage: React.FC = () => {
                       <tr className="bg-slate-50 font-bold border-t border-slate-200">
                         <td colSpan={2} className="py-2 px-3 text-right text-slate-700">Total:</td>
                         <td className="py-2 px-3 text-right text-slate-900">
-                          {formatearGTQ(facturaSeleccionada.totalCentavos)}
+                          <span className="table-identifier">{formatearGTQ(facturaSeleccionada.totalCentavos)}</span>
                         </td>
                       </tr>
                     </tfoot>
@@ -1239,7 +1051,7 @@ export const BillingPaymentsPage: React.FC = () => {
                             <td className="py-2 px-3 font-mono font-medium text-slate-900">{p.codigoRecibo}</td>
                             <td className="py-2 px-3 text-slate-600">{new Date(p.fechaHora).toLocaleString()}</td>
                             <td className="py-2 px-3">{getBadgeMetodoPago(p.metodoPago)}</td>
-                            <td className="py-2 px-3 text-right font-bold text-slate-900">{formatearGTQ(p.montoCentavos)}</td>
+                            <td className="py-2 px-3 text-right font-bold text-slate-900"><span className="table-identifier">{formatearGTQ(p.montoCentavos)}</span></td>
                             <td className="py-2 px-3 text-center">
                               {p.estado === 'CONFIRMADO' ? (
                                 <Badge variant="success">Confirmado</Badge>
@@ -1259,25 +1071,16 @@ export const BillingPaymentsPage: React.FC = () => {
               <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Total Liquidado a la fecha:</span>
-                  <span className="font-bold text-emerald-700">{formatearGTQ(facturaSeleccionada.totalPagadoCentavos)}</span>
+                  <span className="font-bold text-emerald-700"><span className="table-identifier">{formatearGTQ(facturaSeleccionada.totalPagadoCentavos)}</span></span>
                 </div>
                 <div className="flex justify-between text-sm font-bold border-t border-slate-200 pt-1.5">
                   <span className="text-slate-800">Saldo Pendiente de Cobro:</span>
-                  <span className="text-amber-700">{formatearGTQ(facturaSeleccionada.saldoPendienteCentavos)}</span>
+                  <span className="text-amber-700"><span className="table-identifier">{formatearGTQ(facturaSeleccionada.saldoPendienteCentavos)}</span></span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-200 flex justify-end bg-slate-50 shrink-0">
-              <Button
-                variant="secondary"
-                onClick={() => setShowModalDetalle(false)}
-              >
-                Cerrar Detalle
-              </Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

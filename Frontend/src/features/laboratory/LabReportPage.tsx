@@ -1,11 +1,11 @@
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Printer,
   CheckCircle2,
   ArrowLeft,
-  ShieldCheck,
-  QrCode,
   Building2
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -55,7 +55,7 @@ export const LabReportPage: React.FC = () => {
       const inf = await laboratoryRepository.obtenerInformePorOrden(institucionId, ord.id);
       setInforme(inf);
     } catch (err: any) {
-      setErrorGlobal(err?.message || 'Error cargando datos del informe.');
+      setErrorGlobal(getErrorMessage(err, 'Error cargando datos del informe.'));
     } finally {
       setCargando(false);
     }
@@ -115,7 +115,7 @@ export const LabReportPage: React.FC = () => {
       const ordAct = await laboratoryRepository.obtenerOrdenPorId(institucionId, orden.id);
       if (ordAct) setOrden(ordAct);
     } catch (err: any) {
-      setErrorGlobal(err?.message || 'Error al emitir el informe analítico oficial.');
+      setErrorGlobal(getErrorMessage(err, 'Error al emitir el informe analítico oficial.'));
     } finally {
       setEmitiendo(false);
     }
@@ -127,7 +127,7 @@ export const LabReportPage: React.FC = () => {
 
   if (cargando) {
     return (
-      <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ padding: 0, maxWidth: '1000px', margin: '0 auto' }}>
         <SkeletonLoader variant="card" height={320} />
       </div>
     );
@@ -152,7 +152,7 @@ export const LabReportPage: React.FC = () => {
   if (!orden) return null;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{ padding: 0, maxWidth: '1100px', margin: '0 auto' }}>
       {/* Navegación y Barra de Acciones Superior (Oculta al imprimir) */}
       <div className="no-print" style={{ marginBottom: '20px' }}>
         <nav aria-label="Ruta de navegación" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
@@ -164,7 +164,7 @@ export const LabReportPage: React.FC = () => {
             Orden {orden.codigoOrden}
           </Link>
           <span>/</span>
-          <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Informe Analítico Oficial (L09)</span>
+          <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Informe Analítico Oficial</span>
         </nav>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
@@ -178,7 +178,7 @@ export const LabReportPage: React.FC = () => {
               </Badge>
             </div>
             <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
-              Certificación de resultados con control de versiones inmutables y hash de autenticidad (CA13)
+              Resultados revisados por el personal responsable del laboratorio.
             </p>
           </div>
 
@@ -201,7 +201,7 @@ export const LabReportPage: React.FC = () => {
                 aria-label="Emitir Informe Oficial"
               >
                 <CheckCircle2 size={16} style={{ marginRight: '6px' }} />
-                {emitiendo ? 'Emitiendo...' : 'Emitir Informe Oficial (L09)'}
+                {emitiendo ? 'Emitiendo...' : 'Emitir Informe Oficial'}
               </Button>
             )}
           </div>
@@ -226,8 +226,8 @@ export const LabReportPage: React.FC = () => {
         {/* Alerta si faltan pruebas por validar (CA13) */}
         {!estadoPruebas.todasValidadas && !informe && (
           <div style={{ marginTop: '16px' }}>
-            <Alert variant="warning" title="Pruebas pendientes de validación técnica (CA13)">
-              No es posible emitir el informe oficial definitivo porque existen exámenes que aún no han sido certificados en la bandeja de validación (<code>L07</code>):{' '}
+            <Alert variant="warning" title="Pruebas pendientes de validación técnica">
+              No se puede emitir el informe porque aún hay resultados pendientes de validación:{' '}
               <strong>{estadoPruebas.pendientes.join(', ')}</strong>. Solo se permite visualizar la vista previa preliminar.
             </Alert>
           </div>
@@ -285,7 +285,7 @@ export const LabReportPage: React.FC = () => {
               {informe?.codigoInforme || `PREV-${orden.codigoOrden}`}
             </div>
             <div style={{ fontSize: '12px', color: '#4B5563', marginTop: '4px' }}>
-              Orden: <strong>{orden.codigoOrden}</strong>
+              Orden: <strong><span className="table-identifier">{orden.codigoOrden}</span></strong>
             </div>
             <div style={{ fontSize: '11px', color: '#6B7280' }}>
               Emisión: {informe ? new Date(informe.fechaEmision).toLocaleString() : 'Vista Preliminar'}
@@ -327,7 +327,7 @@ export const LabReportPage: React.FC = () => {
               {orden.pacienteEdad} años · Sexo {orden.pacienteSexo === 'F' ? 'Femenino' : 'Masculino'}
             </div>
             <div style={{ color: '#4B5563', fontSize: '12px' }}>
-              Prioridad: <strong>{orden.prioridad}</strong>
+              Prioridad: <strong>{getDisplayLabel(orden.prioridad)}</strong>
             </div>
           </div>
 
@@ -405,7 +405,8 @@ export const LabReportPage: React.FC = () => {
                 {/* Tabla de Parámetros */}
                 {resultado ? (
                   <div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid #E5E7EB', color: '#6B7280', backgroundColor: '#FAFAFA' }}>
                           <th style={{ padding: '8px 14px', width: '32%' }}>Parámetro</th>
@@ -450,7 +451,7 @@ export const LabReportPage: React.FC = () => {
                                       : 'success'
                                   }
                                 >
-                                  {p.alerta}
+                                  {getDisplayLabel(p.alerta)}
                                 </Badge>
                               </td>
                             </tr>
@@ -458,6 +459,7 @@ export const LabReportPage: React.FC = () => {
                         })}
                       </tbody>
                     </table>
+                    </div>
 
                     {/* Metadatos Técnicos del Análisis */}
                     <div
@@ -502,66 +504,27 @@ export const LabReportPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Bloque de Certificación, Hash de Verificación y Firmas (CA13) */}
+        {/* Firma del personal responsable */}
         <div
           style={{
-            borderTop: '2px dashed #D1D5DB',
-            paddingTop: '24px',
-            display: 'grid',
-            gridTemplateColumns: '120px 1fr 220px',
-            gap: '20px',
-            alignItems: 'center'
+            borderTop: '1px solid var(--color-divider)',
+            paddingTop: '20px',
+            display: 'flex',
+            justifyContent: 'flex-end'
           }}
         >
-          {/* Código QR simulado de autenticidad */}
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                width: '90px',
-                height: '90px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '6px',
-                padding: '6px',
-                margin: '0 auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#ffffff'
-              }}
-            >
-              <QrCode size={78} style={{ color: '#1F2937' }} />
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+              Validado por
             </div>
-            <div style={{ fontSize: '9px', color: '#6B7280', marginTop: '4px' }}>
-              Validación QR
-            </div>
-          </div>
-
-          {/* Sello de Integridad y Hash SHA-256 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <ShieldCheck size={16} style={{ color: 'var(--color-primary, #20666B)' }} />
-              <strong style={{ fontSize: '12px', color: '#111827' }}>
-                Certificación Digital de Integridad (Regla CA13)
-              </strong>
-            </div>
-            <p style={{ margin: 0, fontSize: '11px', color: '#6B7280', lineHeight: 1.4 }}>
-              Documento inmutable generado con instantánea exacta de identificadores y versiones analíticas.
-            </p>
-            <div style={{ marginTop: '6px', fontFamily: 'monospace', fontSize: '10px', color: '#374151', wordBreak: 'break-all', backgroundColor: '#F3F4F6', padding: '4px 6px', borderRadius: '4px' }}>
-              {informe?.hashVerificacion || 'SHA256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069'}
-            </div>
-          </div>
-
-          {/* Firma Facultativa */}
-          <div style={{ textAlign: 'center', borderTop: '1px solid #9CA3AF', paddingTop: '8px' }}>
-            <div style={{ fontWeight: 700, fontSize: '12px', color: '#111827' }}>
+            <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-strong)' }}>
               {informe?.emisorNombre || 'Lic. Kevin Estrada'}
             </div>
-            <div style={{ fontSize: '11px', color: '#4B5563' }}>
-              Colegiado {informe?.emisorColegiado || 'QB-4912'}
-            </div>
-            <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
               Químico Biólogo · Validador Responsable
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+              Colegiado {informe?.emisorColegiado || 'QB-4912'}
             </div>
           </div>
         </div>

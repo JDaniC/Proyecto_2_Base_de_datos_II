@@ -1,3 +1,6 @@
+import { Modal } from '../../design-system/components/Modal';
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useState, useEffect } from 'react';
 import {
   Activity,
@@ -5,12 +8,11 @@ import {
   Search,
   Filter,
   CheckCircle2,
-  AlertTriangle,
-  XCircle,
   Cpu
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import { Panel } from '../../design-system/components/Panel';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
@@ -131,11 +133,11 @@ export const QualityControlPage: React.FC = () => {
       setControles((prev) => [nuevoQC, ...prev]);
       setShowModalQC(false);
       setNotificacion(
-        `Corrida de control ${nuevoQC.codigoCorrida} registrada con evaluación: ${nuevoQC.evaluacion} (Z-Score: ${nuevoQC.zScore}).`
+        `Corrida de control ${nuevoQC.codigoCorrida} registrada con evaluación: ${getDisplayLabel(nuevoQC.evaluacion)} (Desviación Z: ${nuevoQC.zScore}).`
       );
       setTimeout(() => setNotificacion(null), 5000);
     } catch (err: unknown) {
-      setErrorQC(err instanceof Error ? err.message : 'Error al registrar corrida de calidad.');
+      setErrorQC(getErrorMessage(err, 'Error al registrar corrida de calidad.'));
     } finally {
       setGuardandoQC(false);
     }
@@ -175,7 +177,7 @@ export const QualityControlPage: React.FC = () => {
       setNotificacion(`Equipo ${nuevoEq.nombre} registrado exitosamente con estado OPERATIVO.`);
       setTimeout(() => setNotificacion(null), 5000);
     } catch (err: unknown) {
-      setErrorEquipo(err instanceof Error ? err.message : 'Error al registrar equipo.');
+      setErrorEquipo(getErrorMessage(err, 'Error al registrar equipo.'));
     } finally {
       setGuardandoEquipo(false);
     }
@@ -224,7 +226,7 @@ export const QualityControlPage: React.FC = () => {
         <span style={{ margin: '0 8px' }}>/</span>
         <span>Laboratorio</span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Equipos y Control de Calidad Analítico (L11)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Equipos y Control de Calidad Analítico</strong>
       </nav>
 
       {/* Alerta de notificación */}
@@ -233,7 +235,7 @@ export const QualityControlPage: React.FC = () => {
           role="status"
           style={{
             backgroundColor: 'var(--color-success-bg)',
-            color: 'var(--color-success)',
+            color: 'var(--color-success-text)',
             border: '1px solid var(--color-success-border)',
             padding: '12px 16px',
             borderRadius: 'var(--radius-input)',
@@ -269,7 +271,7 @@ export const QualityControlPage: React.FC = () => {
                 letterSpacing: '-0.3px'
               }}
             >
-              Control de Calidad Analítico y Estado de Equipos (L11)
+              Control de calidad
             </h1>
             <Badge variant="primary">Reglas de Westgard</Badge>
           </div>
@@ -282,8 +284,7 @@ export const QualityControlPage: React.FC = () => {
               lineHeight: 1.5
             }}
           >
-            Gestión integral del control de calidad interno (IQC), registro de mediciones analíticas, límites históricos
-            aplicados (±2SD, ±3SD), trazabilidad por equipo y monitoreo de calibraciones instrumentales.
+            Registra controles de calidad y revisa equipos, mediciones y límites aplicados.
           </p>
         </div>
 
@@ -300,119 +301,17 @@ export const QualityControlPage: React.FC = () => {
             onClick={() => setShowModalQC(true)}
             leftIcon={<Plus size={16} />}
           >
-            Nueva Corrida QC (L11)
+            Nuevo control
           </Button>
         </div>
       </div>
 
-      {/* Tarjetas KPI de Calidad */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '16px'
-        }}
-      >
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-selection)',
-                color: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Activity size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Total Corridas QC
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-strong)' }}>{totalCorridas}</strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-success-bg)',
-                color: 'var(--color-success)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Aceptadas (|Z| ≤ 2 SD)
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-success)' }}>{corridasAceptadas}</strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-warning-bg)',
-                color: 'var(--color-warning)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <AlertTriangle size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Advertencias (1:2s)
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-warning)' }}>{corridasAdvertencia}</strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-error-bg)',
-                color: 'var(--color-error-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <XCircle size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Rechazadas (1:3s)
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-error-text)' }}>{corridasRechazadas}</strong>
-            </div>
-          </div>
-        </Panel>
-      </div>
+      <MetricStrip items={[
+        { id: 'total', label: 'Controles registrados', value: totalCorridas },
+        { id: 'aceptadas', label: 'Aceptados', value: corridasAceptadas, tone: 'success' },
+        { id: 'advertencias', label: 'Con advertencia', value: corridasAdvertencia, tone: 'warning' },
+        { id: 'rechazadas', label: 'Rechazados', value: corridasRechazadas, tone: 'danger' },
+      ]} />
 
       {/* Navegación por pestañas */}
       <div
@@ -444,7 +343,7 @@ export const QualityControlPage: React.FC = () => {
           }}
         >
           <Activity size={16} />
-          <span>Corridas de Control de Calidad ({controles.length})</span>
+          <span>Controles de calidad ({controles.length})</span>
         </button>
 
         <button
@@ -467,7 +366,7 @@ export const QualityControlPage: React.FC = () => {
           }}
         >
           <Cpu size={16} />
-          <span>Parque de Equipos Analíticos ({equipos.length})</span>
+          <span>Equipos de laboratorio ({equipos.length})</span>
         </button>
       </div>
 
@@ -494,7 +393,7 @@ export const QualityControlPage: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="inline-filter">
                 <Filter size={16} style={{ color: 'var(--color-text-secondary)' }} />
                 <label htmlFor="select-filtro-equipo" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Equipo:
@@ -521,7 +420,7 @@ export const QualityControlPage: React.FC = () => {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="inline-filter">
                 <label htmlFor="select-filtro-evaluacion" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Evaluación:
                 </label>
@@ -561,7 +460,7 @@ export const QualityControlPage: React.FC = () => {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                   <thead>
                     <tr
                       style={{
@@ -576,7 +475,7 @@ export const QualityControlPage: React.FC = () => {
                       <th style={{ padding: '10px 14px' }}>Lote / Nivel</th>
                       <th style={{ padding: '10px 14px' }}>Diana (±2SD)</th>
                       <th style={{ padding: '10px 14px' }}>Valor Medido</th>
-                      <th style={{ padding: '10px 14px' }}>Z-Score</th>
+                      <th style={{ padding: '10px 14px' }}>Desviación Z</th>
                       <th style={{ padding: '10px 14px' }}>Evaluación Westgard</th>
                       <th style={{ padding: '10px 14px' }}>Analista</th>
                     </tr>
@@ -644,7 +543,7 @@ export const QualityControlPage: React.FC = () => {
                           <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700 }}>
                             <span
                               style={{
-                                color: esRechazado ? '#DC2626' : esAdvertencia ? '#D97706' : 'var(--color-success)'
+                                color: esRechazado ? '#DC2626' : esAdvertencia ? '#D97706' : 'var(--color-success-text)'
                               }}
                             >
                               {qc.zScore > 0 ? `+${qc.zScore}` : qc.zScore} SD
@@ -657,7 +556,7 @@ export const QualityControlPage: React.FC = () => {
                                 esRechazado ? 'danger' : esAdvertencia ? 'warning' : 'success'
                               }
                             >
-                              {qc.evaluacion}
+                              {getDisplayLabel(qc.evaluacion)}
                             </Badge>
                             {qc.reglaViolada && (
                               <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '4px' }}>
@@ -706,7 +605,7 @@ export const QualityControlPage: React.FC = () => {
                     <Badge
                       variant={esOperativo ? 'success' : esCalibracion ? 'danger' : 'warning'}
                     >
-                      {eq.estado}
+                      {getDisplayLabel(eq.estado)}
                     </Badge>
                   </div>
 
@@ -758,96 +657,17 @@ export const QualityControlPage: React.FC = () => {
 
       {/* Modal para Registrar Corrida QC */}
       {showModalQC && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-qc-titulo"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17, 24, 39, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1050,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              borderRadius: 'var(--radius-card)',
-              boxShadow: 'var(--shadow-modal)',
-              width: '100%',
-              maxWidth: '600px',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: '18px 24px',
-                borderBottom: '1px solid var(--color-divider)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--color-primary)',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Activity size={20} />
-                </div>
-                <div>
-                  <h3
-                    id="modal-qc-titulo"
-                    style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--color-strong)' }}
-                  >
-                    Registrar Corrida de Control de Calidad (L11)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                    Evaluación automatizada de reglas de Westgard y cálculo de Z-Score
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModalQC(false)}
-                aria-label="Cerrar modal"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--color-text-secondary)',
-                  padding: '6px'
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Formulario */}
-            <form
+      <Modal
+        isOpen={showModalQC}
+        onClose={() => setShowModalQC(false)}
+        title="Registrar control de calidad"
+        maxWidth="600px"
+        description="Registra el valor medido del material de control."
+      >
+        <form
               onSubmit={handleGuardarQC}
               style={{
-                padding: '20px 24px',
+                padding: 0,
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
@@ -860,9 +680,9 @@ export const QualityControlPage: React.FC = () => {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 'var(--radius-input)',
-                    backgroundColor: 'var(--color-error-bg)',
-                    border: '1px solid var(--color-error-border)',
-                    color: 'var(--color-error-text)',
+                    backgroundColor: 'var(--color-danger-bg)',
+                    border: '1px solid var(--color-danger-border)',
+                    color: 'var(--color-danger-text)',
                     fontSize: '13px'
                   }}
                 >
@@ -895,7 +715,7 @@ export const QualityControlPage: React.FC = () => {
                   >
                     {equipos.map((eq) => (
                       <option key={eq.id} value={eq.id}>
-                        {eq.nombre} ({eq.estado})
+                        {eq.nombre} ({getDisplayLabel(eq.estado)})
                       </option>
                     ))}
                   </select>
@@ -1036,72 +856,23 @@ export const QualityControlPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
 
       {/* Modal para Registrar Equipo */}
       {showModalEquipo && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-equipo-titulo"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17, 24, 39, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1050,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              borderRadius: 'var(--radius-card)',
-              boxShadow: 'var(--shadow-modal)',
-              width: '100%',
-              maxWidth: '560px',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden'
-            }}
-          >
-            <div
-              style={{
-                padding: '18px 24px',
-                borderBottom: '1px solid var(--color-divider)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <h3 id="modal-equipo-titulo" style={{ margin: 0, fontSize: '17px', fontWeight: 700 }}>
-                Registrar Equipo Analítico
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModalEquipo(false)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form
+      <Modal
+        isOpen={showModalEquipo}
+        onClose={() => setShowModalEquipo(false)}
+        title="Registrar equipo de laboratorio"
+        maxWidth="560px"
+      >
+        <form
               onSubmit={handleGuardarEquipo}
-              style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}
+              style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}
             >
               {errorEquipo && (
-                <div role="alert" style={{ color: 'var(--color-error-text)', fontSize: '13px' }}>
+                <div role="alert" style={{ color: 'var(--color-danger-text)', fontSize: '13px' }}>
                   {errorEquipo}
                 </div>
               )}
@@ -1214,8 +985,7 @@ export const QualityControlPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
     </div>
   );

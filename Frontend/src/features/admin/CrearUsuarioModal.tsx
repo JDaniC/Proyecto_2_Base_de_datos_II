@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { UserCheck, AlertTriangle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -24,7 +25,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
 
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [email, setEmail] = useState('');
-  const [rolId, setRolId] = useState<RolId>('MEDICO');
+  const [rolId, setRolId] = useState<RolId>(institucionId === 'LABORATORIO_CLINICO' ? 'ANALISTA_LABORATORIO' : 'MEDICO');
   const [estado, setEstado] = useState<EstadoCuenta>('ACTIVO');
   const [profesionalVinculado, setProfesionalVinculado] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -86,7 +87,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
       onClose();
     } catch (err: any) {
       setGuardando(false);
-      setError(err.message || 'Error al aprovisionar la cuenta de usuario.');
+      setError(getErrorMessage(err, 'No se pudo crear la cuenta. Inténtalo de nuevo.'));
     }
   };
 
@@ -94,7 +95,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Aprovisionar Cuenta de Usuario Institucional (V15)"
+      title="Crear usuario"
       maxWidth="600px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -119,8 +120,8 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
         )}
 
         <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-          El usuario será creado dentro del alcance de <strong>{sesion?.institucionNombre || 'la institución'}</strong>{' '}
-          y contará con un identificador de autenticación simulado inmutable para trazabilidad auditada.
+          Se creará una cuenta para <strong>{sesion?.institucionNombre || 'la institución'}</strong>{' '}
+          y podrá acceder con el perfil y los permisos asignados.
         </div>
 
         <div>
@@ -139,7 +140,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
             style={{
               width: '100%',
               padding: '9px 12px',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               fontSize: '14px'
@@ -163,7 +164,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
             style={{
               width: '100%',
               padding: '9px 12px',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               fontSize: '14px'
@@ -186,7 +187,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '14px',
@@ -215,7 +216,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '14px',
@@ -245,7 +246,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
             style={{
               width: '100%',
               padding: '9px 12px',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               fontSize: '14px'
@@ -259,7 +260,7 @@ export const CrearUsuarioModal: React.FC<CrearUsuarioModalProps> = ({
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={guardando} leftIcon={<UserCheck size={16} />}>
-            Aprovisionar Usuario (V15)
+            Crear usuario
           </Button>
         </div>
       </form>

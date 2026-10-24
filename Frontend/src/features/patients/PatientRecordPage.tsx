@@ -12,6 +12,7 @@ import {
   FileText,
   ShieldAlert
 } from 'lucide-react';
+import { patientTabs } from '../../app/productScope';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import {
@@ -68,7 +69,8 @@ export const PatientRecordPage: React.FC = () => {
       : tabParam === 'vacunacion' || tabParam === 'vacunas'
       ? 'VACUNACION'
       : 'GENERAL';
-  const [tabActiva, setTabActiva] = useState(initialTab);
+  const [tabSolicitada, setTabActiva] = useState(initialTab);
+  const tabActiva = patientTabs(institucionId).includes(tabSolicitada) ? tabSolicitada : 'GENERAL';
   const [modalArchivoAbierto, setModalArchivoAbierto] = useState(false);
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
 
@@ -88,6 +90,8 @@ export const PatientRecordPage: React.FC = () => {
       setTabActiva('ANTECEDENTES');
     } else if (tabParam === 'vacunacion' || tabParam === 'vacunas') {
       setTabActiva('VACUNACION');
+    } else {
+      setTabActiva('GENERAL');
     }
   }, [searchParams]);
 
@@ -160,15 +164,16 @@ export const PatientRecordPage: React.FC = () => {
     setExpediente((prev) => (prev ? { ...prev, recetas: nuevas } : null));
   };
 
-  const esPediatrico = institucionId === 'CENTRO_PEDIATRICO' || paciente.responsables !== undefined;
+  const esPediatrico = institucionId === 'CENTRO_PEDIATRICO';
+  const responsablePrincipal = paciente.responsables?.find(r => r.esPrincipal);
 
   // Configuración de pestañas con subrayado de 3px
   const tabsList: TabItem[] = [
-    { id: 'GENERAL', label: 'General y antecedentes' },
+    { id: 'GENERAL', label: esPediatrico ? 'Datos generales' : 'General y antecedentes' },
     ...(esPediatrico
       ? [
           { id: 'RESPONSABLES', label: `Responsables y tutores (${paciente.responsables?.length || 0})` },
-          { id: 'CRECIMIENTO', label: 'Crecimiento y curvas OMS' },
+          { id: 'CRECIMIENTO', label: 'Crecimiento' },
           { id: 'ANTECEDENTES', label: 'Antecedentes y alergias' },
           { id: 'VACUNACION', label: 'Esquema de vacunación' }
         ]
@@ -180,7 +185,7 @@ export const PatientRecordPage: React.FC = () => {
     { id: 'EXAMENES', label: 'Exámenes y resultados' },
     { id: 'PROCEDIMIENTOS', label: 'Procedimientos realizados' },
     { id: 'TIMELINE', label: `Actividad e historial (${eventos.length})` }
-  ];
+  ].filter(tab => patientTabs(institucionId).includes(tab.id));
 
   // Acordeón múltiple para antecedentes clínicos
   const itemsAcordeonAntecedentes: AccordionItem[] = [
@@ -327,7 +332,7 @@ export const PatientRecordPage: React.FC = () => {
           borderRadius: 'var(--radius-panel)',
           padding: '24px 28px',
           marginBottom: '24px',
-          boxShadow: 'var(--shadow-panel)'
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
         <div
@@ -389,10 +394,14 @@ export const PatientRecordPage: React.FC = () => {
                   ? 'Femenino'
                   : 'Otro'}
               </span>
+              {institucionId === 'HOSPITAL_GENERAL' && <span>• Grupo sanguíneo: {paciente.grupoSanguineo || 'No registrado'}</span>}
               <span>•</span>
-              <span>{paciente.tipoIdentificacion}: {paciente.numeroIdentificacion}</span>
-              <span>•</span>
-              <span>{sesion?.institucionNombre}</span>
+              {!paciente.tipoIdentificacion.startsWith('SIN_DOCUMENTO') && (
+                <>
+                  <span>{paciente.tipoIdentificacion}: {paciente.numeroIdentificacion}</span>
+                </>
+              )}
+              {paciente.tipoIdentificacion.startsWith('SIN_DOCUMENTO') && <span>Sin documento</span>}
             </div>
           </div>
 
@@ -406,7 +415,7 @@ export const PatientRecordPage: React.FC = () => {
               Editar datos
             </Button>
 
-            {tienePermisoArchivar && (
+            {tienePermisoArchivar && (!isArchived || esPediatrico) && (
               <Button
                 variant={isArchived ? 'secondary' : 'ghost'}
                 leftIcon={isArchived ? <RefreshCw size={16} /> : <Archive size={16} />}
@@ -442,8 +451,8 @@ export const PatientRecordPage: React.FC = () => {
             variant="warning"
             title="ALERTA CLÍNICA PRIORITARIA: Alergias sin verificar clínicamente"
           >
-            Este paciente no cuenta con confirmación clínica de alergias medicamentosas o de contacto.
-            Antes de prescribir, administrar sustancias o realizar procedimientos invasivos, verifique y registre el estado de alergias.
+            El estado de alergias de este paciente aún no se ha verificado.
+            Revisa los antecedentes y registra la información confirmada.
           </Alert>
         </div>
       )}
@@ -451,8 +460,8 @@ export const PatientRecordPage: React.FC = () => {
       {paciente.estadoAlergias === 'CON_ALERGIAS' && (
         <div style={{ marginBottom: '24px' }}>
           <Alert
-            variant="danger"
-            title="ALERTA CLÍNICA: Paciente con alergias medicamentosas registradas"
+            variant={antecedentes.alergias.some((a) => a.severidad === 'SEVERA') ? 'danger' : 'warning'}
+            title="Alergias registradas"
           >
             Se registran reacciones alérgicas documentadas:{' '}
             <strong>
@@ -460,7 +469,7 @@ export const PatientRecordPage: React.FC = () => {
                 ? antecedentes.alergias.map((a) => a.sustancia).join(', ')
                 : 'Alergias documentadas'}
             </strong>
-            . Verifique contraindicaciones cruzadas antes de emitir recetas clínicas o administrar fármacos.
+            . Revisa los detalles y las reacciones documentadas en el expediente.
           </Alert>
         </div>
       )}
@@ -495,7 +504,7 @@ export const PatientRecordPage: React.FC = () => {
                 <strong style={{ color: 'var(--color-strong)' }}>{paciente.direccion}</strong>
               </div>
 
-              {paciente.contactoEmergencia && (
+              {institucionId === 'HOSPITAL_GENERAL' && paciente.contactoEmergencia && (
                 <div
                   style={{
                     backgroundColor: 'var(--color-panel)',
@@ -514,7 +523,7 @@ export const PatientRecordPage: React.FC = () => {
                 </div>
               )}
 
-              {paciente.responsables && paciente.responsables.length > 0 && (
+              {esPediatrico && paciente.responsables && paciente.responsables.length > 0 && (
                 <div
                   style={{
                     backgroundColor: 'var(--color-panel)',
@@ -526,26 +535,26 @@ export const PatientRecordPage: React.FC = () => {
                   <span style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
                     Responsable legal pediátrico
                   </span>
-                  <div>{paciente.responsables[0].nombre} ({paciente.responsables[0].parentesco})</div>
-                  <div>Tel: {paciente.responsables[0].telefono}</div>
-                  <Badge variant="success">Autoriza atención médica</Badge>
+                  <div>{responsablePrincipal?.nombre || 'Sin principal registrado'} ({responsablePrincipal?.parentesco || '—'})</div>
+                  <div>Tel: {responsablePrincipal?.telefono || 'No registrado'}</div>
+                  <Badge variant={paciente.responsables.find(r => r.esPrincipal)?.autorizaAtencion ? "success" : "warning"}>{paciente.responsables.find(r => r.esPrincipal)?.autorizaAtencion ? "Autoriza atención médica" : "Sin autorización registrada"}</Badge>
                 </div>
               )}
             </div>
           </Panel>
 
           {/* Acordeón de Antecedentes Clínicos (Visible si tiene permiso historial.leer) */}
-          <div>
+          {!esPediatrico && <div>
             {tienePermisoHistorial ? (
               <Accordion items={itemsAcordeonAntecedentes} allowMultiple={true} />
             ) : (
               <Panel title="Información Clínica Protegida">
                 <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                  Su rol administrativo no tiene asignado el permiso <code>historial.leer</code> para consultar notas y antecedentes clínicos reservados.
+                  Tu cuenta no tiene acceso a los antecedentes clínicos de este expediente.
                 </p>
               </Panel>
             )}
-          </div>
+          </div>}
         </div>
       )}
 
@@ -619,16 +628,14 @@ export const PatientRecordPage: React.FC = () => {
                       paddingTop: '10px'
                     }}
                   >
-                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      Consulta ID: <code>{c.id}</code>
-                    </div>
+
                     <Button
                       size="sm"
                       variant="secondary"
                       onClick={() => navigate(`/pacientes/${pacienteId}/consultas/${c.id}`)}
                     >
                       <FileText size={14} style={{ marginRight: '6px' }} />
-                      Ver Detalle de Consulta (V11)
+                      Ver Detalle de Consulta
                     </Button>
                   </div>
                 </div>

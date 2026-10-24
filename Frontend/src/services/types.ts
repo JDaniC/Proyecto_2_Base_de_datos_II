@@ -351,7 +351,7 @@ export interface DashboardData {
 
 // --- Tipos de Pacientes (V04 Búsqueda y V05 Alta/Edición) ---
 
-export type TipoIdentificacion = 'CUI' | 'PASAPORTE' | 'SIN_DOCUMENTO_MENOR';
+export type TipoIdentificacion = 'CUI' | 'PASAPORTE' | 'SIN_DOCUMENTO_MENOR' | 'SIN_DOCUMENTO';
 
 export type SexoAdministrativo = 'MASCULINO' | 'FEMENINO' | 'OTRO';
 
@@ -392,6 +392,7 @@ export interface Paciente {
   direccion: string;
   estado: EstadoPaciente;
   estadoAlergias: EstadoAlergias;
+  grupoSanguineo?: string;
   contactoEmergencia?: ContactoEmergencia;
   responsables?: ResponsablePediatrico[];
   fechaRegistro: string; // ISO
@@ -496,6 +497,7 @@ export interface RevisionConsultaItem {
   fechaHora: string;
   autor: string;
   motivo: string;
+  anterior?: { motivo: string; sintomas: string; observaciones?: string; signosVitales: SignosVitales; diagnosticos: DiagnosticoHistorial[]; tratamientos: TratamientoItemDTO[]; receta?: RecetaHistorial };
 }
 
 export interface DetalleConsultaCompleta {
@@ -542,6 +544,7 @@ export interface DiagnosticoHistorial {
 
 export interface RecetaMedicamentoItem {
   nombre: string;
+  concentracion?: string;
   presentacion: string;
   dosis: string;
   frecuencia: string;
@@ -752,6 +755,7 @@ export interface CrearPacienteDTO {
   telefono: string;
   correo: string;
   direccion: string;
+  grupoSanguineo?: string;
   contactoEmergencia?: ContactoEmergencia;
   responsables?: ResponsablePediatrico[];
   idempotencyKey: string;
@@ -767,6 +771,7 @@ export interface ActualizarPacienteDTO {
   telefono?: string;
   correo?: string;
   direccion?: string;
+  grupoSanguineo?: string;
   contactoEmergencia?: ContactoEmergencia;
   responsables?: ResponsablePediatrico[];
   idempotencyKey: string;
@@ -976,7 +981,7 @@ export type EstadoMuestraLaboratorio =
 
 export interface EventoTrazabilidadMuestra {
   id: string;
-  tipoEvento: 'CREACION' | 'TOMA' | 'RECEPCION' | 'ACEPTACION' | 'RECHAZO' | 'RETOMA' | 'RECTIFICACION';
+  tipoEvento: 'CREACION' | 'TOMA' | 'RECEPCION' | 'ACEPTACION' | 'RECHAZO' | 'RETOMA' | 'RECTIFICACION' | 'TRASLADO' | 'PROCESAMIENTO';
   fechaHora: string;
   actor: string;
   detalle: string;
@@ -1011,6 +1016,9 @@ export interface ItemOrdenLab {
   seccion: string;
   tipoMuestra: string;
   versionPrueba: number;
+  parametros?: PruebaLaboratorioCatalogo['parametros'];
+  metodoAnalitico?: string;
+  muestraIds?: string[];
   arancelGTQ: number;
   estado: 'PENDIENTE' | 'EN_PROCESO' | 'VALIDADO';
 }
@@ -1051,6 +1059,7 @@ export interface CrearOrdenLabDTO {
   prioridad: PrioridadLaboratorio;
   motivoClinico: string;
   pruebasSeleccionadasIds: string[];
+  preciosAcordados?: Record<string, number>;
 }
 
 export type EstadoResultadoLab = 'BORRADOR' | 'VALIDADO' | 'CORREGIDO' | 'ANULADO';
@@ -1254,6 +1263,8 @@ export interface LoteReactivo {
   id: string;
   reactivoId: string;
   reactivoNombre: string;
+  proveedorId?: string;
+  proveedorNombre?: string;
   reactivoCodigo: string;
   seccion: string;
   numeroLote: string;
@@ -1292,6 +1303,9 @@ export interface RegistrarMovimientoDTO {
 
 export interface RegistrarNuevoLoteDTO {
   reactivoId: string;
+  reactivoNombre?: string;
+  proveedorId?: string;
+  proveedorNombre?: string;
   numeroLote: string;
   fechaVencimiento: string;
   temperaturaAlmacenamiento: string;
@@ -1369,3 +1383,12 @@ export interface AnularFacturaDTO {
 
 
 
+
+export type CategoriaReferenciaLab = 'solicitantes' | 'tipos-muestra' | 'metodos' | 'proveedores' | 'reactivos';
+export interface ReferenciaLaboratorio {
+  id: string;
+  categoria: CategoriaReferenciaLab;
+  nombre: string;
+  contacto?: string;
+  estado: 'ACTIVO' | 'INACTIVO';
+}

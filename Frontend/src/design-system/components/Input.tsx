@@ -74,6 +74,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={describedBy}
             style={{
               flex: 1,
+              minWidth: 0,
               border: 'none',
               outline: 'none',
               background: 'transparent',

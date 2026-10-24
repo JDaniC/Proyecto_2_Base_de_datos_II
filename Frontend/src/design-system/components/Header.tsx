@@ -1,7 +1,6 @@
 import React from 'react';
-import { Menu, LogOut, Building2, Bell } from 'lucide-react';
+import { Menu, LogOut, Building2 } from 'lucide-react';
 import { SesionUsuario } from '../../services/types';
-import { Badge } from './Badge';
 import { Button } from './Button';
 
 export interface HeaderProps {
@@ -64,53 +63,19 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="header-institution" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Building2 size={18} color="var(--color-primary)" />
           <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-strong)' }}>
             {sesion.institucionNombre}
           </span>
-          <Badge variant="success" withDot>
-            En línea
-          </Badge>
         </div>
       </div>
 
       {/* Lado derecho: Notificaciones y Perfil de usuario */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <button
-          type="button"
-          aria-label="Notificaciones del sistema"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            padding: '6px',
-            borderRadius: '8px',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <Bell size={18} />
-          <span
-            style={{
-              position: 'absolute',
-              top: '4px',
-              right: '4px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-primary)',
-            }}
-            aria-hidden="true"
-          />
-        </button>
-
-        <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--color-divider)' }} />
+      <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
 
         {/* Perfil del profesional */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="header-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
               width: '36px',
@@ -128,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
             {iniciales}
           </div>
 
-          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+          <div className="header-user-info" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-strong)', lineHeight: 1.2 }}>
               {sesion.nombre}
             </span>

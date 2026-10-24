@@ -1,18 +1,22 @@
+import { Input } from '../../design-system/components/Input';
+import { Modal } from '../../design-system/components/Modal';
+import { Alert } from '../../design-system/components/Alert';
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   TestTube2,
   Search,
   CheckCircle2,
-  XCircle,
   RotateCcw,
   History,
-  Edit3,
-  X
+  Edit3
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import { Panel } from '../../design-system/components/Panel';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
@@ -35,10 +39,12 @@ export const SamplesManagementPage: React.FC = () => {
   const [filtroEstado, setFiltroEstado] = useState<EstadoMuestraLaboratorio | 'TODOS'>('TODOS');
 
   // Modales
+  const [traslado, setTraslado] = useState<MuestraLaboratorio | null>(null);
+  const [destino, setDestino] = useState('');
   const [muestraParaRechazar, setMuestraParaRechazar] = useState<MuestraLaboratorio | null>(null);
-  const [motivoRechazo, setMotivoRechazo] = useState('Hemólisis severa grado 3 (interferencia analítica)');
+  const [motivoRechazo, setMotivoRechazo] = useState('');
   const [muestraParaRetoma, setMuestraParaRetoma] = useState<MuestraLaboratorio | null>(null);
-  const [motivoRetoma, setMotivoRetoma] = useState('Retoma requerida por muestra coagulada al ingreso');
+  const [motivoRetoma, setMotivoRetoma] = useState('');
 
   // Trazabilidad y Rectificación (L05, CA12)
   const [muestraParaTrazabilidad, setMuestraParaTrazabilidad] = useState<MuestraLaboratorio | null>(null);
@@ -49,6 +55,7 @@ export const SamplesManagementPage: React.FC = () => {
   const [guardandoRectificacion, setGuardandoRectificacion] = useState(false);
 
   const [notificacion, setNotificacion] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   const cargarMuestras = async () => {
     setCargando(true);
@@ -101,6 +108,7 @@ export const SamplesManagementPage: React.FC = () => {
     muestra: MuestraLaboratorio,
     nuevoEstado: EstadoMuestraLaboratorio
   ) => {
+    setErrorAccion(null);
     try {
       const actor = sesion?.nombre || 'Personal de Laboratorio';
       const actualizada = await laboratoryRepository.actualizarEstadoMuestra(
@@ -112,10 +120,10 @@ export const SamplesManagementPage: React.FC = () => {
       );
 
       setMuestras((prev) => prev.map((m) => (m.id === actualizada.id ? actualizada : m)));
-      setNotificacion(`Muestra ${actualizada.codigoMuestra} actualizada a estado ${nuevoEstado}.`);
+      setNotificacion(`Muestra ${actualizada.codigoMuestra} actualizada a estado ${getDisplayLabel(nuevoEstado).toLowerCase()}.`);
       setTimeout(() => setNotificacion(null), 4000);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setErrorAccion(getErrorMessage(err, 'No se pudo actualizar la muestra. Inténtalo de nuevo.'));
     }
   };
 
@@ -123,7 +131,9 @@ export const SamplesManagementPage: React.FC = () => {
   const handleConfirmarRechazo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!muestraParaRechazar) return;
+    if (!motivoRechazo.trim()) { setErrorAccion('Escribe el motivo del rechazo.'); return; }
 
+    setErrorAccion(null);
     try {
       const actor = sesion?.nombre || 'Analista de Recepción';
       const rechazada = await laboratoryRepository.actualizarEstadoMuestra(
@@ -136,10 +146,10 @@ export const SamplesManagementPage: React.FC = () => {
 
       setMuestras((prev) => prev.map((m) => (m.id === rechazada.id ? rechazada : m)));
       setMuestraParaRechazar(null);
-      setNotificacion(`Muestra ${rechazada.codigoMuestra} marcada como RECHAZADA. Puede solicitar retoma.`);
+      setNotificacion(`Muestra ${rechazada.codigoMuestra} rechazada. Puedes registrar una nueva toma.`);
       setTimeout(() => setNotificacion(null), 4000);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setErrorAccion(getErrorMessage(err, 'No se pudo actualizar la muestra. Inténtalo de nuevo.'));
     }
   };
 
@@ -147,7 +157,9 @@ export const SamplesManagementPage: React.FC = () => {
   const handleConfirmarRetoma = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!muestraParaRetoma) return;
+    if (!motivoRetoma.trim()) { setErrorAccion('Escribe el motivo de la nueva toma.'); return; }
 
+    setErrorAccion(null);
     try {
       const actor = sesion?.nombre || 'Supervisor de Laboratorio';
       const retoma = await laboratoryRepository.registrarRetomaMuestra(
@@ -161,8 +173,8 @@ export const SamplesManagementPage: React.FC = () => {
       setMuestraParaRetoma(null);
       setNotificacion(`Retoma ${retoma.codigoMuestra} generada exitosamente vinculada a la orden ${retoma.codigoOrden}.`);
       setTimeout(() => setNotificacion(null), 4000);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setErrorAccion(getErrorMessage(err, 'No se pudo actualizar la muestra. Inténtalo de nuevo.'));
     }
   };
 
@@ -171,6 +183,7 @@ export const SamplesManagementPage: React.FC = () => {
     if (!muestraParaTrazabilidad || !nuevoValorRectificar.trim() || !motivoRectificar.trim()) return;
 
     setGuardandoRectificacion(true);
+    setErrorAccion(null);
     try {
       const actor = sesion?.nombre || 'Analista de Calidad';
       const rectificada = await laboratoryRepository.rectificarDatoMuestra(
@@ -187,10 +200,10 @@ export const SamplesManagementPage: React.FC = () => {
       setMostrarFormRectificar(false);
       setNuevoValorRectificar('');
       setMotivoRectificar('');
-      setNotificacion(`Dato de la muestra ${rectificada.codigoMuestra} rectificado con bitácora de trazabilidad.`);
+      setNotificacion(`Datos de la muestra ${rectificada.codigoMuestra} actualizados.`);
       setTimeout(() => setNotificacion(null), 4000);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setErrorAccion(getErrorMessage(err, 'No se pudo actualizar la muestra. Inténtalo de nuevo.'));
     } finally {
       setGuardandoRectificacion(false);
     }
@@ -222,10 +235,10 @@ export const SamplesManagementPage: React.FC = () => {
         <div>
           <nav aria-label="Ruta de navegación" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
             <Link to="/laboratorio/bandeja" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-              Bandeja de Trabajo (L01)
+              Bandeja de Trabajo
             </Link>
             <span style={{ margin: '0 8px' }}>/</span>
-            <strong style={{ color: 'var(--color-strong)' }}>Muestras y Tomas (L04)</strong>
+            <strong style={{ color: 'var(--color-strong)' }}>Muestras y Tomas</strong>
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -245,13 +258,12 @@ export const SamplesManagementPage: React.FC = () => {
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: 'var(--color-strong)' }}>
-                Registro y Recepción de Muestras (L04)
+                Registro y Recepción de Muestras
               </h1>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                Cadena de custodia preanalítica: toma, recepción, criterios de aceptación, rechazos y retomas (CA12)
+                Registra la toma, recepción y estado de cada muestra.
               </p>
             </div>
-            <Badge variant="primary">{sesion?.institucionNombre || 'Laboratorio Clínico Central'}</Badge>
           </div>
         </div>
 
@@ -259,7 +271,7 @@ export const SamplesManagementPage: React.FC = () => {
           variant="secondary"
           onClick={() => navigate('/laboratorio/bandeja')}
         >
-          Volver a Bandeja (L01)
+          Volver a Bandeja
         </Button>
       </div>
 
@@ -284,39 +296,16 @@ export const SamplesManagementPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tira de Métricas Preanalíticas */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '12px'
-        }}
-      >
-        <div style={{ backgroundColor: 'var(--color-surface, #ffffff)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Total Muestras</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-strong)', marginTop: '4px' }}>{metricas.total}</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--color-surface, #ffffff)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#92400E' }}>Pendientes de Flebotomía</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>{metricas.pendientesToma}</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--color-surface, #ffffff)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>En Tránsito / Por Recibir</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-primary)', marginTop: '4px' }}>{metricas.tomadas}</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--color-surface, #ffffff)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#047857' }}>Aceptadas y Aptas</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>{metricas.aceptadas}</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--color-surface, #ffffff)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '14px 16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#991B1B' }}>Rechazadas (CA12)</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>{metricas.rechazadas}</div>
-        </div>
-      </div>
+      <MetricStrip
+        label="Resumen de muestras"
+        items={[
+          { id: 'total', label: 'Total', value: metricas.total },
+          { id: 'pendientes', label: 'Pendientes de toma', value: metricas.pendientesToma, tone: 'warning' },
+          { id: 'tomadas', label: 'Por recibir', value: metricas.tomadas, tone: 'info' },
+          { id: 'aceptadas', label: 'Aptas para análisis', value: metricas.aceptadas, tone: 'success' },
+          { id: 'rechazadas', label: 'Rechazadas', value: metricas.rechazadas, tone: 'danger' },
+        ]}
+      />
 
       {/* Filtros */}
       <Panel>
@@ -342,7 +331,7 @@ export const SamplesManagementPage: React.FC = () => {
                 padding: '9px 12px 9px 36px',
                 borderRadius: 'var(--radius-input)',
                 border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 fontSize: '13px'
               }}
             />
@@ -357,7 +346,7 @@ export const SamplesManagementPage: React.FC = () => {
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-input)',
                 border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 fontSize: '13px'
               }}
             >
@@ -381,7 +370,7 @@ export const SamplesManagementPage: React.FC = () => {
               Control Preanalítico de Muestras ({muestrasFiltradas.length})
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '2px 0 0 0' }}>
-              Gestión de ciclo de vida, trazabilidad unívoca y registro de retomas
+              Revisa la toma, recepción, aceptación y rechazo de muestras.
             </p>
           </div>
         </div>
@@ -414,7 +403,7 @@ export const SamplesManagementPage: React.FC = () => {
                     <td style={{ padding: '12px 10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '13px', color: 'var(--color-strong)' }}>
-                          {muestra.codigoMuestra}
+                          <span className="table-identifier">{muestra.codigoMuestra}</span>
                         </span>
                         {muestra.esRetoma && (
                           <span style={{ fontSize: '10px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E' }}>
@@ -430,7 +419,7 @@ export const SamplesManagementPage: React.FC = () => {
                         to={`/laboratorio/ordenes/${muestra.ordenId}`}
                         style={{ fontFamily: 'monospace', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}
                       >
-                        {muestra.codigoOrden}
+                        <span className="table-identifier">{muestra.codigoOrden}</span>
                       </Link>
                     </td>
 
@@ -514,10 +503,12 @@ export const SamplesManagementPage: React.FC = () => {
                             onClick={() => setMuestraParaRetoma(muestra)}
                             leftIcon={<RotateCcw size={14} />}
                           >
-                            Registrar Retoma (CA12)
+                            Registrar Retoma
                           </Button>
                         )}
 
+                        {['TOMADA', 'RECIBIDA', 'ACEPTADA'].includes(muestra.estado) && <Button size="sm" variant="secondary" onClick={() => { setDestino(''); setTraslado(muestra); }}>Registrar traslado</Button>}
+                        {muestra.estado === 'ACEPTADA' && <Button size="sm" variant="secondary" onClick={() => handleAvanzarEstado(muestra, 'PROCESADA')}>Registrar procesamiento</Button>}
                         {muestra.estado === 'ACEPTADA' && (
                           <span style={{ fontSize: '12px', color: '#047857', fontWeight: 600 }}>
                             Apta para análisis
@@ -534,7 +525,7 @@ export const SamplesManagementPage: React.FC = () => {
                           aria-label={`Ver trazabilidad de ${muestra.codigoMuestra}`}
                         >
                           <History size={13} style={{ marginRight: '4px' }} />
-                          Trazabilidad (L05)
+                          Trazabilidad
                         </Button>
                       </div>
                     </td>
@@ -546,56 +537,20 @@ export const SamplesManagementPage: React.FC = () => {
         )}
       </Panel>
 
+      {traslado && <Modal isOpen onClose={() => setTraslado(null)} title="Registrar traslado de muestra" description={traslado.codigoMuestra}>
+        <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={async e => { e.preventDefault(); try { const actualizada = await laboratoryRepository.registrarTrasladoMuestra(institucionId, traslado.id, destino, sesion!.nombre); setMuestras(prev => prev.map(m => m.id === actualizada.id ? actualizada : m)); setTraslado(null); setNotificacion('Traslado registrado.'); } catch (error) { setErrorAccion(getErrorMessage(error, 'No se pudo registrar el traslado.')); } }}>
+          <Input label="Destino de la muestra" value={destino} onChange={e => setDestino(e.target.value)} required />
+          {errorAccion && <Alert variant="danger">{errorAccion}</Alert>}
+          <Button type="submit">Guardar traslado</Button>
+        </form>
+      </Modal>}
       {/* Modal Rechazar Muestra */}
       {muestraParaRechazar && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-surface, #ffffff)',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '520px',
-              padding: '20px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              border: '1px solid var(--color-border)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#DC2626' }}>
-                <XCircle size={22} />
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                  Rechazo de Muestra ({muestraParaRechazar.codigoMuestra})
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMuestraParaRechazar(null)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmarRechazo}>
+        <Modal isOpen onClose={() => setMuestraParaRechazar(null)} title="Rechazar muestra" description={muestraParaRechazar.codigoMuestra}>
+          <form noValidate onSubmit={handleConfirmarRechazo}>
+              {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
               <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '0 0 14px 0', lineHeight: 1.4 }}>
-                Rechazar una muestra no cancela la orden general, sino que habilita el protocolo de retoma controlada (CA12).
+                La orden permanece activa. Registra una nueva toma para continuar el análisis.
               </p>
 
               <label
@@ -613,7 +568,7 @@ export const SamplesManagementPage: React.FC = () => {
                   padding: '9px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px',
                   marginBottom: '16px'
                 }}
@@ -634,62 +589,18 @@ export const SamplesManagementPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Registrar Retoma (CA12) */}
       {muestraParaRetoma && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-surface, #ffffff)',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '520px',
-              padding: '20px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              border: '1px solid var(--color-border)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D97706' }}>
-                <RotateCcw size={22} />
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                  Registrar Retoma de Muestra (CA12)
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMuestraParaRetoma(null)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmarRetoma}>
+        <Modal isOpen onClose={() => setMuestraParaRetoma(null)} title="Registrar nueva toma de muestra" description={muestraParaRetoma.codigoMuestra}>
+          <form noValidate onSubmit={handleConfirmarRetoma}>
+              {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
               <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '0 0 14px 0', lineHeight: 1.4 }}>
-                Se generará un <strong>nuevo documento de muestra unívoco</strong> vinculado a la orden{' '}
-                <strong>{muestraParaRetoma.codigoOrden}</strong> para el paciente{' '}
-                <strong>{muestraParaRetoma.pacienteNombre}</strong>, manteniendo la trazabilidad histórica completa.
+                Se registrará una nueva muestra para la orden{' '}
+                <strong><span className="table-identifier">{muestraParaRetoma.codigoOrden}</span></strong> para el paciente{' '}
+                <strong>{muestraParaRetoma.pacienteNombre}</strong>.
               </p>
 
               <label
@@ -709,7 +620,7 @@ export const SamplesManagementPage: React.FC = () => {
                   padding: '9px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px',
                   fontFamily: 'inherit',
                   marginBottom: '16px'
@@ -721,84 +632,25 @@ export const SamplesManagementPage: React.FC = () => {
                   Cancelar
                 </Button>
                 <Button variant="primary" type="submit">
-                  Generar Retoma Unívoca
+                  Registrar nueva toma
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Trazabilidad de Muestra y Eventos (L05) */}
       {muestraParaTrazabilidad && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-trazabilidad-title"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px'
-          }}
+        <Modal
+          isOpen
+          onClose={() => setMuestraParaTrazabilidad(null)}
+          title="Historial de la muestra"
+          description={`${muestraParaTrazabilidad.codigoMuestra} · ${muestraParaTrazabilidad.codigoOrden}`}
+          maxWidth="640px"
+          footer={<Button variant="secondary" onClick={() => setMuestraParaTrazabilidad(null)}>Cerrar</Button>}
         >
-          <div
-            style={{
-              backgroundColor: 'var(--color-surface, #ffffff)',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '640px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '20px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              border: '1px solid var(--color-border)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--color-divider)', paddingBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--color-selection)',
-                    color: 'var(--color-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <History size={20} />
-                </div>
-                <div>
-                  <h3 id="modal-trazabilidad-title" style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                    Bitácora de Trazabilidad y Eventos (L05)
-                  </h3>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                    Muestra: <strong style={{ fontFamily: 'monospace' }}>{muestraParaTrazabilidad.codigoMuestra}</strong> · Orden: <strong style={{ fontFamily: 'monospace' }}>{muestraParaTrazabilidad.codigoOrden}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMuestraParaTrazabilidad(null)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Ficha resumida de la muestra */}
+          {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
+          {/* Ficha resumida de la muestra */}
             <div
               style={{
                 display: 'grid',
@@ -818,7 +670,7 @@ export const SamplesManagementPage: React.FC = () => {
               </div>
               <div>
                 <span style={{ color: 'var(--color-text-secondary)' }}>Estado Actual: </span>
-                <strong>{muestraParaTrazabilidad.estado}</strong>
+                <strong>{getDisplayLabel(muestraParaTrazabilidad.estado)}</strong>
               </div>
               <div>
                 <span style={{ color: 'var(--color-text-secondary)' }}>Contenedor: </span>
@@ -839,7 +691,7 @@ export const SamplesManagementPage: React.FC = () => {
                   onClick={() => setMostrarFormRectificar(true)}
                   leftIcon={<Edit3 size={14} />}
                 >
-                  Rectificar Dato Administrativo (CA12)
+                  Rectificar Dato Administrativo
                 </Button>
               ) : (
                 <form
@@ -871,7 +723,7 @@ export const SamplesManagementPage: React.FC = () => {
                           padding: '7px 10px',
                           borderRadius: '6px',
                           border: '1px solid var(--color-border)',
-                          backgroundColor: 'var(--color-input-bg)',
+                          backgroundColor: 'var(--color-control)',
                           fontSize: '12px'
                         }}
                       >
@@ -895,7 +747,7 @@ export const SamplesManagementPage: React.FC = () => {
                           padding: '7px 10px',
                           borderRadius: '6px',
                           border: '1px solid var(--color-border)',
-                          backgroundColor: 'var(--color-input-bg)',
+                          backgroundColor: 'var(--color-control)',
                           fontSize: '12px'
                         }}
                       />
@@ -917,7 +769,7 @@ export const SamplesManagementPage: React.FC = () => {
                         padding: '7px 10px',
                         borderRadius: '6px',
                         border: '1px solid var(--color-border)',
-                        backgroundColor: 'var(--color-input-bg)',
+                        backgroundColor: 'var(--color-control)',
                         fontSize: '12px'
                       }}
                     />
@@ -990,7 +842,7 @@ export const SamplesManagementPage: React.FC = () => {
                               : 'var(--color-primary)'
                         }}
                       >
-                        {evt.tipoEvento}
+                        {getDisplayLabel(evt.tipoEvento)}
                       </span>
                       <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
                         {new Date(evt.fechaHora).toLocaleString()}
@@ -1013,14 +865,7 @@ export const SamplesManagementPage: React.FC = () => {
                   </div>
                 ))}
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', borderTop: '1px solid var(--color-divider)', paddingTop: '12px' }}>
-              <Button variant="secondary" onClick={() => setMuestraParaTrazabilidad(null)}>
-                Cerrar Bitácora
-              </Button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -75,7 +75,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
   const getPrioridadBadge = (prioridad: string) => {
     switch (prioridad) {
       case 'STAT':
-        return <Badge variant="danger">STAT (Inmediato)</Badge>;
+        return <Badge variant="danger">Inmediata</Badge>;
       case 'URGENTE':
         return <Badge variant="warning">Urgente</Badge>;
       default:
@@ -100,7 +100,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Orden de Examen y Resultados (H06) — ${orden.codigoLegible}`}
+      title={`Orden de Examen y Resultados — ${orden.codigoLegible}`}
       maxWidth="850px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -285,7 +285,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
                             padding: '10px 14px',
                             backgroundColor: '#f8fafc',
                             border: '1px solid #e2e8f0',
-                            borderRadius: 'var(--radius-field)',
+                            borderRadius: 'var(--radius-input)',
                             fontSize: '13px',
                             marginBottom: '10px'
                           }}

@@ -109,15 +109,15 @@ const CATALOGO_PERMISOS: DefinicionPermiso[] = [
   {
     id: 'usuarios.administrar',
     categoria: 'ADMINISTRACION',
-    nombre: 'Administración de cuentas y RBAC',
+    nombre: 'Administración de cuentas y accesos',
     descripcion: 'Aprovisionamiento de credenciales, asignación de roles y control de acceso institucional.',
     esCritico: true
   },
   {
     id: 'auditoria.leer',
     categoria: 'ADMINISTRACION',
-    nombre: 'Auditoría y trazabilidad inmutable',
-    descripcion: 'Inspección de eventos de seguridad, correlación técnica y cambios de estado en el sistema.',
+    nombre: 'Registro de actividad',
+    descripcion: 'Consulta de eventos de seguridad y cambios realizados en el sistema.',
     esCritico: true
   }
 ];
@@ -383,7 +383,7 @@ export class MockUserRepository implements UserRepository {
       (u) => u.id === usuarioId && u.institucionId === institucionId
     );
     if (index === -1) {
-      throw new Error(`Usuario ${usuarioId} no encontrado en la institución.`);
+      throw new Error('No se encontró el usuario. Actualiza la vista e inténtalo de nuevo.');
     }
 
     this.usuarios[index] = {

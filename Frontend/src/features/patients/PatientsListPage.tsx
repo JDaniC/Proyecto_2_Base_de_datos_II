@@ -178,8 +178,7 @@ export const PatientsListPage: React.FC = () => {
               marginBottom: 0
             }}
           >
-            Búsqueda, consulta y administración de expedientes clínicos autorizados en{' '}
-            <strong style={{ color: 'var(--color-strong)' }}>{sesion?.institucionNombre}</strong>.
+            Busca pacientes y abre sus expedientes.
           </p>
         </div>
 
@@ -225,12 +224,12 @@ export const PatientsListPage: React.FC = () => {
             type="search"
             value={terminoBusqueda}
             onChange={(e) => setTerminoBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, documento de identificación o código de expediente..."
+            placeholder="Buscar paciente o expediente"
             aria-label="Buscador de pacientes"
             style={{
               width: '100%',
               height: 'var(--height-input)',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid transparent',
               borderRadius: 'var(--radius-input)',
               padding: '0 44px 0 44px',
@@ -272,119 +271,6 @@ export const PatientsListPage: React.FC = () => {
         >
           Filtros {totalFiltrosActivos > 0 && `(${totalFiltrosActivos})`}
         </Button>
-      </div>
-
-      {/* Sugerencias Rápidas de Demostración */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '16px',
-          flexWrap: 'wrap',
-          fontSize: '12px',
-          color: 'var(--color-text-secondary)'
-        }}
-      >
-        <span>Búsquedas frecuentes demo:</span>
-        {institucionId === 'HOSPITAL_GENERAL' && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                setTerminoBusqueda('Roberto');
-                cargarPacientes(undefined);
-              }}
-              style={{
-                background: 'var(--color-panel)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                color: 'var(--color-strong)'
-              }}
-            >
-              Roberto Estrada
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTerminoBusqueda('Claudia');
-                cargarPacientes(undefined);
-              }}
-              style={{
-                background: 'var(--color-panel)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                color: 'var(--color-strong)'
-              }}
-            >
-              Claudia Méndez
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTerminoBusqueda('HC-HOSP-0112');
-                cargarPacientes(undefined);
-              }}
-              style={{
-                background: 'var(--color-panel)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                color: 'var(--color-strong)'
-              }}
-            >
-              HC-HOSP-0112
-            </button>
-          </>
-        )}
-        {institucionId === 'CENTRO_PEDIATRICO' && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                setTerminoBusqueda('Mateo');
-                cargarPacientes(undefined);
-              }}
-              style={{
-                background: 'var(--color-panel)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                color: 'var(--color-strong)'
-              }}
-            >
-              Mateo Álvarez
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTerminoBusqueda('Sofía');
-                cargarPacientes(undefined);
-              }}
-              style={{
-                background: 'var(--color-panel)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                color: 'var(--color-strong)'
-              }}
-            >
-              Sofía Lemus
-            </button>
-          </>
-        )}
       </div>
 
       {/* Panel Desplegable de Filtros */}
@@ -527,11 +413,12 @@ export const PatientsListPage: React.FC = () => {
             border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-panel)',
             overflow: 'hidden',
-            boxShadow: 'var(--shadow-panel)'
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
-          <div style={{ overflowX: 'auto' }}>
+          <div className="patients-list-table-scroll" style={{ overflowX: 'auto' }}>
             <table
+              className="patients-list-table"
               style={{
                 width: '100%',
                 borderCollapse: 'collapse',
@@ -568,19 +455,7 @@ export const PatientsListPage: React.FC = () => {
                       letterSpacing: '0.04em'
                     }}
                   >
-                    Expediente / Identificación
-                  </th>
-                  <th
-                    style={{
-                      padding: '14px 16px',
-                      fontWeight: 600,
-                      color: 'var(--color-text-secondary)',
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}
-                  >
-                    Contacto
+                    Expediente
                   </th>
                   <th
                     style={{
@@ -618,7 +493,7 @@ export const PatientsListPage: React.FC = () => {
                       transition: 'background-color var(--transition-fast)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--color-hover)';
+                      e.currentTarget.style.backgroundColor = 'var(--color-control-hover)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
@@ -648,8 +523,6 @@ export const PatientsListPage: React.FC = () => {
                             ? 'Femenino'
                             : 'Otro'}
                         </span>
-                        <span>•</span>
-                        <span>Nac: {paciente.fechaNacimiento}</span>
                       </div>
                     </td>
 
@@ -671,35 +544,6 @@ export const PatientsListPage: React.FC = () => {
                             Alergias
                           </Badge>
                         )}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--color-text-secondary)',
-                          marginTop: '2px'
-                        }}
-                      >
-                        {paciente.tipoIdentificacion}: {paciente.numeroIdentificacion}
-                      </div>
-                    </td>
-
-                    {/* Teléfono y Ubicación */}
-                    <td style={{ padding: '16px 16px' }}>
-                      <div style={{ color: 'var(--color-text)', fontSize: '13px' }}>
-                        {paciente.telefono}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--color-text-secondary)',
-                          marginTop: '2px',
-                          maxWidth: '220px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {paciente.direccion}
                       </div>
                     </td>
 
@@ -763,7 +607,7 @@ export const PatientsListPage: React.FC = () => {
           >
             <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
               Página {resultado.paginaActual} · Mostrando {resultado.items.length} de{' '}
-              {resultado.totalEncontrados} registros autorizados
+              {resultado.totalEncontrados} pacientes
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

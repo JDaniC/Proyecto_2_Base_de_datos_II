@@ -168,13 +168,13 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Syringe className="text-[#20666B]" size={20} />
+              <Syringe className="text-clinic-primary" size={20} />
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-                Control de Inmunizaciones y Esquema Oficial (P05, Regla CA11)
+                Cobertura de vacunación
               </h3>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-              Esquema Nacional MSPAS con cálculo dinámico de dosis pendientes según la edad del menor ({edadMeses} meses / {paciente.edadAnios} años).
+              Esquema registrado para la edad de este paciente ({edadMeses} meses).
             </p>
           </div>
 
@@ -183,64 +183,33 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
               variant="primary"
               size="sm"
               onClick={handleAbrirAplicarGeneral}
-              className="bg-[#20666B] text-white flex items-center gap-1.5"
+              className="bg-clinic-primary text-white flex items-center gap-1.5"
             >
               <Plus size={15} />
-              Aplicar / Registrar Vacuna (P06)
+              Registrar vacuna
             </Button>
           </div>
         </div>
 
-        {/* Tarjetas KPI de Cobertura */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '12px',
-            marginTop: '16px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--color-border)'
-          }}
-        >
-          {/* Total Dosis */}
-          <div style={{ padding: '10px 14px', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '6px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block' }}>Total Esquema</span>
-            <strong style={{ fontSize: '18px', color: 'var(--color-strong)' }}>{totalDosis}</strong>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginLeft: '4px' }}>dosis</span>
-          </div>
-
-          {/* Dosis Aplicadas */}
-          <div style={{ padding: '10px 14px', backgroundColor: '#EDF5F1', borderRadius: '6px', border: '1px solid #A3C2B8' }}>
-            <span style={{ fontSize: '11px', color: '#134E48', display: 'block', fontWeight: 500 }}>Aplicadas (Vigentes)</span>
-            <strong style={{ fontSize: '18px', color: '#20666B' }}>{dosisAplicadas}</strong>
-            <span style={{ fontSize: '11px', color: '#134E48', marginLeft: '4px' }}>cumplidas</span>
-          </div>
-
-          {/* Dosis Pendientes */}
-          <div style={{ padding: '10px 14px', backgroundColor: '#FEF3C7', borderRadius: '6px', border: '1px solid #FDE68A' }}>
-            <span style={{ fontSize: '11px', color: '#92400E', display: 'block', fontWeight: 500 }}>Dosis Pendientes</span>
-            <strong style={{ fontSize: '18px', color: '#B45309' }}>{dosisPendientes}</strong>
-            <span style={{ fontSize: '11px', color: '#92400E', marginLeft: '4px' }}>debidas por edad</span>
-          </div>
-
-          {/* Dosis Futuras */}
-          <div style={{ padding: '10px 14px', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '6px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block' }}>Dosis Futuras</span>
-            <strong style={{ fontSize: '18px', color: 'var(--color-strong)' }}>{dosisFuturas}</strong>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginLeft: '4px' }}>programadas</span>
-          </div>
-
-          {/* Cobertura % */}
-          <div style={{ padding: '10px 14px', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '6px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block' }}>Cobertura Total</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-              <strong style={{ fontSize: '18px', color: 'var(--color-primary)' }}>{porcentajeCobertura}%</strong>
-              <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>del esquema</span>
-            </div>
-            {/* Barra de progreso visual */}
-            <div style={{ width: '100%', height: '4px', backgroundColor: '#E5E7EB', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
-              <div style={{ width: `${porcentajeCobertura}%`, height: '100%', backgroundColor: '#20666B' }} />
-            </div>
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
+          <div className="metric-strip" role="group" aria-label="Resumen de vacunación">
+            {[
+              { id: 'total', label: 'Dosis del esquema', value: totalDosis, detail: 'en total', color: 'var(--color-strong)' },
+              { id: 'aplicadas', label: 'Aplicadas', value: dosisAplicadas, detail: 'vigentes', color: 'var(--color-success-text)' },
+              { id: 'pendientes', label: 'Pendientes', value: dosisPendientes, detail: 'por edad', color: 'var(--color-warning-text)' },
+              { id: 'futuras', label: 'Futuras', value: dosisFuturas, detail: 'programadas', color: 'var(--color-strong)' },
+              { id: 'cobertura', label: 'Cobertura', value: `${porcentajeCobertura}%`, detail: 'del esquema', color: 'var(--color-primary)' },
+            ].map((metric, index) => (
+              <div
+                key={metric.id}
+                className="metric-strip-item"
+                style={{ borderLeft: index > 0 ? '1px solid var(--color-divider)' : 'none' }}
+              >
+                <span className="metric-strip-label">{metric.label}</span>
+                <strong className="metric-strip-value" style={{ color: metric.color }}>{metric.value}</strong>
+                <span className="metric-strip-detail">{metric.detail}</span>
+              </div>
+            ))}
           </div>
         </div>
       </Panel>
@@ -265,7 +234,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
           }}
         >
           <Layers size={16} />
-          <span>Esquema y Dosis Pendientes (P05)</span>
+          <span>Esquema y Dosis Pendientes</span>
         </button>
 
         <button
@@ -286,7 +255,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
           }}
         >
           <History size={16} />
-          <span>Historial Cronológico e Inmutabilidad (P07) ({aplicaciones.length})</span>
+          <span>Historial de aplicaciones ({aplicaciones.length})</span>
         </button>
       </div>
 
@@ -345,10 +314,10 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
           </div>
 
           {/* Tabla del Esquema */}
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', overflowX: 'auto' }}>
+            <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ backgroundColor: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+                <tr style={{ backgroundColor: 'var(--color-background-alt)', textAlign: 'left' }}>
                   <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Biológico / Vacuna</th>
                   <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Dosis Programada</th>
                   <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Edad Recomendada</th>
@@ -375,7 +344,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                             ? '#FFFBEB'
                             : idx % 2 === 0
                             ? '#FFFFFF'
-                            : 'var(--color-bg-subtle)'
+                            : 'var(--color-background-alt)'
                       }}
                     >
                       <td style={{ padding: '10px 14px' }}>
@@ -396,7 +365,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                           ? 'Al nacer'
                           : item.edadRecomendadaMeses < 12
                           ? `${item.edadRecomendadaMeses} meses`
-                          : `${item.edadRecomendadaMeses / 12} años (${item.edadRecomendadaMeses} m)`}
+                          : item.edadRecomendadaMeses === 12 ? '1 año (12 meses)' : `${item.edadRecomendadaMeses} meses`}
                       </td>
 
                       <td style={{ padding: '10px 14px' }}>
@@ -447,10 +416,10 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                             variant="primary"
                             size="sm"
                             onClick={() => handleAbrirAplicarParaItem(item)}
-                            className="bg-[#20666B] text-white"
+                            className="bg-clinic-primary text-white"
                           >
                             <Syringe size={14} style={{ marginRight: '4px' }} />
-                            Aplicar (P06)
+                            Aplicar
                           </Button>
                         ) : (
                           <Button
@@ -477,17 +446,17 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
       {modoVista === 'HISTORIAL' && (
         <Panel
           title={`Historial Cronológico de Aplicaciones (${aplicaciones.length})`}
-          subtitle="Registro inmutable de biológicos aplicados con trazabilidad de enmiendas y auditoría regulatoria"
+          subtitle="Vacunas aplicadas, dosis, lote y profesional responsable."
         >
           {aplicaciones.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
               No se registran aplicaciones de vacunas en el historial de este menor.
             </div>
           ) : (
-            <div style={{ border: '1px solid var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--color-bg-subtle)', textAlign: 'left' }}>
+                  <tr style={{ backgroundColor: 'var(--color-background-alt)', textAlign: 'left' }}>
                     <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Fecha / Hora</th>
                     <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Biológico y Dosis</th>
                     <th style={{ padding: '10px 14px', color: 'var(--color-text-secondary)' }}>Lote / Vía / Sitio</th>
@@ -507,7 +476,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                             ? '#FEF2F2'
                             : idx % 2 === 0
                             ? '#FFFFFF'
-                            : 'var(--color-bg-subtle)'
+                            : 'var(--color-background-alt)'
                       }}
                     >
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--color-strong)' }}>

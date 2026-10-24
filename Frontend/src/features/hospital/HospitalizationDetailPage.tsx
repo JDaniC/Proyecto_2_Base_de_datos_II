@@ -1,3 +1,4 @@
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -93,7 +94,7 @@ export const HospitalizationDetailPage: React.FC = () => {
     if (!hospitalizacion) return;
     const actualizado = await hospitalizationRepository.asignarCama(institucionId, hospitalizacion.id, nuevaCamaId, fechaInicio, motivo);
     setHospitalizacion(actualizado);
-    setMensajeExito('Traslado de cama registrado correctamente con intervalo [inicio, fin) no solapado.');
+    setMensajeExito('Traslado de cama registrado correctamente.');
     const camasActualizadas = await hospitalizationRepository.listarCamas(institucionId);
     setCamas(camasActualizadas);
     setTimeout(() => setMensajeExito(null), 4000);
@@ -187,10 +188,10 @@ export const HospitalizationDetailPage: React.FC = () => {
           onClick={() => navigate('/hospital/hospitalizaciones')}
           style={{ cursor: 'pointer', textDecoration: 'underline' }}
         >
-          Hospitalizaciones (H01)
+          Hospitalizaciones
         </span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Detalle de Internamiento {hospitalizacion.codigoIngreso} (H02)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Detalle de Internamiento {hospitalizacion.codigoIngreso} </strong>
       </nav>
 
       {/* Banner de éxito */}
@@ -217,7 +218,7 @@ export const HospitalizationDetailPage: React.FC = () => {
       {/* Cabecera Principal H02 */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px',
@@ -248,7 +249,7 @@ export const HospitalizationDetailPage: React.FC = () => {
               {hospitalizacion.pacienteNombre}
             </h1>
             <Badge variant={hospitalizacion.estado === 'ACTIVA' ? 'success' : 'neutral'}>
-              {hospitalizacion.estado}
+              {getDisplayLabel(hospitalizacion.estado)}
             </Badge>
             {hospitalizacion.camaActual ? (
               <Badge variant="primary">
@@ -273,7 +274,7 @@ export const HospitalizationDetailPage: React.FC = () => {
             onClick={() => navigate('/hospital/hospitalizaciones')}
             leftIcon={<ArrowLeft size={16} />}
           >
-            Volver a Lista (H01)
+            Volver a Lista
           </Button>
 
           <Button
@@ -281,7 +282,7 @@ export const HospitalizationDetailPage: React.FC = () => {
             onClick={() => navigate(`/pacientes/${hospitalizacion.pacienteId}`)}
             leftIcon={<ExternalLink size={16} />}
           >
-            Expediente (V06)
+            Expediente
           </Button>
 
           {hospitalizacion.estado === 'ACTIVA' && (
@@ -291,7 +292,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                 onClick={() => setModalCamaAbierto(true)}
                 leftIcon={<ArrowRightLeft size={16} />}
               >
-                Cambiar Cama (H04)
+                Cambiar Cama
               </Button>
 
               <Button
@@ -325,7 +326,7 @@ export const HospitalizationDetailPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-divider)', paddingBottom: '8px' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Médico Tratante (H08):</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Médico Tratante:</span>
               <span style={{ textAlign: 'right' }}>
                 <strong style={{ color: 'var(--color-strong)', display: 'block' }}>{hospitalizacion.medicoTratanteNombre}</strong>
                 <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Colegiado: {hospitalizacion.medicoTratanteColegiado}</span>
@@ -343,12 +344,12 @@ export const HospitalizationDetailPage: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '4px' }}>
-              <span style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>Criterio y Motivo de Internamiento:</span>
+                  <span style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '4px' }}>Motivo de internamiento:</span>
               <div
                 style={{
                   padding: '10px 12px',
                   backgroundColor: 'var(--color-background)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
                   lineHeight: 1.5,
                   color: 'var(--color-strong)'
@@ -399,7 +400,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                   style={{
                     padding: '10px 12px',
                     backgroundColor: 'var(--color-selection)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     border: '1px solid var(--color-border)',
                     lineHeight: 1.5,
                     color: 'var(--color-strong)'
@@ -415,7 +416,7 @@ export const HospitalizationDetailPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <BedDouble size={18} color="var(--color-primary)" />
               <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                Ubicación Hospitalaria Actual (H03)
+                Ubicación Hospitalaria Actual
               </h2>
             </div>
 
@@ -426,7 +427,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                     padding: '16px',
                     backgroundColor: 'var(--color-selection)',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between'
@@ -447,7 +448,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                   style={{
                     padding: '12px',
                     backgroundColor: 'var(--color-background)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     border: '1px solid var(--color-divider)',
                     fontSize: '12px',
                     color: 'var(--color-text-secondary)',
@@ -457,9 +458,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                   }}
                 >
                   <ShieldCheck size={16} color="var(--color-primary)" />
-                  <span>
-                    Asignación auditada. El intervalo semiabierto [inicio, fin) no genera solapamientos (CA17).
-                  </span>
+                  <span>Asignación actual de cama.</span>
                 </div>
               </div>
             ) : (
@@ -518,7 +517,7 @@ export const HospitalizationDetailPage: React.FC = () => {
               cursor: 'pointer'
             }}
           >
-            Historial de Camas (H04) ({hospitalizacion.asignacionesCama.length})
+            Historial de Camas ({hospitalizacion.asignacionesCama.length})
           </button>
 
           <button
@@ -536,7 +535,7 @@ export const HospitalizationDetailPage: React.FC = () => {
               cursor: 'pointer'
             }}
           >
-            Consultas Enlazadas ({hospitalizacion.consultasEnlazadasIds.length})
+            Consultas ({hospitalizacion.consultasEnlazadasIds.length})
           </button>
 
           <button
@@ -554,7 +553,7 @@ export const HospitalizationDetailPage: React.FC = () => {
               cursor: 'pointer'
             }}
           >
-            Procedimientos Realizados (H07) ({hospitalizacion.procedimientos?.length || 0})
+            Procedimientos Realizados ({hospitalizacion.procedimientos?.length || 0})
           </button>
         </div>
 
@@ -585,7 +584,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                   padding: '16px',
                   backgroundColor: 'var(--color-background)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '12px'
@@ -613,7 +612,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       width: '100%',
                       padding: '8px 10px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px',
                       fontFamily: 'inherit'
                     }}
@@ -637,7 +636,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       width: '100%',
                       padding: '8px 10px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   />
@@ -667,9 +666,9 @@ export const HospitalizationDetailPage: React.FC = () => {
                     key={nota.id}
                     style={{
                       padding: '14px 16px',
-                      backgroundColor: 'var(--color-surface)',
+                      backgroundColor: 'var(--color-background)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '8px'
@@ -685,7 +684,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-strong)', lineHeight: 1.5 }}>
                       {nota.notaClinica}
                     </p>
 
@@ -709,7 +708,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                 padding: '12px',
                 backgroundColor: 'var(--color-selection)',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px',
                 display: 'flex',
                 alignItems: 'center',
@@ -717,10 +716,7 @@ export const HospitalizationDetailPage: React.FC = () => {
               }}
             >
               <ShieldCheck size={18} color="var(--color-primary)" />
-              <span>
-                <strong>Auditoría de asignación semiabierta [inicio, fin) (CA17):</strong> Ninguna cama ni paciente puede
-                mantener solapamiento de horario. Cada traslado fija el fin de la asignación anterior idéntico al inicio de la nueva.
-              </span>
+              <span>Historial de camas asignadas durante esta hospitalización.</span>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -771,43 +767,18 @@ export const HospitalizationDetailPage: React.FC = () => {
 
         {/* Contenido Pestaña 3: Consultas Enlazadas */}
         {tabActiva === 'consultas' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-              Consultas médicas ambulatorias o de emergencia asociadas directamente a este internamiento.
-            </div>
-
+          <div>
             {hospitalizacion.consultasEnlazadasIds.length === 0 ? (
               <EmptyState
-                title="Sin consultas previas enlazadas"
-                description="Este ingreso hospitalario fue registrado directamente sin vincular una consulta externa previa."
+                title="Sin consultas vinculadas"
+                description="No hay consultas asociadas a este ingreso."
               />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {hospitalizacion.consultasEnlazadasIds.map((cid, idx) => (
-                  <div
-                    key={cid}
-                    style={{
-                      padding: '12px 14px',
-                      backgroundColor: 'var(--color-selection)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--color-strong)', fontSize: '13px' }}>
-                        Consulta #{idx + 1} — Referencia {cid}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                        Paciente propietario: {hospitalizacion.pacienteNombre} ({hospitalizacion.pacienteExpediente})
-                      </div>
-                    </div>
-                    <Badge variant="primary">Integridad RF-016 Verificada</Badge>
-                  </div>
-                ))}
-              </div>
+              <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+                {hospitalizacion.consultasEnlazadasIds.length === 1
+                  ? '1 consulta asociada a este ingreso.'
+                  : `${hospitalizacion.consultasEnlazadasIds.length} consultas asociadas a este ingreso.`}
+              </p>
             )}
           </div>
         )}
@@ -817,7 +788,7 @@ export const HospitalizationDetailPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                Procedimientos clínicos o quirúrgicos realizados durante el internamiento (H07).
+                Procedimientos clínicos o quirúrgicos realizados durante el internamiento.
               </div>
               {hospitalizacion.estado === 'ACTIVA' && !mostrarFormProc && (
                 <Button
@@ -826,7 +797,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                   onClick={() => setMostrarFormProc(true)}
                   leftIcon={<Plus size={14} />}
                 >
-                  Registrar Procedimiento (H07)
+                  Registrar Procedimiento
                 </Button>
               )}
             </div>
@@ -839,14 +810,14 @@ export const HospitalizationDetailPage: React.FC = () => {
                   padding: '16px',
                   backgroundColor: 'var(--color-background)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '12px'
                 }}
               >
                 <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-strong)' }}>
-                  Registrar Procedimiento Hospitalario (H07)
+                  Registrar Procedimiento Hospitalario
                 </div>
 
                 <div>
@@ -867,7 +838,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       width: '100%',
                       padding: '8px 10px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   />
@@ -891,7 +862,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       width: '100%',
                       padding: '8px 10px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   />
@@ -914,7 +885,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       width: '100%',
                       padding: '8px 10px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   />
@@ -943,9 +914,9 @@ export const HospitalizationDetailPage: React.FC = () => {
                     key={proc.id}
                     style={{
                       padding: '14px 16px',
-                      backgroundColor: 'var(--color-surface)',
+                      backgroundColor: 'var(--color-background)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '6px'
@@ -961,7 +932,7 @@ export const HospitalizationDetailPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '13px', color: 'var(--color-text-primary)' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--color-strong)' }}>
                       <strong>Resultado:</strong> {proc.resultado}
                     </div>
 

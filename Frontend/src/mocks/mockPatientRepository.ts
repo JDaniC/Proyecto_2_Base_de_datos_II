@@ -1,5 +1,6 @@
 import { PatientRepository } from '../services/contracts';
 import {
+  DetalleConsultaCompleta,
   Paciente,
   InstitucionId,
   BuscarPacientesQuery,
@@ -280,15 +281,26 @@ export class MockPatientRepository implements PatientRepository {
       medicamentosActuales: []
     };
 
-    const consultas = MOCK_CONSULTAS_DEFECTO[paciente.id] || [];
+    let detalles: DetalleConsultaCompleta[] = [];
+    try { detalles = (JSON.parse(localStorage.getItem('clinica_consultas_completas_dataset_v1') || '[]') as DetalleConsultaCompleta[]).filter(c => c.pacienteId === id && c.institucionId === institucionId); } catch { /* Keep fixture history. */ }
+    const consultasMap = new Map((MOCK_CONSULTAS_DEFECTO[paciente.id] || []).map(c => [c.id, c]));
+    for (const c of detalles) {
+      const principal = c.diagnosticos.find(d => d.esPrincipal);
+      consultasMap.set(c.id, { id: c.id, fechaHora: c.fechaHora, motivo: c.motivo, sintomas: c.sintomas, profesionalNombre: c.profesionalNombre, profesionalRol: c.profesionalRol, diagnosticoPrincipal: principal ? `${principal.codigoCIE} ${principal.nombre}` : 'Sin diagnóstico registrado', estado: c.estado, signosVitales: c.signosVitales });
+    }
+    const consultas = [...consultasMap.values()].sort((a, b) => b.fechaHora.localeCompare(a.fechaHora));
     if (!this.diagnosticosPorPaciente[paciente.id]) {
       this.diagnosticosPorPaciente[paciente.id] = [...(MOCK_DIAGNOSTICOS_DEFECTO[paciente.id] || [])];
     }
-    const diagnosticos = [...this.diagnosticosPorPaciente[paciente.id]];
+    const diagnosticosMap = new Map(this.diagnosticosPorPaciente[paciente.id].map(d => [d.id, d]));
+    detalles.forEach(c => c.diagnosticos.forEach(d => diagnosticosMap.set(d.id, d)));
+    const diagnosticos = [...diagnosticosMap.values()];
     if (!this.recetasPorPaciente[paciente.id]) {
       this.recetasPorPaciente[paciente.id] = [...(MOCK_RECETAS_DEFECTO[paciente.id] || [])];
     }
-    const recetas = [...this.recetasPorPaciente[paciente.id]];
+    const recetasMap = new Map(this.recetasPorPaciente[paciente.id].map(r => [r.id, r]));
+    detalles.forEach(c => { if (c.receta) recetasMap.set(c.receta.id, c.receta); });
+    const recetas = [...recetasMap.values()].sort((a, b) => b.fechaEmision.localeCompare(a.fechaEmision));
     const eventos = MOCK_EVENTOS_TIMELINE_DEFECTO[paciente.id] || [
       {
         id: `evt-reg-${paciente.id}`,
@@ -322,7 +334,8 @@ export class MockPatientRepository implements PatientRepository {
     const duplicado = this.pacientes.find(
       (p) =>
         p.institucionId === institucionId &&
-        normalizarIdentificacion(p.numeroIdentificacion) === normDoc
+        ((Boolean(normDoc) && normalizarIdentificacion(p.numeroIdentificacion) === normDoc) ||
+          (!normDoc && p.nombreCompleto.toLocaleLowerCase().replace(/\s+/g, ' ').trim() === `${dto.nombres} ${dto.apellidos}`.toLocaleLowerCase().replace(/\s+/g, ' ').trim() && p.fechaNacimiento === dto.fechaNacimiento))
     );
 
     if (duplicado) {
@@ -368,6 +381,7 @@ export class MockPatientRepository implements PatientRepository {
       direccion: dto.direccion.trim(),
       estado: 'ACTIVO',
       estadoAlergias: 'SIN_VERIFICAR',
+      grupoSanguineo: dto.grupoSanguineo,
       contactoEmergencia: dto.contactoEmergencia,
       responsables: dto.responsables,
       fechaRegistro: new Date().toISOString(),
@@ -392,7 +406,7 @@ export class MockPatientRepository implements PatientRepository {
     );
 
     if (index === -1) {
-      throw new Error(`Paciente con ID ${id} no encontrado en la institución activa.`);
+      throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
     }
 
     // Verificar duplicado si cambió el documento
@@ -433,13 +447,14 @@ export class MockPatientRepository implements PatientRepository {
       edadAnios,
       sexo: dto.sexo || actual.sexo,
       tipoIdentificacion: dto.tipoIdentificacion || actual.tipoIdentificacion,
-      numeroIdentificacion: dto.numeroIdentificacion
+      numeroIdentificacion: dto.numeroIdentificacion !== undefined
         ? dto.numeroIdentificacion.trim()
         : actual.numeroIdentificacion,
       telefono: dto.telefono !== undefined ? dto.telefono.trim() : actual.telefono,
       correo: dto.correo !== undefined ? dto.correo.trim() : actual.correo,
       direccion: dto.direccion !== undefined ? dto.direccion.trim() : actual.direccion,
       contactoEmergencia: dto.contactoEmergencia !== undefined ? dto.contactoEmergencia : actual.contactoEmergencia,
+      grupoSanguineo: dto.grupoSanguineo !== undefined ? dto.grupoSanguineo : actual.grupoSanguineo,
       responsables: dto.responsables !== undefined ? dto.responsables : actual.responsables
     };
 
@@ -460,7 +475,7 @@ export class MockPatientRepository implements PatientRepository {
       (p) => p.id === id && p.institucionId === institucionId
     );
     if (index === -1) {
-      throw new Error(`Paciente con ID ${id} no encontrado.`);
+      throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
     }
     this.pacientes[index] = {
       ...this.pacientes[index],
@@ -483,7 +498,7 @@ export class MockPatientRepository implements PatientRepository {
       (p) => p.id === id && p.institucionId === institucionId
     );
     if (index === -1) {
-      throw new Error(`Paciente con ID ${id} no encontrado.`);
+      throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
     }
     this.pacientes[index] = {
       ...this.pacientes[index],
@@ -642,7 +657,7 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
 
     if (!paciente.responsables) {
       paciente.responsables = [];
@@ -667,11 +682,11 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
     if (!paciente.responsables) paciente.responsables = [];
 
     const index = paciente.responsables.findIndex((r) => r.id === responsableId);
-    if (index === -1) throw new Error(`Responsable ${responsableId} no encontrado.`);
+    if (index === -1) throw new Error('No se encontró el responsable. Actualiza la vista e inténtalo de nuevo.');
 
     const respActual = paciente.responsables[index];
 
@@ -680,7 +695,7 @@ export class MockPatientRepository implements PatientRepository {
       const otrosPrincipales = paciente.responsables.filter((r) => r.id !== responsableId && r.esPrincipal);
       if (otrosPrincipales.length === 0) {
         throw new Error(
-          'Regla CA09: No es posible desmarcar al único responsable principal del menor. El menor debe contar siempre con al menos un responsable principal activo.'
+          'El menor debe conservar un responsable principal. Selecciona otro antes de cambiar este vínculo.'
         );
       }
     }
@@ -721,7 +736,7 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
     if (!paciente.responsables) return;
 
     const respActual = paciente.responsables.find((r) => r.id === responsableId);
@@ -732,7 +747,7 @@ export class MockPatientRepository implements PatientRepository {
       const principalesRestantes = paciente.responsables.filter((r) => r.id !== responsableId && r.esPrincipal);
       if (principalesRestantes.length === 0) {
         throw new Error(
-          'Regla CA09: No es posible dar de baja al único responsable principal del menor. Debe designar otro responsable principal antes de proceder a la eliminación del vínculo.'
+          'El menor debe conservar un responsable principal. Selecciona otro antes de desvincular al actual.'
         );
       }
     }
@@ -779,7 +794,7 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
 
     paciente.estadoAlergias = 'SIN_ALERGIAS_CONOCIDAS';
 
@@ -817,7 +832,7 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
 
     if (!this.antecedentesPorPaciente[pacienteId]) {
       this.antecedentesPorPaciente[pacienteId] = JSON.parse(
@@ -868,7 +883,7 @@ export class MockPatientRepository implements PatientRepository {
     this.cargarPacientes();
     await new Promise((res) => setTimeout(res, 40));
     const paciente = this.pacientes.find((p) => p.id === pacienteId);
-    if (!paciente) throw new Error(`Paciente ${pacienteId} no encontrado.`);
+    if (!paciente) throw new Error('No se encontró el paciente. Actualiza la vista e inténtalo de nuevo.');
 
     if (this.antecedentesPorPaciente[pacienteId]) {
       this.antecedentesPorPaciente[pacienteId].alergias = this.antecedentesPorPaciente[

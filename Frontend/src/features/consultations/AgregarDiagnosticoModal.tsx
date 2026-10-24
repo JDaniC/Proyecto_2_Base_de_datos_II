@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { Stethoscope, Search, Check, AlertTriangle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -82,7 +83,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
       onClose();
     } catch (err: any) {
       setGuardando(false);
-      setError(err.message || 'Error al registrar el diagnóstico en el expediente.');
+      setError(getErrorMessage(err, 'Error al registrar el diagnóstico en el expediente.'));
     }
   };
 
@@ -90,7 +91,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Registrar Diagnóstico Clínico Codificado (V12)"
+      title="Registrar Diagnóstico Clínico Codificado"
       maxWidth="620px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -142,7 +143,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
               style={{
                 width: '100%',
                 padding: '9px 12px 9px 36px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '14px',
@@ -218,7 +219,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '14px',
@@ -247,7 +248,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
               style={{
                 width: '100%',
                 padding: '9px 12px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '14px'
@@ -277,7 +278,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
                 Designar como Diagnóstico Principal de este paciente
               </strong>
               <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                Normativa institucional (V12): Todo expediente o atención exige exactamente un diagnóstico principal.
+                Normativa institucional: Todo expediente o atención exige exactamente un diagnóstico principal.
                 {diagnosticoPrincipalActual && esPrincipal && (
                   <span style={{ color: 'var(--color-warning-text)', display: 'block', marginTop: '4px' }}>
                     Nota: Sustituirá a «{diagnosticoPrincipalActual.nombre}» como diagnóstico principal activo.
@@ -305,7 +306,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
             style={{
               width: '100%',
               padding: '8px 12px',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               fontSize: '13px'
@@ -319,7 +320,7 @@ export const AgregarDiagnosticoModal: React.FC<AgregarDiagnosticoModalProps> = (
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={guardando} leftIcon={<Stethoscope size={16} />}>
-            Guardar Diagnóstico (V12)
+            Guardar Diagnóstico
           </Button>
         </div>
       </form>

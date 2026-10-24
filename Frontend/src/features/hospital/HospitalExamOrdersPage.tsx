@@ -1,13 +1,15 @@
+import { Alert } from '../../design-system/components/Alert';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Search,
-  CheckCircle2,
   FlaskConical,
   Eye,
   FileCheck2
 } from 'lucide-react';
-import { Panel } from '../../design-system/components/Panel';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
+import { Modal } from '../../design-system/components/Modal';
 import { Button } from '../../design-system/components/Button';
 import { Badge } from '../../design-system/components/Badge';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
@@ -39,6 +41,9 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const [ordenSeleccionadaDetalle, setOrdenSeleccionadaDetalle] = useState<OrdenExamenHospital | null>(null);
   const [ordenSeleccionadaRegistrar, setOrdenSeleccionadaRegistrar] = useState<OrdenExamenHospital | null>(null);
   const [notificacion, setNotificacion] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [ordenParaCancelar, setOrdenParaCancelar] = useState<OrdenExamenHospital | null>(null);
+  const [cancelando, setCancelando] = useState(false);
 
   const cargarOrdenes = useCallback(async () => {
     setLoading(true);
@@ -56,16 +61,20 @@ export const HospitalExamOrdersPage: React.FC = () => {
     cargarOrdenes();
   }, [cargarOrdenes]);
 
-  const handleCancelarOrden = async (orden: OrdenExamenHospital) => {
-    if (window.confirm(`¿Está seguro de cancelar la orden médica ${orden.codigoLegible}?`)) {
-      try {
-        await examRepository.cancelarOrden(institucionId, orden.id, 'Cancelada por el médico solicitante.');
-        setNotificacion(`Orden ${orden.codigoLegible} cancelada exitosamente.`);
-        await cargarOrdenes();
-        setTimeout(() => setNotificacion(null), 3500);
-      } catch (err: any) {
-        alert(err?.message || 'Error al cancelar la orden.');
-      }
+  const handleCancelarOrden = async () => {
+    if (!ordenParaCancelar) return;
+    setCancelando(true);
+    setErrorAccion(null);
+    try {
+      await examRepository.cancelarOrden(institucionId, ordenParaCancelar.id, 'Cancelada por el médico solicitante.');
+      setNotificacion(`Orden ${ordenParaCancelar.codigoLegible} cancelada.`);
+      setOrdenParaCancelar(null);
+      await cargarOrdenes();
+      setTimeout(() => setNotificacion(null), 3500);
+    } catch (err: unknown) {
+      setErrorAccion(getErrorMessage(err, 'No se pudo cancelar la orden. Inténtalo de nuevo.'));
+    } finally {
+      setCancelando(false);
     }
   };
 
@@ -92,7 +101,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const getPrioridadBadge = (p: PrioridadOrdenExamen) => {
     switch (p) {
       case 'STAT':
-        return <Badge variant="danger">STAT (Inmediato)</Badge>;
+        return <Badge variant="danger">Inmediata</Badge>;
       case 'URGENTE':
         return <Badge variant="warning">Urgente</Badge>;
       default:
@@ -114,28 +123,10 @@ export const HospitalExamOrdersPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '28px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ width: '100%', minWidth: 0, maxWidth: '1400px', margin: '0 auto' }}>
       {/* Notificación flotante */}
-      {notificacion && (
-        <div
-          role="status"
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#ecfdf5',
-            border: '1px solid #10b981',
-            borderRadius: 'var(--radius-panel)',
-            color: '#065f46',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '20px',
-            fontSize: '14px'
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>{notificacion}</span>
-        </div>
-      )}
+      {errorAccion && <Alert variant="danger" title="No se pudo cancelar la orden." onClose={() => setErrorAccion(null)}>{errorAccion}</Alert>}
+      {notificacion && <Alert variant="success" onClose={() => setNotificacion(null)}>{notificacion}</Alert>}
 
       {/* Encabezado canónico H06 */}
       <div
@@ -170,10 +161,10 @@ export const HospitalExamOrdersPage: React.FC = () => {
             }}
           >
             <FlaskConical size={26} color="var(--color-primary)" />
-            Órdenes de Examen y Resultados Hospitalarios (H06)
+            Órdenes de examen
           </h1>
           <p style={{ margin: '6px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-            Emisión de órdenes diagnósticas, seguimiento de procesamiento y reporte estructurado de parámetros analíticos.
+            Consulta órdenes de examen, registra resultados y da seguimiento a su estado.
           </p>
         </div>
 
@@ -182,54 +173,17 @@ export const HospitalExamOrdersPage: React.FC = () => {
           onClick={() => setModalNuevaOrdenAbierto(true)}
           leftIcon={<Plus size={18} />}
         >
-          Nueva Orden de Examen (H06)
+          Nueva orden de examen
         </Button>
       </div>
 
-      {/* Tarjetas resumen KPI */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px'
-        }}
-      >
-        <Panel>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-            Órdenes Totales
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-strong)', marginTop: '4px' }}>
-            {totalOrdenes}
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-            Pendientes / En Proceso
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#d97706', marginTop: '4px' }}>
-            {pendientesEnProceso}
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-            Resultados Validados
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#059669', marginTop: '4px' }}>
-            {completadas}
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-            Urgentes / STAT
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: '#dc2626', marginTop: '4px' }}>
-            {urgentesStat}
-          </div>
-        </Panel>
+      <div style={{ marginBottom: '24px' }}>
+        <MetricStrip items={[
+          { id: 'total', label: 'Órdenes totales', value: totalOrdenes },
+          { id: 'pendientes', label: 'Pendientes o en proceso', value: pendientesEnProceso, tone: 'warning' },
+          { id: 'validadas', label: 'Resultados validados', value: completadas, tone: 'success' },
+          { id: 'urgentes', label: 'Urgentes o inmediatas', value: urgentesStat, tone: 'danger' },
+        ]} />
       </div>
 
       {/* Barra de Búsqueda y Filtros */}
@@ -247,7 +201,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
           borderRadius: 'var(--radius-panel)'
         }}
       >
-        <div style={{ position: 'relative', minWidth: '300px', flex: 1 }}>
+        <div style={{ position: 'relative', minWidth: 'min(300px, 100%)', flex: 1 }}>
           <Search
             size={16}
             style={{
@@ -260,20 +214,20 @@ export const HospitalExamOrdersPage: React.FC = () => {
           />
           <input
             type="text"
-            placeholder="Buscar por código (ORD-HOSP-...), paciente o examen..."
+            placeholder="Buscar por código, paciente o examen"
             value={filtroTexto}
             onChange={(e) => setFiltroTexto(e.target.value)}
             style={{
               width: '100%',
               padding: '9px 12px 9px 36px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="exam-order-filters">
           <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Prioridad:</span>
           <select
             value={filtroPrioridad}
@@ -282,7 +236,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
             style={{
               padding: '8px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               backgroundColor: 'var(--color-background)'
             }}
@@ -290,7 +244,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
             <option value="TODAS">Todas las prioridades</option>
             <option value="RUTINA">Rutina</option>
             <option value="URGENTE">Urgente</option>
-            <option value="STAT">STAT / Inmediato</option>
+            <option value="STAT">Inmediata</option>
           </select>
 
           <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginLeft: '8px' }}>Estado:</span>
@@ -301,7 +255,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
             style={{
               padding: '8px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               backgroundColor: 'var(--color-background)'
             }}
@@ -332,11 +286,11 @@ export const HospitalExamOrdersPage: React.FC = () => {
           style={{
             border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-panel)',
-            overflow: 'hidden',
+            overflowX: 'auto',
             backgroundColor: 'var(--color-background)'
           }}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--color-panel)', borderBottom: '1px solid var(--color-border)' }}>
                 <th style={{ padding: '12px 16px', fontWeight: 600 }}>Código Orden</th>
@@ -396,7 +350,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
                         leftIcon={<Eye size={14} />}
                         title="Ver detalle de orden y resultados analíticos"
                       >
-                        Ver Detalle y Resultados (H06)
+                        Ver Detalle y Resultados
                       </Button>
 
                       {ord.items.some((it) => it.estado === 'PENDIENTE') && (
@@ -415,7 +369,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleCancelarOrden(ord)}
+                          onClick={() => { setErrorAccion(null); setOrdenParaCancelar(ord); }}
                           title="Cancelar orden médica"
                           style={{ color: '#dc2626' }}
                         >
@@ -430,6 +384,22 @@ export const HospitalExamOrdersPage: React.FC = () => {
           </table>
         </div>
       )}
+
+      <Modal
+        isOpen={Boolean(ordenParaCancelar)}
+        onClose={() => { if (!cancelando) setOrdenParaCancelar(null); }}
+        title="Cancelar orden de examen"
+        description={ordenParaCancelar?.codigoLegible}
+        footer={
+          <>
+            <Button variant="secondary" disabled={cancelando} onClick={() => setOrdenParaCancelar(null)}>Volver</Button>
+            <Button variant="danger" loading={cancelando} onClick={handleCancelarOrden}>Cancelar orden</Button>
+          </>
+        }
+      >
+        {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
+        <p>Se cancelarán los exámenes pendientes de esta orden. Confirma que deseas continuar.</p>
+      </Modal>
 
       {/* Modal Nueva Orden */}
       <NuevaOrdenExamenModal

@@ -1,3 +1,4 @@
+import { MockCatalogRepository } from './mockCatalogRepository';
 import { LaboratoryRepository } from '../services/contracts';
 import {
   InstitucionId,
@@ -1112,40 +1113,25 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     const id = `ord-lab-${Date.now()}`;
     const fechaActual = new Date().toISOString();
 
-    const items: OrdenLaboratorio['items'] = dto.pruebasSeleccionadasIds.map((pid, idx) => ({
-      id: `item-${Date.now()}-${idx}`,
-      pruebaId: pid,
-      codigoPrueba: `PRB-${100 + idx}`,
-      nombrePrueba: pid.includes('hem') ? 'Hematología Completa Automatizada' : 'Perfil Bioquímico Clínico',
-      seccion: pid.includes('hem') ? 'Hematología y Coagulación' : 'Bioquímica Clínica',
-      tipoMuestra: 'Sangre Total EDTA / Suero',
-      versionPrueba: 1,
-      arancelGTQ: 150,
-      estado: 'PENDIENTE'
+    const catalogo = await new MockCatalogRepository().obtenerPruebasLaboratorio(institucionId);
+    const items: OrdenLaboratorio['items'] = dto.pruebasSeleccionadasIds.map((pid, idx) => {
+      const prueba = catalogo.find(p => p.id === pid && p.estado === 'ACTIVO');
+      if (!prueba) throw new Error('Una de las pruebas seleccionadas ya no está disponible.');
+      const precio = dto.preciosAcordados?.[pid] ?? 150;
+      if (!Number.isFinite(precio) || precio < 0) throw new Error('El precio acordado no es válido.');
+      return { id: `item-${Date.now()}-${idx}`, pruebaId: pid, codigoPrueba: prueba.codigoPrueba,
+        nombrePrueba: prueba.nombre, seccion: prueba.seccion, tipoMuestra: prueba.tipoMuestra,
+        versionPrueba: prueba.version, parametros: structuredClone(prueba.parametros), metodoAnalitico: prueba.metodoAnalitico, arancelGTQ: Math.round(precio * 100) / 100, estado: 'PENDIENTE' };
+    });
+    const nuevasMuestras: MuestraLaboratorio[] = Array.from(new Set(items.map(i => i.tipoMuestra))).map((tipo, index) => ({
+      id: `mue-${Date.now()}-${index}`, codigoMuestra: `MUE-2026-${nuevoNumero}-${index + 1}`,
+      ordenId: id, codigoOrden, pacienteId: dto.pacienteId, pacienteNombre: dto.pacienteNombre,
+      tipoMuestra: tipo, tuboContenedor: 'Por confirmar en toma', estado: 'PENDIENTE_TOMA',
+      eventosTrazabilidad: [{ id: `evt-${Date.now()}-${index}`, tipoEvento: 'CREACION', fechaHora: fechaActual,
+        actor: 'Recepción', detalle: 'Muestra requerida por las pruebas de la orden' }]
     }));
 
-    const codigoMuestra = `MUE-2026-00${nuevoNumero}-01`;
-    const muestraId = `mue-${Date.now()}`;
-    const muestraNueva: MuestraLaboratorio = {
-      id: muestraId,
-      codigoMuestra,
-      ordenId: id,
-      codigoOrden,
-      pacienteId: dto.pacienteId,
-      pacienteNombre: dto.pacienteNombre,
-      tipoMuestra: 'Sangre Venosa',
-      tuboContenedor: 'Tubo Lila EDTA / Tubo Oro Gel',
-      estado: 'PENDIENTE_TOMA',
-      eventosTrazabilidad: [
-        {
-          id: `evt-${Date.now()}`,
-          tipoEvento: 'CREACION',
-          fechaHora: fechaActual,
-          actor: 'Recepción Central',
-          detalle: 'Orden creada en sistema con contenedor asignado'
-        }
-      ]
-    };
+    items.forEach(item => { item.muestraIds = nuevasMuestras.filter(m => m.tipoMuestra === item.tipoMuestra).map(m => m.id); });
 
     const nuevaOrden: OrdenLaboratorio = {
       id,
@@ -1163,13 +1149,33 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       fechaCreacion: fechaActual,
       totalArancelGTQ: items.reduce((acc, i) => acc + i.arancelGTQ, 0),
       items,
-      muestras: [muestraNueva]
+      muestras: nuevasMuestras
     };
 
     this.ordenes.unshift(nuevaOrden);
-    this.muestras.unshift(muestraNueva);
+    this.muestras.unshift(...nuevasMuestras);
+    const totalCentavos = Math.round(nuevaOrden.totalArancelGTQ * 100);
+    this.facturas.unshift({
+      id: `fac-${id}`, codigoFactura: `FAC-${codigoOrden}`, ordenId: id, codigoOrden,
+      pacienteId: dto.pacienteId, pacienteNombre: dto.pacienteNombre, pacienteNit: dto.pacienteDpi || 'CF',
+      fechaEmision: fechaActual, estado: 'EMITIDA', totalCentavos, totalPagadoCentavos: 0,
+      saldoPendienteCentavos: totalCentavos, pagos: [],
+      items: items.map(i => ({ id: `fac-${i.id}`, pruebaId: i.pruebaId, codigoPrueba: i.codigoPrueba, nombrePrueba: i.nombrePrueba, arancelCentavos: Math.round(i.arancelGTQ * 100) }))
+    });
     this.guardarDatos();
     return nuevaOrden;
+  }
+
+  async registrarTrasladoMuestra(_institucionId: InstitucionId, muestraId: string, destino: string, actor: string): Promise<MuestraLaboratorio> {
+    this.cargarDatos();
+    const muestra = this.muestras.find(m => m.id === muestraId);
+    if (!muestra || ['PENDIENTE_TOMA', 'RECHAZADA', 'PROCESADA'].includes(muestra.estado)) throw new Error('La muestra no admite traslados en su estado actual.');
+    if (!destino.trim()) throw new Error('Indica el destino de la muestra.');
+    muestra.eventosTrazabilidad.push({ id: `evt-${Date.now()}`, tipoEvento: 'TRASLADO', fechaHora: new Date().toISOString(), actor, detalle: `Traslado a ${destino.trim()}` });
+    const orden = this.ordenes.find(o => o.id === muestra.ordenId);
+    if (orden) orden.muestras = orden.muestras.map(m => m.id === muestra.id ? muestra : m);
+    this.guardarDatos();
+    return structuredClone(muestra);
   }
 
   async obtenerMuestras(
@@ -1195,7 +1201,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     await new Promise((res) => setTimeout(res, 40));
 
     const idx = this.muestras.findIndex((m) => m.id === muestraId || m.codigoMuestra === muestraId);
-    if (idx === -1) throw new Error(`Muestra ${muestraId} no encontrada`);
+    if (idx === -1) throw new Error('No se encontró la muestra. Actualiza la vista e inténtalo de nuevo.');
 
     const m = this.muestras[idx];
     const ahora = new Date().toISOString();
@@ -1211,6 +1217,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       m.recibidaPor = actor;
     } else if (nuevoEstado === 'ACEPTADA') {
       tipoEvento = 'ACEPTACION';
+    } else if (nuevoEstado === 'PROCESADA') {
+      tipoEvento = 'PROCESAMIENTO';
     } else if (nuevoEstado === 'RECHAZADA') {
       tipoEvento = 'RECHAZO';
       m.motivoRechazo = motivo || 'Muestra no apta por criterios preanalíticos';
@@ -1258,7 +1266,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     const ahora = new Date().toISOString();
 
     const retomaId = `mue-retoma-${Date.now()}`;
-    const codigoRetoma = `${original.codigoMuestra}-R1`;
+    const numeroRetoma = this.muestras.filter(m => m.muestraOrigenId === original.id).length + 1;
+    const codigoRetoma = `${original.codigoMuestra}-R${numeroRetoma}`;
 
     const nuevaMuestra: MuestraLaboratorio = {
       id: retomaId,
@@ -1321,7 +1330,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       tipoEvento: 'RECTIFICACION',
       fechaHora: ahora,
       actor,
-      detalle: `Rectificación de campo «${campo}»: de «${valorAnterior}» a «${nuevoValor}»`,
+      detalle: `Corrección de ${campo === 'tuboContenedor' ? 'contenedor' : 'tipo de muestra'}: de «${valorAnterior}» a «${nuevoValor}»`,
       motivo
     });
 
@@ -1365,10 +1374,10 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     await new Promise((res) => setTimeout(res, 50));
 
     const orden = this.ordenes.find((o) => o.id === dto.ordenId || o.codigoOrden === dto.ordenId);
-    if (!orden) throw new Error(`Orden ${dto.ordenId} no encontrada`);
+    if (!orden) throw new Error('No se encontró la orden. Actualiza la vista e inténtalo de nuevo.');
 
     const muestra = this.muestras.find((m) => m.id === dto.muestraId || m.codigoMuestra === dto.muestraId);
-    if (!muestra) throw new Error(`Muestra ${dto.muestraId} no encontrada`);
+    if (!muestra) throw new Error('No se encontró la muestra. Actualiza la vista e inténtalo de nuevo.');
 
     // Regla crítica de negocio: solo muestras ACEPTADA o PROCESADA pueden ser analizadas
     if (muestra.estado !== 'ACEPTADA' && muestra.estado !== 'PROCESADA') {
@@ -1378,7 +1387,9 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     }
 
     const item = orden.items.find((i) => i.id === dto.itemOrdenId);
-    if (!item) throw new Error(`Ítem de prueba ${dto.itemOrdenId} no encontrado en la orden`);
+    if (!item) throw new Error('No se encontró la prueba. Actualiza la vista e inténtalo de nuevo.');
+
+    if (muestra.ordenId !== orden.id || muestra.pacienteId !== orden.pacienteId || (item.muestraIds && !item.muestraIds.includes(muestra.id) && !item.muestraIds.includes(muestra.muestraOrigenId || ''))) throw new Error('La muestra no corresponde a esta orden y prueba.');
 
     const parametrosMapeados: ParametroResultadoLab[] = dto.parametros.map((p) => ({
       id: p.parametroId || `param-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -1477,9 +1488,13 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     await new Promise((res) => setTimeout(res, 50));
 
     const idx = this.resultados.findIndex((r) => r.id === resultadoId);
-    if (idx === -1) throw new Error(`Resultado ${resultadoId} no encontrado`);
+    if (idx === -1) throw new Error('No se encontró el resultado. Actualiza la vista e inténtalo de nuevo.');
 
     const res = this.resultados[idx];
+    const ordenRelacionada = this.ordenes.find(o => o.id === res.ordenId);
+    const itemRelacionado = ordenRelacionada?.items.find(i => i.id === res.itemOrdenId && i.pruebaId === res.pruebaId);
+    const muestraRelacionada = this.muestras.find(m => m.id === res.muestraId);
+    if (!ordenRelacionada || !itemRelacionado || !muestraRelacionada || muestraRelacionada.ordenId !== ordenRelacionada.id || muestraRelacionada.pacienteId !== ordenRelacionada.pacienteId || (itemRelacionado.muestraIds && !itemRelacionado.muestraIds.includes(muestraRelacionada.id) && !itemRelacionado.muestraIds.includes(muestraRelacionada.muestraOrigenId || ''))) throw new Error('La muestra y la prueba deben pertenecer a la misma orden.');
     res.estado = 'VALIDADO';
     res.validadorId = validadorId;
     res.validadorNombre = validadorNombre;
@@ -1512,7 +1527,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     await new Promise((res) => setTimeout(res, 50));
 
     const originalIdx = this.resultados.findIndex((r) => r.id === resultadoId);
-    if (originalIdx === -1) throw new Error(`Resultado original ${resultadoId} no encontrado`);
+    if (originalIdx === -1) throw new Error('No se encontró el resultado original. Actualiza la vista e inténtalo de nuevo.');
 
     const original = this.resultados[originalIdx];
     original.estado = 'CORREGIDO';
@@ -1654,7 +1669,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     await new Promise((res) => setTimeout(res, 60));
 
     const orden = this.ordenes.find((o) => o.id === ordenId || o.codigoOrden === ordenId);
-    if (!orden) throw new Error(`Orden ${ordenId} no encontrada`);
+    if (!orden) throw new Error('No se encontró la orden. Actualiza la vista e inténtalo de nuevo.');
 
     // Regla crítica CA13: Todos los resultados incluidos deben estar en estado VALIDADO
     const resultadosOrden = this.resultados.filter((r) => r.ordenId === orden.id);
@@ -1667,7 +1682,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     if (itemsNoValidados.length > 0) {
       const nombresFaltantes = itemsNoValidados.map((i) => `«${i.nombrePrueba}»`).join(', ');
       throw new Error(
-        `Regla CA13 incumplida: No es posible emitir el informe analítico oficial porque las siguientes pruebas no están en estado VALIDADO: ${nombresFaltantes}. Se requiere validación pericial completa antes de emitir.`
+        `No se puede emitir el informe porque faltan resultados por validar: ${nombresFaltantes}. Revisa estas pruebas en la bandeja de validación.`
       );
     }
 
@@ -1752,7 +1767,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<EquipoLaboratorio> {
     await new Promise((res) => setTimeout(res, 40));
     const eq = this.equipos.find((e) => e.id === equipoId);
-    if (!eq) throw new Error(`Equipo ${equipoId} no encontrado.`);
+    if (!eq) throw new Error('No se encontró el equipo. Actualiza la vista e inténtalo de nuevo.');
     eq.estado = nuevoEstado;
     this.guardarDatos();
     return { ...eq };
@@ -1800,7 +1815,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<RegistroControlCalidad> {
     await new Promise((res) => setTimeout(res, 60));
     const equipo = this.equipos.find((e) => e.id === dto.equipoId);
-    if (!equipo) throw new Error(`Equipo analítico ${dto.equipoId} no encontrado.`);
+    if (!equipo) throw new Error('No se encontró el equipo analítico. Actualiza la vista e inténtalo de nuevo.');
 
     // Referencias estadísticas según prueba y nivel
     let mediaDiana = 100;
@@ -1899,7 +1914,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<MovimientoInventario> {
     await new Promise((res) => setTimeout(res, 40));
     const lote = this.lotesReactivos.find((l) => l.id === dto.loteId);
-    if (!lote) throw new Error(`Lote de reactivo ${dto.loteId} no encontrado.`);
+    if (!lote) throw new Error('No se encontró el lote de reactivo. Actualiza la vista e inténtalo de nuevo.');
 
     if (dto.cantidad <= 0) {
       throw new Error('La cantidad del movimiento debe ser un número entero positivo mayor a cero.');
@@ -1907,7 +1922,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
 
     // Regla CA15: No se permite consumir de un lote VENCIDO o INACTIVO
     if (dto.tipoMovimiento === 'CONSUMO' && (lote.estado === 'VENCIDO' || lote.estado === 'INACTIVO')) {
-      throw new Error(`Regla CA15: Bloqueo de seguridad analítica. No se permite registrar consumos de un lote en estado ${lote.estado}.`);
+      throw new Error(`No se puede registrar el consumo porque el lote está ${lote.estado.toLowerCase()}.`);
     }
 
     const saldoAnterior = lote.saldoDisponible;
@@ -1920,7 +1935,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       // Regla CA15: Bloqueo de saldo negativo
       if (dto.cantidad > saldoAnterior) {
         throw new Error(
-          `Regla CA15: Saldo insuficiente. El lote ${lote.numeroLote} solo dispone de ${saldoAnterior} ${lote.unidadMedida}. No se permiten saldos negativos.`
+          `El lote ${lote.numeroLote} tiene ${saldoAnterior} ${lote.unidadMedida} disponibles. Ajusta la cantidad para continuar.`
         );
       }
       saldoNuevo = saldoAnterior - dto.cantidad;
@@ -1964,7 +1979,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<LoteReactivo> {
     await new Promise((res) => setTimeout(res, 50));
 
-    let reactivoNombre = 'Reactivo General de Laboratorio';
+    let reactivoNombre = dto.reactivoNombre || 'Reactivo General de Laboratorio';
     let reactivoCodigo = 'REA-GEN-01';
     let seccion = 'Bioquímica Clínica';
     let unidadMedida = 'Determinaciones';
@@ -1986,6 +2001,8 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
     const nuevoLote: LoteReactivo = {
       id: `lote-${Date.now()}`,
       reactivoId: dto.reactivoId,
+      proveedorId: dto.proveedorId,
+      proveedorNombre: dto.proveedorNombre,
       reactivoNombre,
       reactivoCodigo,
       seccion,
@@ -2045,14 +2062,14 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<{ factura: FacturaLaboratorio; pago: PagoLaboratorio }> {
     await new Promise((res) => setTimeout(res, 50));
     const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
-    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
 
     if (factura.estado === 'ANULADA') {
-      throw new Error('Regla CA14: No se pueden registrar pagos en una factura anulada.');
+      throw new Error('No se pueden registrar cobros en una factura anulada.');
     }
 
     if (dto.montoCentavos <= 0) {
-      throw new Error('El monto a pagar debe ser un número entero positivo de centavos GTQ mayor a cero.');
+      throw new Error('El monto a pagar debe ser mayor a cero.');
     }
 
     // Regla CA14: Idempotencia - si ya existe un pago confirmado con la misma Idempotency-Key
@@ -2068,7 +2085,7 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
       const montoQ = (dto.montoCentavos / 100).toFixed(2);
       const saldoQ = (factura.saldoPendienteCentavos / 100).toFixed(2);
       throw new Error(
-        `Regla CA14: Bloqueo de sobrepago. El monto a pagar (Q ${montoQ}) supera el saldo pendiente de la factura (Q ${saldoQ}). No se admiten pagos excesivos.`
+        `El monto del cobro (Q ${montoQ}) supera el saldo pendiente (Q ${saldoQ}). Ajusta el monto para continuar.`
       );
     }
 
@@ -2107,10 +2124,10 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<FacturaLaboratorio> {
     await new Promise((res) => setTimeout(res, 50));
     const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
-    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
 
     const pago = factura.pagos.find((p) => p.id === dto.pagoId);
-    if (!pago) throw new Error(`Pago ${dto.pagoId} no encontrado en la factura.`);
+    if (!pago) throw new Error('No se encontró el pago. Actualiza la vista e inténtalo de nuevo.');
     if (pago.estado === 'REVERTIDO') {
       throw new Error('El pago ya se encuentra revertido.');
     }
@@ -2144,13 +2161,13 @@ export class MockLaboratoryRepository implements LaboratoryRepository {
   ): Promise<FacturaLaboratorio> {
     await new Promise((res) => setTimeout(res, 50));
     const factura = this.facturas.find((f) => f.id === dto.facturaId || f.codigoFactura === dto.facturaId);
-    if (!factura) throw new Error(`Factura ${dto.facturaId} no encontrada.`);
+    if (!factura) throw new Error('No se encontró la factura. Actualiza la vista e inténtalo de nuevo.');
 
     // Regla CA14: No se anula una factura con pagos confirmados sin registrar antes sus reversiones
     const tienePagosConfirmados = factura.pagos.some((p) => p.estado === 'CONFIRMADO');
     if (tienePagosConfirmados) {
       throw new Error(
-        'Regla CA14: No se puede anular una factura con pagos confirmados vigentes. Debe revertir los pagos primero antes de proceder a la anulación tributaria.'
+        'Esta factura tiene cobros vigentes. Reviértelos antes de anularla.'
       );
     }
 

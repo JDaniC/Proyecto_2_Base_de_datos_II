@@ -216,13 +216,13 @@ export class MockVaccineRepository implements VaccineRepository {
 
     if (yaAplicada) {
       throw new Error(
-        `Regla CA11 (Prevención de doble aplicación): La dosis seleccionada ya fue administrada previamente a este paciente el ${yaAplicada.fechaAplicacion} (Lote: ${yaAplicada.lote}). No se permite duplicar la aplicación.`
+        `Esta dosis ya se registró el ${yaAplicada.fechaAplicacion.split('-').reverse().join('/')} (lote ${yaAplicada.lote}). Revisa el historial de aplicaciones.`
       );
     }
 
     const catalogoVacunas = await this.catalogRepo.obtenerVacunas(institucionId);
     const vacuna = catalogoVacunas.find((v) => v.id === dto.vacunaId);
-    if (!vacuna) throw new Error(`Vacuna ${dto.vacunaId} no encontrada en catálogo.`);
+    if (!vacuna) throw new Error('No se encontró la vacuna. Actualiza la vista e inténtalo de nuevo.');
 
     const dosis = vacuna.dosis.find((d) => d.dosisId === dto.dosisId);
     if (!dosis) throw new Error(`Dosis ${dto.dosisId} no encontrada para la vacuna ${vacuna.nombreVacuna}.`);
@@ -263,7 +263,7 @@ export class MockVaccineRepository implements VaccineRepository {
     await new Promise((res) => setTimeout(res, 50));
 
     const index = this.aplicaciones.findIndex((a) => a.id === aplicacionId);
-    if (index === -1) throw new Error(`Registro de aplicación vacunal ${aplicacionId} no encontrado.`);
+    if (index === -1) throw new Error('No se encontró la aplicación de vacuna. Actualiza la vista e inténtalo de nuevo.');
 
     const actual = this.aplicaciones[index];
     const copiaAnterior: Partial<AplicacionVacuna> = {
@@ -310,7 +310,7 @@ export class MockVaccineRepository implements VaccineRepository {
     await new Promise((res) => setTimeout(res, 50));
 
     const index = this.aplicaciones.findIndex((a) => a.id === aplicacionId);
-    if (index === -1) throw new Error(`Registro de aplicación vacunal ${aplicacionId} no encontrado.`);
+    if (index === -1) throw new Error('No se encontró la aplicación de vacuna. Actualiza la vista e inténtalo de nuevo.');
 
     const actual = this.aplicaciones[index];
     const historial = actual.historialRevisiones ? [...actual.historialRevisiones] : [];

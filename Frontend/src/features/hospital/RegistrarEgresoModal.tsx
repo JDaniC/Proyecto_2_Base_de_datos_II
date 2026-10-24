@@ -1,3 +1,5 @@
+import { toClinicDateTimeInput, fromClinicDateTimeInput } from '../../services/dates';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { LogOut, AlertCircle } from 'lucide-react';
 import { Modal } from '../../design-system/components/Modal';
@@ -20,7 +22,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
   onConfirm
 }) => {
   const [fechaEgreso, setFechaEgreso] = useState<string>(
-    new Date().toISOString().slice(0, 16)
+    toClinicDateTimeInput()
   );
   const [tipoEgreso, setTipoEgreso] = useState<'ALTA_MEDICA' | 'TRASLADO' | 'VOLUNTARIA' | 'FALLECIMIENTO'>('ALTA_MEDICA');
   const [cieCodigo, setCieCodigo] = useState<string>(hospitalizacion.diagnosticoIngresoCIE);
@@ -56,7 +58,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
     setGuardando(true);
     try {
       await onConfirm({
-        fechaEgreso: new Date(fechaEgreso).toISOString(),
+        fechaEgreso: fromClinicDateTimeInput(fechaEgreso),
         tipoEgreso,
         diagnosticoEgresoCIE: cieCodigo.trim(),
         diagnosticoEgresoNombre: cieNombre.trim(),
@@ -64,7 +66,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al registrar egreso hospitalario');
+      setError(getErrorMessage(err, 'Error al registrar egreso hospitalario'));
     } finally {
       setGuardando(false);
     }
@@ -74,7 +76,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Registrar Egreso Hospitalario (H02)"
+      title="Registrar Egreso Hospitalario"
       maxWidth="600px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -83,7 +85,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
             padding: '12px 14px',
             backgroundColor: 'var(--color-selection)',
             border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
@@ -106,7 +108,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               padding: '10px 14px',
               backgroundColor: '#fee2e2',
               color: '#991b1b',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
@@ -136,7 +138,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           />
@@ -158,7 +160,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           >
@@ -185,7 +187,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               marginBottom: '8px'
             }}
@@ -208,7 +210,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           />
@@ -233,7 +235,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               fontFamily: 'inherit',
               resize: 'vertical'

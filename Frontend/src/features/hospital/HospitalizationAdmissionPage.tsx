@@ -1,3 +1,5 @@
+import { toClinicDateTimeInput, fromClinicDateTimeInput } from '../../services/dates';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -42,15 +44,14 @@ export const HospitalizationAdmissionPage: React.FC = () => {
   const [medicoSeleccionadoId, setMedicoSeleccionadoId] = useState<string>('');
   const [camaSeleccionadaId, setCamaSeleccionadaId] = useState<string>('');
   const [fechaIngreso, setFechaIngreso] = useState<string>(
-    new Date().toISOString().slice(0, 16)
+    toClinicDateTimeInput()
   );
   const [cieCodigo, setCieCodigo] = useState<string>('I10');
   const [cieNombre, setCieNombre] = useState<string>('Hipertensión esencial (primaria)');
   const [motivoIngreso, setMotivoIngreso] = useState<string>('');
   
-  // Enlace de consultas y prueba de CA17
+  // Enlace de consultas previas del mismo paciente
   const [enlazarConsultaPrevia, setEnlazarConsultaPrevia] = useState(false);
-  const [simularErrorIncompatible, setSimularErrorIncompatible] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState<string | null>(null);
@@ -136,12 +137,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
 
     const consultasEnlazadas: string[] = [];
     if (enlazarConsultaPrevia) {
-      if (simularErrorIncompatible) {
-        // Simular intento de vincular consulta ajena para probar la invariante CA17
-        consultasEnlazadas.push('cons-incompatible-otro-paciente-999');
-      } else {
-        consultasEnlazadas.push(`cons-${pacienteActual?.id || 'pac'}-previa-01`);
-      }
+      consultasEnlazadas.push(`cons-${pacienteActual?.id || 'pac'}-previa-01`);
     }
 
     const dto: CrearIngresoHospitalarioDTO = {
@@ -152,7 +148,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       medicoTratanteNombre: medicoActual?.nombre,
       medicoTratanteColegiado: medicoActual?.colegiado,
       camaId: camaSeleccionadaId,
-      fechaIngreso: new Date(fechaIngreso).toISOString(),
+      fechaIngreso: fromClinicDateTimeInput(fechaIngreso),
       diagnosticoIngresoCIE: cieCodigo,
       diagnosticoIngresoNombre: cieNombre,
       motivoIngreso: motivoIngreso.trim(),
@@ -164,7 +160,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       const nuevoIngreso = await hospitalizationRepository.crearIngreso(institucionId, dto);
       navigate(`/hospital/hospitalizaciones/${nuevoIngreso.id}`);
     } catch (err: unknown) {
-      setErrorGlobal(err instanceof Error ? err.message : 'Error al registrar el ingreso hospitalario');
+      setErrorGlobal(getErrorMessage(err, 'Error al registrar el ingreso hospitalario'));
     } finally {
       setGuardando(false);
     }
@@ -191,16 +187,16 @@ export const HospitalizationAdmissionPage: React.FC = () => {
           onClick={() => navigate('/hospital/hospitalizaciones')}
           style={{ cursor: 'pointer', textDecoration: 'underline' }}
         >
-          Hospitalizaciones (H01)
+          Hospitalizaciones
         </span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Nuevo Ingreso Hospitalario (H02)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Nuevo Ingreso Hospitalario</strong>
       </nav>
 
       {/* Cabecera Principal */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px',
@@ -228,13 +224,11 @@ export const HospitalizationAdmissionPage: React.FC = () => {
               <BedDouble size={20} />
             </div>
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              Registro de Ingreso Hospitalario (H02)
+              Registro de Ingreso Hospitalario
             </h1>
-            <Badge variant="primary">{sesion?.institucionNombre || 'Hospital General'}</Badge>
           </div>
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '780px', lineHeight: 1.5 }}>
-            Admisión clínica de pacientes a salas de internamiento. Asigna cama disponible (`H03`/`H04`), vincula médico
-            tratante (`H08`) y valida integridad referencial estricta paciente-consulta (`RF-016` / `CA17`).
+            Registre el ingreso, asigne una cama y vincule el diagnóstico y las consultas relacionadas.
           </p>
         </div>
 
@@ -277,7 +271,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <User size={18} color="var(--color-primary)" />
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                1. Paciente y Médico Responsable (H08)
+                1. Paciente y Médico Responsable
               </h2>
             </div>
 
@@ -298,7 +292,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                     width: '100%',
                     padding: '9px 12px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
                   }}
                 >
@@ -320,7 +314,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   htmlFor="medico-select"
                   style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}
                 >
-                  Médico Tratante / Especialista Responsable (H08) *
+                  Médico Tratante / Especialista Responsable *
                 </label>
                 <select
                   id="medico-select"
@@ -331,7 +325,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                     width: '100%',
                     padding: '9px 12px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
                   }}
                 >
@@ -365,7 +359,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                     width: '100%',
                     padding: '9px 12px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
                   }}
                 />
@@ -378,7 +372,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <BedDouble size={18} color="var(--color-primary)" />
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                2. Asignación de Cama Inicial (H03 / H04)
+                2. Asignación de Cama Inicial
               </h2>
             </div>
 
@@ -396,7 +390,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                       padding: '12px',
                       backgroundColor: '#fef3c7',
                       color: '#92400e',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   >
@@ -412,7 +406,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                       width: '100%',
                       padding: '9px 12px',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
                     }}
                   >
@@ -431,7 +425,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                       padding: '10px 12px',
                       backgroundColor: 'var(--color-selection)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '12px'
                     }}
                   >
@@ -451,15 +445,12 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   padding: '12px',
                   backgroundColor: 'var(--color-background)',
                   border: '1px solid var(--color-divider)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '12px',
                   color: 'var(--color-text-secondary)'
                 }}
               >
-                <div style={{ fontWeight: 600, color: 'var(--color-strong)', marginBottom: '4px' }}>
-                  Garantía de Asignación Semiabierta (CA17):
-                </div>
-                El sistema inicia el intervalo en la fecha/hora de ingreso sin solapamiento temporal posible con internamientos previos.
+                La cama debe estar disponible durante el periodo de ingreso seleccionado.
               </div>
             </div>
           </Panel>
@@ -490,7 +481,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   width: '100%',
                   padding: '9px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px',
                   marginBottom: '8px'
                 }}
@@ -513,7 +504,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   width: '100%',
                   padding: '9px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -537,7 +528,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   width: '100%',
                   padding: '9px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px',
                   fontFamily: 'inherit',
                   resize: 'vertical'
@@ -552,7 +543,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <LinkIcon size={18} color="var(--color-primary)" />
             <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              4. Vinculación de Consultas Previas e Integridad Referencial (CA17)
+              4. Consultas previas relacionadas
             </h2>
           </div>
 
@@ -572,7 +563,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   padding: '14px',
                   backgroundColor: 'var(--color-selection)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px'
@@ -581,40 +572,9 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                 <div style={{ fontSize: '13px', color: 'var(--color-strong)', fontWeight: 600 }}>
                   Consulta seleccionada: Consulta de Urgencias / Medicina General — Expediente {pacienteActual?.codigoLegible}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                  Pertenencia verificada: Paciente {pacienteActual?.nombreCompleto}. No se admiten recursos cruzados.
-                </div>
-
-                <div
-                  style={{
-                    marginTop: '6px',
-                    padding: '10px',
-                    backgroundColor: '#fff',
-                    border: '1px dashed #f59e0b',
-                    borderRadius: 'var(--radius-field)'
-                  }}
-                >
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      color: '#b45309',
-                      fontWeight: 600
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={simularErrorIncompatible}
-                      onChange={(e) => setSimularErrorIncompatible(e.target.checked)}
-                    />
-                    <span>
-                      [Simulación para Evaluación CA17] Provocar cruce con recurso de otro paciente (Probar 409 REFERENCIA_INCOMPATIBLE)
-                    </span>
-                  </label>
-                </div>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                La consulta seleccionada debe pertenecer a {pacienteActual?.nombreCompleto}.
+              </div>
               </div>
             )}
           </div>
@@ -635,7 +595,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
             disabled={guardando || camas.length === 0}
             leftIcon={<CheckCircle2 size={16} />}
           >
-            {guardando ? 'Registrando Ingreso...' : 'Confirmar Ingreso Hospitalario (H02)'}
+            {guardando ? 'Registrando Ingreso...' : 'Confirmar Ingreso Hospitalario'}
           </Button>
         </div>
       </form>

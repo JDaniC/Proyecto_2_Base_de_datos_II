@@ -1,3 +1,5 @@
+import { getDisplayLabel } from '../../../services/displayLabels';
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState, useEffect } from 'react';
 import {
   FileCheck2,
@@ -139,7 +141,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
       onResultadoRegistrado();
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Error registrando resultados de laboratorio.');
+      setError(getErrorMessage(err, 'Error registrando resultados de laboratorio.'));
     } finally {
       setGuardando(false);
     }
@@ -151,7 +153,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Registrar Resultados de Laboratorio (H06) — Orden ${orden.codigoLegible}`}
+      title={`Registrar Resultados de Laboratorio — Orden ${orden.codigoLegible}`}
       maxWidth="750px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -162,7 +164,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
               padding: '10px 14px',
               backgroundColor: '#fef2f2',
               border: '1px solid #f87171',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               color: '#b91c1c',
               fontSize: '13px',
               display: 'flex',
@@ -193,7 +195,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
             <div>
               <span style={{ color: 'var(--color-text-secondary)', display: 'block' }}>Prioridad:</span>
               <Badge variant={orden.prioridad === 'STAT' ? 'danger' : orden.prioridad === 'URGENTE' ? 'warning' : 'primary'}>
-                {orden.prioridad}
+                {getDisplayLabel(orden.prioridad)}
               </Badge>
             </div>
             <div>
@@ -220,7 +222,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           >
@@ -285,7 +287,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
                               width: '100%',
                               padding: '6px 8px',
                               border: '1px solid var(--color-border)',
-                              borderRadius: 'var(--radius-field)',
+                              borderRadius: 'var(--radius-input)',
                               fontSize: '12px'
                             }}
                           />
@@ -299,7 +301,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
                               width: '100%',
                               padding: '6px 8px',
                               border: '1px solid var(--color-border)',
-                              borderRadius: 'var(--radius-field)',
+                              borderRadius: 'var(--radius-input)',
                               fontSize: '12px'
                             }}
                           >
@@ -337,7 +339,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               resize: 'vertical'
             }}
@@ -363,7 +365,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -385,7 +387,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -404,7 +406,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
             aria-label="Confirmar registro de resultados"
             leftIcon={<FileCheck2 size={16} />}
           >
-            {guardando ? 'Validando y guardando...' : 'Guardar y Validar Resultado (H06)'}
+            {guardando ? 'Validando y guardando...' : 'Guardar y Validar Resultado'}
           </Button>
         </div>
       </form>

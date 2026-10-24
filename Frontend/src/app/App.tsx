@@ -181,7 +181,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/cobros"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'usuarios.administrar', 'pacientes.administrar']}>
+                  <AuthGuard requierePermiso={['cobros.administrar', 'usuarios.administrar']}>
                     <BillingPaymentsPage />
                   </AuthGuard>
                 }

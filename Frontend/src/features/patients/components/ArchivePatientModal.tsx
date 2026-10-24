@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState } from 'react';
 import { Archive, RefreshCw } from 'lucide-react';
 import { Paciente, CausaArchivo } from '../../../services/types';
@@ -55,7 +56,7 @@ export const ArchivePatientModal: React.FC<ArchivePatientModalProps> = ({
       }
       onClose();
     } catch (err) {
-      setErrorValidacion(err instanceof Error ? err.message : 'Error al procesar la solicitud.');
+      setErrorValidacion(getErrorMessage(err, 'Error al procesar la solicitud.'));
     } finally {
       setProcesando(false);
     }
@@ -65,7 +66,7 @@ export const ArchivePatientModal: React.FC<ArchivePatientModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isArchived ? 'Reactivación de Expediente Clínico (V14)' : 'Archivo de Expediente Clínico (V14)'}
+      title={isArchived ? 'Reactivación de Expediente Clínico' : 'Archivo de Expediente Clínico'}
       maxWidth="560px"
     >
       <form onSubmit={handleSubmit}>
@@ -73,7 +74,7 @@ export const ArchivePatientModal: React.FC<ArchivePatientModalProps> = ({
           {/* Alerta de advertencia institucional */}
           <Alert
             variant={isArchived ? 'warning' : 'danger'}
-            title={isArchived ? 'Reactivar atención clínica' : 'Acción administrativa restrictiva'}
+            title={isArchived ? 'Reactivar atención clínica' : 'Se conservará el historial'}
           >
             {isArchived ? (
               fueFallecimiento ? (
@@ -175,7 +176,7 @@ export const ArchivePatientModal: React.FC<ArchivePatientModalProps> = ({
               placeholder={
                 isArchived
                   ? 'Describa el motivo médico o administrativo por el cual se reactiva el expediente...'
-                  : 'Describa detalladamente el motivo del archivo y los documentos de respaldo...'
+                  : 'Indica el motivo del archivo'
               }
               rows={4}
               required
@@ -184,7 +185,7 @@ export const ArchivePatientModal: React.FC<ArchivePatientModalProps> = ({
                 padding: '12px',
                 borderRadius: 'var(--radius-input)',
                 border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 fontSize: '13px',
                 lineHeight: 1.5,
                 outline: 'none',

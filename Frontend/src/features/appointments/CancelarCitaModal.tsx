@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { AlertTriangle, XCircle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -57,7 +58,7 @@ export const CancelarCitaModal: React.FC<CancelarCitaModalProps> = ({
       onCitaCancelada(citaActualizada);
     } catch (err: any) {
       setGuardando(false);
-      setErrorValidacion(err.message || 'Error al cancelar la cita.');
+      setErrorValidacion(getErrorMessage(err, 'Error al cancelar la cita.'));
     }
   };
 
@@ -65,7 +66,7 @@ export const CancelarCitaModal: React.FC<CancelarCitaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Cancelar Cita Médica (V09)"
+      title="Cancelar Cita Médica"
       maxWidth="520px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -151,7 +152,7 @@ export const CancelarCitaModal: React.FC<CancelarCitaModalProps> = ({
             placeholder="Especifique el motivo clínico o administrativo de la cancelación..."
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',

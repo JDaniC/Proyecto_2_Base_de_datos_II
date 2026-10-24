@@ -1,3 +1,5 @@
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -65,7 +67,7 @@ export const ResultsValidationPage: React.FC = () => {
         setResultadoSeleccionadoId(todos[0].id);
       }
     } catch (err: any) {
-      setErrorGlobal(err?.message || 'Error cargando resultados para validación.');
+      setErrorGlobal(getErrorMessage(err, 'Error cargando resultados para validación.'));
     } finally {
       setCargando(false);
     }
@@ -132,7 +134,7 @@ export const ResultsValidationPage: React.FC = () => {
       // Recargar lista
       await cargarDatos();
     } catch (err: any) {
-      setErrorGlobal(err?.message || 'Error al validar el resultado analítico.');
+      setErrorGlobal(getErrorMessage(err, 'Error al validar el resultado analítico.'));
     } finally {
       setValidando(false);
     }
@@ -142,13 +144,10 @@ export const ResultsValidationPage: React.FC = () => {
   if (!puedeValidar) {
     return (
       <div style={{ padding: '32px 24px', maxWidth: '800px', margin: '40px auto' }}>
-        <Alert variant="danger" title="Acceso Denegado — Requiere Permiso de Validación (CA18)">
+        <Alert variant="danger" title="No tienes permiso para validar resultados">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              Su cuenta actual no cuenta con el permiso <code>resultados.validar</code>.
-              Según la regla de integridad clínica y separación estricta de funciones (<strong>CA13</strong> y <strong>CA18</strong>),
-              un analista técnico solo puede ingresar borradores en <code>L06</code>, y la certificación/firma pericial de resultados
-              exige un profesional facultativo autorizado.
+              La validación está disponible para personal autorizado. Si necesitas este acceso, contacta al administrador de tu institución.
             </p>
             <div>
               <Button
@@ -167,21 +166,21 @@ export const ResultsValidationPage: React.FC = () => {
 
   if (cargando) {
     return (
-      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ padding: 0, maxWidth: '1200px', margin: '0 auto' }}>
         <SkeletonLoader variant="card" height={260} />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1300px', margin: '0 auto' }}>
+    <div style={{ padding: 0, maxWidth: '1300px', margin: '0 auto' }}>
       {/* Breadcrumb */}
       <nav aria-label="Ruta de navegación" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
         <Link to="/laboratorio/bandeja" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
           Bandeja de Laboratorio
         </Link>
         <span>/</span>
-        <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Revisión y Validación de Resultados (L07)</span>
+        <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Revisión y Validación de Resultados</span>
       </nav>
 
       {/* Encabezado */}
@@ -200,7 +199,7 @@ export const ResultsValidationPage: React.FC = () => {
             <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--color-strong)' }}>
               Revisión y Validación de Resultados
             </h1>
-            <Badge variant="primary">L07 — VALIDACIÓN</Badge>
+            <Badge variant="primary"> — VALIDACIÓN</Badge>
           </div>
           <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontSize: '14px' }}>
             Certificación pericial de resultados analíticos previos a la emisión del informe oficial al paciente y médico solicitante.
@@ -272,7 +271,7 @@ export const ResultsValidationPage: React.FC = () => {
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['TODAS', 'STAT', 'URGENTE', 'RUTINA'] as const).map((prio) => (
                   <button
-                    key={prio}
+                    key={prio === 'TODAS' ? 'Todas' : getDisplayLabel(prio)}
                     type="button"
                     onClick={() => setFiltroPrioridad(prio)}
                     style={{
@@ -286,7 +285,7 @@ export const ResultsValidationPage: React.FC = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    {prio}
+                    {prio === 'TODAS' ? 'Todas' : getDisplayLabel(prio)}
                   </button>
                 ))}
               </div>
@@ -316,19 +315,19 @@ export const ResultsValidationPage: React.FC = () => {
                           ? '#F0F7F5'
                           : tieneCriticos
                           ? '#FEF2F2'
-                          : 'var(--color-surface, #ffffff)',
+                          : 'var(--color-background, #ffffff)',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                         <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '12px', color: 'var(--color-primary)' }}>
-                          {res.codigoOrden}
+                          <span className="table-identifier">{res.codigoOrden}</span>
                         </span>
                         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                           {ord?.prioridad === 'STAT' && (
                             <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 5px', borderRadius: '4px', backgroundColor: '#FEE2E2', color: '#991B1B' }}>
-                              STAT
+                              Inmediata
                             </span>
                           )}
                           <Badge variant="warning">BORRADOR v{res.version}</Badge>
@@ -388,7 +387,7 @@ export const ResultsValidationPage: React.FC = () => {
 
                 <div>
                   <span style={{ color: 'var(--color-text-secondary)' }}>Orden Solicitada: </span>
-                  <strong style={{ color: 'var(--color-strong)' }}>{resultadoSeleccionado.codigoOrden}</strong>
+                  <strong style={{ color: 'var(--color-strong)' }}><span className="table-identifier">{resultadoSeleccionado.codigoOrden}</span></strong>
                   <div style={{ color: 'var(--color-text-secondary)' }}>Médico: {ordenSeleccionada?.medicoSolicitante}</div>
                 </div>
 
@@ -464,7 +463,7 @@ export const ResultsValidationPage: React.FC = () => {
                                   : 'success'
                               }
                             >
-                              {param.alerta}
+                              {getDisplayLabel(param.alerta)}
                             </Badge>
                           </td>
                         </tr>
@@ -476,7 +475,7 @@ export const ResultsValidationPage: React.FC = () => {
 
               {/* Observaciones del Analista */}
               {resultadoSeleccionado.observaciones && (
-                <div style={{ padding: '10px 14px', backgroundColor: 'var(--color-surface-hover, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--color-border)', marginBottom: '16px', fontSize: '13px' }}>
+                <div style={{ padding: '10px 14px', backgroundColor: 'var(--color-control-hover, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--color-border)', marginBottom: '16px', fontSize: '13px' }}>
                   <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Observaciones del Analista: </span>
                   <em style={{ color: 'var(--color-strong)' }}>«{resultadoSeleccionado.observaciones}»</em>
                 </div>
@@ -570,14 +569,14 @@ export const ResultsValidationPage: React.FC = () => {
                     aria-label="Abrir captura o solicitar corrección"
                   >
                     <AlertTriangle size={15} style={{ marginRight: '6px' }} />
-                    Editar en Captura (L06)
+                    Editar en Captura
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => setModalCorrectionOpen(true)}
-                    aria-label="Abrir diálogo de corrección o repetición L08"
+                    aria-label="Abrir diálogo de corrección o repetición "
                   >
-                    Corrección / Repetición (L08)
+                    Corrección / Repetición
                   </Button>
                 </div>
 
@@ -588,7 +587,7 @@ export const ResultsValidationPage: React.FC = () => {
                   aria-label="Validar y Certificar Resultado"
                 >
                   <CheckCircle2 size={16} style={{ marginRight: '6px' }} />
-                  {validando ? 'Certificando...' : 'Validar y Certificar Resultado (L07)'}
+                  {validando ? 'Certificando...' : 'Validar y Certificar Resultado'}
                 </Button>
               </div>
 
@@ -601,7 +600,7 @@ export const ResultsValidationPage: React.FC = () => {
                   resultadoActual={resultadoSeleccionado}
                   todasLasVersiones={todosResultados.filter((r) => r.itemOrdenId === resultadoSeleccionado.itemOrdenId)}
                   onExito={(nuevo) => {
-                    setMensajeExito(`Operación L08 completada: nueva versión/serie registrada (ID: ${nuevo.id}, Serie: ${nuevo.serieResultadoId}, Versión: v${nuevo.version}).`);
+                    setMensajeExito(`Operación  completada: nueva versión/serie registrada (ID: ${nuevo.id}, Serie: ${nuevo.serieResultadoId}, Versión: v${nuevo.version}).`);
                     cargarDatos();
                   }}
                 />

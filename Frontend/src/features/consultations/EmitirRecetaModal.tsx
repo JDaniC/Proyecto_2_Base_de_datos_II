@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { Pill, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -28,12 +29,13 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
   const [medicamentos, setMedicamentos] = useState<RecetaMedicamentoItem[]>([
     {
       nombre: '',
-      presentacion: 'Tableta',
+      presentacion: '',
+      concentracion: '',
       dosis: '',
-      frecuencia: 'Cada 8 horas',
-      duracion: '5 días',
-      via: 'Oral',
-      indicaciones: 'Tomar después de los alimentos.'
+      frecuencia: '',
+      duracion: '',
+      via: '',
+      indicaciones: ''
     }
   ]);
 
@@ -45,12 +47,13 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
       ...prev,
       {
         nombre: '',
-        presentacion: 'Tableta',
+        presentacion: '',
+      concentracion: '',
         dosis: '',
-        frecuencia: 'Cada 8 horas',
-        duracion: '5 días',
-        via: 'Oral',
-        indicaciones: 'Tomar según prescripción médica.'
+        frecuencia: '',
+        duracion: '',
+        via: '',
+        indicaciones: ''
       }
     ]);
   };
@@ -74,7 +77,8 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
               ...m,
               nombre: item.nombre,
               presentacion: item.presentacion,
-              dosis: item.concentracion,
+              concentracion: item.concentracion,
+              dosis: '',
               via: item.via,
               frecuencia: item.frecuencia,
               duracion: item.duracion
@@ -100,6 +104,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
         setError(`El fármaco #${i + 1} requiere un nombre válido (mínimo 3 caracteres).`);
         return;
       }
+      if (!m.presentacion.trim() || !m.frecuencia.trim() || !m.duracion.trim() || !m.via.trim() || (institucionId === 'CENTRO_PEDIATRICO' && !m.concentracion?.trim())) { setError(`Completa presentación, concentración, frecuencia, duración y vía del medicamento #${i + 1}.`); return; }
       if (!m.dosis.trim()) {
         setError(`Especifique la dosis para el fármaco #${i + 1} (${m.nombre}).`);
         return;
@@ -122,7 +127,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
       onClose();
     } catch (err: any) {
       setGuardando(false);
-      setError(err.message || 'Error al emitir la receta médica oficial.');
+      setError(getErrorMessage(err, 'Error al emitir la receta médica oficial.'));
     }
   };
 
@@ -130,7 +135,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Emitir Receta Médica Oficial (V13)"
+      title="Emitir Receta Médica Oficial"
       maxWidth="720px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -156,7 +161,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
 
         <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
           Prescripción médica estructurada con certificación institucional. Los medicamentos prescritos
-          quedarán guardados de forma inmutable con trazabilidad auditable.
+          quedarán registrados en el expediente del paciente.
         </div>
 
         {/* Lista de medicamentos dinámicos */}
@@ -204,7 +209,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       fontSize: '11px',
                       padding: '2px 8px',
-                      backgroundColor: 'var(--color-surface)',
+                      backgroundColor: 'var(--color-background)',
                       border: '1px solid var(--color-border)',
                       borderRadius: '4px',
                       cursor: 'pointer',
@@ -230,7 +235,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px',
@@ -251,7 +256,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
@@ -259,6 +264,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                   />
                 </div>
 
+                <div><label>Concentración<input value={med.concentracion || ''} onChange={e => actualizarMedicamento(idx, 'concentracion', e.target.value)} placeholder="Ej. 250 mg / 5 ml" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)' }} /></label></div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
                     Dosis *
@@ -271,7 +277,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
@@ -294,7 +300,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
@@ -314,7 +320,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
@@ -334,7 +340,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      backgroundColor: 'var(--color-input-bg)',
+                      backgroundColor: 'var(--color-control)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-input)',
                       fontSize: '13px'
@@ -355,7 +361,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '8px 10px',
-                    backgroundColor: 'var(--color-input-bg)',
+                    backgroundColor: 'var(--color-control)',
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
@@ -385,7 +391,7 @@ export const EmitirRecetaModal: React.FC<EmitirRecetaModalProps> = ({
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={guardando} leftIcon={<Pill size={16} />}>
-            Emitir Receta Oficial (V13)
+            Emitir Receta Oficial
           </Button>
         </div>
       </form>

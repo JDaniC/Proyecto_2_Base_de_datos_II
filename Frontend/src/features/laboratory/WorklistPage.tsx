@@ -1,3 +1,4 @@
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -15,6 +16,7 @@ import { Panel } from '../../design-system/components/Panel';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import {
   OrdenLaboratorio,
   PrioridadLaboratorio,
@@ -86,7 +88,7 @@ export const WorklistPage: React.FC = () => {
               letterSpacing: '0.05em'
             }}
           >
-            <AlertTriangle size={12} /> STAT
+            <AlertTriangle size={12} /> Inmediata
           </span>
         );
       case 'URGENTE':
@@ -168,7 +170,7 @@ export const WorklistPage: React.FC = () => {
             <span style={{ margin: '0 8px' }}>/</span>
             <span>Laboratorio Clínico</span>
             <span style={{ margin: '0 8px' }}>/</span>
-            <strong style={{ color: 'var(--color-strong)' }}>Bandeja de Trabajo (L01)</strong>
+            <strong style={{ color: 'var(--color-strong)' }}>Bandeja de Trabajo</strong>
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -188,13 +190,12 @@ export const WorklistPage: React.FC = () => {
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: 'var(--color-strong)' }}>
-                Bandeja de Trabajo de Laboratorio Clínico (L01)
+                Bandeja de trabajo
               </h1>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                Centro de comando preanalítico, seguimiento de órdenes y prioridad nosológica
+                Revise órdenes, muestras y resultados pendientes.
               </p>
             </div>
-            <Badge variant="primary">{sesion?.institucionNombre || 'Laboratorio Clínico Especializado'}</Badge>
           </div>
         </div>
 
@@ -205,7 +206,7 @@ export const WorklistPage: React.FC = () => {
             onClick={() => navigate('/laboratorio/muestras')}
             leftIcon={<TestTube2 size={16} />}
           >
-            Gestión de Muestras (L04)
+            Gestión de Muestras
           </Button>
 
           <Button
@@ -213,114 +214,21 @@ export const WorklistPage: React.FC = () => {
             onClick={() => navigate('/laboratorio/ordenes/nueva')}
             leftIcon={<Plus size={16} />}
           >
-            Nueva Orden de Laboratorio (L02)
+            Nueva Orden de Laboratorio
           </Button>
         </div>
       </div>
 
-      {/* Tira de Métricas Operativas */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-          gap: '12px'
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '10px',
-            padding: '14px 16px'
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-            Total Órdenes en Bandeja
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-strong)', marginTop: '4px' }}>
-            {metricas.total}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            Flujo diario activo
-          </div>
-        </div>
-
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '10px',
-            padding: '14px 16px'
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#991B1B' }}>
-            Emergencias (STAT / Urgente)
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>
-            {metricas.statUrgentes}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            Atención prioritaria
-          </div>
-        </div>
-
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '10px',
-            padding: '14px 16px'
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#92400E' }}>
-            Muestras Pendientes
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#D97706', marginTop: '4px' }}>
-            {metricas.pendientesToma}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            Requieren punción / recolección
-          </div>
-        </div>
-
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '10px',
-            padding: '14px 16px'
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>
-            En Análisis Analítico
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-primary)', marginTop: '4px' }}>
-            {metricas.enAnalisis}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            Procesándose en equipos
-          </div>
-        </div>
-
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '10px',
-            padding: '14px 16px'
-          }}
-        >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#047857' }}>
-            Listas para Validar
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>
-            {metricas.paraValidar}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            Pendientes de firma analítica
-          </div>
-        </div>
-      </div>
+      <MetricStrip
+        label="Resumen de órdenes"
+        items={[
+          { id: 'total', label: 'Órdenes', value: metricas.total },
+          { id: 'prioritarias', label: 'Prioritarias', value: metricas.statUrgentes, tone: 'danger' },
+          { id: 'muestras', label: 'Muestras pendientes', value: metricas.pendientesToma, tone: 'warning' },
+          { id: 'analisis', label: 'En análisis', value: metricas.enAnalisis, tone: 'info' },
+          { id: 'validacion', label: 'Por validar', value: metricas.paraValidar, tone: 'success' },
+        ]}
+      />
 
       {/* Filtros de Navegación y Búsqueda */}
       <Panel>
@@ -348,7 +256,7 @@ export const WorklistPage: React.FC = () => {
                   padding: '9px 12px 9px 36px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px'
                 }}
               />
@@ -364,12 +272,12 @@ export const WorklistPage: React.FC = () => {
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px'
                 }}
               >
                 <option value="TODAS">Todas las prioridades</option>
-                <option value="STAT">STAT (Emergencia)</option>
+                <option value="STAT">Emergencia</option>
                 <option value="URGENTE">Urgente</option>
                 <option value="RUTINA">Rutina</option>
               </select>
@@ -385,7 +293,7 @@ export const WorklistPage: React.FC = () => {
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px'
                 }}
               >
@@ -408,7 +316,7 @@ export const WorklistPage: React.FC = () => {
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px'
                 }}
               >
@@ -431,7 +339,7 @@ export const WorklistPage: React.FC = () => {
               Órdenes de Laboratorio ({ordenes.length})
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '2px 0 0 0' }}>
-              Secuencia clasificada por severidad de prioridad y fecha de emisión
+              Ordenadas por prioridad y fecha de emisión
             </p>
           </div>
           <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
@@ -482,7 +390,7 @@ export const WorklistPage: React.FC = () => {
                           textDecoration: 'none'
                         }}
                       >
-                        {orden.codigoOrden}
+                        <span className="table-identifier">{orden.codigoOrden}</span>
                       </Link>
                       <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
                         {new Date(orden.fechaCreacion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} hrs
@@ -557,7 +465,7 @@ export const WorklistPage: React.FC = () => {
                                     : '#B45309'
                               }}
                             >
-                              {orden.muestras[0].estado}
+                              {getDisplayLabel(orden.muestras[0].estado)}
                             </span>
                           </div>
                         </div>
@@ -595,7 +503,7 @@ export const WorklistPage: React.FC = () => {
                           aria-label={`Ver orden ${orden.codigoOrden}`}
                         >
                           <Eye size={14} style={{ marginRight: '4px' }} />
-                          Detalle (L03)
+                          Detalle
                         </Button>
                       </div>
                     </td>

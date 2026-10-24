@@ -204,7 +204,7 @@ export class MockAppointmentRepository implements AppointmentRepository {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.citas.findIndex((c) => c.id === id && c.institucionId === institucionId);
     if (index === -1) {
-      throw new Error(`Cita con ID ${id} no encontrada.`);
+      throw new Error('No se encontró la cita. Actualiza la vista e inténtalo de nuevo.');
     }
 
     const actual = this.citas[index];
@@ -270,7 +270,7 @@ export class MockAppointmentRepository implements AppointmentRepository {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.citas.findIndex((c) => c.id === id && c.institucionId === institucionId);
     if (index === -1) {
-      throw new Error(`Cita con ID ${id} no encontrada.`);
+      throw new Error('No se encontró la cita. Actualiza la vista e inténtalo de nuevo.');
     }
 
     const actual = this.citas[index];

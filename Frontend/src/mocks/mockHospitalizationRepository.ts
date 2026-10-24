@@ -306,7 +306,7 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
         (id) => id.includes('incompatible') || id.includes('otro-paciente')
       );
       if (tieneIncompatible) {
-        throw new Error('409 REFERENCIA_INCOMPATIBLE: Las consultas o diagnósticos vinculados no pertenecen al expediente del paciente.');
+        throw new Error('Las consultas seleccionadas no pertenecen al expediente de este paciente.');
       }
     }
 

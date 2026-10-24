@@ -14,13 +14,13 @@ import {
   Package,
   CreditCard,
   Baby,
-  Syringe,
   Settings,
   ShieldCheck,
   BookOpen,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { isRouteInInstitution } from '../../app/productScope';
 import { SesionUsuario } from '../../services/types';
 
 export interface NavItem {
@@ -34,6 +34,7 @@ export interface SidebarProps {
   sesion: SesionUsuario;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onNavigate?: () => void;
   className?: string;
 }
 
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sesion,
   collapsed,
   onToggleCollapse,
+  onNavigate,
   className = '',
 }) => {
   const getNavItems = (): NavItem[] => {
@@ -87,13 +89,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: <FileText size={20} />,
         }
       );
-    } else if (sesion.institucionId === 'CLINICA_ODONTOLOGICA') {
-      items.push({
-        id: 'catalogos-odon',
-        path: '/administracion/catalogos',
-        label: 'Catálogos odontológicos',
-        icon: <BookOpen size={20} />,
-      });
     } else if (sesion.institucionId === 'LABORATORIO_CLINICO') {
       items.push(
         {
@@ -139,23 +134,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {
           id: 'catalogo-lab',
           path: '/administracion/catalogos?tab=laboratorio',
-          label: 'Catálogo de pruebas (L10)',
+          label: 'Catálogos de laboratorio',
           icon: <BookOpen size={20} />,
         },
-        {
-          id: 'personal-lab',
-          path: '/administracion/usuarios?tab=personal-laboratorio',
-          label: 'Personal de laboratorio (L14)',
-          icon: <Users size={20} />,
-        }
+
       );
-    } else if (sesion.institucionId === 'CENTRO_PEDIATRICO') {
-      items.push({
-        id: 'vacunas-ped',
-        path: '/pediatria/vacunas',
-        label: 'Control de vacunas',
-        icon: <Syringe size={20} />,
-      });
+    }
+
+    if (sesion.institucionId === 'CENTRO_PEDIATRICO') {
+      items.push({ id: 'vacunas-catalogo', path: '/administracion/catalogos?tab=vacunas', label: 'Catálogo de vacunas', icon: <BookOpen size={20} /> });
     }
 
     // Módulos administrativos según permisos
@@ -185,7 +172,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       });
     }
 
-    return items;
+    const permissionsByItem: Record<string, string[]> = {
+      'calidad-lab': ['resultados.analizar', 'resultados.validar', 'usuarios.administrar'],
+      'inventario-lab': ['inventario.administrar', 'resultados.analizar', 'usuarios.administrar'],
+      'cobros-lab': ['cobros.administrar', 'usuarios.administrar'],
+    };
+    return items.filter((item, index) =>
+      (!permissionsByItem[item.id] || permissionsByItem[item.id].some(p => sesion.permisos.some(permission => permission === p))) &&
+      isRouteInInstitution(item.path.split('?')[0], sesion.institucionId) &&
+      !items.slice(0, index).some(previous => previous.path.split('?')[0] === item.path.split('?')[0])
+    );
   };
 
   const navItems = getNavItems();
@@ -263,6 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <NavLink
             key={item.id}
             to={item.path}
+            onClick={onNavigate}
             title={collapsed ? item.label : undefined}
             style={({ isActive }) => ({
               display: 'flex',

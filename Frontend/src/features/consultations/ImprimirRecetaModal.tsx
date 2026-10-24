@@ -29,7 +29,7 @@ export const ImprimirRecetaModal: React.FC<ImprimirRecetaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Receta Médica Oficial (V13)"
+      title="Receta Médica Oficial"
       maxWidth="680px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -145,7 +145,7 @@ export const ImprimirRecetaModal: React.FC<ImprimirRecetaModalProps> = ({
                   }}
                 >
                   <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                    {index + 1}. {med.nombre} {med.presentacion ? `(${med.presentacion})` : ''}
+                    {index + 1}. {med.nombre} {med.concentracion} {med.presentacion ? `(${med.presentacion})` : ''}
                   </div>
                   <div style={{ color: 'var(--color-text)', marginTop: '2px' }}>
                     <strong>Dosis:</strong> {med.dosis} · <strong>Frecuencia:</strong> {med.frecuencia} · <strong>Duración:</strong> {med.duracion} ({med.via})

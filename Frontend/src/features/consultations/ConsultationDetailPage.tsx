@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -95,13 +96,13 @@ export const ConsultationDetailPage: React.FC = () => {
         if (!isMounted) return;
 
         if (!pacData) {
-          setError(`No se encontró el paciente con ID ${pacienteId}.`);
+          setError('No se encontró el paciente solicitado.');
         } else if (!conData) {
-          setError(`No se encontró la consulta clínica con identificador ${consultaId}.`);
+          setError('No se encontró la consulta solicitada.');
         } else {
           // Aislamiento de rol Secretaría (RF-C08, CA18)
           if (sesion?.rolId === 'SECRETARIA') {
-            setError('403 ACCESO_DENEGADO: El personal de secretaría tiene restringido el acceso a notas clínicas, diagnósticos y recetas médicas (RF-C08, CA18).');
+            setError('No tienes permiso para consultar las notas clínicas de esta atención.');
             return;
           }
           setPaciente(pacData);
@@ -109,7 +110,7 @@ export const ConsultationDetailPage: React.FC = () => {
         }
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message || 'Error al recuperar los datos de la consulta.');
+          setError(getErrorMessage(err, 'Error al recuperar los datos de la consulta.'));
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -188,8 +189,8 @@ export const ConsultationDetailPage: React.FC = () => {
           <span>Volver al expediente de {paciente.nombreCompleto}</span>
         </Link>
         <span>/</span>
-        <span style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>
-          Detalle de Consulta ({consulta.id})
+        <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>
+          Detalle de Consulta
         </span>
       </nav>
 
@@ -203,7 +204,7 @@ export const ConsultationDetailPage: React.FC = () => {
       {/* Cabecera Principal de la Consulta */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px',
@@ -240,7 +241,7 @@ export const ConsultationDetailPage: React.FC = () => {
                 v{consulta.revision || 1}
               </Badge>
               {institucionId === 'CLINICA_ODONTOLOGICA' && (
-                <Badge variant="primary">Odontología (C04)</Badge>
+                <Badge variant="primary">Odontología</Badge>
               )}
             </div>
             <div
@@ -292,7 +293,7 @@ export const ConsultationDetailPage: React.FC = () => {
               onClick={() => setShowModificarConsulta(true)}
             >
               <Edit3 size={15} style={{ marginRight: '6px' }} />
-              Corregir o Actualizar Consulta (CA10)
+              Corregir o Actualizar Consulta
             </Button>
           </div>
         </div>
@@ -314,8 +315,7 @@ export const ConsultationDetailPage: React.FC = () => {
           }}
         >
           <div>
-            <strong>Registro Clínico Oficial:</strong> Esta consulta cuenta con trazabilidad inmutable. Las
-            modificaciones posteriores crean revisiones versionadas auditadas según criterio <code>CA10</code>.
+            <strong>Registro clínico:</strong> Las modificaciones posteriores quedan registradas con su autor y motivo.
           </div>
           <div>
             Versión actual activa: <strong>v{consulta.revision || 1}</strong>
@@ -340,7 +340,7 @@ export const ConsultationDetailPage: React.FC = () => {
               <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 600 }}>
                 Síntomas y Evolución:
               </span>
-              <p style={{ margin: '4px 0 0 0', lineHeight: 1.5, color: 'var(--color-text-primary)' }}>
+              <p style={{ margin: '4px 0 0 0', lineHeight: 1.5, color: 'var(--color-strong)' }}>
                 {consulta.sintomas || 'No descritos detalladamente.'}
               </p>
             </div>
@@ -349,7 +349,7 @@ export const ConsultationDetailPage: React.FC = () => {
                 <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 600 }}>
                   Observaciones Adicionales / Examen Físico:
                 </span>
-                <p style={{ margin: '4px 0 0 0', lineHeight: 1.5, color: 'var(--color-text-primary)' }}>
+                <p style={{ margin: '4px 0 0 0', lineHeight: 1.5, color: 'var(--color-strong)' }}>
                   {consulta.observaciones}
                 </p>
               </div>
@@ -386,7 +386,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.presionSistolica}/${sv.presionDiastolica} mmHg`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -409,7 +409,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.frecuenciaCardiacaLpm} lpm`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -432,7 +432,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.frecuenciaRespiratoriaRpm} rpm`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -455,7 +455,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.temperaturaC} °C`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -478,7 +478,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.saturacionOxigenoPct}%`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -501,7 +501,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.pesoKg} kg`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -524,7 +524,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   `${sv.tallaCm} cm`
                 ) : (
                   <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px', fontWeight: 400 }}>
-                    No medido (null)
+                    No medido
                   </span>
                 )}
               </div>
@@ -558,8 +558,8 @@ export const ConsultationDetailPage: React.FC = () => {
 
       {/* Diagnósticos y Tratamientos (V12) */}
       <Panel
-        title="Diagnósticos (CIE-10) y Tratamientos Clínicos (V12)"
-        subtitle="Con diagnóstico principal obligatorio según criterio clínico institucional"
+        title="Diagnósticos (CIE-10) y Tratamientos Clínicos"
+        subtitle="Diagnósticos, tratamientos y procedimientos vinculados a esta consulta."
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Diagnóstico Principal */}
@@ -593,7 +593,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <code
                       style={{
-                        backgroundColor: 'var(--color-surface)',
+                        backgroundColor: 'var(--color-background)',
                         border: '1px solid var(--color-border)',
                         padding: '2px 6px',
                         borderRadius: '4px',
@@ -710,7 +710,7 @@ export const ConsultationDetailPage: React.FC = () => {
 
       {/* Receta Médica Emitida (V13) */}
       <Panel
-        title="Prescripción Farmacológica / Receta Oficial (V13)"
+        title="Prescripción Farmacológica / Receta Oficial"
         subtitle="Medicamentos con posología, concentración e indicaciones estructuradas"
         action={
           consulta.receta ? (
@@ -763,14 +763,14 @@ export const ConsultationDetailPage: React.FC = () => {
                       key={idx}
                       style={{
                         borderBottom: '1px solid var(--color-border)',
-                        backgroundColor: idx % 2 === 0 ? 'var(--color-surface)' : 'var(--color-panel)'
+                        backgroundColor: idx % 2 === 0 ? 'var(--color-background)' : 'var(--color-panel)'
                       }}
                     >
                       <td style={{ padding: '10px 8px', fontWeight: 600, color: 'var(--color-strong)' }}>
                         {m.nombre}
                       </td>
                       <td style={{ padding: '10px 8px' }}>
-                        {m.presentacion}
+                        {m.presentacion} {m.concentracion}
                       </td>
                       <td style={{ padding: '10px 8px', fontWeight: 600 }}>
                         {m.dosis}
@@ -781,7 +781,7 @@ export const ConsultationDetailPage: React.FC = () => {
                       <td style={{ padding: '10px 8px' }}>
                         {m.duracion}
                       </td>
-                      <td style={{ padding: '10px 8px', color: 'var(--color-text-primary)' }}>
+                      <td style={{ padding: '10px 8px', color: 'var(--color-strong)' }}>
                         {m.indicaciones || 'Según indicación'}
                       </td>
                     </tr>
@@ -798,8 +798,9 @@ export const ConsultationDetailPage: React.FC = () => {
       </Panel>
 
       {/* Procedimientos Clínicos Realizados (H07) */}
+      {institucionId === 'HOSPITAL_GENERAL' && (
       <Panel
-        title="Procedimientos Clínicos Realizados (H07)"
+        title="Procedimientos Clínicos Realizados"
         subtitle="Intervenciones, exploraciones diagnósticas o procedimientos menores ambulatorios"
         action={
           !mostrarFormProc && (
@@ -809,7 +810,7 @@ export const ConsultationDetailPage: React.FC = () => {
               leftIcon={<Plus size={14} />}
               onClick={() => setMostrarFormProc(true)}
             >
-              Registrar Procedimiento (H07)
+              Registrar Procedimiento
             </Button>
           )
         }
@@ -829,7 +830,7 @@ export const ConsultationDetailPage: React.FC = () => {
             }}
           >
             <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-strong)' }}>
-              Registrar Procedimiento Clínico (H07)
+              Registrar Procedimiento Clínico
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
@@ -851,7 +852,7 @@ export const ConsultationDetailPage: React.FC = () => {
                     width: '100%',
                     padding: '8px 10px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
                   }}
                 />
@@ -875,7 +876,7 @@ export const ConsultationDetailPage: React.FC = () => {
                     width: '100%',
                     padding: '8px 10px',
                     border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-field)',
+                    borderRadius: 'var(--radius-input)',
                     fontSize: '13px'
                   }}
                 />
@@ -899,7 +900,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -910,7 +911,7 @@ export const ConsultationDetailPage: React.FC = () => {
                 Cancelar
               </Button>
               <Button size="sm" type="submit" variant="primary" disabled={guardandoProc}>
-                {guardandoProc ? 'Registrando...' : 'Guardar Procedimiento (H07)'}
+                {guardandoProc ? 'Registrando...' : 'Guardar Procedimiento'}
               </Button>
             </div>
           </form>
@@ -925,7 +926,7 @@ export const ConsultationDetailPage: React.FC = () => {
                   padding: '12px 14px',
                   backgroundColor: 'var(--color-panel)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
@@ -956,12 +957,12 @@ export const ConsultationDetailPage: React.FC = () => {
             No se realizaron procedimientos invasivos o diagnósticos en esta consulta médica.
           </div>
         )}
-      </Panel>
+      </Panel>)}
 
       {/* Historial de Revisiones Auditadas (CA10) */}
       <Panel
-        title="Historial de Modificaciones y Revisiones Versionadas (CA10)"
-        subtitle="Registro estricto e inmutable de cambios con autor y justificación obligatoria"
+        title="Historial de Modificaciones y Revisiones Versionadas"
+        subtitle="Cambios registrados con su autor, fecha y motivo."
       >
         {consulta.historialRevisiones && consulta.historialRevisiones.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1008,7 +1009,7 @@ export const ConsultationDetailPage: React.FC = () => {
                       })}
                     </span>
                   </div>
-                  <div style={{ marginTop: '6px', color: 'var(--color-text-primary)' }}>
+                  <div style={{ marginTop: '6px', color: 'var(--color-strong)' }}>
                     <span style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>
                       Motivo / Justificación obligatoria:
                     </span>{' '}

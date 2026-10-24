@@ -1,10 +1,13 @@
+import { toClinicDateTimeInput } from '../../../services/dates';
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState } from 'react';
-import { X, Syringe, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useServices } from '../../../app/ServiceContext';
 import { useAuthSession } from '../../../app/AuthSessionContext';
 import { Button } from '../../../design-system/components/Button';
+import { Alert } from '../../../design-system/components/Alert';
 import { Input } from '../../../design-system/components/Input';
 import { Select } from '../../../design-system/components/Select';
+import { Modal } from '../../../design-system/components/Modal';
 import { Paciente, VacunaCatalogo, ItemEsquemaPaciente } from '../../../services/types';
 
 interface RegistrarAplicacionVacunaModalProps {
@@ -39,7 +42,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
   );
 
   const [fechaAplicacion, setFechaAplicacion] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    toClinicDateTimeInput().slice(0, 10)
   );
   const [horaAplicacion, setHoraAplicacion] = useState<string>(
     new Date().toTimeString().slice(0, 5)
@@ -50,8 +53,8 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
       ? 'Vía oral (gotas sublinguales)'
       : 'Cara anterolateral muslo izquierdo'
   );
-  const [reaccionesInmediatas, setReaccionesInmediatas] = useState<string>('Sin reacciones adversas inmediatas.');
-  const [observaciones, setObservaciones] = useState<string>('Aplicación conforme a la norma técnica del esquema nacional.');
+  const [reaccionesInmediatas, setReaccionesInmediatas] = useState<string>('');
+  const [observaciones, setObservaciones] = useState<string>('');
 
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -78,7 +81,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lote.trim()) {
-      setErrorMsg('El número de lote del biológico es un requisito obligatorio para la trazabilidad farmacológica.');
+      setErrorMsg('Ingresa el número de lote de la vacuna.');
       return;
     }
     if (!vacunaId || !dosisId) {
@@ -109,7 +112,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
       await onAplicacionRegistrada();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al registrar la aplicación de la vacuna.';
+      const msg = getErrorMessage(err, 'Error al registrar la aplicación de la vacuna.');
       setErrorMsg(msg);
     } finally {
       setGuardando(false);
@@ -117,37 +120,28 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
-        {/* Cabecera */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Syringe className="text-[#20666B]" size={20} />
-            <div>
-              <h3 className="font-semibold text-slate-800 text-sm">
-                Registrar Aplicación de Vacuna (P06, Regla CA11)
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Menor: <strong className="text-slate-700">{paciente.nombreCompleto}</strong> ({paciente.codigoLegible})
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Registrar aplicación de vacuna"
+      description={`Paciente: ${paciente.nombreCompleto} · ${paciente.codigoLegible}`}
+      maxWidth="720px"
+      footer={(
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={guardando}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="registro-aplicacion-vacuna" variant="primary" loading={guardando}>
+            Registrar dosis
+          </Button>
+        </>
+      )}
+    >
+        <form id="registro-aplicacion-vacuna" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-start gap-2">
-              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
+            <Alert variant="danger" title="No se pudo registrar la aplicación">
+              {errorMsg}
+            </Alert>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -215,61 +209,29 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-700">
-              Reacciones Inmediatas Post-Vacunales (observación 15-30 min)
-            </label>
+          <div>
             <Input
+              label="Reacciones inmediatas (observación de 15 a 30 min)"
               value={reaccionesInmediatas}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReaccionesInmediatas(e.target.value)}
               placeholder="ej. Tolerancia adecuada, llanto breve sin fiebre ni erupción..."
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-700">
-              Observaciones Clínicas o Indicaciones al Tutor
+          <div>
+            <label htmlFor="vacuna-observaciones" style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '6px', color: 'var(--color-strong)' }}>
+              Observaciones o indicaciones al responsable
             </label>
             <textarea
+              id="vacuna-observaciones"
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#20666B] focus:border-[#20666B] outline-none"
+              style={{ width: '100%', minHeight: '96px', resize: 'vertical', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '12px 14px', fontSize: '14px', color: 'var(--color-text)' }}
               value={observaciones}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setObservaciones(e.target.value)}
               placeholder="ej. Se instruye a la madre sobre cuidados del sitio de punción..."
             />
           </div>
-
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-slate-600">
-            <span className="flex items-center gap-1.5 font-medium">
-              <ShieldCheck size={16} className="text-[#20666B]" />
-              Clave Determinista CA11:
-            </span>
-            <code className="text-[11px] font-mono text-slate-800 bg-slate-200/80 px-2 py-0.5 rounded">
-              {paciente.id}_{vacunaId}_{dosisId}
-            </code>
-          </div>
-
-          {/* Botones */}
-          <div className="pt-4 border-t border-slate-200 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-              disabled={guardando}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={guardando}
-              className="bg-[#20666B] text-white"
-            >
-              Registrar Dosis Aplicada (CA11)
-            </Button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

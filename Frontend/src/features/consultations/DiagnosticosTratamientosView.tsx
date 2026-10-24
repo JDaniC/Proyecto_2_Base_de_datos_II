@@ -57,7 +57,7 @@ export const DiagnosticosTratamientosView: React.FC<DiagnosticosTratamientosView
       {/* Banner de Diagnóstico Principal Obligatorio */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderLeft: '4px solid var(--color-primary)',
           borderRadius: 'var(--radius-panel)',
@@ -80,7 +80,7 @@ export const DiagnosticosTratamientosView: React.FC<DiagnosticosTratamientosView
                 letterSpacing: '0.05em'
               }}
             >
-              Diagnóstico Principal Vigente (V12)
+              Diagnóstico Principal Vigente
             </span>
             <Badge variant="primary">Principal</Badge>
           </div>
@@ -120,7 +120,7 @@ export const DiagnosticosTratamientosView: React.FC<DiagnosticosTratamientosView
             onClick={() => setShowAgregarModal(true)}
             leftIcon={<PlusCircle size={15} />}
           >
-            Registrar Diagnóstico CIE-10 (V12)
+            Registrar Diagnóstico CIE-10
           </Button>
         )}
       </div>
@@ -159,7 +159,7 @@ export const DiagnosticosTratamientosView: React.FC<DiagnosticosTratamientosView
                 style={{
                   width: '100%',
                   padding: '8px 12px 8px 34px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'

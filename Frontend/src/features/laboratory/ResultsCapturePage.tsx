@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -81,7 +82,7 @@ export const ResultsCapturePage: React.FC = () => {
           setItemSeleccionadoId(ord.items[0].id);
         }
       } catch (err: any) {
-        setErrorGlobal(err?.message || 'Error al cargar información de la orden.');
+        setErrorGlobal(getErrorMessage(err, 'Error al cargar información de la orden.'));
       } finally {
         setCargando(false);
       }
@@ -109,9 +110,11 @@ export const ResultsCapturePage: React.FC = () => {
       setParametrosForm(resExistente.parametros);
     } else {
       // Cargar parámetros por defecto del catálogo
-      const defecto = obtenerParametrosDefecto(item.codigoPrueba);
+      const defecto: ParametroResultadoLab[] = item.parametros ? item.parametros.map(p => ({ id: p.parametroId, codigoParametro: p.parametroId, nombre: p.nombre, valor: '', unidad: p.unidadMedida, rangoTexto: p.rangoReferencia, alerta: 'NORMAL' })) : obtenerParametrosDefecto(item.codigoPrueba);
       setParametrosForm(defecto);
-      if (item.codigoPrueba.includes('GAS')) {
+      if (item.parametros) {
+        setEquipoAnalitico(''); setMetodoAnalitico(item.metodoAnalitico || ''); setLoteReactivo('');
+      } else if (item.codigoPrueba.includes('GAS')) {
         setEquipoAnalitico('Cobas b 123 Gas Analyzer (Roche)');
         setMetodoAnalitico('Potenciometría / Amperometría Directa');
         setLoteReactivo('LOTE-GAS-2026-08');
@@ -143,8 +146,8 @@ export const ResultsCapturePage: React.FC = () => {
   // Verificar estado preanalítico de las muestras de la orden
   const muestrasAceptadas = useMemo(() => {
     if (!orden) return [];
-    return orden.muestras.filter((m) => m.estado === 'ACEPTADA' || m.estado === 'PROCESADA');
-  }, [orden]);
+    return orden.muestras.filter((m) => (m.estado === 'ACEPTADA' || m.estado === 'PROCESADA') && (!itemActivo?.muestraIds || itemActivo.muestraIds.includes(m.id) || itemActivo.muestraIds.includes(m.muestraOrigenId || '')));
+  }, [orden, itemActivo]);
 
   const hayMuestraApta = muestrasAceptadas.length > 0;
   const muestraPrincipal: MuestraLaboratorio | undefined = muestrasAceptadas[0];
@@ -232,7 +235,7 @@ export const ResultsCapturePage: React.FC = () => {
       );
     } catch (err: any) {
       console.log('ERROR IN handleGuardarBorrador:', err);
-      setErrorGlobal(err?.message || 'Error guardando resultados analíticos.');
+      setErrorGlobal(getErrorMessage(err, 'Error guardando resultados analíticos.'));
     } finally {
       setGuardando(false);
     }
@@ -240,7 +243,7 @@ export const ResultsCapturePage: React.FC = () => {
 
   if (cargando) {
     return (
-      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ padding: 0, maxWidth: '1200px', margin: '0 auto' }}>
         <SkeletonLoader variant="card" height={220} />
       </div>
     );
@@ -248,7 +251,7 @@ export const ResultsCapturePage: React.FC = () => {
 
   if (errorGlobal && !orden) {
     return (
-      <div style={{ padding: '24px', maxWidth: '800px', margin: '40px auto' }}>
+      <div style={{ padding: 0, maxWidth: '800px', margin: '40px auto' }}>
         <Alert variant="danger" title="Error al cargar la orden">
           {errorGlobal}
         </Alert>
@@ -265,7 +268,7 @@ export const ResultsCapturePage: React.FC = () => {
   if (!orden) return null;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: 0, maxWidth: '1200px', margin: '0 auto' }}>
       {/* Breadcrumb de navegación */}
       <nav aria-label="Ruta de navegación" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
         <Link to="/laboratorio/bandeja" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
@@ -276,7 +279,7 @@ export const ResultsCapturePage: React.FC = () => {
           Orden {orden.codigoOrden}
         </Link>
         <span>/</span>
-        <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Captura de Resultados (L06)</span>
+        <span style={{ color: 'var(--color-strong)', fontWeight: 600 }}>Captura de Resultados</span>
       </nav>
 
       {/* Encabezado Principal */}
@@ -295,10 +298,10 @@ export const ResultsCapturePage: React.FC = () => {
             <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--color-strong)' }}>
               Captura de Resultados Analíticos
             </h1>
-            <Badge variant="neutral">L06 — BORRADOR</Badge>
+            <Badge variant="neutral"> — BORRADOR</Badge>
           </div>
           <p style={{ margin: '6px 0 0', color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-            Orden <strong style={{ color: 'var(--color-strong)' }}>{orden.codigoOrden}</strong> · Paciente:{' '}
+            Orden <strong style={{ color: 'var(--color-strong)' }}><span className="table-identifier">{orden.codigoOrden}</span></strong> · Paciente:{' '}
             <strong style={{ color: 'var(--color-strong)' }}>{orden.pacienteNombre}</strong> ({orden.pacienteEdad} años, {orden.pacienteSexo}) · Solicitante: {orden.medicoSolicitante}
           </p>
         </div>
@@ -317,7 +320,7 @@ export const ResultsCapturePage: React.FC = () => {
               onClick={() => navigate('/laboratorio/resultados/validacion')}
             >
               <FileCheck2 size={16} style={{ marginRight: '6px' }} />
-              Bandeja de Validación (L07)
+              Bandeja de Validación
             </Button>
           )}
         </div>
@@ -347,7 +350,7 @@ export const ResultsCapturePage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <p style={{ margin: 0 }}>
                 Esta orden aún no cuenta con una muestra en estado <strong>ACEPTADA</strong> o <strong>PROCESADA</strong>.
-                Según las buenas prácticas clínicas y la regla <code>CA12</code>, no se permite ingresar resultados analíticos sobre muestras en estado pendiente de toma, en tránsito o rechazadas.
+                No se pueden capturar resultados si la muestra está pendiente de toma, en tránsito o fue rechazada.
               </p>
               <div>
                 <Button
@@ -356,7 +359,7 @@ export const ResultsCapturePage: React.FC = () => {
                   onClick={() => navigate('/laboratorio/muestras')}
                 >
                   <TestTube2 size={14} style={{ marginRight: '6px' }} />
-                  Ir al Registro y Recepción de Muestras (L04)
+                  Ir al Registro y Recepción de Muestras
                 </Button>
               </div>
             </div>
@@ -385,18 +388,20 @@ export const ResultsCapturePage: React.FC = () => {
               <span>{muestraPrincipal?.tipoMuestra} ({muestraPrincipal?.tuboContenedor})</span>
             </div>
           </div>
-          <Badge variant="success">Muestra Aceptada</Badge>
+          <Badge variant="success">Muestra apta</Badge>
         </div>
       )}
 
       {/* Selector de Pruebas de la Orden */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--color-border)', marginBottom: '20px', overflowX: 'auto' }}>
+      <div role="tablist" aria-label="Pruebas de la orden" style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--color-border)', marginBottom: '20px', overflowX: 'auto' }}>
         {orden.items.map((item) => {
           const tieneResultado = resultadosExistentes.some((r) => r.itemOrdenId === item.id);
           const esActivo = item.id === itemSeleccionadoId;
           return (
             <button
               key={item.id}
+              role="tab"
+              aria-selected={esActivo}
               type="button"
               onClick={() => setItemSeleccionadoId(item.id)}
               style={{
@@ -445,7 +450,7 @@ export const ResultsCapturePage: React.FC = () => {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                 gap: '16px',
                 padding: '16px',
-                backgroundColor: 'var(--color-surface-hover, #F8FAFC)',
+                backgroundColor: 'var(--color-control-hover, #F8FAFC)',
                 borderRadius: '8px',
                 border: '1px solid var(--color-border)',
                 marginBottom: '20px'
@@ -537,7 +542,7 @@ export const ResultsCapturePage: React.FC = () => {
 
             {/* Tabla de Captura de Parámetros Dinámicos */}
             <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--color-border)', backgroundColor: 'var(--color-background-alt)' }}>
                     <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', width: '28%' }}>Parámetro Analítico</th>
@@ -592,7 +597,7 @@ export const ResultsCapturePage: React.FC = () => {
                               fontSize: '14px',
                               fontWeight: 600,
                               fontFamily: 'monospace',
-                              backgroundColor: 'var(--color-surface, #ffffff)',
+                              backgroundColor: 'var(--color-background, #ffffff)',
                               color: esCritico ? '#B91C1C' : 'var(--color-strong)'
                             }}
                           />
@@ -729,19 +734,11 @@ export const ResultsCapturePage: React.FC = () => {
               <ShieldAlert size={20} style={{ color: 'var(--color-primary)', flexShrink: 0, marginTop: '2px' }} />
               <div style={{ flex: 1 }}>
                 <strong style={{ color: 'var(--color-strong)' }}>
-                  Separación de Responsabilidades y Seguridad Analítica (CA13, CA18)
+                  Resultados pendientes de validación
                 </strong>
                 <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                   Esta acción guarda los resultados exclusivamente en estado <strong>BORRADOR</strong>.
-                  {!puedeValidar ? (
-                    <span>
-                      {' '}Usted cuenta con permiso de análisis (<code>resultados.analizar</code>). La certificación oficial e informe requieren validación independiente por un profesional facultativo autorizado (<code>resultados.validar</code>).
-                    </span>
-                  ) : (
-                    <span>
-                      {' '}Usted posee también el permiso de validación (<code>resultados.validar</code>). Podrá proceder a certificar estos resultados desde la bandeja de validación una vez guardado el borrador.
-                    </span>
-                  )}
+                  {' '}Después de guardar, continúa en la bandeja de validación para revisar y emitir el informe.
                 </p>
               </div>
             </div>
@@ -754,10 +751,10 @@ export const ResultsCapturePage: React.FC = () => {
                     type="button"
                     variant="secondary"
                     onClick={() => setModalCorrectionOpen(true)}
-                    aria-label="Abrir gestión de versiones y repeticiones L08"
+                    aria-label="Abrir gestión de versiones y repeticiones "
                   >
                     <History size={16} style={{ marginRight: '6px' }} />
-                    Versiones y Repetición (L08)
+                    Versiones y Repetición
                   </Button>
                 )}
               </div>
@@ -792,7 +789,7 @@ export const ResultsCapturePage: React.FC = () => {
                 todasLasVersiones={resultadosExistentes.filter((r) => r.itemOrdenId === itemActivo.id)}
                 onExito={async (nuevo) => {
                   setMensajeExito(
-                    `Operación L08 completada: nueva serie/versión registrada (${nuevo.serieResultadoId} v${nuevo.version}).`
+                    `Operación  completada: nueva serie/versión registrada (${nuevo.serieResultadoId} v${nuevo.version}).`
                   );
                   const resAct = await laboratoryRepository.obtenerResultadosPorOrden(institucionId, orden.id);
                   setResultadosExistentes(resAct);

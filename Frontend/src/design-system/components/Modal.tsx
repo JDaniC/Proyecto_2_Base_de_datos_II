@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
 export interface ModalProps {
@@ -21,22 +21,77 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = '520px',
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const lastAlertRef = useRef('');
+  const titleId = `modal-title-${useId()}`;
+  const descriptionId = `modal-description-${useId()}`;
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    const alert = modalRef.current?.querySelector<HTMLElement>('.modal-body [role="alert"]');
+    const message = isOpen ? alert?.textContent || '' : '';
+    if (message && message !== lastAlertRef.current) {
+      alert?.scrollIntoView?.({ block: 'nearest' });
+    }
+    lastAlertRef.current = message;
+  }, [children, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const dialog = modalRef.current;
+    const previousActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const getFocusableElements = () =>
+      Array.from(
+        dialog?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) || []
+      ).filter((element) => element.getAttribute('aria-hidden') !== 'true' && element.getClientRects().length > 0);
+
+    const focusable = getFocusableElements();
+    (focusable[0] || dialog)?.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+
+      if (e.key !== 'Tab' || !dialog) return;
+
+      const elements = getFocusableElements();
+      if (elements.length === 0) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey && (active === first || !dialog.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
+        e.preventDefault();
+        first.focus();
       }
     };
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
+
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
+      if (previousActive?.isConnected) previousActive.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -67,8 +122,9 @@ export const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
-        aria-describedby={description ? 'modal-description' : undefined}
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
         style={{
           backgroundColor: 'var(--color-background)',
           borderRadius: 'var(--radius-modal)', // 20px exacto
@@ -84,6 +140,7 @@ export const Modal: React.FC<ModalProps> = ({
         }}
       >
         <div
+          className="modal-header"
           style={{
             padding: '20px 24px',
             borderBottom: '1px solid var(--color-divider)',
@@ -91,15 +148,16 @@ export const Modal: React.FC<ModalProps> = ({
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: '16px',
+            flexShrink: 0,
           }}
         >
           <div>
-            <h2 id="modal-title" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-strong)' }}>
+            <h2 id={titleId} style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-strong)' }}>
               {title}
             </h2>
             {description && (
               <p
-                id="modal-description"
+                id={descriptionId}
                 style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}
               >
                 {description}
@@ -118,18 +176,20 @@ export const Modal: React.FC<ModalProps> = ({
               padding: '6px',
               borderRadius: '8px',
               display: 'inline-flex',
+              flexShrink: 0,
             }}
           >
             <X size={20} />
           </button>
         </div>
 
-        <div style={{ padding: '24px', overflowY: 'auto', flex: 1, fontSize: '15px', color: 'var(--color-text)' }}>
+        <div className="modal-body" style={{ padding: '24px', overflowY: 'auto', minHeight: 0, flex: 1, fontSize: '15px', color: 'var(--color-text)' }}>
           {children}
         </div>
 
         {footer && (
           <div
+            className="modal-footer"
             style={{
               padding: '16px 24px',
               borderTop: '1px solid var(--color-divider)',
@@ -138,6 +198,7 @@ export const Modal: React.FC<ModalProps> = ({
               alignItems: 'center',
               justifyContent: 'flex-end',
               gap: '12px',
+              flexShrink: 0,
             }}
           >
             {footer}

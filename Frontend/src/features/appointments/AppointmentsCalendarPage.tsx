@@ -1,3 +1,4 @@
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -214,7 +215,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
               }}
             >
               {institucionId === 'CLINICA_ODONTOLOGICA'
-                ? 'Agenda odontológica / Gestión de secretaría'
+                ? 'Agenda odontológica'
                 : 'Agenda médica institucional'}
             </h1>
             <Badge variant="neutral">
@@ -233,8 +234,8 @@ export const AppointmentsCalendarPage: React.FC = () => {
             }}
           >
             {institucionId === 'CLINICA_ODONTOLOGICA'
-              ? 'Gestión y programación de citas para sillones odontológicos y especialistas en Clínica Odontológica Integral.'
-              : `Gestión y seguimiento de atenciones programadas en ${sesion?.institucionNombre}.`}
+              ? 'Consulta y gestiona citas odontológicas.'
+              : 'Consulta y gestiona las citas programadas.'}
           </p>
         </div>
 
@@ -252,107 +253,14 @@ export const AppointmentsCalendarPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Banner de Secretaría Odontológica (C01, RF-C08) */}
       {institucionId === 'CLINICA_ODONTOLOGICA' && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: 'var(--color-selection)',
-            border: '1px solid var(--color-primary)',
-            borderRadius: 'var(--radius-input)',
-            padding: '12px 16px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: 'var(--color-strong)',
-            flexWrap: 'wrap',
-            gap: '8px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <User size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-            <span>
-              <strong>Gestión de Secretaría (C01):</strong> Operador activo:{' '}
-              <strong>{sesion?.nombre || 'Ana Lucía Méndez'}</strong> ({sesion?.rolEtiqueta || 'Secretaría'}). Asignación de sillones y control de citas odontológicas.
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-            <span>Sillón 1: Operatoria</span>
-            <span>•</span>
-            <span>Sillón 2: Endodoncia</span>
-            <span>•</span>
-            <span>Sillón 3: Ortodoncia</span>
-          </div>
-        </div>
-      )}
-
-      {/* Tarjetas de Resumen C01 Odontología */}
-      {institucionId === 'CLINICA_ODONTOLOGICA' && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '12px',
-            marginBottom: '20px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-panel)',
-              padding: '12px 16px',
-              boxShadow: 'var(--shadow-panel)'
-            }}
-          >
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Citas del día</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              {citas.length}
-            </div>
-          </div>
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-panel)',
-              padding: '12px 16px',
-              boxShadow: 'var(--shadow-panel)'
-            }}
-          >
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Programadas</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-primary)' }}>
-              {citas.filter((c) => c.estado === 'PROGRAMADA').length}
-            </div>
-          </div>
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-panel)',
-              padding: '12px 16px',
-              boxShadow: 'var(--shadow-panel)'
-            }}
-          >
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Atendidas</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-success-text)' }}>
-              {citas.filter((c) => c.estado === 'ATENDIDA').length}
-            </div>
-          </div>
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-panel)',
-              padding: '12px 16px',
-              boxShadow: 'var(--shadow-panel)'
-            }}
-          >
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Canceladas</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-danger-text)' }}>
-              {citas.filter((c) => c.estado === 'CANCELADA').length}
-            </div>
-          </div>
+        <div style={{ marginBottom: '20px' }}>
+          <MetricStrip items={[
+            { id: 'total', label: 'Citas del día', value: citas.length },
+            { id: 'programadas', label: 'Programadas', value: citas.filter((c) => c.estado === 'PROGRAMADA').length },
+            { id: 'atendidas', label: 'Atendidas', value: citas.filter((c) => c.estado === 'ATENDIDA').length, tone: 'success' },
+            { id: 'canceladas', label: 'Canceladas', value: citas.filter((c) => c.estado === 'CANCELADA').length, tone: 'danger' },
+          ]} />
         </div>
       )}
 
@@ -364,7 +272,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
           borderRadius: 'var(--radius-panel)',
           padding: '16px 20px',
           marginBottom: '20px',
-          boxShadow: 'var(--shadow-panel)'
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
         {/* Cabecera de navegación de semana y conmutador diario/semanal */}
@@ -465,7 +373,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         </div>
 
         {/* Tira de días interactiva con fondo menta #DDEFE9 para el día activo */}
-        <div
+        <div className="agenda-days"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
@@ -551,7 +459,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
             style={{
               width: '100%',
               height: '38px',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: '8px',
               padding: '0 14px 0 38px',
@@ -563,7 +471,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         </div>
 
         {/* Selector de Profesional */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="inline-filter">
           <User size={16} style={{ color: 'var(--color-text-secondary)' }} />
           <select
             value={profesionalFiltro}
@@ -593,7 +501,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
           <select
             value={estadoFiltro}
             onChange={(e) => setEstadoFiltro(e.target.value as EstadoCita | 'TODOS')}
-            aria-label="Filtrar por estado contractual"
+            aria-label="Filtrar por estado de cita"
             style={{
               height: '38px',
               borderRadius: '8px',
@@ -641,7 +549,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
             border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-panel)',
             overflow: 'hidden',
-            boxShadow: 'var(--shadow-panel)'
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -664,7 +572,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                   flexWrap: 'wrap'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--color-control-hover)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -827,8 +735,8 @@ export const AppointmentsCalendarPage: React.FC = () => {
           onClose={() => setCitaSeleccionada(null)}
           title={
             institucionId === 'CLINICA_ODONTOLOGICA'
-              ? 'Detalle de Cita Odontológica (C02)'
-              : 'Detalle de Cita Médica (V08)'
+              ? 'Detalle de Cita Odontológica'
+              : 'Detalle de Cita Médica'
           }
           maxWidth="560px"
         >
@@ -878,7 +786,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                 style={{
                   fontSize: '14px',
                   color: 'var(--color-text)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   padding: '10px 14px',
                   borderRadius: '8px',
                   margin: '4px 0 0 0'
@@ -900,7 +808,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                   border: '1px solid var(--color-primary)'
                 }}
               >
-                <strong>Secretaría gestora de la cita:</strong> {citaSeleccionada.secretariaGestora}
+                <strong>Cita registrada por:</strong> {citaSeleccionada.secretariaGestora}
               </div>
             )}
 
@@ -920,7 +828,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                 }}
               >
                 <CheckCircle2 size={16} />
-                <span>Cita atendida. Registro de consulta clínica completado exitosamente (409 CITA_YA_ATENDIDA en reintentos).</span>
+                <span>La consulta de esta cita ya fue registrada.</span>
               </div>
             )}
 
@@ -930,13 +838,13 @@ export const AppointmentsCalendarPage: React.FC = () => {
                 style={{
                   fontSize: '12px',
                   color: 'var(--color-text-secondary)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   padding: '8px 12px',
                   borderRadius: '6px',
                   border: '1px solid var(--color-border)'
                 }}
               >
-                <strong>Aislamiento de rol (CA18):</strong> Como secretaría, puede reprogramar o cancelar esta cita. El inicio de la consulta y examen clínico corresponde exclusivamente al odontólogo tratante.
+                Puedes reprogramar o cancelar esta cita. El inicio de la consulta corresponde al odontólogo tratante.
               </div>
             )}
 
@@ -963,7 +871,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
             {citaSeleccionada.historialReprogramaciones && citaSeleccionada.historialReprogramaciones.length > 0 && (
               <div
                 style={{
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid var(--color-border)'
@@ -981,7 +889,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                   }}
                 >
                   <History size={15} />
-                  <span>Historial de reprogramaciones (Auditoría):</span>
+                  <span>Historial de cambios:</span>
                 </div>
                 {citaSeleccionada.historialReprogramaciones.map((rep, idx) => (
                   <div
@@ -1057,7 +965,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                       size="sm"
                       leftIcon={<Stethoscope size={15} />}
                       disabled
-                      title="Atención clínica odontológica reservada para el odontólogo tratante (CA18)"
+                      title="Atención clínica odontológica reservada para el odontólogo tratante"
                     >
                       {institucionId === 'CLINICA_ODONTOLOGICA'
                         ? 'Iniciar consulta odontológica'
@@ -1145,7 +1053,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
           setCitaParaReprogramar(null);
           setCitaSeleccionada(citaActualizada);
           cargarCitas();
-          mostrarToast('Cita médica reprogramada exitosamente. Se ha registrado en la bitácora de auditoría.');
+          mostrarToast('Cita reprogramada correctamente.');
         }}
       />
 

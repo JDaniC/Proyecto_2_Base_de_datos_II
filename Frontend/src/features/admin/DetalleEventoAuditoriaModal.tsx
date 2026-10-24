@@ -1,6 +1,9 @@
+import { Modal } from '../../design-system/components/Modal';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React from 'react';
-import { X, ShieldCheck, FileText, ArrowRight } from 'lucide-react';
+import { FileText, ArrowRight } from 'lucide-react';
 import { EventoAuditoria } from '../../services/types';
+import { AUDIT_ACTION_LABELS, AUDIT_RESOURCE_LABELS, AUDIT_SEVERITY_LABELS } from './auditLabels';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 
@@ -18,95 +21,18 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
   if (!isOpen || !evento) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-auditoria-titulo"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(3px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '16px'
-      }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Detalle de actividad"
+      description={`${evento.id} · ${evento.correlacionId}`}
+      maxWidth="680px"
+      footer={<Button variant="secondary" onClick={onClose}>Cerrar</Button>}
     >
-      <div
-        style={{
-          backgroundColor: 'var(--color-surface)',
-          borderRadius: 'var(--radius-panel)',
-          border: '1px solid var(--color-border)',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        {/* Cabecera */}
-        <div
-          style={{
-            padding: '18px 24px',
-            borderBottom: '1px solid var(--color-border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: 'var(--color-background-alt)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-selection)',
-                color: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <ShieldCheck size={18} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 id="modal-auditoria-titulo" style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                  Detalle de Evento de Auditoría
-                </h2>
-                <Badge variant={evento.severidad === 'CRITICO' ? 'danger' : evento.severidad === 'ADVERTENCIA' ? 'warning' : 'info'}>
-                  {evento.severidad}
-                </Badge>
-              </div>
-              <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-secondary)' }}>
-                {evento.id} • Correlación: {evento.correlacionId}
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar modal de auditoría"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: 'var(--color-text-secondary)',
-              padding: '4px'
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Contenido */}
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <Badge variant={evento.severidad === 'CRITICO' ? 'danger' : evento.severidad === 'ADVERTENCIA' ? 'warning' : 'info'} style={{ marginBottom: '16px' }}>
+        {AUDIT_SEVERITY_LABELS[evento.severidad] || 'Información'}
+      </Badge>
+      <div style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Metadata Principal */}
           <div
             style={{
@@ -132,7 +58,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
               <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block', fontWeight: 600 }}>
                 ACCIÓN REGISTRADA
               </span>
-              <strong style={{ color: 'var(--color-primary)' }}>{evento.accion}</strong>
+              <strong style={{ color: 'var(--color-primary)' }}>{AUDIT_ACTION_LABELS[evento.accion] || 'Actividad'}</strong>
             </div>
 
             <div>
@@ -141,7 +67,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
               </span>
               <span style={{ fontWeight: 600, color: 'var(--color-strong)' }}>{evento.actor.nombre}</span>
               <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                {evento.actor.rol} ({evento.actor.email})
+                {getDisplayLabel(evento.actor.rol)} ({evento.actor.email})
               </div>
             </div>
 
@@ -150,7 +76,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
                 ORIGEN DE CONEXIÓN
               </span>
               <span style={{ fontFamily: 'monospace', color: 'var(--color-strong)' }}>
-                {evento.actor.ipOrigen || '192.168.1.1 (Red interna)'}
+                {evento.actor.ipOrigen || 'No registrada'}
               </span>
             </div>
           </div>
@@ -170,7 +96,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
               <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
                 Recurso Modificado / Accedido
               </span>
-              <Badge variant="neutral">{evento.tipoRecurso}</Badge>
+              <Badge variant="neutral">{AUDIT_RESOURCE_LABELS[evento.tipoRecurso] || 'Registro'}</Badge>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -194,7 +120,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
               </span>
               <div
                 style={{
-                  backgroundColor: 'var(--color-surface)',
+                  backgroundColor: 'var(--color-background)',
                   border: '1px solid var(--color-border)',
                   borderLeft: '4px solid var(--color-primary)',
                   borderRadius: 'var(--radius-input)',
@@ -228,7 +154,7 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
                     }}
                   >
                     <div style={{ fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}>
-                      Campo: <code style={{ color: 'var(--color-primary)' }}>{cambio.campo}</code>
+                      {cambio.campo.replaceAll('.', ' · ').replace(/([a-z])([A-Z])/g, '$1 $2')}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span
@@ -274,26 +200,9 @@ export const DetalleEventoAuditoriaModal: React.FC<DetalleEventoAuditoriaModalPr
               lineHeight: 1.4
             }}
           >
-            Registro inmutable generado bajo norma de trazabilidad clínica institucional. Ninguna clave, secreto, token
-            ni contraseña se almacena ni expone en la interfaz de auditoría.
+            Detalle de la actividad registrada en la institución.
           </div>
         </div>
-
-        {/* Footer */}
-        <div
-          style={{
-            padding: '14px 24px',
-            borderTop: '1px solid var(--color-divider)',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            backgroundColor: 'var(--color-background-alt)'
-          }}
-        >
-          <Button variant="secondary" onClick={onClose}>
-            Cerrar detalle
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };

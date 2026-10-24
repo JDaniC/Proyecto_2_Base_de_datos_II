@@ -1,6 +1,7 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from './AuthSessionContext';
+import { isRouteInInstitution } from './productScope';
 import { PermisoId } from '../services/types';
 import { AccessRestrictedPage } from '../features/auth/AccessRestrictedPage';
 import { SkeletonLoader } from '../design-system/components/SkeletonLoader';
@@ -12,6 +13,7 @@ export interface AuthGuardProps {
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children, requierePermiso }) => {
   const { sesion, cargando } = useAuthSession();
+  const { pathname } = useLocation();
 
   if (cargando) {
     return (
@@ -26,6 +28,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, requierePermiso 
   if (!sesion) {
     return <Navigate to="/acceso" replace />;
   }
+
+  if (!isRouteInInstitution(pathname, sesion.institucionId)) return <AccessRestrictedPage />;
 
   if (requierePermiso) {
     const permitidos = Array.isArray(requierePermiso) ? requierePermiso : [requierePermiso];

@@ -108,7 +108,9 @@ export class MockAuthRepository implements AuthRepository {
     if (cuenta.estado !== 'ACTIVO') {
       const error: AppError = {
         codigo: '403 CUENTA_NO_HABILITADA',
-        mensaje: `Acceso restringido: La cuenta de ${cuenta.nombre} se encuentra en estado "${cuenta.estado}". Comuníquese con el departamento administrativo.`,
+        mensaje: cuenta.estado === 'PENDIENTE'
+          ? 'Tu cuenta está pendiente de habilitación. Contacta con administración para solicitar acceso.'
+          : 'Esta cuenta está inactiva. Contacta con administración para solicitar acceso.',
         status: 403,
         correlacion,
       };

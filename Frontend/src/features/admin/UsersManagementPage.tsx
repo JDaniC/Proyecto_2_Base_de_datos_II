@@ -1,5 +1,7 @@
+import { getDisplayLabel } from '../../services/displayLabels';
+import { Alert } from '../../design-system/components/Alert';
+import { getErrorMessage } from '../../services/errors';
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import {
   UserPlus,
   Search,
@@ -7,9 +9,6 @@ import {
   CheckCircle2,
   Ban,
   RotateCcw,
-  Users,
-  ShieldCheck,
-  FlaskConical
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -18,15 +17,11 @@ import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { CrearUsuarioModal } from './CrearUsuarioModal';
-import { RolesPermissionsMatrixView } from './RolesPermissionsMatrixView';
-import { LaboratorioPersonalView } from './LaboratorioPersonalView';
 import { UsuarioInstitucional, EstadoCuenta } from '../../services/types';
 
 export const UsersManagementPage: React.FC = () => {
   const { sesion } = useAuthSession();
   const { userRepository } = useServices();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'usuarios';
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
@@ -37,6 +32,7 @@ export const UsersManagementPage: React.FC = () => {
   const [filtroRol, setFiltroRol] = useState<string>('TODOS');
   const [showCrearModal, setShowCrearModal] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   const cargarUsuarios = async () => {
     setLoading(true);
@@ -55,6 +51,7 @@ export const UsersManagementPage: React.FC = () => {
   }, [institucionId, userRepository]);
 
   const handleCambiarEstado = async (usuario: UsuarioInstitucional, nuevoEstado: EstadoCuenta) => {
+    setErrorAccion(null);
     try {
       const actualizado = await userRepository.cambiarEstado(institucionId, usuario.id, nuevoEstado);
       setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
@@ -63,21 +60,20 @@ export const UsersManagementPage: React.FC = () => {
       setMensajeExito(`Cuenta de ${usuario.nombreCompleto} ${accionTxt} exitosamente.`);
       setTimeout(() => setMensajeExito(null), 4000);
     } catch (err: any) {
-      alert(err.message || 'Error al cambiar estado de la cuenta');
+      setErrorAccion(getErrorMessage(err, 'Error al cambiar estado de la cuenta'));
     }
   };
 
   const handleUsuarioCreado = (nuevo: UsuarioInstitucional) => {
     setUsuarios((prev) => [nuevo, ...prev]);
-    setMensajeExito(`Usuario ${nuevo.nombreCompleto} aprovisionado exitosamente con rol ${nuevo.rolEtiqueta}.`);
+    setMensajeExito(`Usuario ${nuevo.nombreCompleto} creado con el rol ${nuevo.rolEtiqueta}.`);
     setTimeout(() => setMensajeExito(null), 5000);
   };
 
   const usuariosFiltrados = usuarios.filter((u) => {
     const coincideTexto =
       u.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.email.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.authUid.toLowerCase().includes(busqueda.toLowerCase());
+      u.email.toLowerCase().includes(busqueda.toLowerCase());
 
     if (!coincideTexto) return false;
 
@@ -98,130 +94,18 @@ export const UsersManagementPage: React.FC = () => {
         <span>Administración</span>
         <span style={{ margin: '0 8px' }}>/</span>
         <strong style={{ color: 'var(--color-strong)' }}>
-          {activeTab === 'roles'
-            ? 'Roles y Permisos (V16)'
-            : activeTab === 'personal-laboratorio'
-            ? 'Personal de Laboratorio (L14)'
-            : 'Gestión de Usuarios (V15)'}
+          Usuarios de laboratorio
         </strong>
       </nav>
 
-      {/* Tabs de Navegación Institucional */}
-      <div
-        role="tablist"
-        aria-label="Submódulos de Administración de Cuentas"
-        style={{
-          display: 'flex',
-          gap: '8px',
-          borderBottom: '1px solid var(--color-border)',
-          paddingBottom: '0'
-        }}
-      >
-        <button
-          role="tab"
-          aria-selected={activeTab === 'usuarios'}
-          type="button"
-          onClick={() => setSearchParams({ tab: 'usuarios' })}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            fontSize: '14px',
-            fontWeight: activeTab === 'usuarios' ? 700 : 500,
-            color: activeTab === 'usuarios' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderBottom: activeTab === 'usuarios' ? '3px solid var(--color-primary)' : '3px solid transparent',
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)'
-          }}
-        >
-          <Users size={16} />
-          <span>Usuarios y Cuentas (V15)</span>
-        </button>
-
-        <button
-          role="tab"
-          aria-selected={activeTab === 'roles'}
-          type="button"
-          onClick={() => setSearchParams({ tab: 'roles' })}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            fontSize: '14px',
-            fontWeight: activeTab === 'roles' ? 700 : 500,
-            color: activeTab === 'roles' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderBottom: activeTab === 'roles' ? '3px solid var(--color-primary)' : '3px solid transparent',
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)'
-          }}
-        >
-          <ShieldCheck size={16} />
-          <span>Matriz de Roles y Permisos (V16)</span>
-        </button>
-
-        <button
-          role="tab"
-          aria-selected={activeTab === 'personal-laboratorio'}
-          type="button"
-          onClick={() => setSearchParams({ tab: 'personal-laboratorio' })}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            fontSize: '14px',
-            fontWeight: activeTab === 'personal-laboratorio' ? 700 : 500,
-            color: activeTab === 'personal-laboratorio' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            backgroundColor: 'transparent',
-            border: 'none',
-            borderBottom: activeTab === 'personal-laboratorio' ? '3px solid var(--color-primary)' : '3px solid transparent',
-            cursor: 'pointer',
-            transition: 'all var(--transition-fast)'
-          }}
-        >
-          <FlaskConical size={16} />
-          <span>Personal de Laboratorio (L14)</span>
-        </button>
-      </div>
-
-      {/* Renderizado Condicional por Pestaña */}
-      {activeTab === 'roles' ? (
-        <RolesPermissionsMatrixView />
-      ) : activeTab === 'personal-laboratorio' ? (
-        <LaboratorioPersonalView />
-      ) : (
-        <>
           {/* Alerta de notificación */}
-          {mensajeExito && (
-            <div
-              role="status"
-              style={{
-                backgroundColor: 'var(--color-success-bg)',
-                color: 'var(--color-success-text)',
-                border: '1px solid var(--color-success-border)',
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-input)',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <CheckCircle2 size={16} />
-              <span>{mensajeExito}</span>
-            </div>
-          )}
+          {errorAccion && <Alert variant="danger" title="No se pudo actualizar la cuenta." onClose={() => setErrorAccion(null)}>{errorAccion}</Alert>}
+      {mensajeExito && <Alert variant="success" onClose={() => setMensajeExito(null)}>{mensajeExito}</Alert>}
 
           {/* Cabecera Principal */}
           <div
             style={{
-              backgroundColor: 'var(--color-surface)',
+              backgroundColor: 'var(--color-background)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-panel)',
               padding: '24px',
@@ -235,13 +119,11 @@ export const UsersManagementPage: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                  Administración de Usuarios y Cuentas (V15)
+                  Administración de Usuarios y Cuentas
                 </h1>
-                <Badge variant="primary">{sesion?.institucionNombre || 'Institución Activa'}</Badge>
               </div>
               <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '720px', lineHeight: 1.5 }}>
-                Gestión de provisión de cuentas, asignación de roles institucionales y control de ciclo de vida
-                (<code>PENDIENTE → ACTIVO → INACTIVO</code>). El alcance está estrictamente delimitado a esta institución.
+                Administra las cuentas, los roles y los accesos de esta institución.
               </p>
             </div>
 
@@ -250,7 +132,7 @@ export const UsersManagementPage: React.FC = () => {
               onClick={() => setShowCrearModal(true)}
               leftIcon={<UserPlus size={16} />}
             >
-              Aprovisionar Usuario Institucional
+              Crear usuario
             </Button>
           </div>
 
@@ -279,13 +161,13 @@ export const UsersManagementPage: React.FC = () => {
             />
             <input
               type="text"
-              placeholder="Buscar por nombre, correo electrónico o UID..."
+              placeholder="Buscar por nombre o correo electrónico..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               style={{
                 width: '100%',
                 padding: '9px 12px 9px 36px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
@@ -294,7 +176,7 @@ export const UsersManagementPage: React.FC = () => {
           </div>
 
           {/* Filtro por Estado */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
             <Filter size={15} color="var(--color-text-secondary)" />
             {(['TODOS', 'ACTIVO', 'PENDIENTE', 'INACTIVO'] as const).map((est) => (
               <button
@@ -313,7 +195,7 @@ export const UsersManagementPage: React.FC = () => {
                   cursor: 'pointer'
                 }}
               >
-                {est === 'TODOS' ? 'Todos los estados' : est}
+                {est === 'TODOS' ? 'Todos los estados' : getDisplayLabel(est)}
               </button>
             ))}
           </div>
@@ -325,7 +207,7 @@ export const UsersManagementPage: React.FC = () => {
               onChange={(e) => setFiltroRol(e.target.value)}
               style={{
                 padding: '7px 12px',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 fontSize: '13px',
@@ -335,7 +217,7 @@ export const UsersManagementPage: React.FC = () => {
               <option value="TODOS">Todos los roles</option>
               {rolesUnicos.map((rol) => (
                 <option key={rol} value={rol}>
-                  {rol}
+                  {usuarios.find((u) => u.rolId === rol)?.rolEtiqueta || getDisplayLabel(rol)}
                 </option>
               ))}
             </select>
@@ -346,7 +228,7 @@ export const UsersManagementPage: React.FC = () => {
       {/* Tabla de Usuarios */}
       <Panel
         title={`Usuarios Registrados (${usuariosFiltrados.length})`}
-        subtitle="Listado con estado de cuenta, rol institucional y acciones de control"
+        subtitle="Cuentas, roles y accesos de esta institución"
       >
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px 0' }}>
@@ -356,21 +238,20 @@ export const UsersManagementPage: React.FC = () => {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left', backgroundColor: 'var(--color-panel)' }}>
                   <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Usuario Institucional</th>
                   <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Rol Asignado</th>
                   <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Estado Cuenta</th>
                   <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Vínculo Profesional</th>
-                  <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>UID Autenticación</th>
                   <th style={{ padding: '10px 12px', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                       No se encontraron usuarios institucionales con los filtros aplicados.
                     </td>
                   </tr>
@@ -440,13 +321,6 @@ export const UsersManagementPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* UID */}
-                      <td style={{ padding: '12px' }}>
-                        <code style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                          {u.authUid}
-                        </code>
-                      </td>
-
                       {/* Acciones */}
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '6px' }}>
@@ -499,8 +373,7 @@ export const UsersManagementPage: React.FC = () => {
           onUsuarioCreado={handleUsuarioCreado}
         />
       )}
-        </>
-      )}
+
     </div>
   );
 };

@@ -1,10 +1,12 @@
+import { Modal } from '../../design-system/components/Modal';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
-import { X, PlusCircle, Trash2, FlaskConical, AlertCircle, History } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle } from 'lucide-react';
 import { useServices } from '../../app/ServiceContext';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { Button } from '../../design-system/components/Button';
 import { Input } from '../../design-system/components/Input';
-import { PruebaLaboratorioCatalogo } from '../../services/types';
+import { PruebaLaboratorioCatalogo, ReferenciaLaboratorio } from '../../services/types';
 
 interface ParametroForm {
   nombre: string;
@@ -38,6 +40,11 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
   const { catalogRepository } = useServices();
   const { sesion } = useAuthSession();
   const institucionId = sesion?.institucionId || 'LABORATORIO_CLINICO';
+
+  const [referencias, setReferencias] = useState<ReferenciaLaboratorio[]>([]);
+  useEffect(() => {
+    if (isOpen) Promise.all(['tipos-muestra', 'metodos'].map(c => catalogRepository.obtenerReferenciasLaboratorio(institucionId, c as 'tipos-muestra' | 'metodos'))).then(listas => setReferencias(listas.flat().filter(r => r.estado === 'ACTIVO'))).catch(() => setReferencias([]));
+  }, [isOpen, institucionId, catalogRepository]);
 
   const esVersionado = Boolean(pruebaExistenteParaVersionar);
 
@@ -129,7 +136,7 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
     }
 
     if (esVersionado && !motivoVersion.trim()) {
-      setError('Debe especificar el motivo clínico/técnico de la nueva versión (Regla CA16).');
+      setError('Debe especificar el motivo clínico/técnico de la nueva versión.');
       return;
     }
 
@@ -181,108 +188,24 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
       }
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al guardar la prueba en el catálogo.');
+      setError(getErrorMessage(err, 'Error al guardar la prueba en el catálogo.'));
     } finally {
       setGuardando(false);
     }
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-prueba-lab-titulo"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(17, 24, 39, 0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1050,
-        padding: '16px'
-      }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={esVersionado ? `Nueva versión de prueba: v${pruebaExistenteParaVersionar!.version + 1}.0` : 'Registrar prueba de laboratorio'}
+      description={esVersionado ? 'Las órdenes existentes conservarán los datos de su versión.' : 'Define la muestra, los parámetros y los valores de referencia.'}
+      maxWidth="680px"
     >
-      <div
-        style={{
-          backgroundColor: 'var(--color-background)',
-          borderRadius: 'var(--radius-card)',
-          boxShadow: 'var(--shadow-modal)',
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid var(--color-border)',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Cabecera */}
-        <div
-          style={{
-            padding: '18px 24px',
-            borderBottom: '1px solid var(--color-divider)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: esVersionado ? 'var(--color-selection)' : 'transparent'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-primary)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {esVersionado ? <History size={20} /> : <FlaskConical size={20} />}
-            </div>
-            <div>
-              <h3
-                id="modal-prueba-lab-titulo"
-                style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--color-strong)' }}
-              >
-                {esVersionado
-                  ? `Nueva Versión de Determinación: v${pruebaExistenteParaVersionar!.version + 1}.0`
-                  : 'Registrar Nueva Determinación de Laboratorio (L10)'}
-              </h3>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                {esVersionado
-                  ? 'Regla CA16: Preserva historial de órdenes anteriores e incrementa versión inmutable'
-                  : 'Catálogo de pruebas analíticas, tipos de muestra y parámetros de referencia'}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar modal"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--color-text-secondary)',
-              padding: '6px'
-            }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Contenido scrolleable */}
-        <form
+      <form
           onSubmit={handleSubmit}
           style={{
-            padding: '20px 24px',
+            padding: 0,
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
@@ -295,9 +218,9 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
               style={{
                 padding: '10px 14px',
                 borderRadius: 'var(--radius-input)',
-                backgroundColor: 'var(--color-error-bg)',
-                border: '1px solid var(--color-error-border)',
-                color: 'var(--color-error-text)',
+                backgroundColor: 'var(--color-danger-bg)',
+                border: '1px solid var(--color-danger-border)',
+                color: 'var(--color-danger-text)',
                 fontSize: '13px',
                 display: 'flex',
                 alignItems: 'center',
@@ -315,15 +238,12 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
                 padding: '12px 14px',
                 borderRadius: 'var(--radius-input)',
                 backgroundColor: 'var(--color-selection)',
-                border: '1px solid var(--color-primary-light, #A0C4C7)',
+                border: '1px solid var(--color-selection, #A0C4C7)',
                 fontSize: '12px',
                 color: 'var(--color-strong)'
               }}
             >
-              <strong>Atención de Trazabilidad (CA16):</strong> Esta acción creará la versión{' '}
-              <code>v{pruebaExistenteParaVersionar!.version + 1}.0</code>. Las órdenes de análisis emitidas
-              previamente continuarán referenciando la versión inmutable{' '}
-              <code>v{pruebaExistenteParaVersionar!.version}.0</code>.
+              Las órdenes anteriores conservarán la versión v{pruebaExistenteParaVersionar!.version}. La nueva versión se usará en órdenes posteriores.
             </div>
           )}
 
@@ -424,6 +344,7 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
               </label>
               <Input
                 id="input-tipo-muestra"
+                list="tipos-muestra-lab"
                 value={tipoMuestra}
                 onChange={(e) => setTipoMuestra(e.target.value)}
                 placeholder="ej. Suero en tubo rojo / plasma EDTA"
@@ -440,6 +361,7 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
               </label>
               <Input
                 id="input-metodo-analitico"
+                list="metodos-lab"
                 value={metodoAnalitico}
                 onChange={(e) => setMetodoAnalitico(e.target.value)}
                 placeholder="ej. Quimioluminiscencia (CLIA)"
@@ -449,6 +371,8 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
             </div>
           </div>
 
+          <datalist id="tipos-muestra-lab">{referencias.filter(r => r.categoria === 'tipos-muestra').map(r => <option key={r.id} value={r.nombre} />)}</datalist>
+          <datalist id="metodos-lab">{referencias.filter(r => r.categoria === 'metodos').map(r => <option key={r.id} value={r.nombre} />)}</datalist>
           {/* Si es versionado, motivo del cambio */}
           {esVersionado && (
             <div>
@@ -456,7 +380,7 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
                 htmlFor="input-motivo-version"
                 style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}
               >
-                Motivo Clínico de la Nueva Versión (Regla CA16) *
+                Motivo Clínico de la Nueva Versión *
               </label>
               <Input
                 id="input-motivo-version"
@@ -473,7 +397,7 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
           <div
             style={{
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-card)',
+              borderRadius: 'var(--radius-panel)',
               padding: '14px',
               backgroundColor: 'var(--color-background-alt)'
             }}
@@ -605,11 +529,10 @@ export const RegistrarPruebaLabModal: React.FC<RegistrarPruebaLabModalProps> = (
               Cancelar
             </Button>
             <Button type="submit" variant="primary" loading={guardando}>
-              {esVersionado ? 'Guardar Nueva Versión (CA16)' : 'Registrar Determinación'}
+              {esVersionado ? 'Guardar Nueva Versión' : 'Registrar prueba'}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

@@ -29,6 +29,7 @@ export const Panel: React.FC<PanelProps> = ({
   };
 
   const hasHeader = Boolean(title || subtitle || action);
+  const headerPadding = padding === 'none' ? paddingMap.md : paddingMap[padding];
 
   return (
     <div
@@ -44,8 +45,9 @@ export const Panel: React.FC<PanelProps> = ({
     >
       {hasHeader && (
         <div
+          className="panel-header"
           style={{
-            padding: `${paddingMap[padding]} ${paddingMap[padding]} 12px`,
+            padding: `${headerPadding} ${headerPadding} 16px`,
             borderBottom: '1px solid var(--color-divider)',
             display: 'flex',
             alignItems: 'center',
@@ -53,22 +55,22 @@ export const Panel: React.FC<PanelProps> = ({
             gap: '16px',
           }}
         >
-          <div>
+          <div style={{ minWidth: 0, flex: 1 }}>
             {title && (
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', lineHeight: 1.35, fontWeight: 700, color: 'var(--color-strong)', overflowWrap: 'anywhere' }}>
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+              <p style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                 {subtitle}
               </p>
             )}
           </div>
-          {action && <div>{action}</div>}
+          {action && <div className="panel-header-action" style={{ flexShrink: 0 }}>{action}</div>}
         </div>
       )}
-      <div style={{ padding: paddingMap[padding] }}>{children}</div>
+      <div className="panel-body" style={{ minWidth: 0, padding: paddingMap[padding] }}>{children}</div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -77,7 +78,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
       onCitaReprogramada(citaActualizada);
     } catch (err: any) {
       setGuardando(false);
-      setErrorValidacion(err.message || 'Error al reprogramar la cita médica.');
+      setErrorValidacion(getErrorMessage(err, 'Error al reprogramar la cita médica.'));
     }
   };
 
@@ -85,7 +86,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Reprogramar Cita Médica (V09)"
+      title="Reprogramar Cita Médica"
       maxWidth="560px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -155,7 +156,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
               onChange={(e) => setNuevaFecha(e.target.value)}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 padding: '10px 14px',
@@ -184,7 +185,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
               onChange={(e) => setNuevaHora(e.target.value)}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 padding: '10px 14px',
@@ -224,7 +225,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
             placeholder="Indique la causa o solicitud médica/administrativa de la reprogramación..."
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',

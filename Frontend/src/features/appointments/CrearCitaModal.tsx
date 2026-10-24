@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { CalendarPlus, AlertCircle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -118,7 +119,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
       onClose();
     } catch (err: any) {
       setGuardando(false);
-      setErrorValidacion(err.message || 'Error al programar la cita médica.');
+      setErrorValidacion(getErrorMessage(err, 'Error al programar la cita médica.'));
     }
   };
 
@@ -128,8 +129,8 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
       onClose={onClose}
       title={
         institucionId === 'CLINICA_ODONTOLOGICA'
-          ? 'Programar Cita Odontológica (C01)'
-          : 'Programar Nueva Cita Médica (V09)'
+          ? 'Programar Cita Odontológica'
+          : 'Programar Nueva Cita Médica'
       }
       maxWidth="620px"
     >
@@ -145,7 +146,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
               color: 'var(--color-strong)'
             }}
           >
-            <strong>Secretaría gestora asignada:</strong> {sesion?.nombre || 'Ana Lucía Méndez (Secretaría Odontológica)'} — Vínculo administrativo registrado automáticamente (CA18).
+            <strong>Registrada por:</strong> {sesion?.nombre || 'Personal de atención'}
           </div>
         )}
 
@@ -189,7 +190,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             onChange={(e) => setPacienteId(e.target.value)}
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',
@@ -200,7 +201,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
           >
             {pacientes.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nombres} {p.apellidos} — Expediente: {p.codigoLegible} ({p.tipoIdentificacion}: {p.numeroIdentificacion})
+                {p.nombres} {p.apellidos} — Expediente: {p.codigoLegible}
               </option>
             ))}
           </select>
@@ -226,7 +227,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             onChange={(e) => setProfesionalId(e.target.value)}
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',
@@ -244,7 +245,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
         </div>
 
         {/* Fila Fecha, Hora e Intervalos */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'end', gap: '12px' }}>
           <div>
             <label
               htmlFor="cita-fecha-input"
@@ -265,7 +266,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
               onChange={(e) => setFecha(e.target.value)}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 padding: '10px 14px',
@@ -286,7 +287,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
                 marginBottom: '6px'
               }}
             >
-              Hora (24 h, intervalos 15 min) <span style={{ color: 'var(--color-danger-text)' }}>*</span>
+              Hora (24 h) <span style={{ color: 'var(--color-danger-text)' }}>*</span>
             </label>
             <select
               id="cita-hora-select"
@@ -294,7 +295,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
               onChange={(e) => setHoraInicio(e.target.value)}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 padding: '10px 14px',
@@ -330,7 +331,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
               onChange={(e) => setDuracionMinutos(Number(e.target.value))}
               style={{
                 width: '100%',
-                backgroundColor: 'var(--color-input-bg)',
+                backgroundColor: 'var(--color-control)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 'var(--radius-input)',
                 padding: '10px 14px',
@@ -340,9 +341,9 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
               }}
             >
               <option value={15}>15 minutos</option>
-              <option value={30}>30 minutos (Estándar)</option>
+              <option value={30}>30 minutos</option>
               <option value={45}>45 minutos</option>
-              <option value={60}>60 minutos (Extensa)</option>
+              <option value={60}>60 minutos</option>
             </select>
           </div>
         </div>
@@ -369,7 +370,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             placeholder="Ej. Consultorio 104 - Torre Médica A"
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',
@@ -401,7 +402,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             placeholder="Describa el motivo clínico de la consulta programada..."
             style={{
               width: '100%',
-              backgroundColor: 'var(--color-input-bg)',
+              backgroundColor: 'var(--color-control)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-input)',
               padding: '10px 14px',

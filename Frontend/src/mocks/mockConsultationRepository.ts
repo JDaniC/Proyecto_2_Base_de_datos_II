@@ -263,6 +263,7 @@ export class MockConsultationRepository implements ConsultationRepository {
         estado: 'EMITIDA',
         medicamentos: dto.receta.medicamentos.map((m) => ({
           nombre: m.nombre,
+          concentracion: m.concentracion,
           presentacion: m.presentacion,
           dosis: `${m.dosis} ${m.unidad}`.trim(),
           frecuencia: m.frecuencia,
@@ -433,7 +434,7 @@ export class MockConsultationRepository implements ConsultationRepository {
         c.institucionId === institucionId
     );
     if (index === -1) {
-      throw new Error(`Consulta ${consultaId} no encontrada.`);
+      throw new Error('No se encontró la consulta. Actualiza la vista e inténtalo de nuevo.');
     }
 
     if (!motivoCorreccion || motivoCorreccion.trim().length < 5) {
@@ -447,7 +448,8 @@ export class MockConsultationRepository implements ConsultationRepository {
       revision: nuevaRevision,
       fechaHora: new Date().toISOString(),
       autor,
-      motivo: motivoCorreccion.trim()
+      motivo: motivoCorreccion.trim(),
+      anterior: structuredClone({ motivo: actual.motivo, sintomas: actual.sintomas, observaciones: actual.observaciones, signosVitales: actual.signosVitales, diagnosticos: actual.diagnosticos, tratamientos: actual.tratamientos, receta: actual.receta })
     };
 
     const actualizada: DetalleConsultaCompleta = {
@@ -457,6 +459,9 @@ export class MockConsultationRepository implements ConsultationRepository {
       observaciones:
         cambios.observaciones !== undefined ? cambios.observaciones.trim() : actual.observaciones,
       signosVitales: cambios.signosVitales ? { ...actual.signosVitales, ...cambios.signosVitales } : actual.signosVitales,
+      diagnosticos: cambios.diagnosticos ? cambios.diagnosticos.map((d, i) => ({ ...d, id: actual.diagnosticos[i]?.id || `dx-${Date.now()}-${i}`, fechaRegistro: actual.diagnosticos[i]?.fechaRegistro || new Date().toISOString(), registradoPor: autor })) : actual.diagnosticos,
+      tratamientos: cambios.tratamientos || actual.tratamientos,
+      receta: cambios.receta ? { ...(actual.receta || { id: `rec-${Date.now()}`, codigoReceta: `REC-${Date.now()}`, fechaEmision: new Date().toISOString(), emitidaPor: autor, rolEmisor: actual.profesionalRol, estado: 'EMITIDA' as const }), medicamentos: cambios.receta.medicamentos.map(m => ({ ...m, dosis: `${m.dosis} ${m.unidad}`.trim() })) } : actual.receta,
       revision: nuevaRevision,
       historialRevisiones: [...(actual.historialRevisiones || []), registroRevision]
     };

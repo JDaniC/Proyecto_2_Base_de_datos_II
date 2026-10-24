@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -5,18 +6,17 @@ import {
   Search,
   User,
   TestTube2,
-  AlertTriangle,
   Plus
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import { Panel } from '../../design-system/components/Panel';
-import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { Input } from '../../design-system/components/Input';
 import { Alert } from '../../design-system/components/Alert';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import {
+  ReferenciaLaboratorio,
   Paciente,
   PruebaLaboratorioCatalogo,
   PrioridadLaboratorio
@@ -30,6 +30,8 @@ export const NewOrderPage: React.FC = () => {
 
   // Datos de catálogo
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [solicitantes, setSolicitantes] = useState<ReferenciaLaboratorio[]>([]);
+  const [precios, setPrecios] = useState<Record<string, string>>({});
   const [pruebasCatalogo, setPruebasCatalogo] = useState<PruebaLaboratorioCatalogo[]>([]);
   const [cargandoInicial, setCargandoInicial] = useState(true);
 
@@ -54,12 +56,14 @@ export const NewOrderPage: React.FC = () => {
     const cargar = async () => {
       setCargandoInicial(true);
       try {
-        const [resPacientes, resPruebas] = await Promise.all([
+        const [resPacientes, resPruebas, resSolicitantes] = await Promise.all([
           patientRepository.buscar(institucionId, { limite: 20 }),
-          catalogRepository.obtenerPruebasLaboratorio(institucionId)
+          catalogRepository.obtenerPruebasLaboratorio(institucionId),
+          catalogRepository.obtenerReferenciasLaboratorio(institucionId, 'solicitantes')
         ]);
         setPacientes(resPacientes.items);
-        setPruebasCatalogo(resPruebas);
+        setPruebasCatalogo(resPruebas.filter(p => p.estado === 'ACTIVO'));
+        setSolicitantes(resSolicitantes.filter(r => r.estado === 'ACTIVO'));
       } catch {
         // Fallback
       } finally {
@@ -111,8 +115,8 @@ export const NewOrderPage: React.FC = () => {
 
   // Cálculo de total aproximado
   const totalArancelEstimado = useMemo(() => {
-    return pruebasSeleccionadas.length * 150;
-  }, [pruebasSeleccionadas]);
+    return pruebasSeleccionadas.reduce((total, p) => total + Math.round(Number(precios[p.id] || 0) * 100), 0) / 100;
+  }, [pruebasSeleccionadas, precios]);
 
   const handleTogglePrueba = (prueba: PruebaLaboratorioCatalogo) => {
     const existe = pruebasSeleccionadas.find((p) => p.id === prueba.id);
@@ -147,23 +151,25 @@ export const NewOrderPage: React.FC = () => {
       return;
     }
 
+    if (pruebasSeleccionadas.some(p => precios[p.id] === undefined || !Number.isFinite(Number(precios[p.id])) || Number(precios[p.id]) < 0)) { setError('Registra el precio acordado para cada prueba.'); return; }
     setGuardando(true);
     try {
       await laboratoryRepository.crearOrden(institucionId, {
         pacienteId: pacienteSeleccionado.id,
         pacienteNombre: `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`,
         pacienteDpi: pacienteSeleccionado.numeroIdentificacion,
-        pacienteEdad: 30, // Estimado clínico
+        pacienteEdad: pacienteSeleccionado.edadAnios,
         pacienteSexo: pacienteSeleccionado.sexo,
         medicoSolicitante: colegiadoMedico ? `${medicoSolicitante} (${colegiadoMedico})` : medicoSolicitante,
         prioridad,
         motivoClinico,
-        pruebasSeleccionadasIds: pruebasSeleccionadas.map((p) => p.id)
+        pruebasSeleccionadasIds: pruebasSeleccionadas.map((p) => p.id),
+        preciosAcordados: Object.fromEntries(pruebasSeleccionadas.map(p => [p.id, Number(precios[p.id])]))
       });
 
       navigate(`/laboratorio/bandeja`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al registrar la orden de laboratorio.');
+      setError(getErrorMessage(err, 'Error al registrar la orden de laboratorio.'));
     } finally {
       setGuardando(false);
     }
@@ -184,10 +190,10 @@ export const NewOrderPage: React.FC = () => {
       <div>
         <nav aria-label="Ruta de navegación" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
           <Link to="/laboratorio/bandeja" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-            Bandeja de Trabajo (L01)
+            Bandeja de Trabajo
           </Link>
           <span style={{ margin: '0 8px' }}>/</span>
-          <strong style={{ color: 'var(--color-strong)' }}>Nueva Orden de Laboratorio (L02)</strong>
+          <strong style={{ color: 'var(--color-strong)' }}>Nueva Orden de Laboratorio</strong>
         </nav>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -197,14 +203,13 @@ export const NewOrderPage: React.FC = () => {
             </Button>
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: 'var(--color-strong)' }}>
-                Crear Orden de Laboratorio Clínico (L02)
+                Crear Orden de Laboratorio Clínico
               </h1>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                Ingreso de solicitud analítica con asignación automática de muestras y contenedores unívocos
+                Selecciona el paciente, el profesional y las pruebas solicitadas.
               </p>
             </div>
           </div>
-          <Badge variant="primary">{sesion?.institucionNombre || 'Laboratorio Clínico Central'}</Badge>
         </div>
       </div>
 
@@ -292,7 +297,7 @@ export const NewOrderPage: React.FC = () => {
                     padding: '9px 12px 9px 36px',
                     borderRadius: 'var(--radius-input)',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-input-bg)',
+                    backgroundColor: 'var(--color-control)',
                     fontSize: '13px'
                   }}
                 />
@@ -349,11 +354,13 @@ export const NewOrderPage: React.FC = () => {
                 </label>
                 <Input
                   id="medico-nombre"
+                  list="solicitantes-lab"
                   value={medicoSolicitante}
                   onChange={(e) => setMedicoSolicitante(e.target.value)}
-                  placeholder="Ej. Dr. Fernando Arévalo"
+                  placeholder="Selecciona o escribe el solicitante"
                   required
                 />
+                <datalist id="solicitantes-lab">{solicitantes.map(r => <option key={r.id} value={r.nombre} />)}</datalist>
               </div>
 
               <div>
@@ -387,7 +394,7 @@ export const NewOrderPage: React.FC = () => {
                     padding: '8px 10px',
                     borderRadius: 'var(--radius-input)',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-input-bg)',
+                    backgroundColor: 'var(--color-control)',
                     fontSize: '13px',
                     fontWeight: prioridad === 'STAT' ? 800 : prioridad === 'URGENTE' ? 700 : 500,
                     color: prioridad === 'STAT' ? '#DC2626' : prioridad === 'URGENTE' ? '#D97706' : 'var(--color-strong)'
@@ -395,31 +402,10 @@ export const NewOrderPage: React.FC = () => {
                 >
                   <option value="RUTINA">Rutina (Atención Estándar)</option>
                   <option value="URGENTE">Urgente (Prioridad Preferencial)</option>
-                  <option value="STAT">STAT (Emergencia Médica Vital Inmediata)</option>
+                  <option value="STAT">Inmediata (emergencia)</option>
                 </select>
               </div>
             </div>
-
-            {prioridad === 'STAT' && (
-              <div
-                style={{
-                  padding: '12px 14px',
-                  backgroundColor: '#FEE2E2',
-                  border: '1px solid #F87171',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  fontSize: '13px',
-                  color: '#991B1B'
-                }}
-              >
-                <AlertTriangle size={18} style={{ flexShrink: 0 }} />
-                <span>
-                  <strong>Atención:</strong> Las órdenes con prioridad <strong>STAT</strong> omiten tiempos de cola regular y activan alerta inmediata en cabina analítica.
-                </span>
-              </div>
-            )}
 
             <div>
               <label
@@ -440,7 +426,7 @@ export const NewOrderPage: React.FC = () => {
                   padding: '10px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px',
                   fontFamily: 'inherit'
                 }}
@@ -478,7 +464,7 @@ export const NewOrderPage: React.FC = () => {
                     padding: '8px 12px 8px 36px',
                     borderRadius: 'var(--radius-input)',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-input-bg)',
+                    backgroundColor: 'var(--color-control)',
                     fontSize: '13px'
                   }}
                 />
@@ -491,7 +477,7 @@ export const NewOrderPage: React.FC = () => {
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-input)',
                   border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   fontSize: '13px'
                 }}
               >
@@ -538,6 +524,7 @@ export const NewOrderPage: React.FC = () => {
                       </span>
                       <input
                         type="checkbox"
+                        aria-label={`Seleccionar ${prueba.nombre}`}
                         checked={seleccionada}
                         onChange={() => {}}
                         style={{ cursor: 'pointer' }}
@@ -591,12 +578,14 @@ export const NewOrderPage: React.FC = () => {
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Total Arancelario Estimado</span>
+                <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Total acordado</span>
                 <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-strong)' }}>
                   Q {totalArancelEstimado.toFixed(2)}
                 </div>
               </div>
             </div>
+
+            {pruebasSeleccionadas.map(p => <Input key={p.id} label={`Precio acordado: ${p.nombre} (Q)`} type="number" min="0" step="0.01" value={precios[p.id] ?? ''} onChange={e => setPrecios(prev => ({ ...prev, [p.id]: e.target.value }))} required />)}
 
             {contenedoresRequeridos.length > 0 && (
               <div
@@ -608,7 +597,7 @@ export const NewOrderPage: React.FC = () => {
                 }}
               >
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-strong)', marginBottom: '6px' }}>
-                  Contenedores de Muestra a recolectar automáticamente:
+                  Tipos de muestra requeridos:
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {contenedoresRequeridos.map((c, i) => (
@@ -621,7 +610,7 @@ export const NewOrderPage: React.FC = () => {
                         fontSize: '12px',
                         padding: '4px 8px',
                         borderRadius: '6px',
-                        backgroundColor: 'var(--color-surface, #ffffff)',
+                        backgroundColor: 'var(--color-background, #ffffff)',
                         border: '1px solid var(--color-border)',
                         color: 'var(--color-primary)',
                         fontWeight: 600
@@ -644,7 +633,7 @@ export const NewOrderPage: React.FC = () => {
                 disabled={guardando || pruebasSeleccionadas.length === 0 || !pacienteSeleccionado}
                 leftIcon={<Plus size={16} />}
               >
-                {guardando ? 'Emitiendo Orden...' : 'Emitir Orden de Laboratorio (L02)'}
+                {guardando ? 'Emitiendo Orden...' : 'Emitir Orden de Laboratorio'}
               </Button>
             </div>
           </div>

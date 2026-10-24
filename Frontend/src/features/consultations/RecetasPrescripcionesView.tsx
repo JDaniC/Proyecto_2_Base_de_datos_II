@@ -34,7 +34,7 @@ export const RecetasPrescripcionesView: React.FC<RecetasPrescripcionesViewProps>
       {/* Cabecera de la sección de prescripción médica */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderLeft: '4px solid var(--color-primary)',
           borderRadius: 'var(--radius-panel)',
@@ -57,7 +57,7 @@ export const RecetasPrescripcionesView: React.FC<RecetasPrescripcionesViewProps>
                 letterSpacing: '0.05em'
               }}
             >
-              Prescripción Farmacológica Certificada (V13)
+              Prescripción Farmacológica Certificada
             </span>
             <Badge variant="info">Total: {recetas.length}</Badge>
           </div>
@@ -73,7 +73,7 @@ export const RecetasPrescripcionesView: React.FC<RecetasPrescripcionesViewProps>
             onClick={() => setShowEmitirModal(true)}
             leftIcon={<PlusCircle size={15} />}
           >
-            Emitir Nueva Receta (V13)
+            Emitir Nueva Receta
           </Button>
         )}
       </div>
@@ -104,7 +104,7 @@ export const RecetasPrescripcionesView: React.FC<RecetasPrescripcionesViewProps>
                 onClick={() => setRecetaParaImprimir(r)}
                 leftIcon={<Printer size={14} />}
               >
-                Imprimir Receta (V13)
+                Imprimir Receta
               </Button>
             }
           >
@@ -144,7 +144,7 @@ export const RecetasPrescripcionesView: React.FC<RecetasPrescripcionesViewProps>
                           {m.nombre}
                         </td>
                         <td style={{ padding: '10px 12px' }}>
-                          {m.presentacion}
+                          {m.presentacion} {m.concentracion}
                         </td>
                         <td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--color-primary)' }}>
                           {m.dosis}

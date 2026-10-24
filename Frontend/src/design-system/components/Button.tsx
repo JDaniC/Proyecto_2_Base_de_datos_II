@@ -23,9 +23,9 @@ export const Button: React.FC<ButtonProps> = ({
   const isActionDisabled = disabled || loading;
 
   const sizeStyles: Record<string, React.CSSProperties> = {
-    sm: { height: '36px', padding: '0 14px', fontSize: '14px' },
-    md: { height: '40px', padding: '0 18px', fontSize: '15px' },
-    lg: { height: '48px', padding: '0 24px', fontSize: '16px' },
+    sm: { minHeight: '36px', padding: '7px 14px', fontSize: '14px' },
+    md: { minHeight: '40px', padding: '8px 18px', fontSize: '15px' },
+    lg: { minHeight: '48px', padding: '10px 24px', fontSize: '16px' },
   };
 
   const variantStyles: Record<string, React.CSSProperties> = {
@@ -63,6 +63,8 @@ export const Button: React.FC<ButtonProps> = ({
     transition: 'all var(--transition-fast)',
     userSelect: 'none',
     textDecoration: 'none',
+    lineHeight: 1.35,
+    height: 'auto',
     ...sizeStyles[size],
     ...variantStyles[variant],
     ...style,
@@ -90,14 +92,10 @@ export const Button: React.FC<ButtonProps> = ({
           aria-hidden="true"
         />
       )}
-      {!loading && leftIcon}
-      <span>{children}</span>
-      {!loading && rightIcon}
-      <style>{`
-        @keyframes btn-spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      {!loading && leftIcon && <span style={{ display: 'inline-flex', flexShrink: 0 }}>{leftIcon}</span>}
+      <span style={{ minWidth: 0 }}>{children}</span>
+      {!loading && rightIcon && <span style={{ display: 'inline-flex', flexShrink: 0 }}>{rightIcon}</span>}
+
     </button>
   );
 };

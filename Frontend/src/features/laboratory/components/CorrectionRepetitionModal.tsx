@@ -1,3 +1,5 @@
+import { getErrorMessage } from '../../../services/errors';
+import { getDisplayLabel } from '../../../services/displayLabels';
 import React, { useState } from 'react';
 import {
   FileEdit,
@@ -163,7 +165,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
       onExito(resultadoFinal);
       onClose();
     } catch (err: any) {
-      setErrorLocal(err?.message || 'Error al procesar la operación analítica.');
+      setErrorLocal(getErrorMessage(err, 'Error al procesar la operación analítica.'));
     } finally {
       setProcesando(false);
     }
@@ -175,7 +177,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Corrección de Versiones vs Repetición de Series (L08)"
+      title="Corregir resultado o repetir análisis"
       maxWidth="860px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -191,9 +193,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
             lineHeight: 1.5
           }}
         >
-          <strong style={{ color: 'var(--color-strong)' }}>Regla de Negocio CA12 y CA13: </strong>
-          La <strong>corrección de un resultado</strong> genera la versión <code>v{resultadoActual.version + 1}</code> en la misma serie (<code>{resultadoActual.serieResultadoId}</code>), archivando la versión previa como inmutable.
-          La <strong>repetición de un análisis</strong> crea una nueva serie independiente para asociar retomas o reensayos analíticos.
+          Corregir conserva el resultado anterior y crea una versión nueva. Repetir inicia una serie independiente para una nueva toma o análisis.
         </div>
 
         {errorLocal && (
@@ -222,7 +222,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
             }}
           >
             <FileEdit size={16} />
-            <span>Corregir Resultado (Nueva Versión v{resultadoActual.version + 1})</span>
+            <span>Corregir resultado</span>
           </button>
 
           <button
@@ -243,7 +243,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
             }}
           >
             <RotateCcw size={16} />
-            <span>Repetición Técnica (Nueva Serie)</span>
+            <span>Repetir análisis</span>
           </button>
 
           <button
@@ -278,7 +278,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '12px',
                 padding: '12px',
-                backgroundColor: 'var(--color-surface-hover, #F8FAFC)',
+                backgroundColor: 'var(--color-control-hover, #F8FAFC)',
                 borderRadius: '8px',
                 border: '1px solid var(--color-border)'
               }}
@@ -322,7 +322,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                   >
                     {orden.muestras.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.codigoMuestra} — {m.tipoMuestra} ({m.estado}) {m.esRetoma ? '★ RETOMA' : ''}
+                        {m.codigoMuestra} — {m.tipoMuestra} ({getDisplayLabel(m.estado)}) {m.esRetoma ? '★ RETOMA' : ''}
                       </option>
                     ))}
                   </select>
@@ -485,7 +485,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                                 : 'success'
                             }
                           >
-                            {param.alerta}
+                            {getDisplayLabel(param.alerta)}
                           </Badge>
                         </td>
                       </tr>
@@ -530,7 +530,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                       {v.serieResultadoId}
                     </span>
                     <Badge variant={v.estado === 'VALIDADO' ? 'success' : v.estado === 'CORREGIDO' ? 'neutral' : 'warning'}>
-                      v{v.version} — {v.estado}
+                      v{v.version} — {getDisplayLabel(v.estado)}
                     </Badge>
                     {v.id === resultadoActual.id && <Badge variant="primary">Activo</Badge>}
                   </div>
@@ -541,7 +541,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                 </div>
 
                 <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-                  Analista: <strong>{v.analistaNombre}</strong> · Muestra: <strong>{v.codigoMuestra}</strong> · Equipo: <strong>{v.equipoAnalitico}</strong>
+                  Analista: <strong>{v.analistaNombre}</strong> · Muestra: <strong><span className="table-identifier">{v.codigoMuestra}</span></strong> · Equipo: <strong>{v.equipoAnalitico}</strong>
                 </div>
 
                 {v.motivoModificacion && (
@@ -559,7 +559,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
                         padding: '4px 8px',
                         borderRadius: '4px',
                         border: '1px solid var(--color-border)',
-                        backgroundColor: 'var(--color-surface, #ffffff)',
+                        backgroundColor: 'var(--color-background, #ffffff)',
                         fontSize: '11px'
                       }}
                     >

@@ -1,3 +1,7 @@
+import { formatCalendarDate } from '../../services/dates';
+import { Modal } from '../../design-system/components/Modal';
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useState, useEffect } from 'react';
 import {
   Package,
@@ -6,19 +10,19 @@ import {
   Filter,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw,
   Thermometer,
-  ShieldAlert,
   FileText
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
 import { Panel } from '../../design-system/components/Panel';
+import { MetricStrip } from '../../design-system/components/MetricStrip';
 import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { Input } from '../../design-system/components/Input';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import {
+  ReferenciaLaboratorio,
   LoteReactivo,
   MovimientoInventario,
   TipoMovimientoInventario,
@@ -27,7 +31,7 @@ import {
 
 export const InventoryPage: React.FC = () => {
   const { sesion } = useAuthSession();
-  const { laboratoryRepository } = useServices();
+  const { laboratoryRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'LABORATORIO_CLINICO';
 
   const [activeTab, setActiveTab] = useState<'lotes' | 'kardex'>('lotes');
@@ -57,7 +61,12 @@ export const InventoryPage: React.FC = () => {
   const [errorMov, setErrorMov] = useState<string | null>(null);
 
   // Formulario de Nuevo Lote
-  const [nuevoReactivoId, setNuevoReactivoId] = useState('rea-01');
+  const [nuevoReactivoId, setNuevoReactivoId] = useState('');
+  const [referencias, setReferencias] = useState<ReferenciaLaboratorio[]>([]);
+  const [proveedorId, setProveedorId] = useState('');
+  useEffect(() => {
+    Promise.all(['reactivos', 'proveedores'].map(c => catalogRepository.obtenerReferenciasLaboratorio(institucionId, c as 'reactivos' | 'proveedores'))).then(listas => { const refs = listas.flat().filter(r => r.estado === 'ACTIVO'); setReferencias(refs); setNuevoReactivoId(refs.find(r => r.categoria === 'reactivos')?.id || ''); }).catch(() => setReferencias([]));
+  }, [institucionId, catalogRepository]);
   const [nuevoNumeroLote, setNuevoNumeroLote] = useState('');
   const [nuevoVencimiento, setNuevoVencimiento] = useState('');
   const [nuevaTemp, setNuevaTemp] = useState('2°C a 8°C (Refrigeración)');
@@ -106,7 +115,7 @@ export const InventoryPage: React.FC = () => {
     }
 
     if (!movMotivo.trim()) {
-      setErrorMov('El motivo del movimiento es obligatorio para garantizar la trazabilidad de inventario (CA15).');
+      setErrorMov('Ingresa el motivo del movimiento.');
       return;
     }
 
@@ -136,11 +145,11 @@ export const InventoryPage: React.FC = () => {
 
       setShowModalMovimiento(false);
       setNotificacion(
-        `Movimiento ${nuevoMov.tipoMovimiento} de ${nuevoMov.cantidad} unid. registrado en lote ${nuevoMov.numeroLote}. Nuevo saldo: ${nuevoMov.saldoNuevo}.`
+        `Movimiento ${getDisplayLabel(nuevoMov.tipoMovimiento)} de ${nuevoMov.cantidad} unid. registrado en lote ${nuevoMov.numeroLote}. Nuevo saldo: ${nuevoMov.saldoNuevo}.`
       );
       setTimeout(() => setNotificacion(null), 5000);
     } catch (err: unknown) {
-      setErrorMov(err instanceof Error ? err.message : 'Error al registrar movimiento.');
+      setErrorMov(getErrorMessage(err, 'Error al registrar movimiento.'));
     } finally {
       setGuardandoMov(false);
     }
@@ -167,6 +176,7 @@ export const InventoryPage: React.FC = () => {
       return;
     }
 
+    if (!nuevoReactivoId) { setErrorLote('Selecciona un reactivo del catálogo.'); return; }
     setGuardandoLote(true);
     try {
       const actor = {
@@ -178,6 +188,9 @@ export const InventoryPage: React.FC = () => {
         institucionId,
         {
           reactivoId: nuevoReactivoId,
+          reactivoNombre: referencias.find(r => r.id === nuevoReactivoId)?.nombre,
+          proveedorId: proveedorId || undefined,
+          proveedorNombre: referencias.find(r => r.id === proveedorId)?.nombre,
           numeroLote: nuevoNumeroLote.trim().toUpperCase(),
           fechaVencimiento: nuevoVencimiento,
           temperaturaAlmacenamiento: nuevaTemp.trim(),
@@ -198,7 +211,7 @@ export const InventoryPage: React.FC = () => {
       setNotificacion(`Lote ${creado.numeroLote} de ${creado.reactivoNombre} registrado con saldo inicial de ${creado.saldoDisponible}.`);
       setTimeout(() => setNotificacion(null), 5000);
     } catch (err: unknown) {
-      setErrorLote(err instanceof Error ? err.message : 'Error al registrar nuevo lote.');
+      setErrorLote(getErrorMessage(err, 'Error al registrar nuevo lote.'));
     } finally {
       setGuardandoLote(false);
     }
@@ -223,7 +236,6 @@ export const InventoryPage: React.FC = () => {
   const totalLotes = lotes.length;
   const lotesDisponibles = lotes.filter((l) => l.estado === 'DISPONIBLE').length;
   const lotesVencidos = lotes.filter((l) => l.estado === 'VENCIDO').length;
-  const totalDeterminaciones = lotes.reduce((acc, l) => acc + (l.estado === 'DISPONIBLE' ? l.saldoDisponible : 0), 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -233,7 +245,7 @@ export const InventoryPage: React.FC = () => {
         <span style={{ margin: '0 8px' }}>/</span>
         <span>Laboratorio</span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Reactivos, Lotes e Inventario (L12)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Reactivos, Lotes e Inventario</strong>
       </nav>
 
       {/* Alerta de notificación */}
@@ -242,7 +254,7 @@ export const InventoryPage: React.FC = () => {
           role="status"
           style={{
             backgroundColor: 'var(--color-success-bg)',
-            color: 'var(--color-success)',
+            color: 'var(--color-success-text)',
             border: '1px solid var(--color-success-border)',
             padding: '12px 16px',
             borderRadius: 'var(--radius-input)',
@@ -278,9 +290,8 @@ export const InventoryPage: React.FC = () => {
                 letterSpacing: '-0.3px'
               }}
             >
-              Inventario de Reactivos, Lotes y Kardex (L12)
+              Inventario de Reactivos, Lotes y Kardex
             </h1>
-            <Badge variant="warning">Regla CA15</Badge>
           </div>
           <p
             style={{
@@ -291,9 +302,7 @@ export const InventoryPage: React.FC = () => {
               lineHeight: 1.5
             }}
           >
-            Gestión analítica de lotes y reactivos de laboratorio. Trazabilidad de movimientos (entradas, consumos,
-            ajustes y bajas), cálculo de saldos inmutables, control de revisión concurrente y bloqueo estricto de consumos
-            vencidos o saldos negativos (Regla CA15).
+            Registra entradas, consumos y ajustes. El sistema mantiene el saldo por lote y bloquea el uso de reactivos vencidos o sin existencias.
           </p>
         </div>
 
@@ -321,127 +330,19 @@ export const InventoryPage: React.FC = () => {
             }}
             leftIcon={<Plus size={16} />}
           >
-            Registrar Movimiento (CA15)
+            Registrar Movimiento
           </Button>
         </div>
       </div>
 
-      {/* Tarjetas KPI */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '16px'
-        }}
-      >
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-selection)',
-                color: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Package size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Lotes Disponibles
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-strong)' }}>
-                {lotesDisponibles} / {totalLotes}
-              </strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-success-bg)',
-                color: 'var(--color-success)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Saldo Total Disponible
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-success)' }}>
-                {totalDeterminaciones.toLocaleString()} unid.
-              </strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-error-bg)',
-                color: 'var(--color-error-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <ShieldAlert size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Lotes Vencidos / Bloqueados
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-error-text)' }}>
-                {lotesVencidos}
-              </strong>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-selection)',
-                color: 'var(--color-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FileText size={20} />
-            </div>
-            <div>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                Movimientos en Kardex
-              </span>
-              <strong style={{ fontSize: '20px', color: 'var(--color-strong)' }}>
-                {movimientos.length}
-              </strong>
-            </div>
-          </div>
-        </Panel>
-      </div>
+      <MetricStrip
+        label="Resumen de inventario"
+        items={[
+          { id: 'lotes', label: 'Lotes disponibles', value: `${lotesDisponibles} / ${totalLotes}` },
+          { id: 'vencidos', label: 'Lotes vencidos o bloqueados', value: lotesVencidos, tone: 'danger' },
+          { id: 'movimientos', label: 'Movimientos registrados', value: movimientos.length },
+        ]}
+      />
 
       {/* Pestañas Lotes vs Kardex */}
       <div
@@ -496,7 +397,7 @@ export const InventoryPage: React.FC = () => {
           }}
         >
           <FileText size={16} />
-          <span>Kardex / Historial de Movimientos ({movimientos.length})</span>
+          <span>Historial de movimientos ({movimientos.length})</span>
         </button>
       </div>
 
@@ -625,16 +526,15 @@ export const InventoryPage: React.FC = () => {
 
                           <td style={{ padding: '10px 14px' }}>
                             <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary)' }}>
-                              {lote.numeroLote}
+                              <span className="table-identifier">{lote.numeroLote}</span>
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                              Revisión stock: #{lote.revisionStock} (CA15)
                             </div>
                           </td>
 
                           <td style={{ padding: '10px 14px' }}>
                             <div style={{ fontWeight: esVencido ? 700 : 500, color: esVencido ? '#DC2626' : 'var(--color-strong)' }}>
-                              {new Date(lote.fechaVencimiento).toLocaleDateString()}
+                              {formatCalendarDate(lote.fechaVencimiento)}
                             </div>
                             {esVencido && (
                               <span style={{ fontSize: '11px', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -673,7 +573,7 @@ export const InventoryPage: React.FC = () => {
                                   : 'success'
                               }
                             >
-                              {lote.estado}
+                              {getDisplayLabel(lote.estado)}
                             </Badge>
                           </td>
 
@@ -706,10 +606,10 @@ export const InventoryPage: React.FC = () => {
         <Panel>
           <div style={{ marginBottom: '14px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Kardex Analítico de Movimientos de Inventario (Regla CA15)
+              Historial de movimientos de inventario
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-              Registro append-only de entradas, consumos analíticos, ajustes y bajas con trazabilidad inmutable de actor y saldos.
+              Entradas, consumos, ajustes y bajas de reactivos.
             </p>
           </div>
 
@@ -746,7 +646,7 @@ export const InventoryPage: React.FC = () => {
 
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ fontWeight: 600 }}>{mov.reactivoNombre}</div>
-                        <code style={{ fontSize: '11px', color: 'var(--color-primary)' }}>{mov.numeroLote}</code>
+                        <code style={{ fontSize: '11px', color: 'var(--color-primary)' }}><span className="table-identifier">{mov.numeroLote}</span></code>
                       </td>
 
                       <td style={{ padding: '10px 14px' }}>
@@ -759,12 +659,12 @@ export const InventoryPage: React.FC = () => {
                               : 'info'
                           }
                         >
-                          {mov.tipoMovimiento}
+                          {getDisplayLabel(mov.tipoMovimiento)}
                         </Badge>
                       </td>
 
                       <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700 }}>
-                        <span style={{ color: esEntrada ? 'var(--color-success)' : '#DC2626' }}>
+                        <span style={{ color: esEntrada ? 'var(--color-success-text)' : '#DC2626' }}>
                           {esEntrada ? `+${mov.cantidad}` : `-${mov.cantidad}`}
                         </span>
                       </td>
@@ -798,89 +698,16 @@ export const InventoryPage: React.FC = () => {
 
       {/* Modal Registrar Movimiento */}
       {showModalMovimiento && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-movimiento-titulo"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17, 24, 39, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1050,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              borderRadius: 'var(--radius-card)',
-              boxShadow: 'var(--shadow-modal)',
-              width: '100%',
-              maxWidth: '580px',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: '18px 24px',
-                borderBottom: '1px solid var(--color-divider)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--color-primary)',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <RefreshCw size={20} />
-                </div>
-                <div>
-                  <h3
-                    id="modal-movimiento-titulo"
-                    style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--color-strong)' }}
-                  >
-                    Registrar Movimiento de Inventario (CA15)
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                    Cálculo derivado de saldos e incremento de revisión de stock
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModalMovimiento(false)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Form */}
-            <form
+      <Modal
+        isOpen={showModalMovimiento}
+        onClose={() => setShowModalMovimiento(false)}
+        title="Registrar movimiento de inventario"
+        maxWidth="580px"
+        description="Registra la entrada o salida de unidades de un lote."
+      >
+        <form
               onSubmit={handleGuardarMovimiento}
-              style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               {errorMov && (
                 <div
@@ -888,9 +715,9 @@ export const InventoryPage: React.FC = () => {
                   style={{
                     padding: '10px 14px',
                     borderRadius: 'var(--radius-input)',
-                    backgroundColor: 'var(--color-error-bg)',
-                    border: '1px solid var(--color-error-border)',
-                    color: 'var(--color-error-text)',
+                    backgroundColor: 'var(--color-danger-bg)',
+                    border: '1px solid var(--color-danger-border)',
+                    color: 'var(--color-danger-text)',
                     fontSize: '13px'
                   }}
                 >
@@ -925,7 +752,7 @@ export const InventoryPage: React.FC = () => {
                 >
                   {lotes.map((l) => (
                     <option key={l.id} value={l.id}>
-                      {l.numeroLote} — {l.reactivoNombre} ({l.saldoDisponible} {l.unidadMedida} disp. · {l.estado})
+                      {l.numeroLote} — {l.reactivoNombre} ({l.saldoDisponible} {l.unidadMedida} disp. · {getDisplayLabel(l.estado)})
                     </option>
                   ))}
                 </select>
@@ -937,15 +764,14 @@ export const InventoryPage: React.FC = () => {
                   style={{
                     padding: '10px 12px',
                     borderRadius: 'var(--radius-input)',
-                    backgroundColor: 'var(--color-error-bg)',
-                    border: '1px solid var(--color-error-border)',
-                    color: 'var(--color-error-text)',
+                    backgroundColor: 'var(--color-danger-bg)',
+                    border: '1px solid var(--color-danger-border)',
+                    color: 'var(--color-danger-text)',
                     fontSize: '12px'
                   }}
                 >
-                  <strong>Bloqueo de Regla CA15:</strong> El lote seleccionado se encuentra{' '}
-                  <code>{loteSeleccionado.estado}</code>. Los consumos analíticos están estrictamente bloqueados. Solo
-                  se admiten bajas o ajustes de salida por descarte.
+                  <strong>Lote no disponible para consumo:</strong> El lote se encuentra{' '}
+                  <strong>{getDisplayLabel(loteSeleccionado.estado).toLowerCase()}</strong>. Selecciona otro lote para registrar un consumo.
                 </div>
               )}
 
@@ -1004,7 +830,7 @@ export const InventoryPage: React.FC = () => {
                   htmlFor="input-mov-motivo"
                   style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}
                 >
-                  Motivo Justificado (Regla CA15) *
+                  Motivo Justificado *
                 </label>
                 <Input
                   id="input-mov-motivo"
@@ -1046,76 +872,27 @@ export const InventoryPage: React.FC = () => {
                   Cancelar
                 </Button>
                 <Button type="submit" variant="primary" loading={guardandoMov}>
-                  Confirmar Movimiento (CA15)
+                  Confirmar Movimiento
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
 
       {/* Modal Nuevo Lote */}
       {showModalNuevoLote && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-nuevo-lote-titulo"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17, 24, 39, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1050,
-            padding: '16px'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--color-background)',
-              borderRadius: 'var(--radius-card)',
-              boxShadow: 'var(--shadow-modal)',
-              width: '100%',
-              maxWidth: '560px',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--color-border)',
-              overflow: 'hidden'
-            }}
-          >
-            <div
-              style={{
-                padding: '18px 24px',
-                borderBottom: '1px solid var(--color-divider)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <h3 id="modal-nuevo-lote-titulo" style={{ margin: 0, fontSize: '17px', fontWeight: 700 }}>
-                Registrar Nuevo Lote de Reactivo
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModalNuevoLote(false)}
-                aria-label="Cerrar modal"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form
+      <Modal
+        isOpen={showModalNuevoLote}
+        onClose={() => setShowModalNuevoLote(false)}
+        title="Registrar lote de reactivo"
+        maxWidth="560px"
+      >
+        <form
               onSubmit={handleGuardarNuevoLote}
-              style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}
+              style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}
             >
               {errorLote && (
-                <div role="alert" style={{ color: 'var(--color-error-text)', fontSize: '13px' }}>
+                <div role="alert" style={{ color: 'var(--color-danger-text)', fontSize: '13px' }}>
                   {errorLote}
                 </div>
               )}
@@ -1137,12 +914,12 @@ export const InventoryPage: React.FC = () => {
                     fontSize: '13px'
                   }}
                 >
-                  <option value="rea-01">Reactivo Hexoquinasa Glucosa Cobas (Bioquímica)</option>
-                  <option value="rea-02">Diluente Cellpack DCL Sysmex (Hematología)</option>
-                  <option value="rea-03">PreciControl Troponin I Cobas (Inmunología)</option>
+                  <option value="">Selecciona un reactivo</option>
+                  {referencias.filter(r => r.categoria === 'reactivos').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
                 </select>
               </div>
 
+              <div><label htmlFor="proveedor-lote">Proveedor</label><select id="proveedor-lote" value={proveedorId} onChange={e => setProveedorId(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)' }}><option value="">No registrado</option>{referencias.filter(r => r.categoria === 'proveedores').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}</select></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label htmlFor="input-num-lote" style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
@@ -1227,8 +1004,7 @@ export const InventoryPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
     </div>
   );

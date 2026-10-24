@@ -1,4 +1,6 @@
 import {
+  ReferenciaLaboratorio,
+  CategoriaReferenciaLab,
   CuentaDemo,
   SesionUsuario,
   SimulacionEscenario,
@@ -182,6 +184,8 @@ export interface UserRepository {
 }
 
 export interface CatalogRepository {
+  obtenerReferenciasLaboratorio(institucionId: InstitucionId, categoria: CategoriaReferenciaLab): Promise<ReferenciaLaboratorio[]>;
+  guardarReferenciaLaboratorio(institucionId: InstitucionId, referencia: Omit<ReferenciaLaboratorio, 'id'> & { id?: string }): Promise<ReferenciaLaboratorio>;
   obtenerMedicos(institucionId: InstitucionId): Promise<MedicoCatalogo[]>;
   crearMedico(institucionId: InstitucionId, medico: Omit<MedicoCatalogo, 'id'>): Promise<MedicoCatalogo>;
   cambiarEstadoMedico(institucionId: InstitucionId, id: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<MedicoCatalogo>;
@@ -265,6 +269,7 @@ export interface LaboratoryRepository {
   obtenerBandeja(institucionId: InstitucionId, filtros?: FiltrosBandejaLab): Promise<OrdenLaboratorio[]>;
   obtenerOrdenPorId(institucionId: InstitucionId, ordenId: string): Promise<OrdenLaboratorio | null>;
   crearOrden(institucionId: InstitucionId, dto: CrearOrdenLabDTO): Promise<OrdenLaboratorio>;
+  registrarTrasladoMuestra(institucionId: InstitucionId, muestraId: string, destino: string, actor: string): Promise<MuestraLaboratorio>;
   obtenerMuestras(institucionId: InstitucionId, ordenId?: string): Promise<MuestraLaboratorio[]>;
   actualizarEstadoMuestra(
     institucionId: InstitucionId,

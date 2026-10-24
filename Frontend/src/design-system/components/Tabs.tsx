@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export interface TabItem {
   id: string;
@@ -15,9 +15,17 @@ export interface TabsProps {
 }
 
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className = '' }) => {
+  const tabListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const activeButton = tabListRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
+    activeButton?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
+  }, [activeTab]);
+
   return (
     <div
       role="tablist"
+      ref={tabListRef}
       className={`tabs-nav ${className}`}
       style={{
         display: 'flex',

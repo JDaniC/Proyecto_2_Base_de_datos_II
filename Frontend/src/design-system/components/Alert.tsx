@@ -58,6 +58,7 @@ export const Alert: React.FC<AlertProps> = ({
   return (
     <div
       role={role}
+      aria-atomic="true"
       className={`alert alert-${variant} ${className}`}
       style={{
         display: 'flex',
@@ -70,13 +71,14 @@ export const Alert: React.FC<AlertProps> = ({
         borderRadius: 'var(--radius-panel)',
         fontSize: '14px',
         lineHeight: 1.45,
+        minWidth: 0,
         ...style,
       }}
     >
       <div style={{ flexShrink: 0, marginTop: '2px' }}>
         {icon ?? variantStyles.defaultIcon}
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
         {title && (
           <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: '15px' }}>
             {title}
@@ -97,6 +99,7 @@ export const Alert: React.FC<AlertProps> = ({
             padding: '4px',
             borderRadius: '6px',
             display: 'inline-flex',
+            flexShrink: 0,
             opacity: 0.8,
           }}
         >

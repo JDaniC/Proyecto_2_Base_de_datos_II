@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState, useEffect } from 'react';
 import {
   FileText,
@@ -107,7 +108,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
       onOrdenCreada();
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Error al emitir la orden médica de examen.');
+      setError(getErrorMessage(err, 'Error al emitir la orden médica de examen.'));
     } finally {
       setGuardando(false);
     }
@@ -124,7 +125,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Nueva Solicitud / Orden de Examen Hospitalario (H06)"
+      title="Nueva Solicitud / Orden de Examen Hospitalario"
       maxWidth="700px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -135,7 +136,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
               padding: '10px 14px',
               backgroundColor: '#fef2f2',
               border: '1px solid #f87171',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               color: '#b91c1c',
               fontSize: '13px',
               display: 'flex',
@@ -163,7 +164,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                   padding: '9px 12px',
                   backgroundColor: 'var(--color-panel)',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px',
                   fontWeight: 600,
                   color: 'var(--color-strong)'
@@ -181,7 +182,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                   width: '100%',
                   padding: '9px 12px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
@@ -209,13 +210,13 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             >
               <option value="RUTINA">Rutina (Turno estándar / 24 horas)</option>
               <option value="URGENTE">Urgente (Prioridad clínica / 2-4 horas)</option>
-              <option value="STAT">STAT / Inmediato (Emergencia médica / &lt; 1 hora)</option>
+              <option value="STAT">Inmediata (emergencia médica)</option>
             </select>
           </div>
         </div>
@@ -239,7 +240,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -263,7 +264,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -315,7 +316,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                           alignItems: 'flex-start',
                           gap: '10px',
                           padding: '8px 10px',
-                          borderRadius: 'var(--radius-field)',
+                          borderRadius: 'var(--radius-input)',
                           backgroundColor: checked ? 'var(--color-selection)' : 'var(--color-background)',
                           border: checked ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
                           cursor: 'pointer',
@@ -360,7 +361,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
             aria-label="Confirmar emisión de orden médica"
             leftIcon={<FileText size={16} />}
           >
-            {guardando ? 'Emitiendo orden...' : 'Emitir Orden Médica (H06)'}
+            {guardando ? 'Emitiendo orden...' : 'Emitir Orden Médica'}
           </Button>
         </div>
       </form>

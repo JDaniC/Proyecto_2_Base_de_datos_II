@@ -63,7 +63,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
   const getPrioridadBadge = (p: PrioridadOrdenExamen) => {
     switch (p) {
       case 'STAT':
-        return <Badge variant="danger">STAT</Badge>;
+        return <Badge variant="danger">Inmediata</Badge>;
       case 'URGENTE':
         return <Badge variant="warning">Urgente</Badge>;
       default:
@@ -129,7 +129,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FlaskConical size={20} color="var(--color-primary)" />
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Órdenes de Examen y Resultados de Laboratorio (H06)
+              Órdenes de Examen y Resultados de Laboratorio
             </h2>
             <Badge variant="primary">{ordenes.length} {ordenes.length === 1 ? 'Orden' : 'Órdenes'}</Badge>
           </div>
@@ -145,7 +145,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
           disabled={esArchivado}
           title={esArchivado ? 'Expediente archivado: no se pueden solicitar nuevos exámenes' : undefined}
         >
-          Solicitar Examen (H06)
+          Solicitar Examen
         </Button>
       </div>
 
@@ -183,7 +183,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
                     onClick={() => setOrdenSeleccionadaDetalle(ord)}
                     leftIcon={<Eye size={14} />}
                   >
-                    Ver Resultados (H06)
+                    Ver Resultados
                   </Button>
 
                   {ord.items.some((it) => it.estado === 'PENDIENTE') && (
@@ -217,7 +217,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
                       padding: '6px 12px',
                       backgroundColor: 'var(--color-panel)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '12px',
                       display: 'flex',
                       alignItems: 'center',

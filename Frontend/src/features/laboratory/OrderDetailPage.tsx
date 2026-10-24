@@ -1,3 +1,4 @@
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -64,7 +65,7 @@ export const OrderDetailPage: React.FC = () => {
     return (
       <div style={{ padding: '32px', textAlign: 'center' }}>
         <Alert variant="danger" title="Orden no encontrada">
-          No se encontró la orden de laboratorio solicitada con identificador «{ordenId}».
+          No se encontró la orden de laboratorio solicitada.
         </Alert>
         <div style={{ marginTop: '16px' }}>
           <Button variant="secondary" onClick={() => navigate('/laboratorio/bandeja')}>
@@ -170,10 +171,10 @@ export const OrderDetailPage: React.FC = () => {
       <div>
         <nav aria-label="Ruta de navegación" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
           <Link to="/laboratorio/bandeja" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-            Bandeja de Trabajo (L01)
+            Bandeja de Trabajo
           </Link>
           <span style={{ margin: '0 8px' }}>/</span>
-          <strong style={{ color: 'var(--color-strong)' }}>Detalle de Orden {orden.codigoOrden} (L03)</strong>
+          <strong style={{ color: 'var(--color-strong)' }}>Detalle de Orden {orden.codigoOrden} </strong>
         </nav>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -182,40 +183,40 @@ export const OrderDetailPage: React.FC = () => {
               <ArrowLeft size={16} />
             </Button>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="order-summary-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: 'var(--color-strong)' }}>
-                  Orden {orden.codigoOrden} (L03)
+                  Orden {orden.codigoOrden}
                 </h1>
                 {renderBadgePrioridad(orden.prioridad)}
-                <Badge variant="primary">{orden.estado}</Badge>
+                <Badge variant="primary">{getDisplayLabel(orden.estado)}</Badge>
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                Seguimiento del circuito preanalítico, analítico y postanalítico institucional
+                Revisa las muestras, pruebas y resultados de esta orden.
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="order-header-actions">
             <Button
               variant="secondary"
               onClick={() => navigate('/laboratorio/muestras')}
               leftIcon={<TestTube2 size={16} />}
             >
-              Gestionar Muestras (L04)
+              Gestionar Muestras
             </Button>
             <Button
               variant="secondary"
               onClick={() => navigate(`/laboratorio/informes/${orden.id}`)}
               leftIcon={<FileText size={16} />}
             >
-              Informe Oficial (L09)
+              Informe Oficial
             </Button>
             <Button
               variant="primary"
               onClick={() => navigate(`/laboratorio/resultados/captura/${orden.id}`)}
               leftIcon={<FlaskConical size={16} />}
             >
-              Capturar Resultados (L06)
+              Capturar Resultados
             </Button>
           </div>
         </div>
@@ -426,7 +427,7 @@ export const OrderDetailPage: React.FC = () => {
           }}
         >
           <History size={16} />
-          <span>Trazabilidad de Muestra y Eventos (L05)</span>
+          <span>Trazabilidad de Muestra y Eventos</span>
         </button>
       </div>
 
@@ -434,7 +435,7 @@ export const OrderDetailPage: React.FC = () => {
       {tabActiva === 'pruebas' && (
         <Panel title="Pruebas Analíticas Incluidas">
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
                   <th style={{ padding: '10px', color: 'var(--color-text-secondary)' }}>Código</th>
@@ -466,7 +467,7 @@ export const OrderDetailPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '12px 10px' }}>
                       <Badge variant={item.estado === 'VALIDADO' ? 'success' : item.estado === 'EN_PROCESO' ? 'info' : 'warning'}>
-                        {item.estado}
+                        {getDisplayLabel(item.estado)}
                       </Badge>
                     </td>
                     <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--color-strong)' }}>
@@ -515,7 +516,7 @@ export const OrderDetailPage: React.FC = () => {
                       width: '40px',
                       height: '40px',
                       borderRadius: '8px',
-                      backgroundColor: 'var(--color-surface, #ffffff)',
+                      backgroundColor: 'var(--color-background, #ffffff)',
                       border: '1px solid var(--color-border)',
                       display: 'flex',
                       alignItems: 'center',
@@ -528,7 +529,7 @@ export const OrderDetailPage: React.FC = () => {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <strong style={{ fontFamily: 'monospace', fontSize: '14px', color: 'var(--color-strong)' }}>
-                        {muestra.codigoMuestra}
+                        <span className="table-identifier">{muestra.codigoMuestra}</span>
                       </strong>
                       <Badge
                         variant={
@@ -539,7 +540,7 @@ export const OrderDetailPage: React.FC = () => {
                             : 'warning'
                         }
                       >
-                        {muestra.estado}
+                        {getDisplayLabel(muestra.estado)}
                       </Badge>
                       {muestra.esRetoma && <Badge variant="neutral">Retoma</Badge>}
                     </div>
@@ -568,8 +569,8 @@ export const OrderDetailPage: React.FC = () => {
       {/* Contenido Pestaña 3: Trazabilidad (L05) */}
       {tabActiva === 'trazabilidad' && (
         <Panel
-          title="Trazabilidad Cronológica de Muestra (L05)"
-          subtitle="Bitácora inmutable de eventos preanalíticos, recepción, rectificaciones y retomas"
+          title="Trazabilidad Cronológica de Muestra"
+          subtitle="Revisa los cambios registrados durante la toma, recepción y procesamiento."
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {orden.muestras.flatMap((m) => m.eventosTrazabilidad).length === 0 ? (
@@ -630,7 +631,7 @@ export const OrderDetailPage: React.FC = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <strong style={{ color: 'var(--color-strong)', fontSize: '13px' }}>
-                            {evento.tipoEvento} · Muestra {evento.codigoMuestra}
+                            {getDisplayLabel(evento.tipoEvento)} · Muestra {evento.codigoMuestra}
                           </strong>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginLeft: '8px' }}>
                             por {evento.actor}

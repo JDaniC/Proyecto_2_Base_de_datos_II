@@ -128,7 +128,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldCheck size={20} color="var(--color-primary)" />
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Seguros Médicos y Pólizas de Cobertura (H05)
+              Seguros Médicos y Pólizas de Cobertura
             </h2>
             <Badge variant="primary">{polizas.length} {polizas.length === 1 ? 'Póliza' : 'Pólizas'}</Badge>
           </div>
@@ -144,7 +144,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
           disabled={esArchivado}
           title={esArchivado ? 'Expediente archivado: no se pueden afiliar nuevas pólizas' : undefined}
         >
-          Afiliar Póliza (H05)
+          Afiliar Póliza
         </Button>
       </div>
 
@@ -281,7 +281,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
                       padding: '12px 14px',
                       backgroundColor: 'var(--color-background)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-field)',
+                      borderRadius: 'var(--radius-input)',
                       fontSize: '12px',
                       display: 'flex',
                       flexWrap: 'wrap',

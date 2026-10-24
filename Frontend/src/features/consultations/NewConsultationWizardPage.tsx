@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '../../services/errors';
+import { getDisplayLabel } from '../../services/displayLabels';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText,
@@ -27,7 +29,6 @@ import {
   RegistroConsultaCompletaDTO
 } from '../../services/types';
 import { Button } from '../../design-system/components/Button';
-import { Badge } from '../../design-system/components/Badge';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 
 const CATALOGO_CIE10 = [
@@ -90,6 +91,15 @@ export const NewConsultationWizardPage: React.FC = () => {
 
   // Paso del Stepper (1 a 5)
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const stepperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = stepperRef.current;
+    const active = container?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (container && active) {
+      container.scrollTo?.({ left: Math.max(0, active.offsetLeft - container.offsetLeft - 16), behavior: 'smooth' });
+    }
+  }, [paso]);
+
 
   // Paso 1: Datos Generales
   const [motivo, setMotivo] = useState('');
@@ -156,7 +166,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           if (cita.estado === 'CANCELADA') {
             setErrorBloqueanteCita({
               codigo: '409 ESTADO_INVALIDO',
-              mensaje: 'No se puede iniciar una consulta clínica vinculada a una cita en estado CANCELADA (CA06).'
+              mensaje: 'La cita está cancelada. No se puede iniciar una consulta desde esta cita.'
             });
             setCargandoInicial(false);
             return;
@@ -164,7 +174,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           if (cita.estado === 'ATENDIDA') {
             setErrorBloqueanteCita({
               codigo: '409 CITA_YA_ATENDIDA',
-              mensaje: 'La cita seleccionada ya fue atendida en una consulta previa y no admite duplicidad de atenciones (CA06).'
+              mensaje: 'Esta cita ya tiene una consulta registrada. Revisa el expediente para continuar.'
             });
             setCargandoInicial(false);
             return;
@@ -172,7 +182,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           if (cita.pacienteId !== pac?.id) {
             setErrorBloqueanteCita({
               codigo: '409 REFERENCIA_INCOMPATIBLE',
-              mensaje: 'La cita seleccionada pertenece a otro paciente y no es compatible con este expediente (CA17).'
+              mensaje: 'La cita seleccionada pertenece a otro paciente. Elige una cita del expediente actual.'
             });
             setCargandoInicial(false);
             return;
@@ -183,8 +193,8 @@ export const NewConsultationWizardPage: React.FC = () => {
           }
         }
         if (pac?.responsables && pac.responsables.length > 0) {
-          const principal = pac.responsables.find((r) => r.esPrincipal) || pac.responsables[0];
-          setResponsableAutorizaId(principal.id);
+          const principal = pac.responsables.find((r) => r.esPrincipal && r.autorizaAtencion) || pac.responsables.find(r => r.autorizaAtencion);
+          setResponsableAutorizaId(principal?.id || '');
         }
         setCargandoInicial(false);
       })
@@ -312,7 +322,7 @@ export const NewConsultationWizardPage: React.FC = () => {
         setErrorValidacion('El motivo de la consulta es obligatorio (mínimo 4 caracteres).');
         return;
       }
-      if (institucionId === 'CENTRO_PEDIATRICO' && paciente?.responsables?.length && !responsableAutorizaId) {
+      if (institucionId === 'CENTRO_PEDIATRICO' && !paciente?.responsables?.some(r => r.id === responsableAutorizaId && r.autorizaAtencion)) {
         setErrorValidacion('En Pediatría es obligatorio seleccionar el responsable que autoriza la atención.');
         return;
       }
@@ -343,6 +353,7 @@ export const NewConsultationWizardPage: React.FC = () => {
         setErrorValidacion('Ha indicado emitir receta pero no ha agregado ningún medicamento a la prescripción.');
         return;
       }
+      if (emitirReceta && medicamentos.some(m => !m.nombre.trim() || !m.presentacion.trim() || !m.dosis.trim() || !m.frecuencia.trim() || !m.duracion.trim() || !m.via.trim() || (institucionId === 'CENTRO_PEDIATRICO' && !m.concentracion.trim()))) { setErrorValidacion('Completa los datos de cada medicamento antes de continuar.'); return; }
       setPaso(5);
       return;
     }
@@ -396,13 +407,13 @@ export const NewConsultationWizardPage: React.FC = () => {
       navigate(`/pacientes/${pacienteId}?tab=consultas`);
     } catch (err: any) {
       setGuardando(false);
-      setErrorValidacion(err.message || 'Error al registrar la consulta médica.');
+      setErrorValidacion(getErrorMessage(err, 'Error al registrar la consulta médica.'));
     }
   };
 
   if (cargandoInicial) {
     return (
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 0 }}>
         <SkeletonLoader height="32px" width="300px" />
         <div style={{ marginTop: '20px' }}>
           <SkeletonLoader height="120px" width="100%" />
@@ -425,8 +436,8 @@ export const NewConsultationWizardPage: React.FC = () => {
   const pasosConfig = [
     { num: 1, label: 'Datos Consulta', icon: FileText },
     { num: 2, label: 'Signos Vitales', icon: Activity },
-    { num: 3, label: 'Diagnósticos (V12)', icon: ClipboardCheck },
-    { num: 4, label: 'Receta Médica (V13)', icon: Pill },
+    { num: 3, label: 'Diagnósticos', icon: ClipboardCheck },
+    { num: 4, label: 'Receta Médica', icon: Pill },
     { num: 5, label: 'Revisión Final', icon: CheckCircle2 }
   ];
 
@@ -463,7 +474,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           borderRadius: 'var(--radius-panel)',
           padding: '20px 24px',
           marginBottom: '24px',
-          boxShadow: 'var(--shadow-panel)'
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
@@ -471,10 +482,9 @@ export const NewConsultationWizardPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
                 {institucionId === 'CLINICA_ODONTOLOGICA'
-                  ? 'Registro de Consulta Odontológica (C03)'
-                  : 'Registro de Consulta Médica (Pantalla 04 Aprobada)'}
+                  ? 'Registro de Consulta Odontológica'
+                  : 'Registro de Consulta Médica'}
               </h1>
-              <Badge variant="primary">{sesion?.institucionNombre}</Badge>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
               <span>
@@ -521,12 +531,12 @@ export const NewConsultationWizardPage: React.FC = () => {
             borderRadius: 'var(--radius-panel)',
             padding: '24px',
             marginBottom: '24px',
-            boxShadow: 'var(--shadow-panel)'
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-danger-text)', fontWeight: 700, fontSize: '17px', marginBottom: '8px' }}>
             <AlertCircle size={22} />
-            <span>Conflicto de Cita Vinculada ({errorBloqueanteCita.codigo})</span>
+            <span>No se puede iniciar la consulta</span>
           </div>
           <p style={{ color: 'var(--color-danger-text)', fontSize: '14px', margin: '0 0 16px 0' }}>
             {errorBloqueanteCita.mensaje}
@@ -553,6 +563,10 @@ export const NewConsultationWizardPage: React.FC = () => {
 
       {/* Componente Stepper de 4 Pasos + Revisión Final (Design System #26) */}
       <div
+        ref={stepperRef}
+        className="consultation-stepper"
+        role="group"
+        aria-label="Pasos de la consulta"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -562,7 +576,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           borderRadius: 'var(--radius-panel)',
           padding: '16px 24px',
           marginBottom: '24px',
-          boxShadow: 'var(--shadow-panel)'
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
         {pasosConfig.map((item, idx) => {
@@ -577,6 +591,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                 onClick={() => {
                   if (item.num < paso) setPaso(item.num as any);
                 }}
+                aria-current={isActive ? 'step' : undefined}
                 disabled={item.num > paso}
                 style={{
                   display: 'flex',
@@ -667,13 +682,13 @@ export const NewConsultationWizardPage: React.FC = () => {
       )}
 
       {/* Contenido Dinámico por Paso */}
-      <div
+      <div className="consultation-step-content"
         style={{
           backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px 28px',
-          boxShadow: 'var(--shadow-panel)'
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
         {/* PASO 1: Datos de la Consulta */}
@@ -681,24 +696,9 @@ export const NewConsultationWizardPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
               {institucionId === 'CLINICA_ODONTOLOGICA'
-                ? 'Paso 1: Motivo de Consulta y Examen Estomatológico (C03)'
+                ? 'Paso 1: Motivo de Consulta y Examen Estomatológico'
                 : 'Paso 1: Motivo y Descripción del Cuadro Clínico'}
             </h2>
-
-            {institucionId === 'CLINICA_ODONTOLOGICA' && (
-              <div
-                style={{
-                  backgroundColor: 'var(--color-selection)',
-                  border: '1px solid var(--color-primary)',
-                  borderRadius: 'var(--radius-input)',
-                  padding: '10px 14px',
-                  fontSize: '13px',
-                  color: 'var(--color-strong)'
-                }}
-              >
-                <strong>Atención Odontológica Especializada (C03):</strong> Registro clínico estomatológico, tejidos periodontales y oclusión. Sin odontograma según alcance expreso (§8.3).
-              </div>
-            )}
 
             {/* Selector de responsable en Pediatría */}
             {institucionId === 'CENTRO_PEDIATRICO' && paciente.responsables && paciente.responsables.length > 0 && (
@@ -707,7 +707,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   htmlFor="responsable-select"
                   style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}
                 >
-                  Responsable legal que autoriza la atención médica (Pediatría RF-P04) <span style={{ color: 'var(--color-danger-text)' }}>*</span>
+                  Responsable legal que autoriza la atención médica <span style={{ color: 'var(--color-danger-text)' }}>*</span>
                 </label>
                 <select
                   id="responsable-select"
@@ -715,7 +715,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   onChange={(e) => setResponsableAutorizaId(e.target.value)}
                   style={{
                     width: '100%',
-                    backgroundColor: 'var(--color-input-bg)',
+                    backgroundColor: 'var(--color-control)',
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-input)',
                     padding: '10px 14px',
@@ -723,7 +723,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     color: 'var(--color-text)'
                   }}
                 >
-                  {paciente.responsables.map((r) => (
+                  {paciente.responsables.filter(r => r.autorizaAtencion).map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.nombre} ({r.parentesco}) — Tel: {r.telefono} {r.esPrincipal ? '· Principal' : ''}
                     </option>
@@ -745,10 +745,10 @@ export const NewConsultationWizardPage: React.FC = () => {
                 type="text"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ej. Control de hipertensión arterial y cifras glucémicas en ayunas..."
+                placeholder={institucionId === 'CLINICA_ODONTOLOGICA' ? "Ej. Dolor dental o revisión bucal" : "Describe el motivo de la atención"}
                 style={{
                   width: '100%',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   padding: '10px 14px',
@@ -758,13 +758,13 @@ export const NewConsultationWizardPage: React.FC = () => {
               />
             </div>
 
-            {/* Síntomas (Textarea 120px aprobado) */}
+            {/* Síntomas */}
             <div>
               <label
                 htmlFor="sintomas-input"
                 style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}
               >
-                Síntomas y evolución cronológica referida por el paciente (Textarea 120 px)
+                Síntomas y evolución
               </label>
               <textarea
                 id="sintomas-input"
@@ -775,7 +775,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   width: '100%',
                   minHeight: '120px',
                   height: '120px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   padding: '12px 14px',
@@ -786,13 +786,13 @@ export const NewConsultationWizardPage: React.FC = () => {
               />
             </div>
 
-            {/* Observaciones (Textarea 120px aprobado) */}
+            {/* Observaciones clínicas */}
             <div>
               <label
                 htmlFor="observaciones-input"
                 style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}
               >
-                Observaciones clínicas del examen físico y hallazgos inmediatos (Textarea 120 px)
+                Observaciones del examen físico
               </label>
               <textarea
                 id="observaciones-input"
@@ -803,7 +803,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   width: '100%',
                   minHeight: '120px',
                   height: '120px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   padding: '12px 14px',
@@ -838,7 +838,7 @@ export const NewConsultationWizardPage: React.FC = () => {
               >
                 <Info size={16} style={{ flexShrink: 0 }} />
                 <span>
-                  <strong>Regla clínica estricta:</strong> Los parámetros no medidos deben permanecer vacíos. La plataforma almacenará estrictamente <em>null</em> (nunca 0) para prevenir distorsión en curvas y falsas alertas.
+                  Deja vacío cualquier valor que no se haya medido.
                 </span>
               </div>
             </div>
@@ -858,7 +858,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={pesoKg}
                   onChange={(e) => setPesoKg(e.target.value)}
                   placeholder="ej. 72.5"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -875,15 +875,15 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={tallaCm}
                   onChange={(e) => setTallaCm(e.target.value)}
                   placeholder="ej. 170"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
               {imcCalculado && (
-                <div style={{ backgroundColor: 'var(--color-input-bg)', padding: '10px 14px', borderRadius: 'var(--radius-input)', border: '1px solid var(--color-border)' }}>
+                <div style={{ backgroundColor: 'var(--color-control)', padding: '10px 14px', borderRadius: 'var(--radius-input)', border: '1px solid var(--color-border)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>IMC calculado automáticamente:</span>
                   <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-strong)' }}>
-                    {imcCalculado.valor} kg/m² ({imcCalculado.estado})
+                    {imcCalculado.valor} kg/m² ({getDisplayLabel(imcCalculado.estado)})
                   </div>
                 </div>
               )}
@@ -901,7 +901,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={temperaturaC}
                   onChange={(e) => setTemperaturaC(e.target.value)}
                   placeholder="ej. 36.6"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -917,7 +917,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={presionSistolica}
                   onChange={(e) => setPresionSistolica(e.target.value)}
                   placeholder="ej. 120"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -933,7 +933,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={presionDiastolica}
                   onChange={(e) => setPresionDiastolica(e.target.value)}
                   placeholder="ej. 80"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -949,7 +949,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={frecuenciaCardiaca}
                   onChange={(e) => setFrecuenciaCardiaca(e.target.value)}
                   placeholder="ej. 72"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -965,7 +965,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={frecuenciaRespiratoria}
                   onChange={(e) => setFrecuenciaRespiratoria(e.target.value)}
                   placeholder="ej. 16"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -981,7 +981,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   value={saturacionOxigeno}
                   onChange={(e) => setSaturacionOxigeno(e.target.value)}
                   placeholder="ej. 98"
-                  style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                  style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                 />
               </div>
 
@@ -999,7 +999,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     value={perimetroCefalico}
                     onChange={(e) => setPerimetroCefalico(e.target.value)}
                     placeholder="ej. 43.5"
-                    style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                    style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
                   />
                 </div>
               )}
@@ -1012,7 +1012,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-                Paso 3: Diagnósticos (CIE-10) y Tratamientos Institucionales (V12)
+                Paso 3: Diagnósticos (CIE-10) y Tratamientos Institucionales
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                 Seleccione diagnósticos desde el catálogo. Si ingresa diagnósticos, debe marcar <strong>exactamente uno como principal</strong>.
@@ -1029,8 +1029,8 @@ export const NewConsultationWizardPage: React.FC = () => {
                 type="text"
                 value={busquedaCIE}
                 onChange={(e) => setBusquedaCIE(e.target.value)}
-                placeholder="Escriba código o nombre de patología (ej. Hipertensión, Diabetes, Gastritis, Asma)..."
-                style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
+                placeholder={institucionId === 'CLINICA_ODONTOLOGICA' ? "Buscar por código, caries o gingivitis" : "Buscar diagnóstico por código o nombre"}
+                style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '10px 14px', fontSize: '14px', color: 'var(--color-text)' }}
               />
 
               {busquedaCIE.trim().length > 0 && (
@@ -1060,8 +1060,8 @@ export const NewConsultationWizardPage: React.FC = () => {
               </div>
 
               {diagnosticos.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', backgroundColor: 'var(--color-input-bg)', borderRadius: '8px', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
-                  No se han agregado diagnósticos aún. Seleccione al menos uno desde el catálogo superior.
+                <div style={{ padding: '16px', textAlign: 'center', backgroundColor: 'var(--color-control)', borderRadius: '8px', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+                  No hay diagnósticos agregados. Busca en el catálogo cuando corresponda.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1113,7 +1113,7 @@ export const NewConsultationWizardPage: React.FC = () => {
               {institucionId === 'CLINICA_ODONTOLOGICA' && (
                 <div style={{ marginBottom: '12px' }}>
                   <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '6px' }}>
-                    Procedimientos odontológicos sugeridos del catálogo (C05):
+                    Tratamientos del catálogo odontológico:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA.map((t) => (
@@ -1125,7 +1125,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                           setNuevoTratamientoIndic(t.indicaciones);
                         }}
                         style={{
-                          backgroundColor: 'var(--color-input-bg)',
+                          backgroundColor: 'var(--color-control)',
                           border: '1px solid var(--color-border)',
                           borderRadius: '16px',
                           padding: '4px 10px',
@@ -1151,8 +1151,8 @@ export const NewConsultationWizardPage: React.FC = () => {
                     type="text"
                     value={nuevoTratamientoDesc}
                     onChange={(e) => setNuevoTratamientoDesc(e.target.value)}
-                    placeholder="ej. Dieta baja en sodio, curación de herida, reposo..."
-                    style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
+                    placeholder="Describe el tratamiento indicado"
+                    style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
                   />
                 </div>
                 <div>
@@ -1164,8 +1164,8 @@ export const NewConsultationWizardPage: React.FC = () => {
                     type="text"
                     value={nuevoTratamientoIndic}
                     onChange={(e) => setNuevoTratamientoIndic(e.target.value)}
-                    placeholder="ej. 30 minutos diarios de caminata ligera..."
-                    style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
+                    placeholder="Indicaciones para realizar el tratamiento"
+                    style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
                   />
                 </div>
                 <Button size="sm" variant="secondary" onClick={agregarTratamiento} leftIcon={<Plus size={14} />}>
@@ -1176,7 +1176,7 @@ export const NewConsultationWizardPage: React.FC = () => {
               {tratamientos.length > 0 && (
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {tratamientos.map((t, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-input-bg)', padding: '8px 12px', borderRadius: '6px', fontSize: '13px' }}>
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-control)', padding: '8px 12px', borderRadius: '6px', fontSize: '13px' }}>
                       <div>
                         <strong>{t.descripcion}</strong> {t.indicaciones ? `— ${t.indicaciones}` : ''}
                       </div>
@@ -1196,10 +1196,10 @@ export const NewConsultationWizardPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-                Paso 4: Prescripción y Receta Médica (V13)
+                Paso 4: Prescripción y Receta Médica
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                Emisión de orden farmacológica institucional con registro estructurado e instantánea inmutable.
+                Añade los medicamentos y sus indicaciones antes de finalizar la consulta.
               </p>
             </div>
 
@@ -1241,7 +1241,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                         type="button"
                         onClick={() => autocompletarMedicamento(m)}
                         style={{
-                          backgroundColor: 'var(--color-input-bg)',
+                          backgroundColor: 'var(--color-control)',
                           border: '1px solid var(--color-border)',
                           borderRadius: '16px',
                           padding: '4px 10px',
@@ -1257,7 +1257,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                 </div>
 
                 {/* Formulario de agregar medicamento */}
-                <div style={{ backgroundColor: 'var(--color-input-bg)', padding: '16px', borderRadius: 'var(--radius-input)', border: '1px solid var(--color-border)' }}>
+                <div style={{ backgroundColor: 'var(--color-control)', padding: '16px', borderRadius: 'var(--radius-input)', border: '1px solid var(--color-border)' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-strong)', marginBottom: '12px' }}>
                     Agregar fármaco a la prescripción:
                   </div>
@@ -1412,7 +1412,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   </div>
 
                   {medicamentos.length === 0 ? (
-                    <div style={{ padding: '16px', textAlign: 'center', backgroundColor: 'var(--color-input-bg)', borderRadius: '8px', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+                    <div style={{ padding: '16px', textAlign: 'center', backgroundColor: 'var(--color-control)', borderRadius: '8px', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
                       No ha agregado medicamentos a la receta aún.
                     </div>
                   ) : (
@@ -1462,7 +1462,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     value={observacionesReceta}
                     onChange={(e) => setObservacionesReceta(e.target.value)}
                     placeholder="ej. Reevaluar en 7 días si no hay mejoría. Hidratación constante..."
-                    style={{ width: '100%', backgroundColor: 'var(--color-input-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
+                    style={{ width: '100%', backgroundColor: 'var(--color-control)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-input)', padding: '8px 12px', fontSize: '13px' }}
                   />
                 </div>
               </div>
@@ -1507,14 +1507,14 @@ export const NewConsultationWizardPage: React.FC = () => {
                 </Button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px', fontSize: '13px' }}>
-                <div>Peso: <strong>{pesoKg ? `${pesoKg} kg` : 'No medido (null)'}</strong></div>
-                <div>Talla: <strong>{tallaCm ? `${tallaCm} cm` : 'No medido (null)'}</strong></div>
-                {imcCalculado && <div>IMC: <strong>{imcCalculado.valor} ({imcCalculado.estado})</strong></div>}
-                <div>Temperatura: <strong>{temperaturaC ? `${temperaturaC} °C` : 'No medido (null)'}</strong></div>
-                <div>Presión: <strong>{presionSistolica && presionDiastolica ? `${presionSistolica}/${presionDiastolica} mmHg` : 'No medido (null)'}</strong></div>
-                <div>Frec. Cardíaca: <strong>{frecuenciaCardiaca ? `${frecuenciaCardiaca} lpm` : 'No medido (null)'}</strong></div>
-                <div>Frec. Respiratoria: <strong>{frecuenciaRespiratoria ? `${frecuenciaRespiratoria} rpm` : 'No medido (null)'}</strong></div>
-                <div>Sat. O₂: <strong>{saturacionOxigeno ? `${saturacionOxigeno} %` : 'No medido (null)'}</strong></div>
+                <div>Peso: <strong>{pesoKg ? `${pesoKg} kg` : 'No medido'}</strong></div>
+                <div>Talla: <strong>{tallaCm ? `${tallaCm} cm` : 'No medido'}</strong></div>
+                {imcCalculado && <div>IMC: <strong>{imcCalculado.valor} ({getDisplayLabel(imcCalculado.estado)})</strong></div>}
+                <div>Temperatura: <strong>{temperaturaC ? `${temperaturaC} °C` : 'No medido'}</strong></div>
+                <div>Presión: <strong>{presionSistolica && presionDiastolica ? `${presionSistolica}/${presionDiastolica} mmHg` : 'No medido'}</strong></div>
+                <div>Frec. Cardíaca: <strong>{frecuenciaCardiaca ? `${frecuenciaCardiaca} lpm` : 'No medido'}</strong></div>
+                <div>Frec. Respiratoria: <strong>{frecuenciaRespiratoria ? `${frecuenciaRespiratoria} rpm` : 'No medido'}</strong></div>
+                <div>Sat. O₂: <strong>{saturacionOxigeno ? `${saturacionOxigeno} %` : 'No medido'}</strong></div>
               </div>
             </div>
 

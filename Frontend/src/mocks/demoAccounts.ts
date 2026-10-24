@@ -16,6 +16,7 @@ export const DEMO_ACCOUNTS: CuentaDemo[] = [
     permisos: [
       'pacientes.administrar',
       'historial.leer',
+      'historial.archivar',
       'citas.administrar',
       'consultas.registrar',
       'diagnosticos.registrar',
@@ -94,6 +95,7 @@ export const DEMO_ACCOUNTS: CuentaDemo[] = [
     permisos: [
       'pacientes.administrar',
       'historial.leer',
+      'historial.archivar',
       'citas.administrar',
       'consultas.registrar',
       'diagnosticos.registrar',
@@ -157,6 +159,8 @@ export const DEMO_ACCOUNTS: CuentaDemo[] = [
       'resultados.analizar',
       'resultados.validar',
       'informes.emitir',
+      'usuarios.administrar',
+      'auditoria.leer',
       'cobros.administrar',
       'inventario.administrar',
     ],
@@ -177,6 +181,7 @@ export const DEMO_ACCOUNTS: CuentaDemo[] = [
     permisos: [
       'pacientes.administrar',
       'historial.leer',
+      'historial.archivar',
       'citas.administrar',
       'consultas.registrar',
       'diagnosticos.registrar',
@@ -216,6 +221,8 @@ export const DEMO_ACCOUNTS: CuentaDemo[] = [
     permisos: [
       'pacientes.administrar',
       'historial.leer',
+      'historial.archivar',
+      'auditoria.leer',
       'citas.administrar',
       'consultas.registrar',
       'diagnosticos.registrar',

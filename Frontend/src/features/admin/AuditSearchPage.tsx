@@ -1,3 +1,4 @@
+import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
@@ -13,6 +14,7 @@ import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { EmptyState } from '../../design-system/components/EmptyState';
 import { DetalleEventoAuditoriaModal } from './DetalleEventoAuditoriaModal';
 import { EventoAuditoria, FiltrosAuditoriaQuery } from '../../services/types';
+import { AUDIT_ACTION_LABELS, AUDIT_RESOURCE_LABELS, AUDIT_SEVERITY_LABELS } from './auditLabels';
 
 export const AuditSearchPage: React.FC = () => {
   const { sesion } = useAuthSession();
@@ -81,13 +83,13 @@ export const AuditSearchPage: React.FC = () => {
         <span style={{ margin: '0 8px' }}>/</span>
         <span>Administración</span>
         <span style={{ margin: '0 8px' }}>/</span>
-        <strong style={{ color: 'var(--color-strong)' }}>Auditoría y Trazabilidad (V18)</strong>
+        <strong style={{ color: 'var(--color-strong)' }}>Registro de actividad</strong>
       </nav>
 
       {/* Cabecera Principal V18 */}
       <div
         style={{
-          backgroundColor: 'var(--color-surface)',
+          backgroundColor: 'var(--color-background)',
           border: '1px solid var(--color-border)',
           borderRadius: 'var(--radius-panel)',
           padding: '24px',
@@ -115,20 +117,14 @@ export const AuditSearchPage: React.FC = () => {
               <ShieldCheck size={20} />
             </div>
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-strong)' }}>
-              Bitácora de Auditoría y Trazabilidad (V18)
+              Registro de actividad
             </h1>
-            <Badge variant="info">Inmutable</Badge>
           </div>
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--color-text-secondary)', maxWidth: '780px', lineHeight: 1.5 }}>
-            Búsqueda e inspección de eventos institucionales (`RF-014`): rectificaciones clínicas versionadas (`CA10`),
-            bajas y reactivaciones de historiales (`DEC-03`), asignación de roles y emisión de recetas oficiales sin exponer
-            claves ni secretos.
+            Consulta las acciones realizadas en esta institución y revisa sus detalles.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Badge variant="primary">{sesion?.institucionNombre || 'Institución Activa'}</Badge>
-        </div>
       </div>
 
       {/* Panel de Filtros */}
@@ -149,7 +145,7 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
@@ -169,22 +165,22 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
                 <option value="TODAS">Todas las acciones</option>
-                <option value="CREACION">CREACION</option>
-                <option value="MODIFICACION">MODIFICACION</option>
-                <option value="RECTIFICACION_CA10">RECTIFICACION_CA10</option>
-                <option value="ARCHIVADO_EXPEDIENTE">ARCHIVADO_EXPEDIENTE</option>
-                <option value="REACTIVACION_EXPEDIENTE">REACTIVACION_EXPEDIENTE</option>
-                <option value="CAMBIO_ESTADO_CUENTA">CAMBIO_ESTADO_CUENTA</option>
-                <option value="ASIGNACION_PERMISOS">ASIGNACION_PERMISOS</option>
-                <option value="EMISION_RECETA">EMISION_RECETA</option>
-                <option value="ACCESO_CLINICO">ACCESO_CLINICO</option>
+                <option value="CREACION">Creación</option>
+                <option value="MODIFICACION">Modificación</option>
+                <option value="RECTIFICACION_CA10">Corrección clínica</option>
+                <option value="ARCHIVADO_EXPEDIENTE">Expediente archivado</option>
+                <option value="REACTIVACION_EXPEDIENTE">Expediente reactivado</option>
+                <option value="CAMBIO_ESTADO_CUENTA">Cambio de cuenta</option>
+                <option value="ASIGNACION_PERMISOS">Cambio de permisos</option>
+                <option value="EMISION_RECETA">Receta emitida</option>
+                <option value="ACCESO_CLINICO">Acceso clínico</option>
               </select>
             </div>
 
@@ -200,21 +196,21 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
                 <option value="TODOS">Todos los recursos</option>
-                <option value="PACIENTE">PACIENTE</option>
-                <option value="EXPEDIENTE">EXPEDIENTE</option>
-                <option value="CONSULTA">CONSULTA</option>
-                <option value="RECETA">RECETA</option>
-                <option value="USUARIO">USUARIO</option>
-                <option value="ROL">ROL</option>
-                <option value="CATALOGO_MEDICO">CATALOGO_MEDICO</option>
-                <option value="PRUEBA_LAB">PRUEBA_LAB</option>
+                <option value="PACIENTE">Paciente</option>
+                <option value="EXPEDIENTE">Expediente</option>
+                <option value="CONSULTA">Consulta</option>
+                <option value="RECETA">Receta</option>
+                <option value="USUARIO">Usuario</option>
+                <option value="ROL">Rol</option>
+                <option value="CATALOGO_MEDICO">Catálogo médico</option>
+                <option value="PRUEBA_LAB">Prueba de laboratorio</option>
               </select>
             </div>
 
@@ -232,7 +228,7 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
@@ -253,7 +249,7 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
@@ -274,7 +270,7 @@ export const AuditSearchPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  backgroundColor: 'var(--color-input-bg)',
+                  backgroundColor: 'var(--color-control)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
@@ -307,7 +303,7 @@ export const AuditSearchPage: React.FC = () => {
               Eventos Registrados ({eventos.length})
             </h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-              Orden cronológico descendente • Firma inmutable
+              Ordenados del más reciente al más antiguo
             </span>
           </div>
         </div>
@@ -355,7 +351,7 @@ export const AuditSearchPage: React.FC = () => {
 
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 600, color: 'var(--color-strong)' }}>{ev.actor.nombre}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{ev.actor.rol}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{getDisplayLabel(ev.actor.rol)}</div>
                     </td>
 
                     <td style={{ padding: '12px' }}>
@@ -370,14 +366,14 @@ export const AuditSearchPage: React.FC = () => {
                             : 'info'
                         }
                       >
-                        {ev.accion}
+                        {AUDIT_ACTION_LABELS[ev.accion] || 'Actividad'}
                       </Badge>
                     </td>
 
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 500, color: 'var(--color-strong)' }}>{ev.recursoNombre}</div>
                       <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                        {ev.tipoRecurso} {ev.versionAfectada && `(${ev.versionAfectada})`}
+                        {AUDIT_RESOURCE_LABELS[ev.tipoRecurso] || 'Registro'} {ev.versionAfectada && `(versión ${ev.versionAfectada})`}
                       </div>
                     </td>
 
@@ -391,7 +387,7 @@ export const AuditSearchPage: React.FC = () => {
                             : 'neutral'
                         }
                       >
-                        {ev.severidad}
+                        {AUDIT_SEVERITY_LABELS[ev.severidad] || 'Información'}
                       </Badge>
                     </td>
 

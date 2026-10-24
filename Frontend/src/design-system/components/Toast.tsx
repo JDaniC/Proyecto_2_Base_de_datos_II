@@ -37,12 +37,15 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
     <div
       aria-live="polite"
       role="status"
+      aria-atomic="true"
       style={{
         position: 'fixed',
         bottom: '24px',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 2000,
+        width: 'max-content',
+        maxWidth: 'min(560px, calc(100vw - 32px))',
         pointerEvents: 'none',
       }}
     >
@@ -50,7 +53,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
         style={{
           pointerEvents: 'auto',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: '12px',
           backgroundColor: 'var(--color-background)',
           color: 'var(--color-text)',
@@ -64,7 +67,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
         }}
       >
         <span style={{ display: 'inline-flex', flexShrink: 0 }}>{iconMap[type]}</span>
-        <span>{toast.message}</span>
+        <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{toast.message}</span>
         <button
           type="button"
           onClick={onClose}
@@ -78,6 +81,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
             marginLeft: '8px',
             borderRadius: '4px',
             display: 'inline-flex',
+            flexShrink: 0,
           }}
         >
           <X size={16} />

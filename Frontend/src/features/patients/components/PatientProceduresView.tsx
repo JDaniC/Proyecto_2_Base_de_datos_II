@@ -141,7 +141,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Activity size={20} color="var(--color-primary)" />
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
-              Procedimientos Clínicos y Quirúrgicos Realizados (H07)
+              Procedimientos Clínicos y Quirúrgicos Realizados
             </h2>
             <Badge variant="primary">{procedimientos.length} {procedimientos.length === 1 ? 'Procedimiento' : 'Procedimientos'}</Badge>
           </div>
@@ -157,7 +157,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           disabled={esArchivado}
           title={esArchivado ? 'Expediente archivado: no se pueden registrar nuevos procedimientos' : undefined}
         >
-          Registrar Procedimiento (H07)
+          Registrar Procedimiento
         </Button>
       </div>
 
@@ -204,10 +204,10 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           onClick={() => setFiltroOrigen('TODOS')}
           style={{
             padding: '6px 12px',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             border: '1px solid var(--color-border)',
             backgroundColor: filtroOrigen === 'TODOS' ? 'var(--color-selection)' : 'var(--color-background)',
-            color: filtroOrigen === 'TODOS' ? 'var(--color-primary)' : 'var(--color-text-primary)',
+            color: filtroOrigen === 'TODOS' ? 'var(--color-primary)' : 'var(--color-strong)',
             fontWeight: filtroOrigen === 'TODOS' ? 600 : 400,
             fontSize: '12px',
             cursor: 'pointer'
@@ -219,10 +219,10 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           onClick={() => setFiltroOrigen('HOSPITALIZACION')}
           style={{
             padding: '6px 12px',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             border: '1px solid var(--color-border)',
             backgroundColor: filtroOrigen === 'HOSPITALIZACION' ? 'var(--color-selection)' : 'var(--color-background)',
-            color: filtroOrigen === 'HOSPITALIZACION' ? 'var(--color-primary)' : 'var(--color-text-primary)',
+            color: filtroOrigen === 'HOSPITALIZACION' ? 'var(--color-primary)' : 'var(--color-strong)',
             fontWeight: filtroOrigen === 'HOSPITALIZACION' ? 600 : 400,
             fontSize: '12px',
             cursor: 'pointer'
@@ -234,10 +234,10 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           onClick={() => setFiltroOrigen('CONSULTA')}
           style={{
             padding: '6px 12px',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             border: '1px solid var(--color-border)',
             backgroundColor: filtroOrigen === 'CONSULTA' ? 'var(--color-selection)' : 'var(--color-background)',
-            color: filtroOrigen === 'CONSULTA' ? 'var(--color-primary)' : 'var(--color-text-primary)',
+            color: filtroOrigen === 'CONSULTA' ? 'var(--color-primary)' : 'var(--color-strong)',
             fontWeight: filtroOrigen === 'CONSULTA' ? 600 : 400,
             fontSize: '12px',
             cursor: 'pointer'
@@ -299,7 +299,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
       <Modal
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
-        title="Registrar Procedimiento Clínico Realizado (H07)"
+        title="Registrar Procedimiento Clínico Realizado"
         maxWidth="600px"
       >
         <form onSubmit={handleRegistrar} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -319,7 +319,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                 width: '100%',
                 padding: '8px 10px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 backgroundColor: 'var(--color-panel)',
                 fontSize: '13px'
               }}
@@ -345,7 +345,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -368,7 +368,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -392,7 +392,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                 width: '100%',
                 padding: '8px 10px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -416,7 +416,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                 width: '100%',
                 padding: '8px 10px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -439,7 +439,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
                 width: '100%',
                 padding: '8px 10px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -455,7 +455,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
               disabled={guardando}
               aria-label="Confirmar registro de procedimiento realizado"
             >
-              {guardando ? 'Guardando...' : 'Guardar Procedimiento (H07)'}
+              {guardando ? 'Guardando...' : 'Guardar Procedimiento'}
             </Button>
           </div>
         </form>

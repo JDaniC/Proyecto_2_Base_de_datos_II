@@ -1,6 +1,8 @@
 import { CatalogRepository } from '../services/contracts';
 import {
   InstitucionId,
+  CategoriaReferenciaLab,
+  ReferenciaLaboratorio,
   MedicoCatalogo,
   AseguradoraCatalogo,
   ProcedimientoOdontologico,
@@ -15,6 +17,41 @@ const STORAGE_LAB = 'clinica_catalog_lab_v1';
 const STORAGE_VACUNAS = 'clinica_catalog_vacunas_v1';
 
 export class MockCatalogRepository implements CatalogRepository {
+  private referenciasLab: ReferenciaLaboratorio[] | null = null;
+
+  private cargarReferenciasLab(): ReferenciaLaboratorio[] {
+    if (this.referenciasLab) return this.referenciasLab;
+    try { this.referenciasLab = JSON.parse(localStorage.getItem('clinica_lab_referencias_v1') || 'null'); } catch { /* Start from fixtures. */ }
+    if (!this.referenciasLab) {
+      const seeds: Array<[CategoriaReferenciaLab, string]> = [
+        ['solicitantes', 'Dr. Arturo Valenzuela'],
+        ...Array.from(new Set(this.pruebasLab.map(p => p.tipoMuestra))).map(n => ['tipos-muestra', n] as [CategoriaReferenciaLab, string]),
+        ...Array.from(new Set(this.pruebasLab.map(p => p.metodoAnalitico))).map(n => ['metodos', n] as [CategoriaReferenciaLab, string]),
+        ['proveedores', 'Distribuidora de insumos clínicos'], ['reactivos', 'Reactivo de química clínica']
+      ];
+      this.referenciasLab = seeds.map(([categoria, nombre], i) => ({ id: `ref-lab-${i}`, categoria, nombre, estado: 'ACTIVO' }));
+    }
+    return this.referenciasLab;
+  }
+
+  async obtenerReferenciasLaboratorio(institucionId: InstitucionId, categoria: CategoriaReferenciaLab): Promise<ReferenciaLaboratorio[]> {
+    if (institucionId !== 'LABORATORIO_CLINICO') throw new Error('Este catálogo pertenece al laboratorio.');
+    return structuredClone(this.cargarReferenciasLab().filter(r => r.categoria === categoria));
+  }
+
+  async guardarReferenciaLaboratorio(institucionId: InstitucionId, referencia: Omit<ReferenciaLaboratorio, 'id'> & { id?: string }): Promise<ReferenciaLaboratorio> {
+    if (institucionId !== 'LABORATORIO_CLINICO') throw new Error('Este catálogo pertenece al laboratorio.');
+    const lista = this.cargarReferenciasLab();
+    const nombre = referencia.nombre.trim();
+    if (!nombre) throw new Error('El nombre es obligatorio.');
+    if (lista.some(r => r.id !== referencia.id && r.categoria === referencia.categoria && r.nombre.toLocaleLowerCase() === nombre.toLocaleLowerCase())) throw new Error('Ya existe un registro con ese nombre.');
+    if (referencia.id && !lista.some(r => r.id === referencia.id && r.categoria === referencia.categoria)) throw new Error('Registro no encontrado.');
+    const guardada: ReferenciaLaboratorio = { ...referencia, nombre, id: referencia.id || `ref-${crypto.randomUUID()}` };
+    this.referenciasLab = referencia.id ? lista.map(r => r.id === referencia.id ? guardada : r) : [...lista, guardada];
+    localStorage.setItem('clinica_lab_referencias_v1', JSON.stringify(this.referenciasLab));
+    return structuredClone(guardada);
+  }
+
   private medicos: MedicoCatalogo[] = [];
   private aseguradoras: AseguradoraCatalogo[] = [];
   private procedimientosOdonto: ProcedimientoOdontologico[] = [];
@@ -375,7 +412,7 @@ export class MockCatalogRepository implements CatalogRepository {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.pruebasLab.findIndex((p) => p.id === pruebaId);
     if (index === -1) {
-      throw new Error(`Prueba de laboratorio ${pruebaId} no encontrada.`);
+      throw new Error('No se encontró la prueba de laboratorio. Actualiza la vista e inténtalo de nuevo.');
     }
 
     const anterior = this.pruebasLab[index];
@@ -398,7 +435,7 @@ export class MockCatalogRepository implements CatalogRepository {
     await new Promise((res) => setTimeout(res, 30));
     const index = this.pruebasLab.findIndex((p) => p.id === pruebaId);
     if (index === -1) {
-      throw new Error(`Prueba de laboratorio ${pruebaId} no encontrada.`);
+      throw new Error('No se encontró la prueba de laboratorio. Actualiza la vista e inténtalo de nuevo.');
     }
 
     this.pruebasLab[index] = {
@@ -436,7 +473,7 @@ export class MockCatalogRepository implements CatalogRepository {
   ): Promise<VacunaCatalogo> {
     await new Promise((res) => setTimeout(res, 50));
     const index = this.vacunas.findIndex((v) => v.id === vacunaId);
-    if (index === -1) throw new Error(`Vacuna ${vacunaId} no encontrada.`);
+    if (index === -1) throw new Error('No se encontró la vacuna. Actualiza la vista e inténtalo de nuevo.');
 
     this.vacunas[index] = {
       ...this.vacunas[index],

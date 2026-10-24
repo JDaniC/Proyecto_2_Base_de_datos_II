@@ -58,6 +58,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             aria-describedby={describedBy}
             style={{
               width: '100%',
+              minWidth: 0,
               border: 'none',
               outline: 'none',
               background: 'transparent',

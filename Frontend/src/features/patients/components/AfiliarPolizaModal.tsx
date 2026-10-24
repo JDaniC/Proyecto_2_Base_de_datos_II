@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertCircle } from 'lucide-react';
 import { Modal } from '../../../design-system/components/Modal';
@@ -121,7 +122,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al afiliar la póliza');
+      setError(getErrorMessage(err, 'Error al afiliar la póliza'));
     } finally {
       setGuardando(false);
     }
@@ -131,7 +132,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Afiliar Póliza de Seguro Médico (H05)"
+      title="Afiliar Póliza de Seguro Médico"
       maxWidth="620px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -141,7 +142,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
               padding: '10px 14px',
               backgroundColor: '#fee2e2',
               color: '#991b1b',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
@@ -171,7 +172,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             >
@@ -199,7 +200,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             >
@@ -232,7 +233,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -256,7 +257,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -282,7 +283,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -305,7 +306,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -328,7 +329,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             />
@@ -341,7 +342,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
             padding: '14px',
             backgroundColor: 'var(--color-background)',
             border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px'
@@ -380,7 +381,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -402,7 +403,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               >
@@ -433,7 +434,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -456,7 +457,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                   width: '100%',
                   padding: '8px 10px',
                   border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-field)',
+                  borderRadius: 'var(--radius-input)',
                   fontSize: '13px'
                 }}
               />
@@ -481,7 +482,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           />

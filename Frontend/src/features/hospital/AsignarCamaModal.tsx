@@ -1,3 +1,5 @@
+import { toClinicDateTimeInput, fromClinicDateTimeInput } from '../../services/dates';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, ArrowRightLeft } from 'lucide-react';
 import { Modal } from '../../design-system/components/Modal';
@@ -22,7 +24,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
 }) => {
   const [nuevaCamaId, setNuevaCamaId] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>(
-    new Date().toISOString().slice(0, 16)
+    toClinicDateTimeInput()
   );
   const [motivo, setMotivo] = useState<string>('');
   const [guardando, setGuardando] = useState(false);
@@ -52,10 +54,10 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
 
     setGuardando(true);
     try {
-      await onConfirm(nuevaCamaId, new Date(fechaInicio).toISOString(), motivo.trim());
+      await onConfirm(nuevaCamaId, fromClinicDateTimeInput(fechaInicio), motivo.trim());
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al asignar cama');
+      setError(getErrorMessage(err, 'Error al asignar cama'));
     } finally {
       setGuardando(false);
     }
@@ -65,7 +67,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Asignar o Trasladar Cama Hospitalaria (H04)"
+      title="Asignar o Trasladar Cama Hospitalaria"
       maxWidth="560px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -74,7 +76,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
             padding: '12px 14px',
             backgroundColor: 'var(--color-selection)',
             border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-field)',
+            borderRadius: 'var(--radius-input)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
@@ -88,7 +90,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
               {hospitalizacion.codigoIngreso} • Cama actual: {hospitalizacion.camaActual?.codigoCama || 'Ninguna'}
             </div>
           </div>
-          <Badge variant="neutral">Intervalo semiabierto [inicio, fin) (CA17)</Badge>
+          <Badge variant="neutral">En curso</Badge>
         </div>
 
         {error && (
@@ -97,7 +99,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
               padding: '10px 14px',
               backgroundColor: '#fee2e2',
               color: '#991b1b',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
@@ -118,7 +120,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
             Cama Destino (Disponibles en el hospital)
           </label>
           {camasLibres.length === 0 ? (
-            <div style={{ padding: '12px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: 'var(--radius-field)', fontSize: '13px' }}>
+            <div style={{ padding: '12px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: 'var(--radius-input)', fontSize: '13px' }}>
               No hay camas disponibles actualmente en la institución.
             </div>
           ) : (
@@ -131,7 +133,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
                 width: '100%',
                 padding: '9px 12px',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-field)',
+                borderRadius: 'var(--radius-input)',
                 fontSize: '13px'
               }}
             >
@@ -162,12 +164,12 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px'
             }}
           />
           <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '4px', display: 'block' }}>
-            La cama previa registrará su fin exactamente en este instante, previniendo solapamiento temporal.
+            La asignación actual finalizará cuando se confirme el traslado.
           </span>
         </div>
 
@@ -184,13 +186,13 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
             rows={3}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
-            placeholder="Ejemplo: Requerimiento de monitoreo intensivo, mejoría hemodinámica, pase a sala común..."
+            placeholder="Ej.: requiere cuidados intermedios o presenta mejoría clínica..."
             required
             style={{
               width: '100%',
               padding: '9px 12px',
               border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-field)',
+              borderRadius: 'var(--radius-input)',
               fontSize: '13px',
               fontFamily: 'inherit',
               resize: 'vertical'
@@ -217,7 +219,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
             disabled={guardando || camasLibres.length === 0}
             leftIcon={<ArrowRightLeft size={16} />}
           >
-            {guardando ? 'Asignando...' : 'Confirmar Traslado (H04)'}
+            {guardando ? 'Asignando...' : 'Confirmar Traslado'}
           </Button>
         </div>
       </form>

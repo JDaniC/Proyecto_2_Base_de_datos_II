@@ -1,3 +1,5 @@
+import { Modal } from '../../../design-system/components/Modal';
+import { getErrorMessage } from '../../../services/errors';
 import React, { useState } from 'react';
 import {
   Users,
@@ -55,6 +57,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
   const [guardando, setGuardando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [responsableParaEliminar, setResponsableParaEliminar] = useState<ResponsablePediatrico | null>(null);
 
   // Sincronizar estado local si cambia el paciente prop
   React.useEffect(() => {
@@ -111,7 +114,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
       setModalNuevoAbierto(false);
       await onActualizado();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al registrar responsable.';
+      const msg = getErrorMessage(err, 'Error al registrar responsable.');
       setErrorAccion(msg);
     } finally {
       setGuardando(false);
@@ -129,9 +132,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
 
     // Regla CA09: Prevenir desmarcar al único principal
     if (!esPrincipal && responsableAEditar.esPrincipal && principalesCount <= 1) {
-      setErrorAccion(
-        'Regla CA09: No es posible desmarcar la principalidad del único responsable principal del menor. Debe designar otro principal antes.'
-      );
+      setErrorAccion('Este menor debe tener al menos un responsable principal. Asigna otro antes de cambiar este vínculo.');
       return;
     }
 
@@ -153,7 +154,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
       setResponsableAEditar(null);
       await onActualizado();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al actualizar responsable.';
+      const msg = getErrorMessage(err, 'Error al actualizar responsable.');
       setErrorAccion(msg);
     } finally {
       setGuardando(false);
@@ -163,24 +164,22 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
   const handleEliminarResponsable = async (resp: ResponsablePediatrico) => {
     // Regla CA09: Prevenir eliminar al último principal
     if (resp.esPrincipal && principalesCount <= 1) {
-      setErrorAccion(
-        'Regla CA09: No es posible dar de baja al único responsable principal del menor. Debe designar otro responsable principal antes de proceder.'
-      );
-      return;
-    }
-
-    if (!confirm(`¿Confirma que desea desvincular al responsable «${resp.nombre}»?`)) {
+      setErrorAccion('Este menor debe conservar al menos un responsable principal. Asigna otro antes de retirar este vínculo.');
       return;
     }
 
     try {
       setErrorAccion(null);
+      setGuardando(true);
       await patientRepository.eliminarResponsable(institucionId, paciente.id, resp.id);
       setMensajeExito(`Responsable «${resp.nombre}» desvinculado.`);
+      setResponsableParaEliminar(null);
       await onActualizado();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al desvincular responsable.';
+      const msg = getErrorMessage(err, 'Error al desvincular responsable.');
       setErrorAccion(msg);
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -193,7 +192,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
       setMensajeExito(`«${resp.nombre}» ha sido designado como Responsable Principal.`);
       await onActualizado();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al actualizar principalidad.';
+      const msg = getErrorMessage(err, 'Error al actualizar principalidad.');
       setErrorAccion(msg);
     }
   };
@@ -232,39 +231,28 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
       )}
 
       {/* Banner de Verificación de Consentimiento Clínico (CA09) */}
-      {tieneAutorizacionActiva ? (
-        <Alert
-          variant="success"
-          title="Facultad de Consentimiento Clínico Acreditada (Regla CA09)"
-        >
-          El expediente pediátrico de <strong>{paciente.nombreCompleto}</strong> cuenta con tutores
-          legales debidamente acreditados y facultados para autorizar consultas, procedimientos
-          médicos e inmunizaciones oficiales.
-        </Alert>
-      ) : (
+      {!tieneAutorizacionActiva && (
         <Alert
           variant="danger"
-          title="Atención Médica Bloqueada por Falta de Consentimiento (Regla CA09)"
+          title="Falta una persona autorizada para consentir la atención"
         >
-          Ningún responsable registrado posee la facultad activa de <code>autoriza_atencion = true</code>.
-          Conforme a las normativas de patria potestad y la regla clínica <code>CA09</code>, es obligatorio
-          que al menos un tutor autorice formalmente la atención médica del menor antes de iniciar consultas.
+          Asigna este permiso a una persona responsable antes de iniciar la atención.
         </Alert>
       )}
 
       {/* Panel Principal */}
       <Panel
         title={`Responsables y Tutores Legales (${responsables.length})`}
-        subtitle="Vínculos familiares, patria potestad y facultades independientes de consentimiento médico (P01, CA09)"
+        subtitle="Personas responsables y permisos para autorizar la atención"
         action={
           <Button
             variant="primary"
             size="sm"
             onClick={abrirModalNuevo}
-            className="flex items-center gap-1.5 bg-[#20666B] hover:bg-[#184d50] text-white text-xs"
+            className="flex items-center gap-1.5 bg-clinic-primary hover:bg-clinic-primary-dark text-white text-xs"
           >
             <Plus size={15} />
-            Vincular Nuevo Responsable (CA09)
+            Vincular Nuevo Responsable
           </Button>
         }
       >
@@ -273,13 +261,13 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
             <Users size={36} className="mx-auto text-slate-300 mb-2" />
             <p className="font-semibold text-slate-700">Sin responsables vinculados</p>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Regla CA09: Todo menor debe tener vinculado al menos un responsable con principalidad obligatoria.
+              Todo menor debe tener al menos un responsable principal.
             </p>
             <Button
               variant="primary"
               size="sm"
               onClick={abrirModalNuevo}
-              className="mt-4 bg-[#20666B] text-white text-xs"
+              className="mt-4 bg-clinic-primary text-white text-xs"
             >
               Registrar Primer Responsable
             </Button>
@@ -294,7 +282,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                   key={resp.id}
                   className={`p-4 rounded-xl border transition-all ${
                     resp.esPrincipal
-                      ? 'bg-white border-[#20666B]/30 shadow-sm ring-1 ring-[#20666B]/10'
+                      ? 'bg-white border-clinic-primary-soft shadow-sm ring-1 ring-clinic-primary-soft'
                       : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
                   }`}
                 >
@@ -304,7 +292,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                       <div
                         className={`p-2 rounded-lg ${
                           resp.esPrincipal
-                            ? 'bg-[#20666B]/10 text-[#20666B]'
+                            ? 'bg-clinic-primary-soft text-clinic-primary'
                             : 'bg-slate-100 text-slate-600'
                         }`}
                       >
@@ -312,7 +300,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-sm">{resp.nombre}</h4>
-                        <p className="text-xs font-semibold text-[#20666B]">{resp.parentesco}</p>
+                        <p className="text-xs font-semibold text-clinic-primary">{resp.parentesco}</p>
                       </div>
                     </div>
 
@@ -330,11 +318,11 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                         variant="danger"
                         size="sm"
                         disabled={esUnicoPrincipal}
-                        onClick={() => handleEliminarResponsable(resp)}
+                        onClick={() => { setErrorAccion(null); setResponsableParaEliminar(resp); }}
                         className="px-2 py-1 text-xs"
                         title={
                           esUnicoPrincipal
-                            ? 'Regla CA09: No es posible dar de baja al único responsable principal del menor'
+                            ? 'El menor debe conservar al menos un responsable principal'
                             : 'Desvincular tutor'
                         }
                       >
@@ -389,7 +377,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                       <button
                         type="button"
                         onClick={() => handleHacerPrincipalDirecto(resp)}
-                        className="text-[11px] font-semibold text-[#20666B] hover:underline"
+                        className="text-[11px] font-semibold text-clinic-primary hover:underline"
                       >
                         Hacer Principal
                       </button>
@@ -402,29 +390,29 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
         )}
       </Panel>
 
+      <Modal
+        isOpen={Boolean(responsableParaEliminar)}
+        onClose={() => { if (!guardando) setResponsableParaEliminar(null); }}
+        title="Desvincular responsable"
+        footer={<>
+          <Button variant="secondary" disabled={guardando} onClick={() => setResponsableParaEliminar(null)}>Volver</Button>
+          <Button variant="danger" loading={guardando} onClick={() => responsableParaEliminar && handleEliminarResponsable(responsableParaEliminar)}>Desvincular</Button>
+        </>}
+      >
+        {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
+        <p>Se retirará el vínculo de <strong>{responsableParaEliminar?.nombre}</strong> con este expediente. Confirma que deseas continuar.</p>
+      </Modal>
+
       {/* MODAL 1: Vincular Nuevo Responsable (CA09) */}
       {modalNuevoAbierto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#20666B]/10 rounded-md text-[#20666B]">
-                  <Users size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Vincular Tutor / Responsable Legal</h3>
-                  <p className="text-xs text-slate-500">Expediente pediátrico (Regla CA09)</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setModalNuevoAbierto(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCrearResponsable} className="p-6 space-y-4 text-xs">
+      <Modal
+        isOpen={modalNuevoAbierto}
+        onClose={() => setModalNuevoAbierto(false)}
+        title="Vincular responsable legal"
+        maxWidth="520px"
+      >
+        <form onSubmit={handleCrearResponsable} className="space-y-4">
+              {errorAccion && <Alert variant="danger">{errorAccion}</Alert>}
               <Input
                 label="Nombre completo del responsable *"
                 value={nombre}
@@ -467,7 +455,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
               {/* Checkboxes de facultades independientes (CA09) */}
               <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                 <p className="font-bold text-slate-800 text-xs uppercase tracking-wider">
-                  Facultades Legales y de Atención (Regla CA09)
+                  Facultades Legales y de Atención
                 </p>
 
                 <label className="flex items-start gap-2.5 cursor-pointer">
@@ -475,11 +463,11 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                     type="checkbox"
                     checked={esPrincipal}
                     onChange={(e) => setEsPrincipal(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#20666B] focus:ring-[#20666B]"
+                    className="mt-0.5 w-4 h-4 rounded text-clinic-primary focus:ring-clinic-primary"
                   />
                   <div>
                     <span className="font-semibold text-slate-800 block">
-                      Responsable Principal (es_principal = true)
+                      Responsable principal
                     </span>
                     <span className="text-[11px] text-slate-500 block">
                       Contacto preferente ante notificaciones oficiales y trámites administrativos.
@@ -492,11 +480,11 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                     type="checkbox"
                     checked={autorizaAtencion}
                     onChange={(e) => setAutorizaAtencion(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#20666B] focus:ring-[#20666B]"
+                    className="mt-0.5 w-4 h-4 rounded text-clinic-primary focus:ring-clinic-primary"
                   />
                   <div>
                     <span className="font-semibold text-slate-800 block">
-                      Autoriza Atención Médica y Vacunación (autoriza_atencion = true)
+                      Puede autorizar consultas y vacunas
                     </span>
                     <span className="text-[11px] text-slate-500 block">
                       Facultad clínica independiente para consentir consultas, prescripción e inmunizaciones.
@@ -517,39 +505,25 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                   type="submit"
                   variant="primary"
                   loading={guardando}
-                  className="bg-[#20666B] text-white"
+                  className="bg-clinic-primary text-white"
                 >
-                  Guardar Responsable (CA09)
+                  Guardar Responsable
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
 
       {/* MODAL 2: Editar Vínculo de Responsable (CA09) */}
       {modalEditarAbierto && responsableAEditar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#20666B]/10 rounded-md text-[#20666B]">
-                  <Edit2 size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Editar Datos y Facultades del Tutor</h3>
-                  <p className="text-xs text-slate-500">Trazabilidad de parentesco y consentimientos (CA09)</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setModalEditarAbierto(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleActualizarResponsable} className="p-6 space-y-4 text-xs">
+      <Modal
+        isOpen={modalEditarAbierto}
+        onClose={() => setModalEditarAbierto(false)}
+        title="Editar responsable legal"
+        maxWidth="520px"
+      >
+        <form onSubmit={handleActualizarResponsable} className="space-y-4">
+              {errorAccion && <Alert variant="danger">{errorAccion}</Alert>}
               <Input
                 label="Nombre completo del tutor/a *"
                 value={nombre}
@@ -588,7 +562,7 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
 
               {/* Bloque de sincronización compartida */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-800">
-                <p className="font-semibold">Responsable Compartido entre Hermanos (Regla CA09):</p>
+                <p className="font-semibold">Responsable Compartido entre Hermanos:</p>
                 <p className="mt-0.5">
                   Actualizar el teléfono o nombre reflejará el cambio de contacto en los expedientes de todos los hermanos vinculados sin alterar sus permisos individuales.
                 </p>
@@ -606,15 +580,15 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                     checked={esPrincipal}
                     onChange={(e) => setEsPrincipal(e.target.checked)}
                     disabled={responsableAEditar.esPrincipal && principalesCount <= 1}
-                    className="mt-0.5 w-4 h-4 rounded text-[#20666B] focus:ring-[#20666B]"
+                    className="mt-0.5 w-4 h-4 rounded text-clinic-primary focus:ring-clinic-primary"
                   />
                   <div>
                     <span className="font-semibold text-slate-800 block">
-                      Responsable Principal (es_principal = true)
+                      Responsable principal
                     </span>
                     {responsableAEditar.esPrincipal && principalesCount <= 1 ? (
                       <span className="text-[11px] text-amber-700 font-medium block">
-                        Protección CA09: No puede desmarcarse al único responsable principal del menor.
+                        Protección: No puede desmarcarse al único responsable principal del menor.
                       </span>
                     ) : (
                       <span className="text-[11px] text-slate-500 block">
@@ -629,11 +603,11 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                     type="checkbox"
                     checked={autorizaAtencion}
                     onChange={(e) => setAutorizaAtencion(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded text-[#20666B] focus:ring-[#20666B]"
+                    className="mt-0.5 w-4 h-4 rounded text-clinic-primary focus:ring-clinic-primary"
                   />
                   <div>
                     <span className="font-semibold text-slate-800 block">
-                      Autoriza Atención Médica y Vacunación (autoriza_atencion = true)
+                      Puede autorizar consultas y vacunas
                     </span>
                     <span className="text-[11px] text-slate-500 block">
                       Facultad independiente para consentir actos médicos.
@@ -654,14 +628,13 @@ export const PediatricGuardiansView: React.FC<PediatricGuardiansViewProps> = ({
                   type="submit"
                   variant="primary"
                   loading={guardando}
-                  className="bg-[#20666B] text-white"
+                  className="bg-clinic-primary text-white"
                 >
-                  Actualizar Responsable (CA09)
+                  Actualizar Responsable
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+      </Modal>
       )}
     </div>
   );

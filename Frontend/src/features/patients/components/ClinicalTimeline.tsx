@@ -1,3 +1,4 @@
+import { getDisplayLabel } from '../../../services/displayLabels';
 import React, { useState } from 'react';
 import {
   FileText,
@@ -176,7 +177,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-panel)',
                     padding: '16px 20px',
-                    boxShadow: 'var(--shadow-panel)',
+                    boxShadow: 'var(--shadow-sm)',
                     zIndex: 2
                   }}
                 >
@@ -225,7 +226,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
                         {evento.titulo}
                       </span>
                       <Badge variant={getBadgeVariante(evento.tipoEvento)}>
-                        {evento.tipoEvento}
+                        {getDisplayLabel(evento.tipoEvento)}
                       </Badge>
                       {evento.recursoCodigo && (
                         <span

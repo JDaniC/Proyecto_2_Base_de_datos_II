@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
@@ -6,6 +7,7 @@ import { useServices } from '../../app/ServiceContext';
 import {
   TipoIdentificacion,
   SexoAdministrativo,
+  ResponsablePediatrico,
   PacienteDuplicadoException
 } from '../../services/types';
 import { Button } from '../../design-system/components/Button';
@@ -35,6 +37,9 @@ export const PatientFormPage: React.FC = () => {
   const [telefono, setTelefono] = useState('');
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
+  const [grupoSanguineo, setGrupoSanguineo] = useState('');
+  const [responsablesExistentes, setResponsablesExistentes] = useState<ResponsablePediatrico[]>([]);
+  const documentoOpcional = institucionId === 'CLINICA_ODONTOLOGICA' || institucionId === 'CENTRO_PEDIATRICO';
 
   // Hospital: Contacto de emergencia
   const [contactoNombre, setContactoNombre] = useState('');
@@ -83,6 +88,8 @@ export const PatientFormPage: React.FC = () => {
           setTelefono(paciente.telefono);
           setCorreo(paciente.correo);
           setDireccion(paciente.direccion);
+          setGrupoSanguineo(paciente.grupoSanguineo || '');
+          setResponsablesExistentes(paciente.responsables || []);
 
           if (paciente.contactoEmergencia) {
             setContactoNombre(paciente.contactoEmergencia.nombre);
@@ -91,7 +98,7 @@ export const PatientFormPage: React.FC = () => {
           }
 
           if (paciente.responsables && paciente.responsables.length > 0) {
-            const resp = paciente.responsables[0];
+            const resp = paciente.responsables.find(r => r.esPrincipal) || paciente.responsables[0];
             setRespNombre(resp.nombre);
             setRespParentesco(resp.parentesco);
             setRespDocumento(resp.documento || '');
@@ -124,7 +131,7 @@ export const PatientFormPage: React.FC = () => {
     }
 
     if (!fechaNacimiento) {
-      setErrorValidacion('La fecha civil de nacimiento es obligatoria.');
+      setErrorValidacion('La fecha de nacimiento es obligatoria.');
       return;
     }
 
@@ -135,7 +142,7 @@ export const PatientFormPage: React.FC = () => {
       return;
     }
 
-    if (!numeroIdentificacion.trim()) {
+    if (!documentoOpcional && !numeroIdentificacion.trim()) {
       setErrorValidacion('El número de identificación o código de menor es obligatorio.');
       return;
     }
@@ -152,7 +159,7 @@ export const PatientFormPage: React.FC = () => {
         return;
       }
       if (!respEsPrincipal) {
-        setErrorValidacion('Debe marcar al menos un responsable como principal (es_principal = true).');
+        setErrorValidacion('Selecciona un responsable principal.');
         return;
       }
       if (!respAutoriza) {
@@ -175,11 +182,11 @@ export const PatientFormPage: React.FC = () => {
             }
           : undefined;
 
-      const responsables =
+      const responsablePrincipal =
         institucionId === 'CENTRO_PEDIATRICO' && respNombre.trim()
           ? [
               {
-                id: `resp-${Date.now()}`,
+                id: responsablesExistentes.find(r => r.esPrincipal)?.id || `resp-${Date.now()}`,
                 nombre: respNombre.trim(),
                 parentesco: respParentesco,
                 telefono: respTelefono.trim() || telefono.trim(),
@@ -190,14 +197,19 @@ export const PatientFormPage: React.FC = () => {
             ]
           : undefined;
 
+      const responsables = responsablePrincipal ? [...responsablesExistentes.filter(r => !r.esPrincipal), ...responsablePrincipal] : undefined;
+      const documento = numeroIdentificacion.trim() || '';
+      const tipoDocumento = documento ? tipoIdentificacion : institucionId === 'CENTRO_PEDIATRICO' ? 'SIN_DOCUMENTO_MENOR' : 'SIN_DOCUMENTO';
+
       if (isEditing && pacienteId) {
         await patientRepository.actualizar(institucionId, pacienteId, {
           nombres,
           apellidos,
           fechaNacimiento,
           sexo,
-          tipoIdentificacion,
-          numeroIdentificacion,
+          tipoIdentificacion: tipoDocumento,
+          numeroIdentificacion: documento,
+          grupoSanguineo: institucionId === 'HOSPITAL_GENERAL' ? grupoSanguineo : undefined,
           telefono,
           correo,
           direccion,
@@ -212,8 +224,9 @@ export const PatientFormPage: React.FC = () => {
           apellidos,
           fechaNacimiento,
           sexo,
-          tipoIdentificacion,
-          numeroIdentificacion,
+          tipoIdentificacion: tipoDocumento,
+          numeroIdentificacion: documento,
+          grupoSanguineo: institucionId === 'HOSPITAL_GENERAL' ? grupoSanguineo : undefined,
           telefono,
           correo,
           direccion,
@@ -237,7 +250,7 @@ export const PatientFormPage: React.FC = () => {
         });
       } else {
         setErrorValidacion(
-          err instanceof Error ? err.message : 'Ocurrió un error inesperado al procesar el expediente.'
+          getErrorMessage(err, 'Ocurrió un error inesperado al procesar el expediente.')
         );
       }
     } finally {
@@ -322,9 +335,7 @@ export const PatientFormPage: React.FC = () => {
               marginBottom: 0
             }}
           >
-            Institución activa:{' '}
-            <strong style={{ color: 'var(--color-strong)' }}>{sesion?.institucionNombre}</strong>.
-            Los datos registrados quedan vinculados al centro médico institucional.
+            Registra los datos de identificación y contacto del paciente.
           </p>
         </div>
 
@@ -337,16 +348,15 @@ export const PatientFormPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Banner de Control de Duplicados 409 PACIENTE_DUPLICADO */}
       {errorDuplicado && (
         <div style={{ marginBottom: '24px' }}>
           <Alert
             variant="warning"
-            title="Control de duplicados institucional (409 PACIENTE_DUPLICADO)"
+            title="Este paciente ya está registrado"
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <p style={{ margin: 0 }}>
-                El documento «<strong>{errorDuplicado.documento}</strong>» ya se encuentra registrado en este centro para el paciente «<strong>{errorDuplicado.nombre}</strong>» con expediente «<strong>{errorDuplicado.codigo}</strong>». Para garantizar la integridad del historial clínico, no se permite crear expedientes duplicados.
+                El documento «<strong>{errorDuplicado.documento}</strong>» ya está asociado a «<strong>{errorDuplicado.nombre}</strong>» (expediente <strong>{errorDuplicado.codigo}</strong>).
               </p>
               <div>
                 <Button
@@ -407,6 +417,7 @@ export const PatientFormPage: React.FC = () => {
               onChange={(e) => setFechaNacimiento(e.target.value)}
               required
             />
+            {institucionId === 'HOSPITAL_GENERAL' && <Select label="Grupo sanguíneo" value={grupoSanguineo} onChange={e => setGrupoSanguineo(e.target.value)} options={[{ value: '', label: 'No registrado' }, ...['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(value => ({ value, label: value }))]} />}
             <Select
               label="Sexo / Género administrativo *"
               value={sexo}
@@ -440,15 +451,15 @@ export const PatientFormPage: React.FC = () => {
               options={[
                 { value: 'CUI', label: 'CUI (DPI de Guatemala)' },
                 { value: 'PASAPORTE', label: 'Pasaporte extranjero' },
-                { value: 'SIN_DOCUMENTO_MENOR', label: 'Sin documento / Menor (identificador provisional)' }
+                ...(documentoOpcional ? [{ value: institucionId === 'CENTRO_PEDIATRICO' ? 'SIN_DOCUMENTO_MENOR' : 'SIN_DOCUMENTO', label: 'Sin documento' }] : [])
               ]}
             />
             <Input
-              label="Número de documento / Identificación *"
+              label={documentoOpcional ? "Número de documento (opcional)" : "Número de documento / Identificación *"}
               value={numeroIdentificacion}
               onChange={(e) => setNumeroIdentificacion(e.target.value)}
               placeholder="Ej. 9900-10101-0101"
-              required
+              required={!documentoOpcional}
             />
             <Input
               label="Teléfono principal de contacto *"
@@ -478,8 +489,8 @@ export const PatientFormPage: React.FC = () => {
         {/* Panel 3: Variantes Especializadas por Institución */}
         {institucionId === 'HOSPITAL_GENERAL' && (
           <Panel
-            title="3. Contacto de Emergencia Hospitalario (RF-H01)"
-            subtitle="Requerido para admisiones y procedimientos de urgencia"
+            title="3. Contacto de Emergencia Hospitalario"
+            subtitle="Contacto opcional para situaciones de emergencia"
             style={{ marginBottom: '20px' }}
           >
             <div
@@ -513,7 +524,7 @@ export const PatientFormPage: React.FC = () => {
 
         {institucionId === 'CENTRO_PEDIATRICO' && (
           <Panel
-            title="3. Responsable Legal / Tutor Pediátrico (RF-P03, P01)"
+            title="3. Responsable Legal / Tutor Pediátrico"
             subtitle="Obligatorio en pediatría: vínculo y autorización de atención"
             style={{ marginBottom: '20px' }}
           >
@@ -584,7 +595,7 @@ export const PatientFormPage: React.FC = () => {
                   onChange={(e) => setRespEsPrincipal(e.target.checked)}
                   style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }}
                 />
-                Responsable principal del menor (es_principal = true)
+                Responsable principal del menor
               </label>
 
               <label

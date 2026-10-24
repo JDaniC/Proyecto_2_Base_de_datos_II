@@ -1,5 +1,7 @@
+import { Modal } from '../../design-system/components/Modal';
+import { getErrorMessage } from '../../services/errors';
 import React, { useState } from 'react';
-import { X, PlusCircle, Trash2, Syringe, AlertCircle } from 'lucide-react';
+import { PlusCircle, Trash2, AlertCircle } from 'lucide-react';
 import { useServices } from '../../app/ServiceContext';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { Button } from '../../design-system/components/Button';
@@ -19,22 +21,24 @@ interface RegistrarVacunaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onVacunaGuardada: (vacuna: VacunaCatalogo) => void;
+  vacunaExistente?: VacunaCatalogo | null;
 }
 
 export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
   isOpen,
   onClose,
-  onVacunaGuardada
+  onVacunaGuardada,
+  vacunaExistente
 }) => {
   const { catalogRepository } = useServices();
   const { sesion } = useAuthSession();
   const institucionId = sesion?.institucionId || 'CENTRO_PEDIATRICO';
 
-  const [nombreVacuna, setNombreVacuna] = useState('');
-  const [enfermedadPrevenida, setEnfermedadPrevenida] = useState('');
-  const [viaAdministracion, setViaAdministracion] = useState<'INTRAMUSCULAR' | 'SUBCUTANEA' | 'INTRADERMICA' | 'ORAL'>('INTRAMUSCULAR');
-  const [esquemaVersion, setEsquemaVersion] = useState('Esquema Nacional MSPAS v2.2');
-  const [dosisList, setDosisList] = useState<DosisFormItem[]>([
+  const [nombreVacuna, setNombreVacuna] = useState(vacunaExistente?.nombreVacuna || '');
+  const [enfermedadPrevenida, setEnfermedadPrevenida] = useState(vacunaExistente?.enfermedadPrevenida || '');
+  const [viaAdministracion, setViaAdministracion] = useState<'INTRAMUSCULAR' | 'SUBCUTANEA' | 'INTRADERMICA' | 'ORAL'>(vacunaExistente?.viaAdministracion || 'INTRAMUSCULAR');
+  const [esquemaVersion, setEsquemaVersion] = useState(vacunaExistente ? `${vacunaExistente.esquemaVersion} · revisión` : '');
+  const [dosisList, setDosisList] = useState<DosisFormItem[]>(vacunaExistente?.dosis.map(d => ({ ...d })) || [
     {
       dosisId: `dos-${Date.now()}-1`,
       numeroDosis: 1,
@@ -116,7 +120,9 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
       };
 
       let guardada: VacunaCatalogo;
-      if (catalogRepository.crearVacuna) {
+      if (vacunaExistente && catalogRepository.crearVersionEsquemaVacuna) {
+        guardada = await catalogRepository.crearVersionEsquemaVacuna(institucionId, vacunaExistente.id, esquemaVersion, nuevaVacunaPayload.dosis);
+      } else if (catalogRepository.crearVacuna) {
         guardada = await catalogRepository.crearVacuna(institucionId, nuevaVacunaPayload);
       } else {
         guardada = {
@@ -128,7 +134,7 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
       onVacunaGuardada(guardada);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al guardar la vacuna en catálogo.';
+      const msg = getErrorMessage(err, 'Error al guardar la vacuna en catálogo.');
       setErrorMsg(msg);
     } finally {
       setGuardando(false);
@@ -136,27 +142,8 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
-        {/* Cabecera */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Syringe className="text-[#20666B]" size={20} />
-            <h3 className="font-semibold text-slate-800 text-sm">
-              Registrar Nueva Vacuna / Esquema Pediátrico (P04)
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+    <Modal isOpen={isOpen} onClose={onClose} title={vacunaExistente ? "Actualizar dosis y edades" : "Registrar vacuna y dosis"}  maxWidth="680px">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
               <AlertCircle size={16} className="flex-shrink-0" />
@@ -167,6 +154,7 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Nombre de la Vacuna / Biológico *"
+              disabled={!!vacunaExistente}
               placeholder="ej. Vacuna contra Varicela (Cepa Oka)"
               value={nombreVacuna}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNombreVacuna(e.target.value)}
@@ -175,6 +163,7 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
 
             <Input
               label="Enfermedad Prevenida *"
+              disabled={!!vacunaExistente}
               placeholder="ej. Varicela e infecciones secundarias"
               value={enfermedadPrevenida}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEnfermedadPrevenida(e.target.value)}
@@ -185,6 +174,7 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Vía de Administración *"
+              disabled={!!vacunaExistente}
               value={viaAdministracion}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 setViaAdministracion(e.target.value as any)
@@ -293,13 +283,12 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
               type="submit"
               variant="primary"
               loading={guardando}
-              className="bg-[#20666B] text-white"
+              className="bg-clinic-primary text-white"
             >
-              Guardar Vacuna en Catálogo (P04)
+              Guardar Vacuna en Catálogo
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
