@@ -83,7 +83,7 @@ for row in mapping:
                       'archivo': 'Backend/docs/mapa-ui-v1.json', 'referencia': row['destino'],
                       'ejecutable': 'SOLO_MAPEO'})
 with (OUT / ('inventario' + suffix + '.csv')).open('w') as stream:
-    writer = csv.DictWriter(stream, fieldnames=['unidad', 'tipo', 'riesgo', 'archivo', 'referencia', 'ejecutable'])
+    writer = csv.DictWriter(stream, lineterminator='\n', fieldnames=['unidad', 'tipo', 'riesgo', 'archivo', 'referencia', 'ejecutable'])
     writer.writeheader()
     writer.writerows(inventory)
 
