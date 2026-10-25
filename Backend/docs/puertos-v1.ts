@@ -216,7 +216,13 @@ export interface ProfesionalHistorico {
 export interface RepositorioProfesional {
   porId(id: UUID): Promise<(ProfesionalHistorico & { readonly activo: boolean }) | null>;
 }
+export interface ResponsablePaciente {
+  readonly responsable: Responsable;
+  readonly vinculo: VinculoResponsable;
+}
 export interface RepositorioResponsables {
+  /** Recarga por paciente: resolver vínculo y snapshot sin IDs conocidos de antemano. */
+  porPaciente(pacienteId: UUID, pagina: FiltrosPagina): Promise<Pagina<ResponsablePaciente>>;
   porId(id: UUID): Promise<Responsable | null>;
   porDocumento(documento: Identificacion): Promise<Responsable | null>;
   vinculo(pacienteId: UUID, responsableId: UUID): Promise<VinculoResponsable | null>;
@@ -298,6 +304,7 @@ export interface BundleInstitucional {
   readonly unidadDeTrabajo: UnidadDeTrabajo;
   readonly pacientes: RepositorioPaciente;
   readonly consultas: RepositorioConsulta;
+  readonly responsables: RepositorioResponsables;
   readonly historial: ConsultaHistorial;
   readonly cuenta: RepositorioCuenta;
 }
