@@ -19,7 +19,7 @@ Solo lógica de GitHub: tarea → rama → PR → revisión → merge. No requie
 
 develop y main requieren PR, cero aprobaciones humanas obligatorias, conversaciones resueltas y contrato-pr verde con rama actualizada; se impiden force push y eliminación. No se exige CODEOWNERS ni aprobación del compañero.
 
-La revisión de Codex se configura en la cuenta, no con una API key del repositorio. El usuario confirmó haber activado la configuración. La prueba de funcionamiento es una respuesta del bot en el PR; activar el ajuste no prueba retrospectivamente una revisión. El flujo actual no implementa un check adicional que obligue técnicamente a que Codex haya terminado: el responsable verifica ese paso. No interpretar ausencia de hallazgos como autorización para fusionar.
+La revisión de Codex se configura en la cuenta, no con una API key del repositorio. El usuario confirmó haber activado la configuración. La prueba de funcionamiento es una respuesta del bot en el PR; activar el ajuste no prueba retrospectivamente una revisión. La puerta revision-codex exige resultado completo y sin hallazgos del SHA actual. El workflow activa auto-merge cuando la puerta está verde; GitHub sigue exigiendo contrato-pr y las demás reglas. No interpretar ausencia de hallazgos como autorización para fusionar.
 
 Para importar el plan local usar `[PLAN] descripción`; el validador limita esa excepción a plan/ y AGENTS. Conservar la guía completa local al reconciliarla con las Code Review Rules del PR inicial. La consolidación inicial incorpora el plan; verificar que su PR esté fusionado antes de iniciar tareas.
 

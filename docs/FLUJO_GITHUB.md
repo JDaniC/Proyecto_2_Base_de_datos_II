@@ -31,7 +31,7 @@ Documentación: https://developers.openai.com/codex/integrations/github
 
 CI ejecuta únicamente contrato-pr: valida identificador, rama, destino y las excepciones documentales. Este flujo no instala MCP ni levanta bases de datos. Las pruebas funcionales y compilaciones de cada tarea se adjuntan como evidencia y las verifica el compañero; no se certifican automáticamente con este check.
 
-Protecciones previstas: PR obligatorio, cero aprobaciones humanas obligatorias, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. Codex no es por sí solo un estado obligatorio de CI: el responsable debe comprobar sus resultados; no hay un bloqueo automático que certifique que Codex terminó.
+Protecciones previstas: PR obligatorio, cero aprobaciones humanas obligatorias, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. La puerta revision-codex comprueba el resumen nativo del bot sobre el SHA actual; solo permite auto-merge sin hallazgos y con contrato-pr verde.
 
 Si CI falla, corregir o documentar un bloqueo real; no desactivar la comprobación. Si Codex encuentra un error, corregir y volver a revisar. Desacuerdos se resuelven con evidencia en el PR. No marcar HECHA automáticamente al fusionar: verificar criterios y cierre humano en el tablero.
 
@@ -56,3 +56,15 @@ Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). 
 ## Mantenimiento solicitado
 
 `[MANTENIMIENTO] descripción` admite limpieza de Frontend/, plan/, configuración de GitHub y guía UI sustituida. No permite modificar Backend/ ni Database/ con esa excepción. Este trabajo responde a una solicitud humana de mantenimiento y no marca como HECHA ninguna tarea del producto. Mantiene contrato-pr y las protecciones vigentes.
+
+## Fusión automática y diagnóstico
+
+La rama predeterminada es develop; main se conserva para las entregas. Los workflows de eventos y comentarios se cargan desde la rama predeterminada. El anterior pull_request_target no se ejecutaba porque solo existía en develop mientras la predeterminada era main.
+
+El flujo actual responde a la finalización de «Validación del proyecto», a los comentarios del PR y a ejecución manual. Solo ejecuta el script de la rama predeterminada, nunca código del PR con permisos de escritura. Comprueba comentarios del bot chatgpt-codex-connector[bot], tipo Bot y app 1144995, y el bloque estructurado codex-review-state:v1 observado en la integración nativa. Formato desconocido, revisión anterior, resultado incompleto o hallazgos mantienen el PR bloqueado. Si cambia el contrato del bot, adaptar el parser y sus pruebas; no aceptar silencio como aprobación.
+
+Con revisión limpia del SHA actual se habilita auto-merge squash; GitHub espera además contrato-pr y las reglas del repositorio. Las ramas fusionadas se eliminan automáticamente. Borradores y forks no se integran con este flujo. No exige aprobación de David. Si la rama queda desactualizada, actualizarla, repetir checks y obtener revisión del nuevo SHA.
+
+Para reevaluar un PR existente: `gh workflow run auto-merge.yml --ref develop -f pr=7` (cambiar el número). Si Codex revisó un SHA anterior, solicitar `@codex review` y esperar la respuesta del commit actual. No repetir comentarios en bucle ni usar --admin. La ejecución manual evalúa, no fabrica un resultado del bot.
+
+Fuentes: https://github.blog/changelog/2025-11-07-actions-pull_request_target-and-environment-branch-protections-changes/ y https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow
