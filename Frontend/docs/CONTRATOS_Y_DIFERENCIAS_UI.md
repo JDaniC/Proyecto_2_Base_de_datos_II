@@ -396,3 +396,6 @@ Agenda (segunda revisión de E00-P1-03): motivo_cancelacion se mapea a motivoCan
 
 
 Responsables/recetas (tercera revisión de E00-P1-03): alta de responsable pediátrico nuevo requiere documento, nombres y apellidos separados; E02/E04 amplían captura antes de conectarla. El mapper compone nombre de presentación sin inventar documentos ni dividir nombres libres sin esos datos. Receta de lectura incluye fecha_emision independiente de fecha_hora de consulta, más id/codigo_legible/version/estado y prescriptor histórico. El mapper usa esa fecha para fechaEmision e impresión, nunca la fecha de consulta. Fechas y emisor no se envían como entrada de emisión. En pediatría se exige concentración del medicamento y vía ≤100 caracteres según política de captura M04.
+
+
+Invariante común de recetas (quinta revisión E00-P1-03): concentración e indicaciones no pueden estar vacías ni contener solo espacios en ninguna institución; vía ≤100 caracteres. La UI debe validar esos campos en E03, sin inventar instrucciones. El adaptador combina dosis + unidad de captura en dosis textual antes del envío; lectura/impresión usa ese texto. Cita.fecha_creacion se mapea a fechaCreacion y no se deriva del horario reprogramado.

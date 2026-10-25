@@ -93,6 +93,7 @@ export type Cita = {
   readonly id: UUID; readonly pacienteId: UUID; readonly profesionalId: UUID;
   readonly fecha: FechaCivil; readonly horaInicio: string; readonly horaFin: string;
   readonly motivo: string; readonly consultorio?: string; readonly version: Version;
+  readonly fechaCreacion: InstanteUTC;
 } & (
   | { readonly estado: 'PROGRAMADA' | 'EN_CURSO' | 'ATENDIDA'; readonly motivoCancelacion?: never }
   | { readonly estado: 'CANCELADA'; readonly motivoCancelacion: string }
@@ -123,8 +124,8 @@ export interface Diagnostico {
 }
 export interface Tratamiento { readonly descripcion: string; readonly indicaciones: string; }
 export interface Medicamento {
-  readonly nombre: string; readonly presentacion: string; readonly concentracion?: string;
-  readonly dosis: string; readonly unidad?: string; readonly frecuencia: string;
+  readonly nombre: string; readonly presentacion: string; readonly concentracion: string;
+  readonly dosis: string; readonly frecuencia: string;
   readonly duracion: string; readonly via: string; readonly indicaciones: string;
 }
 export interface RecetaEntrada {
@@ -301,6 +302,9 @@ export interface UnidadDeTrabajo {
 }
 /** Bundle inmutable por petición, resuelto fuera de dominio y sin motor en comandos. */
 export interface BundleInstitucional {
+  readonly citas: RepositorioCita;
+  readonly identidades: RepositorioIdentidades;
+  readonly profesionales: RepositorioProfesional;
   readonly unidadDeTrabajo: UnidadDeTrabajo;
   readonly pacientes: RepositorioPaciente;
   readonly consultas: RepositorioConsulta;

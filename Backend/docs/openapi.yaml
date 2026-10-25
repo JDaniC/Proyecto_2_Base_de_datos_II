@@ -2050,16 +2050,15 @@ components:
         concentracion:
           type: string
           maxLength: 200
+          minLength: 1
+          pattern: \S
         dosis:
           type: string
           minLength: 1
           maxLength: 200
           pattern: \S
-        unidad:
-          type: string
-          minLength: 1
-          maxLength: 200
-          pattern: \S
+          description: Texto de dosis completo con unidad. Mapper combina dosis/unidad de captura en este texto
+            antes del envío; lectura/impresión usa el texto preservado.
         frecuencia:
           type: string
           minLength: 1
@@ -2073,11 +2072,13 @@ components:
         via:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 100
           pattern: \S
         indicaciones:
           type: string
           maxLength: 500
+          minLength: 1
+          pattern: \S
       required:
       - nombre
       - presentacion
@@ -2086,6 +2087,7 @@ components:
       - duracion
       - via
       - indicaciones
+      - concentracion
     Receta:
       type: object
       additionalProperties: false
@@ -2461,6 +2463,8 @@ components:
           minLength: 1
           maxLength: 1000
           pattern: \S
+        fecha_creacion:
+          $ref: '#/components/schemas/InstanteUTC'
       required:
       - id
       - version
@@ -2471,6 +2475,7 @@ components:
       - hora_fin
       - motivo
       - estado
+      - fecha_creacion
       allOf:
       - if:
           properties:

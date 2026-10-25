@@ -1878,7 +1878,8 @@
         "id": "00000000-0000-4000-8000-000000000003",
         "version": 1,
         "estado": "PROGRAMADA",
-        "hora_fin": "10:30"
+        "hora_fin": "10:30",
+        "fecha_creacion": "2026-10-24T12:00:00Z"
       },
       "meta": {
         "correlacion": "00000000-0000-4000-8000-000000000090"
@@ -1900,7 +1901,8 @@
           "id": "00000000-0000-4000-8000-000000000003",
           "version": 1,
           "estado": "PROGRAMADA",
-          "hora_fin": "10:30"
+          "hora_fin": "10:30",
+          "fecha_creacion": "2026-10-24T12:00:00Z"
         }
       ],
       "meta": {
@@ -2603,7 +2605,8 @@
         "version": 2,
         "estado": "CANCELADA",
         "hora_fin": "10:30",
-        "motivo_cancelacion": "Motivo sintético de cancelación"
+        "motivo_cancelacion": "Motivo sintético de cancelación",
+        "fecha_creacion": "2026-10-24T12:00:00Z"
       },
       "meta": {
         "correlacion": "00000000-0000-4000-8000-000000000090"
@@ -2624,7 +2627,8 @@
         "id": "00000000-0000-4000-8000-000000000003",
         "version": 2,
         "estado": "CANCELADA",
-        "hora_fin": "10:30"
+        "hora_fin": "10:30",
+        "fecha_creacion": "2026-10-24T12:00:00Z"
       },
       "meta": {
         "correlacion": "00000000-0000-4000-8000-000000000090"
@@ -2652,7 +2656,8 @@
             "id": "00000000-0000-4000-8000-000000000003",
             "version": 1,
             "estado": "PROGRAMADA",
-            "hora_fin": "10:30"
+            "hora_fin": "10:30",
+            "fecha_creacion": "2026-10-24T12:00:00Z"
           },
           "actual": {
             "paciente_id": "00000000-0000-4000-8000-000000000001",
@@ -2664,7 +2669,8 @@
             "version": 2,
             "estado": "CANCELADA",
             "hora_fin": "10:30",
-            "motivo_cancelacion": "Motivo sintético de cancelación"
+            "motivo_cancelacion": "Motivo sintético de cancelación",
+            "fecha_creacion": "2026-10-24T12:00:00Z"
           }
         }
       ],
@@ -2694,7 +2700,8 @@
             "id": "00000000-0000-4000-8000-000000000003",
             "version": 1,
             "estado": "PROGRAMADA",
-            "hora_fin": "10:30"
+            "hora_fin": "10:30",
+            "fecha_creacion": "2026-10-24T12:00:00Z"
           },
           "actual": {
             "paciente_id": "00000000-0000-4000-8000-000000000001",
@@ -2705,7 +2712,8 @@
             "id": "00000000-0000-4000-8000-000000000003",
             "version": 2,
             "estado": "PROGRAMADA",
-            "hora_fin": "11:30"
+            "hora_fin": "11:30",
+            "fecha_creacion": "2026-10-24T12:00:00Z"
           }
         }
       ],
@@ -2928,6 +2936,137 @@
   {
     "id": "receta-pediatrica-sin-concentracion",
     "schema": "EmitirRecetaPediatrica",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-indicaciones-invalida-139",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-indicaciones-invalida-140",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "   ",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-concentracion-invalida-141",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": ""
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-concentracion-invalida-142",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "   "
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-via-invalida-143",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-comun-sin-concentracion",
+    "schema": "EmitirReceta",
     "valid": false,
     "value": {
       "version_esperada": 1,
