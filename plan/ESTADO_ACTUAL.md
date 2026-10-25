@@ -28,7 +28,7 @@ Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; v
 
 La consolidación inicial ya se integró en el corte indicado; verificar referencias remotas y obtener la versión actual de develop. No iniciar desde una copia anterior a esos cambios.
 
-Las 48 tareas siguen sin ejecución acreditada en el tablero al preparar este corte. En una base consolidada, el helper debe mostrar inicialmente E00-P1-01 y E00-P2-01 disponibles, sujetas a revisar reservas remotas. No hay seguimientos de implementación creados artificialmente.
+La tarea E00-P1-01 ya tiene cambios documentales integrados por PR #4, commit 3dffdd8. Su cierre y la revisión se verifican en el tablero y seguimiento; no marcarla HECHA desde la limpieza. Las siguientes candidatas dependen de ese estado real: ejecutar el helper en lugar de repetir el listado inicial. Los seguimientos existentes son de tareas efectivamente iniciadas.
 
 Leer [continuidad y cola compartida](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md); ejecutar `python3 scripts/github/cola.py`. Daniel y David pueden tomar cualquier lote. Para una tarea activa leer también `plan/seguimiento/ID.md` y su rama/PR.
 
