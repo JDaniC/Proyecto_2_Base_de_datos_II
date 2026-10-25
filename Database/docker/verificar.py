@@ -48,7 +48,7 @@ def main():
             if admin:
                 args = ['exec', '-T', 'postgres', 'psql', '-X', '-U', 'postgres_admin', '-d', 'hospital_general', '-At', '-v', 'ON_ERROR_STOP=1']
             else:
-                args = ['exec', '-T', 'postgres', 'sh', '-c', 'PGPASSWORD="$(cat /run/secrets/postgres_app_password)" exec psql -X -h127.0.0.1 -U hospital_app -d hospital_general -At -v ON_ERROR_STOP=1']
+                args = ['exec', '-T', 'postgres', 'sh', '-c', 'PGPASSWORD="$(cat /run/secrets/postgres_app_password)" exec psql -X -h postgres -U hospital_app -d hospital_general -At -v ON_ERROR_STOP=1']
             return comando(args, texto, rechazo)
 
         def mysql(texto, admin=False, rechazo=None):
@@ -75,13 +75,25 @@ def main():
             aprobado('bootstrap replica set, esquema y permisos MongoDB')
             assert pg("SELECT count(*) FROM information_schema.tables WHERE table_schema='hospital_general' AND table_type='BASE TABLE';", admin=True) == '50'
             assert mysql("SELECT count(*) FROM information_schema.tables WHERE table_schema='clinica_odontologica' AND table_type='BASE TABLE';", admin=True) == '22'
-            aprobado('50 tablas PostgreSQL y 22 MySQL inicializadas')
+            assert mysql("SELECT count(*) FROM information_schema.tables WHERE table_schema='clinica_odontologica' AND table_type='BASE TABLE' AND engine='InnoDB';", admin=True) == '22'
+            aprobado('50 tablas PostgreSQL y 22 MySQL (InnoDB) inicializadas')
+            mysql('SET @bdii_pruebas_autorizadas=1;\n' + (ROOT / 'Database/tests/regresiones_mysql.sql').read_text(), admin=True)
+            aprobado('27 regresiones SQL MySQL en contenedor aislado')
             pg("CREATE TABLE hospital_general.no_permitida(id integer);", rechazo='permission denied')
             mysql("CREATE TABLE no_permitida(id integer);", rechazo='1142')
-            aprobado('usuarios SQL de aplicacion sin DDL')
-            pg('DELETE FROM hospital_general.auditoria WHERE false;', rechazo='permission denied')
-            mysql('DELETE FROM auditoria WHERE false;', rechazo='1142')
-            aprobado('usuarios SQL sin borrado de auditoria')
+            pg("SELECT count(*) FROM hospital_general.modelo_database;", rechazo='permission denied')
+            mysql("SELECT count(*) FROM modelo_database;", rechazo='1142')
+            aprobado('usuarios SQL de aplicacion sin DDL ni lectura de manifiesto')
+            for tabla in ('auditoria', 'operaciones', 'revisiones'):
+                columna = 'accion' if tabla == 'auditoria' else ('caso_uso' if tabla == 'operaciones' else 'motivo')
+                pg(f'DELETE FROM hospital_general.{tabla} WHERE false;', rechazo='permission denied')
+                pg(f'UPDATE hospital_general.{tabla} SET {columna}={columna} WHERE false;', rechazo='permission denied')
+                mysql(f'DELETE FROM {tabla} WHERE false;', rechazo='1142')
+                mysql(f'UPDATE {tabla} SET {columna}={columna} WHERE false;', rechazo='1142')
+            aprobado('usuarios SQL sin actualizacion ni borrado de auditoria, operaciones y revisiones')
+            comando(['exec', '-T', 'postgres', 'sh', '-c', 'PGPASSWORD=invalida exec psql -X -h postgres -U hospital_app -d hospital_general -At -c "SELECT 1"'], rechazo='password authentication failed')
+            comando(['exec', '-T', 'mysql', 'sh', '-c', 'MYSQL_PWD=invalida exec mysql -h127.0.0.1 -uclinica_app --database=clinica_odontologica -e "SELECT 1"'], rechazo='1045')
+            aprobado('rechazo de credenciales SQL invalidas sin fallback a root')
             pg("INSERT INTO paciente(primer_nombre,primer_apellido,cui) VALUES('SINTETICO','DOCKER','DOCKER-SINTETICO');")
             mysql("INSERT INTO paciente(nombres,apellidos,correo) VALUES('SINTETICO','DOCKER','sintetico@example.invalid');")
             aprobado('conexion autenticada y escritura con usuarios SQL de aplicacion')
@@ -97,6 +109,12 @@ def main():
         finally:
             # -p siempre es el proyecto aleatorio creado por este proceso, nunca el proyecto de trabajo.
             comando(['down', '--volumes', '--timeout', '30'])
+    contenedores = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={proyecto}', '--format', '{{.Names}}'],
+                                  text=True, capture_output=True, check=True).stdout.strip()
+    volumenes = subprocess.run(['docker', 'volume', 'ls', '--filter', f'name={proyecto}', '--format', '{{.Name}}'],
+                               text=True, capture_output=True, check=True).stdout.strip()
+    assert not contenedores and not volumenes, f'Recursos temporales remanentes: {contenedores} {volumenes}'
+    aprobado('limpieza verificada: sin contenedores ni volumenes temporales remanentes')
     resultado = {'estado': 'PASS', 'firebase_incluido': False, 'proyecto_temporal_eliminado': True, 'casos': casos}
     salida = ROOT / '.test-results/docker/resultado.json'
     salida.parent.mkdir(parents=True, exist_ok=True)

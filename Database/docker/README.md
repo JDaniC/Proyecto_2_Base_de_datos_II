@@ -72,6 +72,33 @@ Estas cuentas técnicas no sustituyen la autorización clínica del futuro backe
 python3 Database/docker/verificar.py
 ```
 
-El verificador usa otro proyecto aleatorio `bdii-db-test-*`, puertos libres, secretos nuevos y volúmenes nuevos. Comprueba arranque desde cero, 50 tablas PostgreSQL, 22 MySQL, permisos, autenticación, rollback MongoDB y persistencia de registros sintéticos al recrear los contenedores. Al terminar elimina únicamente su proyecto/volúmenes temporales; conserva el proyecto de trabajo. No requiere instalar motores nativos ni dependencias Node de Firebase. Los resultados se guardan en `.test-results/docker/resultado.json`, fuera de Git.
+El verificador usa otro proyecto aleatorio `bdii-db-test-*`, puertos libres, secretos nuevos y volúmenes nuevos. Comprueba arranque desde cero, 50 tablas PostgreSQL, 22 MySQL (`InnoDB`), 27 regresiones SQL MySQL, permisos (sin DDL, sin lectura de `modelo_database` y sin `UPDATE`/`DELETE` sobre `auditoria`, `operaciones` y `revisiones`), rechazo de credenciales inválidas sin fallback a `root`, autenticación y rollback MongoDB, persistencia de registros sintéticos al recrear los contenedores y ausencia de contenedores/volúmenes temporales remanentes tras `down --volumes`. Al terminar elimina únicamente su proyecto/volúmenes temporales; conserva el proyecto de trabajo. No requiere instalar motores nativos ni dependencias Node de Firebase. Los resultados se guardan en `.test-results/docker/resultado.json`, fuera de Git.
+
+## Emuladores Firebase (Firestore y Auth) y verificación local multiplataforma
+
+`Database/firebase/firebase.json` configura los emuladores de **Authentication** (`127.0.0.1:9098`) y **Cloud Firestore** (`127.0.0.1:8188`), además de `hub` (`127.0.0.1:4418`) y `logging` (`127.0.0.1:4518`), con `singleProjectMode: false` y `ui.enabled: false`. Siempre se ejecutan con un proyecto explícito con prefijo `demo-` (por ejemplo `demo-bdii-pediatria` o `demo-bdii-cierre`) para garantizar que nunca se conecten a un proyecto real.
+
+### Instrucciones por plataforma (macOS, Linux y Windows/WSL2)
+
+1. **Solo Docker + Node/Firebase CLI (cualquier SO con Docker Desktop o Docker Engine):**
+   - Levantar y probar PostgreSQL 18.6, MySQL 8.4.6 (`InnoDB`) y MongoDB 8.0.32 (`replicaSet=rs0`) en proyecto aislado:
+     ```sh
+     python3 Database/docker/verificar.py
+     ```
+   - Probar validadores y emuladores Firestore + Auth (requiere Node 24.12+, Firebase CLI y Java 21+):
+     ```sh
+     npm --prefix Database ci
+     python3 Database/tests/verificar_local.py --motores firestore
+     ```
+
+2. **Suite completa de procesos temporales (`verificar_local.py`):**
+   - `Database/tests/verificar_local.py` detecta automáticamente binarios keg-only de Homebrew en macOS Apple Silicon/Intel (`/opt/homebrew/opt/postgresql@18/bin`, `/opt/homebrew/opt/mysql@8.4/bin`) y runtimes Java 21+ (`JAVA_HOME`, Homebrew OpenJDK o JBR/Temurin de DBeaver/DataGrip/Android Studio). En Linux o Windows/WSL2 busca en `PATH` o acepta `--postgres-bin` y `--mysql-bin`:
+     ```sh
+     python3 Database/tests/verificar_local.py
+     ```
+   - Para iniciar manualmente los emuladores Auth + Firestore para sesiones futuras de backend/integración:
+     ```sh
+     firebase emulators:start --only auth,firestore --project demo-bdii-pediatria --config Database/firebase/firebase.json
+     ```
 
 Fuentes de las decisiones de infraestructura: [imagen PostgreSQL y volúmenes 18+](https://hub.docker.com/_/postgres), [orden de arranque Compose](https://docs.docker.com/compose/how-tos/startup-order/), [replica set con keyfile](https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-with-keyfile-access-control/).
