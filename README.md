@@ -68,7 +68,7 @@ Los SQL inicializan bases nuevas y rechazan modelos incompatibles; no reemplazan
 
 ## Integración y documentación vigente
 
-Ramas permanentes: `main` y `develop`. Consultar [flujo GitHub](docs/FLUJO_GITHUB.md), [cronograma](plan/09_CRONOGRAMA_HASTA_05_NOV.md) y [tablero](plan/06_TABLERO.md). La referencia visual conservada está en [diseño visual](Agente/DISENO_VISUAL.md). La planificación anterior de interfaz/ fue sustituida por el frontend implementado y el plan de integración.
+Ramas permanentes: `main` y `develop`. Consultar [flujo GitHub](docs/FLUJO_GITHUB.md), [cronograma](plan/09_CRONOGRAMA_HASTA_05_NOV.md) y [tablero](plan/06_TABLERO.md). La [guía única de interfaz](Frontend/README.md) resume uso, alcance y diseño implementado. Se retiraron las especificaciones de construcción y los informes narrativos duplicados; la evidencia UI histórica se conserva en plan/evidencias/UI/.
 
 ## Empezar un chat nuevo en Antigravity
 

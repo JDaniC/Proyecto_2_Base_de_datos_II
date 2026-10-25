@@ -1,0 +1,41 @@
+{
+  "fecha": "2026-10-24",
+  "base": "997c3ec",
+  "alcance": "Consolidación, documentación UI única y carga diferida; no implementa backend",
+  "verificaciones": {
+    "frontend_build": "PASS",
+    "frontend_product_tests": {
+      "estado": "PASS",
+      "total": 38
+    },
+    "github_workflow_tests": {
+      "estado": "PASS",
+      "total": 22
+    },
+    "document_links": "PASS"
+  },
+  "bundle": {
+    "antes_kb_reportados": 1178.62,
+    "despues_inicial_bytes": 535540,
+    "despues_inicial_gzip_bytes": 148415,
+    "pantallas_diferidas": 25,
+    "mayor_chunk_bytes": 297819,
+    "nota": "Antes: tamaño redondeado de build previo. Después: suma del entry y dependencias estáticas según dist/.vite/manifest.json. No es una medición de latencia de red."
+  },
+  "navegador": {
+    "entorno": "vite preview, bundle compilado, cuenta hospital sintética",
+    "rutas": [
+      "/acceso",
+      "/panel",
+      "/pacientes",
+      "/hospital/camas"
+    ],
+    "estado": "PASS",
+    "observacion": "Inicio cargó entry, vendor y DashboardPage; PatientsListPage se descargó al navegar. Menú se conservó y camas abrió sin alerta."
+  },
+  "limites": [
+    "No se ejecutó la suite histórica completa",
+    "No se verificó API/persistencia real; backend pendiente",
+    "No se afirma revisión completada por Codex si no hay respuesta"
+  ]
+}

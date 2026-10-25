@@ -52,3 +52,7 @@ El PR `[INTEGRACION-INICIAL] Consolidar frontend y documentación` desde Fronten
 ## Continuidad entre agentes y personas
 
 Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). Reservar con PR borrador; antes de retomar revisar rama, commits y seguimiento. El cambio de persona no cambia ID ni crea una tarea paralela. Antigravity lee AGENTS.md y la regla .agents/rules/00-continuidad.md al abrir la raíz del proyecto.
+
+## Mantenimiento solicitado
+
+`[MANTENIMIENTO] descripción` admite limpieza de Frontend/, plan/, configuración de GitHub y guía UI sustituida. No permite modificar Backend/ ni Database/ con esa excepción. Este trabajo responde a una solicitud humana de mantenimiento y no marca como HECHA ninguna tarea del producto. Mantiene contrato-pr y las protecciones vigentes.

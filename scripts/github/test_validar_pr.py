@@ -34,3 +34,9 @@ class ContratoTests(unittest.TestCase):
 
     def test_config_continuidad_sin_codigo_de_aplicacion(self):
         validar('[CONFIG-GITHUB] Continuidad', 'codex/continuidad-compartida', 'develop', ['plan/06_TABLERO.md', '.agents/rules/00-continuidad.md', 'scripts/github/cola.py', 'README.md'], '')
+
+    def test_mantenimiento_ui(self):
+        validar('[MANTENIMIENTO] Limpieza', 'codex/limpieza-final', 'develop', ['Frontend/src/app/App.tsx', 'Agente/DISENO_VISUAL.md', 'plan/ESTADO_ACTUAL.md'], '')
+    def test_mantenimiento_no_modelos(self):
+        with self.assertRaises(ValueError):
+            validar('[MANTENIMIENTO] Limpieza', 'codex/limpieza-final', 'develop', ['Database/hospital_general_postgresql.sql'], '')
