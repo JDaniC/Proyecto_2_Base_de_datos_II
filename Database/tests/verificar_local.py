@@ -133,6 +133,8 @@ class Verificacion:
             self.registrar('PostgreSQL', 'reejecucion compatible')
             sql((DB/'tests/regresiones_postgresql.sql').read_text(), nombre='postgres_regresiones')
             self.registrar('PostgreSQL', '33 regresiones SQL')
+            sql((DB/'tests/regresiones_archivo_postgresql.sql').read_text(), nombre='postgres_regresiones_archivo')
+            self.registrar('PostgreSQL', '8 regresiones de archivo y propiedad inmutable')
             # La segunda conexion espera el commit de la primera, despues rechaza el solapamiento.
             sql("""SET search_path=hospital_general,public;
             INSERT INTO paciente(id_paciente,primer_nombre,primer_apellido) VALUES(20001,'SINTETICO','A'),(20002,'SINTETICO','B');
@@ -154,6 +156,18 @@ class Verificacion:
             fallo = self.ejecutar(antiguo, esquema, esperado=1, nombre='postgres_esquema_anterior')
             assert 'ESQUEMA_ANTERIOR_SIN_MANIFIESTO' in fallo.stderr
             self.registrar('PostgreSQL', 'rechazo no destructivo de esquema anterior')
+            self.ejecutar([base/'createdb', '-h', '127.0.0.1', '-p', str(port), 'bdii_test_migracion'])
+            migrada = [str(x) if x != 'bdii_test_regresion' else 'bdii_test_migracion' for x in cli]
+            reversion = (DB/'migrations/001_revertir_archivo_historiales_postgresql.sql').read_text()
+            migracion = (DB/'migrations/001_corregir_archivo_historiales_postgresql.sql').read_text()
+            self.ejecutar(migrada, esquema)
+            self.ejecutar(migrada, reversion, nombre='postgres_migracion_estado_v2')
+            fallo_init = self.ejecutar(migrada, esquema, esperado=1, nombre='postgres_migracion_rechazo_init')
+            assert 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' in fallo_init.stderr
+            self.ejecutar(migrada, migracion, nombre='postgres_migracion_v2_v3')
+            self.ejecutar(migrada, esquema, nombre='postgres_migracion_reejecucion')
+            self.ejecutar(migrada, (DB/'tests/regresiones_archivo_postgresql.sql').read_text(), nombre='postgres_migracion_regresiones_archivo')
+            self.registrar('PostgreSQL', 'migracion explicita v2 -> v3 compatible con inicializador')
         finally:
             self.ejecutar([base/'pg_ctl', '-D', data, 'stop', '-m', 'fast'])
 

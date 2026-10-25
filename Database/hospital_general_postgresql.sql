@@ -1,4 +1,4 @@
--- Base relacional del Hospital General (PostgreSQL 15+). Inicializador v2.
+-- Base relacional del Hospital General (PostgreSQL 15+). Inicializador v3.
 -- Base nueva: no es una migracion de esquemas antiguos. Ejecutar con ON_ERROR_STOP=1.
 -- Basada en las 46 entidades y atributos del modelo relacional del proyecto.
 -- Ejecutar conectado a la base de datos PostgreSQL de destino.
@@ -26,7 +26,7 @@ DECLARE version_actual integer; huella_actual text;
 BEGIN
  IF to_regclass('hospital_general.modelo_database') IS NOT NULL THEN
    SELECT version,huella INTO version_actual,huella_actual FROM modelo_database WHERE id=1;
-   IF version_actual IS DISTINCT FROM 2 OR huella_actual IS DISTINCT FROM pg_temp.huella_hospital() THEN
+   IF version_actual IS DISTINCT FROM 3 OR huella_actual IS DISTINCT FROM pg_temp.huella_hospital() THEN
      RAISE EXCEPTION 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
    END IF;
  ELSIF EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='hospital_general' AND c.relkind IN('r','p','v','m')) THEN
@@ -683,7 +683,23 @@ DECLARE paciente_a bigint; paciente_b bigint; consulta_a bigint; consulta_b bigi
 BEGIN
   IF TG_TABLE_NAME = 'consulta' THEN
     SELECT id_paciente,estado_historial INTO paciente_a,estado_historial_actual FROM historial_clinico WHERE id_historial=NEW.id_historial FOR SHARE;
-    IF estado_historial_actual IS DISTINCT FROM 'ACTIVO' THEN RAISE EXCEPTION 'HISTORIAL_INACTIVO' USING ERRCODE='23514'; END IF;
+    IF TG_OP = 'INSERT' THEN
+      IF estado_historial_actual IS DISTINCT FROM 'ACTIVO' THEN RAISE EXCEPTION 'HISTORIAL_INACTIVO' USING ERRCODE='23514'; END IF;
+    ELSE
+      IF NEW.id_historial IS DISTINCT FROM OLD.id_historial OR NEW.id_cita IS DISTINCT FROM OLD.id_cita
+         OR NEW.id_personal_atendio IS DISTINCT FROM OLD.id_personal_atendio OR NEW.id_publico IS DISTINCT FROM OLD.id_publico THEN
+        RAISE EXCEPTION 'RELACION_CLINICA_INMUTABLE' USING ERRCODE='23514';
+      END IF;
+      IF OLD.estado = 'FINALIZADA' THEN
+        IF NEW.estado <> 'FINALIZADA' OR NEW.revision <> OLD.revision + 1 OR NOT EXISTS(
+          SELECT 1 FROM revisiones WHERE tipo_recurso='consulta' AND recurso_id=OLD.id_publico
+           AND version=OLD.revision AND contenido_anterior=to_jsonb(OLD)) THEN
+          RAISE EXCEPTION 'CORRECCION_CONSULTA_REQUIERE_REVISION' USING ERRCODE='23514';
+        END IF;
+      ELSIF estado_historial_actual IS DISTINCT FROM 'ACTIVO' AND NEW.estado <> 'FINALIZADA' THEN
+        RAISE EXCEPTION 'HISTORIAL_INACTIVO' USING ERRCODE='23514';
+      END IF;
+    END IF;
     IF NEW.id_cita IS NOT NULL THEN
       SELECT id_paciente,estado_cita INTO paciente_b,estado_cita_actual FROM cita WHERE id_cita=NEW.id_cita FOR UPDATE;
       IF paciente_a IS DISTINCT FROM paciente_b OR estado_cita_actual='CANCELADA' THEN
@@ -835,6 +851,6 @@ CREATE TABLE IF NOT EXISTS modelo_database (
  id smallint PRIMARY KEY CHECK(id=1), version integer NOT NULL CHECK(version>0), huella text NOT NULL,
  fecha_creacion timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-INSERT INTO modelo_database(id,version,huella) VALUES(1,2,pg_temp.huella_hospital())
+INSERT INTO modelo_database(id,version,huella) VALUES(1,3,pg_temp.huella_hospital())
  ON CONFLICT(id) DO NOTHING;
 COMMIT;
