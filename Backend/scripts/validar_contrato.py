@@ -72,6 +72,12 @@ def validate_artifacts():
             require(op['requestBody']['content']['application/json']['schema']['$ref'].endswith('/' + target),
                     'Fixture no corresponde al request: ' + case['id'])
             request_coverage.add((case['operationId'], case['valid']))
+        if 'queryOperationId' in case:
+            op = operations[case['queryOperationId']]
+            require(op['x-query-schema']['$ref'] == '#/components/schemas/' + target,
+                    'Fixture no corresponde a query: ' + case['id'])
+            query = {p['name']: p['schema'] for p in op['parameters'] if p.get('in') == 'query'}
+            require(query == schemas[target]['properties'], 'Query y esquema divergen: ' + case['id'])
     # Los ejemplos embebidos en errores también deben cumplir su esquema.
     for response in spec['components']['responses'].values():
         media = response['content']['application/json']

@@ -1,0 +1,575 @@
+[
+  {
+    "caso": "DIAGNOSTICO",
+    "evento": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "snapshots": [
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 1,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          }
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Diagnóstico corregido sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Indicaciones corregidas",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 2,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 2,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          },
+          "observaciones": "Corrección sintética"
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [],
+        "tratamientos": [],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 3
+      }
+    ],
+    "version_ausente": 99
+  },
+  {
+    "caso": "TRATAMIENTO",
+    "evento": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000073",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "snapshots": [
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 1,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          }
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Diagnóstico corregido sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Indicaciones corregidas",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 2,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 2,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          },
+          "observaciones": "Corrección sintética"
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [],
+        "tratamientos": [],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 3
+      }
+    ],
+    "version_ausente": 99
+  },
+  {
+    "caso": "RECETA",
+    "evento": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000070",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "snapshots": [
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 1,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          }
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Diagnóstico corregido sintético",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Indicaciones corregidas",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 2,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 2,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          },
+          "observaciones": "Corrección sintética"
+        }
+      },
+      {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [],
+        "tratamientos": [],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 3
+      }
+    ],
+    "version_ausente": 99
+  }
+]

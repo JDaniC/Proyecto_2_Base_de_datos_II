@@ -324,7 +324,7 @@
     "destino": "COMUN_V1",
     "operationId": "consultaObtener",
     "responsable": "E03-P2-03",
-    "regla": "GET por consulta UUID; comprobar paciente_id recibido contra expediente seleccionado.",
+    "regla": "GET por consulta UUID; comprobar paciente_id recibido contra expediente seleccionado. Lectura desde evento usa version_consulta como query version; ampliar firma UI en E03. Sin version se consulta vigente; no sustituir versión histórica ausente por vigente.",
     "fuente_ui": "`features/consultations/ConsultationDetailPage.tsx:93`",
     "propuesta_inventario": "`GET /api/v1/pacientes/{pacienteId}/consultas/{consultaId}`"
   },

@@ -178,6 +178,8 @@ export interface VinculoResponsable {
 }
 export interface RevisionConsulta {
   readonly id: UUID; readonly consultaId: UUID; readonly anterior: Consulta;
+  /** Versión resultante del cambio; anterior.version identifica el snapshot conservado. */
+  readonly version: Version;
   readonly motivo: string; readonly autorId: UUID; readonly fechaHora: InstanteUTC;
 }
 export interface Pagina<T> { readonly elementos: readonly T[]; readonly siguienteCursor?: string; }
@@ -189,9 +191,11 @@ export type EventoHistorial = {
   readonly id: UUID; readonly fechaHora: InstanteUTC; readonly recursoId: UUID;
   readonly titulo: string;
 } & (
-  | { readonly tipo: 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'; readonly consultaId: UUID }
-  | { readonly tipo: Exclude<TipoEventoHistorial, 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'>;
-      readonly consultaId?: UUID }
+  | { readonly tipo: 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'; readonly consultaId: UUID;
+      readonly versionConsulta: Version }
+  | { readonly tipo: 'CONSULTA'; readonly consultaId?: UUID; readonly versionConsulta: Version }
+  | { readonly tipo: Exclude<TipoEventoHistorial, 'CONSULTA' | 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'>;
+      readonly consultaId?: UUID; readonly versionConsulta?: never }
 );
 export interface RepositorioPaciente {
   porId(id: UUID): Promise<Paciente | null>;
@@ -214,6 +218,11 @@ export interface RepositorioConsulta {
   /** Una cita identifica a lo sumo una consulta; permite estado EN_CURSO derivado. */
   porCita(citaId: UUID): Promise<Consulta | null>;
   porId(id: UUID): Promise<Consulta | null>;
+  /** Snapshot exacto por (consulta UUID, versión), vigente o anterior. Nunca fallback
+   * a vigente ni búsqueda paginada. null si no existe en el ámbito autorizado.
+   * La versión anterior se conserva atómicamente antes de reemplazar la vigente.
+   */
+  porVersion(id: UUID, version: Version): Promise<Consulta | null>;
   revisiones(id: UUID, pagina: FiltrosPagina, rango?: RangoInstantes): Promise<Pagina<RevisionConsulta>>;
 }
 export interface ConsultaHistorial {

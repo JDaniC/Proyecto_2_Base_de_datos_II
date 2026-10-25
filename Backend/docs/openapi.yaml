@@ -945,7 +945,12 @@ paths:
     get:
       operationId: consultaObtener
       summary: consultaObtener
-      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      x-query-schema:
+        $ref: '#/components/schemas/SeleccionConsulta'
+      description: Sin version devuelve la consulta vigente. Con version devuelve exactamente ese snapshot
+        confirmado, incluida la versión vigente si coincide; nunca sustituye una versión ausente por la actual.
+        Busca por UUID y versión en el mismo ámbito, sin barrer revisiones; ausente o ajena produce 404.
+        Revalida cuenta y permiso historial.leer actuales también para versiones históricas.
       tags:
       - consultas
       x-permisos:
@@ -958,6 +963,12 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/UUID'
+      - name: version
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/Version'
+        description: Versión exacta indicada por version_consulta del evento histórico.
       responses:
         '200':
           description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
@@ -1075,6 +1086,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AgregarDiagnostico'
+      x-esquemas-institucionales:
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/AgregarDiagnosticoDental'
   /consultas/{id}/tratamientos:
     post:
       operationId: consultaTratamiento
@@ -1225,6 +1239,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CorregirConsulta'
       x-esquemas-institucionales:
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/CorregirConsultaDental'
         CENTRO_MEDICO_PEDIATRICO:
           $ref: '#/components/schemas/CorregirConsultaPediatrica'
   /consultas/{id}/revisiones:
@@ -1618,6 +1634,43 @@ components:
       - telefono
       description: Contacto de emergencia hospitalario con nombres y apellidos explícitos; no dividir ni inventar
         apellido desde el antiguo nombre libre.
+    ContactoLectura:
+      type: object
+      additionalProperties: false
+      description: Contacto hospitalario legado; conserva ambos nombres/apellidos de 80 más separador.
+      properties:
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 161
+          pattern: \S
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 161
+          pattern: \S
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 60
+          pattern: \S
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: \S
+      required:
+      - nombres
+      - apellidos
+      - parentesco
+      - telefono
+    SeleccionConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          $ref: '#/components/schemas/Version'
+      description: Sin version lee vigente; con version lee únicamente el snapshot confirmado solicitado.
     Identificacion:
       type: object
       additionalProperties: false
@@ -1865,8 +1918,17 @@ components:
       type: object
       additionalProperties: false
       properties:
-        nombres: *id009
-        apellidos: *id010
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+          description: Lectura sin truncamiento; PG/Mongo hasta 161 al unir grupos, MySQL 160 y Firestore 200.
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
         fecha_nacimiento:
           anyOf:
           - $ref: '#/components/schemas/FechaCivil'
@@ -1886,7 +1948,10 @@ components:
         correo: *id015
         direccion: *id016
         grupo_sanguineo: *id017
-        contacto_emergencia: *id018
+        contacto_emergencia:
+          $ref: '#/components/schemas/ContactoLectura'
+          x-instituciones:
+          - HOSPITAL_GENERAL
         id:
           $ref: '#/components/schemas/UUID'
         codigo_legible:
@@ -2263,6 +2328,32 @@ components:
       - required:
         - cita_id
         - version_cita
+      - properties:
+          diagnosticos:
+            items:
+              $ref: '#/components/schemas/DiagnosticoDental'
+    DiagnosticoDental:
+      description: Política odontológica explícita, nombre máximo 180, preservable en el catálogo existente.
+      allOf:
+      - $ref: '#/components/schemas/Diagnostico'
+      - properties:
+          nombre:
+            maxLength: 180
+    AgregarDiagnosticoDental:
+      allOf:
+      - $ref: '#/components/schemas/AgregarDiagnostico'
+      - properties:
+          diagnostico:
+            $ref: '#/components/schemas/DiagnosticoDental'
+    CorregirConsultaDental:
+      allOf:
+      - $ref: '#/components/schemas/CorregirConsulta'
+      - properties:
+          contenido:
+            properties:
+              diagnosticos:
+                items:
+                  $ref: '#/components/schemas/DiagnosticoDental'
     ConsultaPediatrica:
       allOf:
       - $ref: '#/components/schemas/ConsultaCompleta'
@@ -2602,6 +2693,8 @@ components:
           $ref: '#/components/schemas/Profesional'
         consulta_id:
           $ref: '#/components/schemas/UUID'
+        version_consulta:
+          $ref: '#/components/schemas/Version'
       required:
       - id
       - fecha_hora
@@ -2621,9 +2714,28 @@ components:
         then:
           required:
           - consulta_id
-      description: En componentes clínicos recurso_id identifica el componente y consulta_id su padre, para cargar
-        GET /consultas/{consulta_id} sin barrer historia. En tipo CONSULTA, recurso_id ya es la consulta. Referencias
-        del mismo paciente/ámbito; selladas por servidor.
+      - if:
+          properties:
+            tipo:
+              enum:
+              - CONSULTA
+              - DIAGNOSTICO
+              - TRATAMIENTO
+              - RECETA
+          required:
+          - tipo
+        then:
+          required:
+          - version_consulta
+        else:
+          not:
+            required:
+            - version_consulta
+      description: Eventos clínicos referencian una versión confirmada e inmutable de la consulta. Para componentes,
+        cargar GET /consultas/{consulta_id}?version={version_consulta} y seleccionar recurso_id dentro del snapshot.
+        Para CONSULTA, recurso_id es la consulta y también se usa version_consulta. No cargar la versión vigente
+        como sustituto ni barrer historia. El componente debe existir en la versión referenciada. Evento y versión
+        se confirman atómicamente, con referencias del mismo paciente/ámbito selladas por servidor.
     Historial:
       type: object
       additionalProperties: false

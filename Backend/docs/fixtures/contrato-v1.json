@@ -2014,7 +2014,8 @@
             "fecha_hora": "2026-10-25T12:00:00Z",
             "tipo": "CONSULTA",
             "recurso_id": "00000000-0000-4000-8000-000000000005",
-            "titulo": "Consulta sintética"
+            "titulo": "Consulta sintética",
+            "version_consulta": 1
           }
         ]
       },
@@ -2051,7 +2052,8 @@
               "fecha_hora": "2026-10-25T12:00:00Z",
               "tipo": "CONSULTA",
               "recurso_id": "00000000-0000-4000-8000-000000000005",
-              "titulo": "Consulta sintética"
+              "titulo": "Consulta sintética",
+              "version_consulta": 1
             }
           ]
         }
@@ -3398,7 +3400,8 @@
       "tipo": "DIAGNOSTICO",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
       "consulta_id": "00000000-0000-4000-8000-000000000005",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3410,7 +3413,8 @@
       "fecha_hora": "2026-10-25T12:10:00Z",
       "tipo": "DIAGNOSTICO",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3423,7 +3427,8 @@
       "tipo": "TRATAMIENTO",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
       "consulta_id": "00000000-0000-4000-8000-000000000005",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3435,7 +3440,8 @@
       "fecha_hora": "2026-10-25T12:10:00Z",
       "tipo": "TRATAMIENTO",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3448,7 +3454,8 @@
       "tipo": "RECETA",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
       "consulta_id": "00000000-0000-4000-8000-000000000005",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3460,7 +3467,8 @@
       "fecha_hora": "2026-10-25T12:10:00Z",
       "tipo": "RECETA",
       "recurso_id": "00000000-0000-4000-8000-000000000071",
-      "titulo": "Diagnóstico sintético"
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
     }
   },
   {
@@ -3649,5 +3657,1238 @@
       "motivo": "Prueba sintética",
       "duracion_minutos": 0
     }
+  },
+  {
+    "id": "AF01-lectura-nombres-80",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-nombres-81",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-nombres-160",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-nombres-161",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-nombres-200",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-nombres-201",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF01-alta-nombres-80",
+    "schema": "AltaPaciente",
+    "value": {
+      "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "apellidos": "Sintetico",
+      "fecha_nacimiento": "2015-01-01",
+      "sexo": "OTRO"
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-alta-nombres-81",
+    "schema": "AltaPaciente",
+    "value": {
+      "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "apellidos": "Sintetico",
+      "fecha_nacimiento": "2015-01-01",
+      "sexo": "OTRO"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF01-lectura-apellidos-80",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-apellidos-81",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-apellidos-160",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-apellidos-161",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-apellidos-200",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-lectura-apellidos-201",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF01-alta-apellidos-80",
+    "schema": "AltaPaciente",
+    "value": {
+      "nombres": "Paciente",
+      "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "fecha_nacimiento": "2015-01-01",
+      "sexo": "OTRO"
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-alta-apellidos-81",
+    "schema": "AltaPaciente",
+    "value": {
+      "nombres": "Paciente",
+      "apellidos": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "fecha_nacimiento": "2015-01-01",
+      "sexo": "OTRO"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF01-busqueda-nombres-legados",
+    "schema": "RespuestaPacientes",
+    "value": {
+      "data": [
+        {
+          "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "apellidos": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "fecha_nacimiento": "2015-10-25",
+          "sexo": "OTRO",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "codigo_legible": "SINTETICO-001",
+          "institucion": "HOSPITAL_GENERAL",
+          "estado": "ACTIVO",
+          "version": 1,
+          "fecha_registro": "2026-10-25T12:00:00Z"
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-expediente-nombres-legados",
+    "schema": "RespuestaExpediente",
+    "value": {
+      "data": {
+        "paciente": {
+          "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "apellidos": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "fecha_nacimiento": "2015-10-25",
+          "sexo": "OTRO",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "codigo_legible": "SINTETICO-001",
+          "institucion": "HOSPITAL_GENERAL",
+          "estado": "ACTIVO",
+          "version": 1,
+          "fecha_registro": "2026-10-25T12:00:00Z"
+        },
+        "historial": {
+          "paciente_id": "00000000-0000-4000-8000-000000000001",
+          "version": 1,
+          "estado": "ACTIVO",
+          "eventos": [
+            {
+              "id": "00000000-0000-4000-8000-000000000010",
+              "fecha_hora": "2026-10-25T12:00:00Z",
+              "tipo": "CONSULTA",
+              "recurso_id": "00000000-0000-4000-8000-000000000005",
+              "titulo": "Consulta sintética",
+              "version_consulta": 1
+            }
+          ]
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-contacto-legado-161",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z",
+        "contacto_emergencia": {
+          "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "apellidos": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "parentesco": "MADRE",
+          "telefono": "SINTETICO"
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF01-contacto-legado-162",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z",
+        "contacto_emergencia": {
+          "nombres": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "apellidos": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "parentesco": "MADRE",
+          "telefono": "SINTETICO"
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-diagnostico-dental-180",
+    "schema": "ConsultaDental",
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003",
+      "version_cita": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-correccion-diagnostico-180",
+    "schema": "CorregirConsultaDental",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-diagnostico-dental-181",
+    "schema": "ConsultaDental",
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003",
+      "version_cita": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-diagnostico-181",
+    "schema": "CorregirConsultaDental",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-diagnostico-dental-200",
+    "schema": "ConsultaDental",
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003",
+      "version_cita": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-diagnostico-200",
+    "schema": "CorregirConsultaDental",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-diagnostico-dental-201",
+    "schema": "ConsultaDental",
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003",
+      "version_cita": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-diagnostico-201",
+    "schema": "CorregirConsultaDental",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-diagnostico-historico-200",
+    "schema": "RespuestaConsulta",
+    "value": {
+      "data": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF03-evento-version-CONSULTA",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "CONSULTA",
+      "recurso_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "valid": true
+  },
+  {
+    "id": "AF03-evento-version-invalida-CONSULTA-None",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "CONSULTA",
+      "recurso_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-CONSULTA-0",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "CONSULTA",
+      "recurso_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 0
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-CONSULTA-1",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "CONSULTA",
+      "recurso_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": "1"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-DIAGNOSTICO",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "valid": true
+  },
+  {
+    "id": "AF03-evento-version-invalida-DIAGNOSTICO-None",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-DIAGNOSTICO-0",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 0
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-DIAGNOSTICO-1",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": "1"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-TRATAMIENTO",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "valid": true
+  },
+  {
+    "id": "AF03-evento-version-invalida-TRATAMIENTO-None",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-TRATAMIENTO-0",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 0
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-TRATAMIENTO-1",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": "1"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-RECETA",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 1
+    },
+    "valid": true
+  },
+  {
+    "id": "AF03-evento-version-invalida-RECETA-None",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-RECETA-0",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": 0
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-evento-version-invalida-RECETA-1",
+    "schema": "EventoHistorial",
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético",
+      "version_consulta": "1"
+    },
+    "valid": false
+  },
+  {
+    "id": "AF03-seleccion-vigente",
+    "schema": "SeleccionConsulta",
+    "value": {},
+    "valid": true,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-anterior",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": 1
+    },
+    "valid": true,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-cero",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": 0
+    },
+    "valid": false,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-null",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": null
+    },
+    "valid": false,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-tipo-interno",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": "1"
+    },
+    "valid": false,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-fraccion",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": 1.5
+    },
+    "valid": false,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF03-seleccion-extra",
+    "schema": "SeleccionConsulta",
+    "value": {
+      "version": 1,
+      "actor": "FALSO"
+    },
+    "valid": false,
+    "queryOperationId": "consultaObtener"
+  },
+  {
+    "id": "AF02-agregar-dental-180",
+    "schema": "AgregarDiagnosticoDental",
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        "es_principal": true
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-correccion-comun-180",
+    "schema": "CorregirConsulta",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-agregar-dental-181",
+    "schema": "AgregarDiagnosticoDental",
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        "es_principal": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-comun-181",
+    "schema": "CorregirConsulta",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-agregar-dental-200",
+    "schema": "AgregarDiagnosticoDental",
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        "es_principal": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-comun-200",
+    "schema": "CorregirConsulta",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "id": "AF02-agregar-dental-201",
+    "schema": "AgregarDiagnosticoDental",
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+        "es_principal": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "id": "AF02-correccion-comun-201",
+    "schema": "CorregirConsulta",
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "valid": false
   }
 ]

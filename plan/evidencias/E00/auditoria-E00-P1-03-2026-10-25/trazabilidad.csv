@@ -1,0 +1,26 @@
+criterio,fuente,criterio_verificable,artefacto,evidencia,trazabilidad,resultado,prioridad
+A01,RNF-029; tarea trabajo 1,API REST JSON bajo /api/v1,Backend/docs/openapi.yaml:7,T01 y lectura de servers,CUBIERTO,PASS,ALTA
+A02,Tarea trabajo 1,DTO/endpoints de sesión/paciente/agenda/consulta/corrección/archivo/historial,Backend/docs/openapi.yaml:15,T01; inventario 26 operaciones,CUBIERTO,PASS,ALTA
+A03,DEC07; tarea flujo fallo,Entradas cerradas sin actor/motor/institución de cliente,Backend/docs/openapi.yaml; plan/03 §7,T01; T08,CUBIERTO,PASS,ALTA
+A04,RNF-031; DEC08,UUID públicos sin identificador nativo,Backend/docs/openapi.yaml:UUID,T01; T07 ID nativo,CUBIERTO,PASS,ALTA
+A05,DEC08; trabajo 1,Versión en lectura y esperada en comandos de cambio,Backend/docs/openapi.yaml; puertos-v1.ts,T01; fixtures sin-version; revisión de firmas,CUBIERTO,PASS,ALTA
+A06,RF-019; trabajo 1,Clave/hash/replay estables descritos para comandos,plan/03 §7; UnidadDeTrabajo,Lectura de protocolo; claves en OpenAPI,CUBIERTO,PASS,ALTA
+A07,RNF-030,Fecha civil real; evento UTC; zona de presentación documentada,FechaCivil; InstanteUTC; plan/03 §7,T07; lectura de reglas,CUBIERTO,PASS,ALTA
+A08,RNF-032; CA07,Rangos/orden/cursor/limite y filtros previos a página definidos,BuscarCitas/Historial/Revisiones; lectores,T01; T07; lectura de plan/03 §6/§7,CUBIERTO,PASS,ALTA
+A09,RF-020; RNF-033; aceptación tarea,Errores HTTP requeridos con catálogo y sin mensajes de proveedor,Error400/401/403/404/409/413/500/503,T01; 21 fixtures válidos de errores,CUBIERTO,PASS,ALTA
+A10,Trabajo 4; aceptación tarea,Ejemplos sintéticos positivos/negativos para cada request con body,Backend/docs/fixtures/contrato-v1.json,T01: 169 fixtures; cobertura mínima validada,CUBIERTO,PASS,ALTA
+A11,Trabajo 2; RNF-035,Firmas puras compilables sin framework/SDK/SQL/entorno,Backend/docs/puertos-v1.ts,AST; compilación estricta; lectura de importaciones,CUBIERTO,PASS,ALTA
+A12,Trabajo 2; arquitectura §4,UoW lectores previos/plan de cambios+revisiones+operación+auditoría,LectorTransaccional; UnidadDeTrabajo; PlanConfirmacion,Lectura de tipos y comentarios; compilación,CUBIERTO,PASS,ALTA
+A13,Trabajo 2; RF-013/RNF-024; DEC16 §3,Evento resuelve snapshot/versionado concreto aun después de corrección,EventoHistorial; RepositorioConsulta,T11; AF03,DIVERGENTE,FAIL,ALTA
+A14,Trabajo 2; DEC03/04/05/10,Políticas cita dental/autorización pediátrica/no agenda lab/reactivación peds,x-instituciones; overlays; plan/03 §7,T01; fixtures institucionales; lectura,CUBIERTO,PASS,ALTA
+A15,Trabajo 3,Cada firma UI tiene destino/caso o extensión identificada,Backend/docs/mapa-ui-v1.json,T01: igualdad de 117 métodos; revisión de destinos,CUBIERTO,PASS,ALTA
+A16,Trabajo 3; DEC11,Métodos retirados y solo mock identificados,Mapa UI; productScope.ts,T01: 10 exclusiones; categorías 96/11/10,CUBIERTO,PASS,MEDIA
+A17,DEC06; trabajo 3,Alias pediátrico solo en mapper de presentación,Institucion; plan/03 §7; Frontend/docs,T01 fixture alias inválido; revisión de guía,CUBIERTO,PASS,ALTA
+A18,Trabajo 4,Extensiones con tarea responsable y puerta contractual,87 filas EXTENSION_PENDIENTE; README puerta,T01; T06; revisión de tareas responsables,CUBIERTO,PASS,ALTA
+A19,RF-015/017; excepción tarea,Restricciones físicas reconciliadas o extensión concreta acordada,Diagnostico.nombre; modelo MySQL,T10; AF02,PARCIAL,FAIL,ALTA
+A20,RF-D01; DEC16 §1,Lectura preserva nombres completos legados admitidos por modelos,Paciente.nombres/apellidos,T09; modelo-legado.mjs; AF01,DIVERGENTE,FAIL,ALTA
+A21,DEC16; conservación,Ausencia legada no sustituida por fecha/sexo/duración inventados,Paciente nullable; Cita nullable; COMPATIBILIDAD,T01 fixtures legado; lectura de reglas,CUBIERTO,PASS,ALTA
+A22,Trabajo 2; límites diseño,Límites 256 KiB/100 y rechazo sin truncamiento definidos,OpenAPI x-limites; plan/03 §7,T01 y lectura; medición runtime futura,CUBIERTO,PASS,ALTA
+A23,Aceptación tarea,Sintaxis/ejemplos validados con versiones registradas,requirements-contrato.txt; validar_contrato.py,T01–T06; reporte de herramientas,CUBIERTO,PASS,ALTA
+A24,CA04/07; RF-017,Equivalencia/orden/rollback en cuatro implementaciones reales,Backend/src y adaptadores futuros,No existen implementaciones; no exigidas en E00 como runtime,NOT_IMPLEMENTED,NOT_IMPLEMENTED,ALTA
+A25,Aceptación tarea; política integración,Revisión de consistencia y revisión automática limpia antes de cierre,Informe auditoría; PR #15,3 hallazgos actuales; revision-codex FAILURE para SHA,PARCIAL,FAIL,ALTA

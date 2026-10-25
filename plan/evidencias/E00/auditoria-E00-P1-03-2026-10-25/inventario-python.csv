@@ -1,0 +1,6 @@
+#,unit,kind,risk,args,todo,path,line,doc
+1,decimal_values,function,MEDIUM,value,False,scripts/validar_contrato.py,20,Evita falsos rechazos de multipleOf debidos a división binaria de floats.
+2,is_integer,function,MEDIUM,checker;value,False,scripts/validar_contrato.py,31,
+3,require,function,MEDIUM,condition;message,False,scripts/validar_contrato.py,42,
+4,validate_artifacts,function,CRITICAL,,False,scripts/validar_contrato.py,47,
+
