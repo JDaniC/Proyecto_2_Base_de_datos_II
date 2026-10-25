@@ -260,7 +260,7 @@
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
     "operationId": "citaListar",
-    "responsable": "E03-P2-01",
+    "responsable": "E03-P1-01 / E03-P2-03",
     "regla": "fechaDesde/fechaHasta → fecha_desde/fecha_hasta con hasta exclusiva; sin agenda laboratorio.",
     "fuente_ui": "`features/appointments/AppointmentsCalendarPage.tsx:75`",
     "propuesta_inventario": "`GET /api/v1/citas?fechaDesde={f1}&fechaHasta={f2}&profesionalId={id}&estado={est}&q={q}`"
@@ -270,7 +270,7 @@
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
     "operationId": "citaObtener",
-    "responsable": "E03-P2-01",
+    "responsable": "E03-P1-01 / E03-P2-03",
     "regla": "UUID, versión; recurso ajeno 404. Consultar citaRevisiones para historialReprogramaciones mediante cursor; motivo_cancelacion → motivoCancelacion sin alterar motivo de atención.",
     "fuente_ui": "`features/consultations/NewConsultationWizardPage.tsx:159`",
     "propuesta_inventario": "`GET /api/v1/citas/{id}`",
@@ -283,7 +283,7 @@
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
     "operationId": "citaCrear",
-    "responsable": "E03-P2-01",
+    "responsable": "E03-P1-01 / E03-P2-03",
     "regla": "Omitir secretariaGestora; resolver versión_paciente al elegir paciente. Colisión → 409 CITA_SOLAPADA.",
     "fuente_ui": "`features/appointments/CrearCitaModal.tsx:116`",
     "propuesta_inventario": "`POST /api/v1/citas`"
@@ -293,8 +293,8 @@
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
     "operationId": "citaReprogramar",
-    "responsable": "E03-P2-01",
-    "regla": "nuevaFecha/nuevaHora → fecha/hora_inicio; motivo, versión y clave.",
+    "responsable": "E03-P1-01 / E03-P2-03",
+    "regla": "nuevaFecha/nuevaHora → fecha/hora_inicio; motivo, versión y clave. Duración de cita legada desconocida: ampliar captura/firma UI con duracion_minutos en E03; sin dato explícito falla 409 y conserva cita.",
     "fuente_ui": "`features/appointments/ReprogramarCitaModal.tsx:69`",
     "propuesta_inventario": "`PATCH /api/v1/citas/{id}/reprogramacion`"
   },
@@ -303,7 +303,7 @@
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
     "operationId": "citaCancelar",
-    "responsable": "E03-P2-01",
+    "responsable": "E03-P1-01 / E03-P2-03",
     "regla": "motivoCancelacion → motivo; versión y clave.",
     "fuente_ui": "`features/appointments/CancelarCitaModal.tsx:51`",
     "propuesta_inventario": "`POST /api/v1/citas/{id}/cancelacion`"
@@ -417,8 +417,8 @@
     "metodo": "CatalogRepository.obtenerMedicos",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E03-P2-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "responsable": "E03-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre. Coordinación de contrato común de profesionales; adaptadores SQL E03-P1-02 y Firestore E03-P2-02, conexión UI E03-P2-03. E03-P2-01 solo implementa núcleo clínico Mongo, sin agenda pública.",
     "fuente_ui": "`features/hospital/HospitalizationAdmissionPage.tsx:65` (y conectar en `AppointmentsCalendarPage.tsx` / `CrearCitaModal.tsx`)",
     "propuesta_inventario": "`GET /api/v1/catalogos/medicos`"
   },
