@@ -70,7 +70,7 @@ WHERE id_historial = 41001;
 
 
 def ejecutar_pruebas_migracion(evidencias_dir: Path = SALIDA_DEFAULT) -> dict:
-    base = modulo.buscar_binario_dir(None, "initdb", getattr(modulo, "RUTAS_PG", ())) or Path(shutil.which("initdb") or "").parent
+    base = modulo.buscar_binario_dir(None, "initdb", modulo.RUTAS_POSTGRES) or Path(shutil.which("initdb") or "").parent
     if not (base / "initdb").is_file():
         raise RuntimeError("Falta PostgreSQL nativo para verificar migración.")
     evidencias_dir.mkdir(parents=True, exist_ok=True)

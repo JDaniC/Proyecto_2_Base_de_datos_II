@@ -36,7 +36,7 @@ actor_baja=(SELECT id_publico FROM usuario WHERE id_usuario=91001) WHERE id_hist
 
 
 def main():
-    base = modulo.buscar_binario_dir(None, "initdb", getattr(modulo, "RUTAS_PG", ())) or Path(shutil.which("initdb") or "").parent
+    base = modulo.buscar_binario_dir(None, "initdb", modulo.RUTAS_POSTGRES) or Path(shutil.which("initdb") or "").parent
     if not (base / "initdb").is_file():
         raise RuntimeError("Falta PostgreSQL nativo: prueba bloqueada.")
     SALIDA.mkdir(parents=True, exist_ok=True)
