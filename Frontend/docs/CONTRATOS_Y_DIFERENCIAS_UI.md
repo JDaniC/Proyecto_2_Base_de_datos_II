@@ -387,3 +387,6 @@ El [mapa de los 117 métodos](../../Backend/docs/mapa-ui-v1.json) determina el d
 - Alta pediátrica: responsable nuevo sin UUID o referencia existente con versión. Paciente requiere al menos un principal, aunque no autorice; consulta exige autorización vigente del vínculo seleccionado. Las mutaciones de vínculos quedan fuera del PATCH demográfico.
 
 El contrato incorpora rechazos de actor, motor, institución y propiedades desconocidas; alias pediátrico solo en mapper de respuesta. Los [fixtures](../../Backend/docs/fixtures/contrato-v1.json) y el [validador](../../Backend/scripts/validar_contrato.py) acreditan esquema y trazabilidad, sin simular persistencia ni seguridad real.
+
+
+Edición demográfica (revisión de E00-P1-03): una propiedad omitida conserva su valor, null elimina opcionales y un valor nuevo lo reemplaza. El adaptador debe distinguir campos no editados de correo/documento/contacto borrado explícitamente; estos últimos viajan como null. Nombres, apellidos, sexo y fecha de nacimiento nunca se borran con null. Respuestas omiten campos retirados. Archivo devuelve baja con causa/motivo/fecha/actor y reactivación conserva el registro previo en el historial del servidor. El parentesco forma parte del vínculo referenciado, no de los datos globales del responsable.

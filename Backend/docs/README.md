@@ -48,3 +48,10 @@ Las firmas de puertos ilustran operaciones comunes y la frontera transaccional. 
 ## Fuentes técnicas
 
 Se fijó OpenAPI 3.1.0 deliberadamente; no se sigue automáticamente la versión más reciente. Fuentes primarias consultadas el 25/10/2026: [especificación OpenAPI 3.1.0](https://spec.openapis.org/oas/v3.1.0.html), [OpenAPI Spec Validator](https://openapi-spec-validator.readthedocs.io/en/latest/), [validación JSON Schema y FormatChecker](https://python-jsonschema.readthedocs.io/en/stable/validate/).
+
+
+## Edición y metadatos conservados
+
+En PATCH, omitir un campo conserva el valor anterior; enviar null elimina solo campos opcionales; un valor lo reemplaza. Correo vacío o identificación/contacto borrados explícitamente en UI se mapean a null. El snapshot de respuesta omite campos retirados. La reserva de identificación cambia o se libera atómicamente con la demografía y su revisión histórica. La creación no acepta null como sustituto de campos requeridos.
+
+Paciente archivado contiene baja con causa, motivo, fecha y actor; la lectura y el plan de confirmación la conservan. Reactivación guarda la baja previa y justificación en eventos de estado antes de retirar la baja vigente. El vínculo pediátrico conserva parentesco. Los filtros estado/q de agenda llegan al repositorio antes de paginar; no filtrar una página ya seleccionada.

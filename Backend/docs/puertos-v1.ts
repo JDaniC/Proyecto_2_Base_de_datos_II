@@ -58,10 +58,36 @@ export interface PerfilPaciente {
   readonly grupoSanguineo?: string;
   readonly contactoEmergencia?: { readonly nombre: string; readonly parentesco: string; readonly telefono: string };
 }
-export interface Paciente extends PerfilPaciente {
-  readonly id: UUID; readonly historialId: UUID; readonly version: Version;
-  readonly estado: 'ACTIVO' | 'ARCHIVADO';
+export type CausaArchivo = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
+export interface ArchivoRegistrado {
+  readonly causa: CausaArchivo; readonly motivo: string;
+  readonly fechaHora: InstanteUTC; readonly actorId: UUID;
 }
+export type Paciente = PerfilPaciente & {
+  readonly id: UUID; readonly historialId: UUID; readonly version: Version;
+} & (
+  | { readonly estado: 'ACTIVO'; readonly baja?: never }
+  | { readonly estado: 'ARCHIVADO'; readonly baja: ArchivoRegistrado }
+);
+/** Omitido = conservar; null = retirar del snapshot; valor = reemplazar. */
+export type CambioPerfilPaciente = Partial<Pick<PerfilPaciente,
+  'nombres' | 'apellidos' | 'fechaNacimiento' | 'sexo'>> & {
+  readonly identificacion?: Identificacion | null;
+  readonly telefono?: string | null; readonly correo?: string | null;
+  readonly direccion?: string | null; readonly grupoSanguineo?: string | null;
+  readonly contactoEmergencia?: PerfilPaciente['contactoEmergencia'] | null;
+};
+export interface CambioDemografico {
+  readonly versionEsperada: Version; readonly cambios: CambioPerfilPaciente;
+}
+export type EventoEstadoPaciente = {
+  readonly id: UUID; readonly pacienteId: UUID; readonly versionAnterior: Version;
+  readonly fechaHora: InstanteUTC; readonly actorId: UUID;
+} & (
+  | { readonly tipo: 'ARCHIVO'; readonly baja: ArchivoRegistrado }
+  | { readonly tipo: 'REACTIVACION'; readonly bajaAnterior: ArchivoRegistrado;
+      readonly motivo: string; readonly correccionFallecimiento: boolean }
+);
 export interface Cita {
   readonly id: UUID; readonly pacienteId: UUID; readonly profesionalId: UUID;
   readonly fecha: FechaCivil; readonly horaInicio: string; readonly horaFin: string;
@@ -99,6 +125,7 @@ export interface Consulta extends ContenidoClinico {
 }
 export interface VinculoResponsable {
   readonly responsableId: UUID; readonly pacienteId: UUID;
+  readonly parentesco: string;
   readonly version: Version; readonly esPrincipal: boolean;
   readonly autorizaAtencion: boolean; readonly activo: boolean;
 }
@@ -117,12 +144,17 @@ export interface EventoHistorial {
 }
 export interface RepositorioPaciente {
   porId(id: UUID): Promise<Paciente | null>;
+  historialEstados(id: UUID, pagina: FiltrosPagina): Promise<Pagina<EventoEstadoPaciente>>;
   buscar(q: string, estado: 'ACTIVO' | 'ARCHIVADO' | 'TODOS', pagina: FiltrosPagina): Promise<Pagina<Paciente>>;
+}
+export interface FiltrosCitas {
+  readonly desde: FechaCivil; readonly hastaExclusiva: FechaCivil;
+  readonly profesionalId?: UUID; readonly estado?: Cita['estado']; readonly q?: string;
 }
 export interface RepositorioCita {
   porId(id: UUID): Promise<Cita | null>;
-  listar(desde: FechaCivil, hastaExclusiva: FechaCivil, pagina: FiltrosPagina,
-    profesionalId?: UUID): Promise<Pagina<Cita>>;
+  /** Aplicar TODOS los filtros antes de paginar y vincularlos al cursor. */
+  listar(filtros: FiltrosCitas, pagina: FiltrosPagina): Promise<Pagina<Cita>>;
   /** Bloquea/reserva el intervalo en la misma transacción, no valida fuera de UoW. */
   solapamientos(profesionalId: UUID, fecha: FechaCivil, inicio: string, fin: string): Promise<readonly Cita[]>;
 }
@@ -200,6 +232,8 @@ export interface PlanConfirmacion<T> {
   readonly tipo: 'CONFIRMAR';
   readonly cambios: readonly CambioComun[];
   readonly revisiones: readonly RevisionConsulta[];
+  /** Persistir con el cambio de estado; conserva causa/motivo después de reactivar. */
+  readonly estadosPaciente: readonly EventoEstadoPaciente[];
   readonly auditoria: readonly EventoAuditoria[];
   readonly resultado: ResultadoDurable<T>;
   // UoW añade operación idempotente y sus reservas al mismo commit.

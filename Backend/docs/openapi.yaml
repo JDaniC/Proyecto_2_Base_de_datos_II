@@ -288,7 +288,9 @@ paths:
     patch:
       operationId: pacienteActualizar
       summary: pacienteActualizar
-      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      description: 'PATCH parcial de demografía: omisión conserva, null elimina opcionales; obligatorios no admiten
+        null. Comando conserva historial previo y actualiza/libera reserva de identidad atómicamente. No modifica
+        vínculos de responsables.'
       tags:
       - pacientes
       x-permisos:
@@ -1682,17 +1684,60 @@ components:
         apellidos: *id010
         fecha_nacimiento: *id011
         sexo: *id012
-        identificacion: *id013
-        telefono: *id014
-        correo: *id015
-        direccion: *id016
-        grupo_sanguineo: *id017
-        contacto_emergencia: *id018
+        identificacion:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - $ref: '#/components/schemas/Identificacion'
+          - type: 'null'
+        telefono:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - type: string
+            maxLength: 30
+            minLength: 1
+            pattern: \S
+          - type: 'null'
+        correo:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: 'null'
+        direccion:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - type: string
+            maxLength: 500
+            minLength: 1
+            pattern: \S
+          - type: 'null'
+        grupo_sanguineo:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - type: string
+            enum:
+            - A+
+            - A-
+            - B+
+            - B-
+            - AB+
+            - AB-
+            - O+
+            - O-
+          - type: 'null'
+        contacto_emergencia:
+          description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
+          anyOf:
+          - $ref: '#/components/schemas/Contacto'
+          - type: 'null'
         version_esperada:
           $ref: '#/components/schemas/Version'
       required:
       - version_esperada
       minProperties: 2
+      description: 'PATCH parcial: omitir campo lo conserva; null retira solo los opcionales. Obligatorios no admiten
+        null. Remover identificación libera su reserva de unicidad en la misma UoW, sin perder revisión histórica.'
     Paciente:
       type: object
       additionalProperties: false
@@ -1731,6 +1776,8 @@ components:
             $ref: '#/components/schemas/ResponsablePaciente'
           minItems: 1
           maxItems: 100
+        baja:
+          $ref: '#/components/schemas/ArchivoRegistrado'
       required:
       - id
       - codigo_legible
@@ -1742,6 +1789,20 @@ components:
       - estado
       - version
       - fecha_registro
+      allOf:
+      - if:
+          properties:
+            estado:
+              const: ARCHIVADO
+          required:
+          - estado
+        then:
+          required:
+          - baja
+        else:
+          not:
+            required:
+            - baja
     ArchivoPaciente:
       type: object
       additionalProperties: false
@@ -2683,6 +2744,30 @@ components:
         desde: *id005
         hasta: *id006
       required: *id039
+    ArchivoRegistrado:
+      type: object
+      additionalProperties: false
+      properties:
+        causa:
+          type: string
+          enum:
+          - TRASLADO
+          - FALLECIMIENTO
+          - OTRA_ADMINISTRATIVA
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        fecha_hora:
+          $ref: '#/components/schemas/InstanteUTC'
+        actor_id:
+          $ref: '#/components/schemas/UUID'
+      required:
+      - causa
+      - motivo
+      - fecha_hora
+      - actor_id
   parameters:
     Idempotencia:
       name: Idempotency-Key

@@ -122,3 +122,11 @@ Responsables de extensiones: E03-P2-01 (catálogo profesional); E04-P1-01 (odont
 E01-P2-03 conecta infraestructura cliente HTTP común. Los adaptadores especializados esperan su contrato; deben fallar explícitamente mientras esté pendiente. No hay fallback a mocks. La provisión de cuentas y archivos de informes son procesos recuperables fuera del callback clínico, según arquitectura §5/§6.
 
 Fuente primaria de canonización de reintentos: [RFC 8785, JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785), consultada el 25/10/2026.
+
+
+### Precisiones tras revisión de Codex de bc8f27a
+
+- El PATCH demográfico distingue omisión (conservar), valor (reemplazar) y null (retirar campos opcionales: identificacion, telefono, correo, direccion, grupo_sanguineo, contacto_emergencia). Los campos obligatorios nunca admiten null. Cliente traduce un correo/documento/contacto borrado explícitamente a null y no a cadena vacía; una propiedad no editada se omite. El planificador calcula snapshot nuevo sin el campo retirado y preserva revisión previa; retirar/cambiar identificación libera/reserva la clave única en el mismo commit. Alta sigue omitiendo opcionales vacíos y respuestas omiten los retirados.
+- Paciente ARCHIVADO contiene baja tipada con causa, motivo, fecha y actor. El plan de confirmación persiste también EventoEstadoPaciente; la reactivación conserva bajaAnterior con su causa/motivo y la justificación de corrección de fallecimiento en ese historial. Paciente ACTIVO no mantiene una baja vigente. El lector de paciente recupera baja actual e historial paginado de estados para validar y reconstruir sin pérdida.
+- VinculoResponsable en aplicación conserva parentesco además de versiones, principal, autorización y estado; el adaptador no infiere ni inventa esa relación.
+- RepositorioCita.listar recibe FiltrosCitas completo (rango, profesional, estado, q) más paginación; filtrar en persistencia antes de seleccionar la página. Todos los filtros se vinculan al cursor.

@@ -2405,5 +2405,170 @@
       }
     },
     "valid": false
+  },
+  {
+    "id": "patch-retirar-correo",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "correo": null
+    }
+  },
+  {
+    "id": "patch-retirar-identificacion",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "identificacion": null
+    }
+  },
+  {
+    "id": "patch-retirar-contacto_emergencia",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "contacto_emergencia": null
+    }
+  },
+  {
+    "id": "patch-retirar-telefono",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "telefono": null
+    }
+  },
+  {
+    "id": "patch-retirar-direccion",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "direccion": null
+    }
+  },
+  {
+    "id": "patch-retirar-grupo_sanguineo",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "grupo_sanguineo": null
+    }
+  },
+  {
+    "id": "patch-campo-omitido-se-conserva",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "telefono": "00000000"
+    }
+  },
+  {
+    "id": "patch-no-vaciar-obligatorio",
+    "schema": "CambioPaciente",
+    "valid": false,
+    "value": {
+      "version_esperada": 2,
+      "nombres": null
+    }
+  },
+  {
+    "id": "patch-correo-vacio-no-canonico",
+    "schema": "CambioPaciente",
+    "valid": false,
+    "value": {
+      "version_esperada": 2,
+      "correo": ""
+    }
+  },
+  {
+    "id": "respuesta-archivo-preserva-causa-motivo",
+    "schema": "RespuestaPaciente",
+    "valid": true,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ARCHIVADO",
+        "version": 2,
+        "fecha_registro": "2026-10-25T12:00:00Z",
+        "baja": {
+          "causa": "FALLECIMIENTO",
+          "motivo": "Registro sintético de archivo",
+          "fecha_hora": "2026-10-25T12:00:00Z",
+          "actor_id": "00000000-0000-4000-8000-000000000006"
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-archivado-sin-baja",
+    "schema": "RespuestaPaciente",
+    "valid": false,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ARCHIVADO",
+        "version": 2,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-reactivado-campos-retirados",
+    "schema": "RespuestaPaciente",
+    "valid": true,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 3,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "filtros-agenda-antes-de-pagina",
+    "schema": "BuscarCitas",
+    "valid": true,
+    "value": {
+      "fecha_desde": "2026-10-25",
+      "fecha_hasta": "2026-10-26",
+      "estado": "PROGRAMADA",
+      "q": "Sintético",
+      "limite": 20
+    }
   }
 ]
