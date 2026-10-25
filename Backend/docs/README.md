@@ -58,3 +58,8 @@ Paciente archivado contiene baja con causa, motivo, fecha y actor; la lectura y 
 
 
 Las cancelaciones conservan motivo_cancelacion sin reemplazar el motivo de atención. Cancelación/reprogramación producen revisiones atómicas con horarios/estados anterior y actual; GET /citas/{id}/revisiones las pagina para el historial de agenda. Los puertos de revisiones de consulta y cita reciben el rango temporal antes de paginar. Los snapshots clínicos incluyen datos históricos del profesional y autorización; las revisiones de paciente preservan demografía previa.
+
+
+Responsable pediátrico nuevo exige documento, nombres y apellidos explícitos; la identificación ya es obligatoria en M04. El formulario se adapta en E02/E04 antes de conectarlo; no inventar identificaciones ni dividir nombres libres sin captura explícita. Las referencias a responsables existentes conservan su UUID y versión.
+
+Receta de entrada contiene solo medicamentos/observaciones. RecetaEmitida es el snapshot de lectura/persistencia con UUID, código, versión, estado, fecha_emision y prescriptor histórico: el servidor sella estos metadatos. Su fecha corresponde a la emisión real, incluso si ocurre después de abrir la consulta; corrección conserva emisión original y registra fecha de modificación en revisión. La política pediátrica exige concentración explícita y vía ≤100 caracteres en medicamentos para preservar M04; hay overlays para consulta completa, emisión y corrección.

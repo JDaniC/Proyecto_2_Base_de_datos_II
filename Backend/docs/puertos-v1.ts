@@ -127,11 +127,23 @@ export interface Medicamento {
   readonly dosis: string; readonly unidad?: string; readonly frecuencia: string;
   readonly duracion: string; readonly via: string; readonly indicaciones: string;
 }
-export interface ContenidoClinico {
+export interface RecetaEntrada {
+  readonly medicamentos: readonly Medicamento[]; readonly observaciones?: string;
+}
+export interface RecetaEmitida extends RecetaEntrada {
+  readonly id: UUID; readonly codigoLegible: string; readonly version: Version;
+  readonly estado: 'EMITIDA' | 'ANULADA'; readonly fechaEmision: InstanteUTC;
+  readonly prescriptor: ProfesionalHistorico;
+}
+export interface ContenidoClinicoEntrada {
   readonly motivo: string; readonly sintomas: string; readonly observaciones?: string;
   readonly signosVitales: SignosVitales; readonly diagnosticos: readonly Diagnostico[];
   readonly tratamientos: readonly Tratamiento[];
-  readonly receta?: { readonly medicamentos: readonly Medicamento[]; readonly observaciones?: string };
+  readonly receta?: RecetaEntrada;
+}
+/** Snapshot persistido/lectura; fecha de receta es propia, sellada por el servidor. */
+export interface ContenidoClinico extends Omit<ContenidoClinicoEntrada, 'receta'> {
+  readonly receta?: RecetaEmitida;
 }
 export interface Consulta extends ContenidoClinico {
   readonly id: UUID; readonly pacienteId: UUID; readonly citaId?: UUID;
@@ -193,8 +205,9 @@ export interface RepositorioIdentidades {
   titular(identidadNormalizada: Identificacion): Promise<UUID | null>;
 }
 export interface Responsable {
-  readonly id: UUID; readonly version: Version; readonly nombre: string;
-  readonly telefono: string; readonly documento?: Identificacion;
+  readonly id: UUID; readonly version: Version;
+  readonly nombres: string; readonly apellidos: string; readonly nombre: string;
+  readonly telefono: string; readonly documento: Identificacion;
 }
 export interface ProfesionalHistorico {
   readonly id: UUID; readonly nombre: string; readonly rol: Rol;

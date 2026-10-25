@@ -393,3 +393,6 @@ Edición demográfica (revisión de E00-P1-03): una propiedad omitida conserva s
 
 
 Agenda (segunda revisión de E00-P1-03): motivo_cancelacion se mapea a motivoCancelacion y no sobrescribe motivo de atención. El detalle compone `GET /citas/{id}` con `GET /citas/{id}/revisiones` paginado para historialReprogramaciones, conservando motivo, actor y horario anterior/actual. Rangos de revisiones se filtran antes de paginar; el cliente continúa el cursor si necesita más cambios históricos.
+
+
+Responsables/recetas (tercera revisión de E00-P1-03): alta de responsable pediátrico nuevo requiere documento, nombres y apellidos separados; E02/E04 amplían captura antes de conectarla. El mapper compone nombre de presentación sin inventar documentos ni dividir nombres libres sin esos datos. Receta de lectura incluye fecha_emision independiente de fecha_hora de consulta, más id/codigo_legible/version/estado y prescriptor histórico. El mapper usa esa fecha para fechaEmision e impresión, nunca la fecha de consulta. Fechas y emisor no se envían como entrada de emisión. En pediatría se exige concentración del medicamento y vía ≤100 caracteres según política de captura M04.

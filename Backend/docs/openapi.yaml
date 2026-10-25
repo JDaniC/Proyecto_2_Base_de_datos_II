@@ -1169,6 +1169,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EmitirReceta'
+      x-esquemas-institucionales:
+        CENTRO_MEDICO_PEDIATRICO:
+          $ref: '#/components/schemas/EmitirRecetaPediatrica'
   /consultas/{id}/correcciones:
     post:
       operationId: consultaCorregir
@@ -1221,6 +1224,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CorregirConsulta'
+      x-esquemas-institucionales:
+        CENTRO_MEDICO_PEDIATRICO:
+          $ref: '#/components/schemas/CorregirConsultaPediatrica'
   /consultas/{id}/revisiones:
     get:
       operationId: consultaRevisiones
@@ -1648,11 +1654,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        nombre:
-          type: string
-          minLength: 1
-          maxLength: 200
-          pattern: \S
         documento:
           $ref: '#/components/schemas/Identificacion'
         telefono:
@@ -1669,12 +1670,27 @@ components:
           type: boolean
         autoriza_atencion:
           type: boolean
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
       required:
-      - nombre
       - telefono
       - parentesco
       - es_principal
       - autoriza_atencion
+      - nombres
+      - apellidos
+      - documento
+      description: 'Responsable pediátrico nuevo: identificación obligatoria y nombres/apellidos explícitos para
+        M04. El mapper no inventa documento ni divide un nombre libre sin confirmación del usuario. La UI amplía
+        captura en E02/E04 antes de conectarse.'
     ResponsableAlta:
       oneOf:
       - $ref: '#/components/schemas/VinculoResponsable'
@@ -2196,6 +2212,9 @@ components:
       - required:
         - responsable_id
         - version_vinculo
+      - properties:
+          receta:
+            $ref: '#/components/schemas/RecetaPediatricaEntrada'
     FinalizarConsulta:
       type: object
       additionalProperties: false
@@ -2279,7 +2298,8 @@ components:
         signos_vitales: *id028
         diagnosticos: *id029
         tratamientos: *id030
-        receta: *id031
+        receta:
+          $ref: '#/components/schemas/RecetaEmitida'
         id:
           $ref: '#/components/schemas/UUID'
         paciente_id:
@@ -2298,10 +2318,6 @@ components:
           - ABIERTA
           - FINALIZADA
         version:
-          $ref: '#/components/schemas/Version'
-        receta_id:
-          $ref: '#/components/schemas/UUID'
-        version_receta:
           $ref: '#/components/schemas/Version'
       required:
       - id
@@ -2707,11 +2723,24 @@ components:
           $ref: '#/components/schemas/Identificacion'
         version:
           $ref: '#/components/schemas/Version'
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
       required:
       - id
       - nombre
       - telefono
       - version
+      - nombres
+      - apellidos
+      - documento
     ResponsablePaciente:
       type: object
       additionalProperties: false
@@ -2908,6 +2937,111 @@ components:
       required:
       - data
       - meta
+    PrescriptorHistorico:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        rol:
+          $ref: '#/components/schemas/Rol'
+        colegiado:
+          type: string
+          minLength: 1
+          maxLength: 60
+        entidad_colegiacion:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+      required:
+      - id
+      - nombre
+      - rol
+      - colegiado
+      - entidad_colegiacion
+    RecetaEmitida:
+      type: object
+      additionalProperties: false
+      properties:
+        medicamentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medicamento'
+          minItems: 1
+          maxItems: 100
+        observaciones:
+          type: string
+          maxLength: 2000
+        id:
+          $ref: '#/components/schemas/UUID'
+        codigo_legible:
+          type: string
+          minLength: 1
+          maxLength: 50
+        version:
+          $ref: '#/components/schemas/Version'
+        estado:
+          type: string
+          enum:
+          - EMITIDA
+          - ANULADA
+        fecha_emision:
+          $ref: '#/components/schemas/InstanteUTC'
+        prescriptor:
+          $ref: '#/components/schemas/PrescriptorHistorico'
+      required:
+      - medicamentos
+      - id
+      - codigo_legible
+      - version
+      - estado
+      - fecha_emision
+      - prescriptor
+      description: Snapshot de lectura/persistencia. ID, código, versión, estado, prescriptor y fecha_emision son
+        sellados por servidor; la fecha es la emisión real, independiente del inicio de consulta. Correcciones conservan
+        fecha original de emisión y registran fecha de cambio en revisión.
+    MedicamentoPediatrico:
+      allOf:
+      - $ref: '#/components/schemas/Medicamento'
+      - required:
+        - concentracion
+        properties:
+          concentracion:
+            type: string
+            minLength: 1
+            maxLength: 200
+            pattern: \S
+          via:
+            type: string
+            minLength: 1
+            maxLength: 100
+    RecetaPediatricaEntrada:
+      allOf:
+      - $ref: '#/components/schemas/Receta'
+      - properties:
+          medicamentos:
+            items:
+              $ref: '#/components/schemas/MedicamentoPediatrico'
+    EmitirRecetaPediatrica:
+      allOf:
+      - $ref: '#/components/schemas/EmitirReceta'
+      - properties:
+          receta:
+            $ref: '#/components/schemas/RecetaPediatricaEntrada'
+    CorregirConsultaPediatrica:
+      allOf:
+      - $ref: '#/components/schemas/CorregirConsulta'
+      - properties:
+          contenido:
+            properties:
+              receta:
+                $ref: '#/components/schemas/RecetaPediatricaEntrada'
   parameters:
     Idempotencia:
       name: Idempotency-Key

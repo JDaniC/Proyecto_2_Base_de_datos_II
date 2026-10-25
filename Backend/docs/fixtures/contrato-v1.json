@@ -428,7 +428,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -450,7 +451,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       },
@@ -472,7 +474,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -607,7 +610,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -651,7 +655,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -693,7 +698,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -737,7 +743,8 @@
             "frecuencia": "Ejemplo",
             "duracion": "Ejemplo",
             "via": "Ejemplo",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
           }
         ]
       }
@@ -755,11 +762,16 @@
       "sexo": "OTRO",
       "responsables": [
         {
-          "nombre": "Responsable sintético",
           "telefono": "00000000",
           "parentesco": "TUTOR",
           "es_principal": true,
-          "autoriza_atencion": false
+          "autoriza_atencion": false,
+          "nombres": "Responsable",
+          "apellidos": "Sintético",
+          "documento": {
+            "tipo": "CUI",
+            "numero": "SINTETICO-RESP-001"
+          }
         }
       ]
     }
@@ -775,11 +787,16 @@
       "sexo": "OTRO",
       "responsables": [
         {
-          "nombre": "Responsable sintético",
           "telefono": "00000000",
           "parentesco": "TUTOR",
           "es_principal": false,
-          "autoriza_atencion": false
+          "autoriza_atencion": false,
+          "nombres": "Responsable",
+          "apellidos": "Sintético",
+          "documento": {
+            "tipo": "CUI",
+            "numero": "SINTETICO-RESP-001"
+          }
         }
       ]
     }
@@ -2705,6 +2722,228 @@
       "desde": "2026-10-24T00:00:00Z",
       "hasta": "2026-10-26T00:00:00Z",
       "limite": 20
+    }
+  },
+  {
+    "id": "responsable-nuevo-sin-identificacion",
+    "schema": "AltaPediatrica",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "responsables": [
+        {
+          "telefono": "00000000",
+          "parentesco": "TUTOR",
+          "es_principal": true,
+          "autoriza_atencion": false,
+          "nombres": "Responsable",
+          "apellidos": "Sintético"
+        }
+      ]
+    }
+  },
+  {
+    "id": "receta-fecha-propia-posterior-a-consulta",
+    "schema": "RespuestaConsulta",
+    "valid": true,
+    "value": {
+      "data": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 1,
+          "estado": "EMITIDA",
+          "fecha_emision": "2026-10-25T12:30:00Z",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          }
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "lectura-receta-sin-fecha-emision",
+    "schema": "RespuestaConsulta",
+    "valid": false,
+    "value": {
+      "data": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1,
+        "receta": {
+          "medicamentos": [
+            {
+              "nombre": "Producto sintético",
+              "presentacion": "Ejemplo",
+              "dosis": "Ejemplo académico",
+              "frecuencia": "Ejemplo",
+              "duracion": "Ejemplo",
+              "via": "Ejemplo",
+              "indicaciones": "Sin uso clínico",
+              "concentracion": "Concentración sintética"
+            }
+          ],
+          "id": "00000000-0000-4000-8000-000000000070",
+          "codigo_legible": "REC-SINTETICA-001",
+          "version": 1,
+          "estado": "EMITIDA",
+          "prescriptor": {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "nombre": "Profesional sintético",
+            "rol": "MEDICO",
+            "colegiado": "SINTETICO-001",
+            "entidad_colegiacion": "Entidad sintética"
+          }
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "entrada-receta-no-acepta-fecha-servidor",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ],
+        "fecha_emision": "2026-10-25T12:30:00Z"
+      }
+    }
+  },
+  {
+    "id": "receta-pediatrica-valida",
+    "schema": "EmitirRecetaPediatrica",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico",
+            "concentracion": "Concentración sintética"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "receta-pediatrica-sin-concentracion",
+    "schema": "EmitirRecetaPediatrica",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
     }
   }
 ]
