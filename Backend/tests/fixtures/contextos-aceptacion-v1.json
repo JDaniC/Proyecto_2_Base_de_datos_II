@@ -1,0 +1,869 @@
+{
+  "version": 1,
+  "sintetico": true,
+  "nota": "Semillas declarativas para el arnés. No son DTO HTTP, credenciales, datos personales reales ni permisos aceptados desde el cliente. Cada adaptador futuro mapeará estos datos en su entorno aislado.",
+  "bundles_prueba": [
+    {
+      "id": "bundle-hospital",
+      "institucion": "HOSPITAL_GENERAL",
+      "motor": "postgresql"
+    },
+    {
+      "id": "bundle-odontologia",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "motor": "mysql"
+    },
+    {
+      "id": "bundle-laboratorio",
+      "institucion": "LABORATORIO_CLINICO",
+      "motor": "mongodb"
+    },
+    {
+      "id": "bundle-pediatria",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "motor": "firestore"
+    }
+  ],
+  "cuentas": [
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000101",
+      "uid": "fixture-uid-hospital-admin",
+      "institucion": "HOSPITAL_GENERAL",
+      "estado": "ACTIVA",
+      "roles": [
+        "ADMIN_INSTITUCIONAL"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "historial.leer",
+        "historial.archivar",
+        "citas.administrar",
+        "usuarios.administrar",
+        "auditoria.leer"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000102",
+      "uid": "fixture-uid-hospital-secretaria",
+      "institucion": "HOSPITAL_GENERAL",
+      "estado": "ACTIVA",
+      "roles": [
+        "SECRETARIA"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "citas.administrar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000103",
+      "uid": "fixture-uid-hospital-medico",
+      "institucion": "HOSPITAL_GENERAL",
+      "estado": "ACTIVA",
+      "roles": [
+        "MEDICO"
+      ],
+      "permisos": [
+        "historial.leer",
+        "consultas.registrar",
+        "diagnosticos.registrar",
+        "tratamientos.registrar",
+        "recetas.emitir"
+      ],
+      "profesional_id": "00000000-0000-4000-8000-000000000201"
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000104",
+      "uid": "fixture-uid-dental-admin",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "estado": "ACTIVA",
+      "roles": [
+        "ADMIN_INSTITUCIONAL"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "historial.leer",
+        "historial.archivar",
+        "citas.administrar",
+        "usuarios.administrar",
+        "auditoria.leer"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000105",
+      "uid": "fixture-uid-dental-secretaria",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "estado": "ACTIVA",
+      "roles": [
+        "SECRETARIA"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "citas.administrar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000106",
+      "uid": "fixture-uid-odontologo",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "estado": "ACTIVA",
+      "roles": [
+        "ODONTOLOGO"
+      ],
+      "permisos": [
+        "historial.leer",
+        "consultas.registrar",
+        "diagnosticos.registrar",
+        "tratamientos.registrar",
+        "recetas.emitir"
+      ],
+      "profesional_id": "00000000-0000-4000-8000-000000000202"
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000107",
+      "uid": "fixture-uid-lab-admin",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "ADMIN_INSTITUCIONAL"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "historial.leer",
+        "historial.archivar",
+        "auditoria.leer",
+        "cobros.administrar",
+        "inventario.administrar",
+        "ordenes.administrar",
+        "muestras.administrar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000108",
+      "uid": "fixture-uid-lab-recepcion",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "SECRETARIA"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "ordenes.administrar",
+        "muestras.administrar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000109",
+      "uid": "fixture-uid-lab-medico",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "MEDICO_LABORATORIO"
+      ],
+      "permisos": [
+        "historial.leer",
+        "consultas.registrar",
+        "diagnosticos.registrar",
+        "tratamientos.registrar",
+        "recetas.emitir"
+      ],
+      "profesional_id": "00000000-0000-4000-8000-000000000203"
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000110",
+      "uid": "fixture-uid-lab-analista",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "ANALISTA_LABORATORIO"
+      ],
+      "permisos": [
+        "historial.leer",
+        "resultados.analizar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000111",
+      "uid": "fixture-uid-lab-validador",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "VALIDADOR_LABORATORIO"
+      ],
+      "permisos": [
+        "historial.leer",
+        "resultados.validar",
+        "informes.emitir"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000112",
+      "uid": "fixture-uid-pediatria-admin",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "ADMIN_INSTITUCIONAL"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "historial.leer",
+        "historial.archivar",
+        "citas.administrar",
+        "usuarios.administrar",
+        "auditoria.leer"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000113",
+      "uid": "fixture-uid-pediatria-secretaria",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "SECRETARIA"
+      ],
+      "permisos": [
+        "pacientes.administrar",
+        "citas.administrar"
+      ]
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000114",
+      "uid": "fixture-uid-pediatra",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "estado": "ACTIVA",
+      "roles": [
+        "PEDIATRA"
+      ],
+      "permisos": [
+        "historial.leer",
+        "consultas.registrar",
+        "diagnosticos.registrar",
+        "tratamientos.registrar",
+        "recetas.emitir"
+      ],
+      "profesional_id": "00000000-0000-4000-8000-000000000204"
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000115",
+      "uid": "fixture-uid-hospital-cuenta-inactiva",
+      "institucion": "HOSPITAL_GENERAL",
+      "estado": "INACTIVA",
+      "roles": [
+        "MEDICO"
+      ],
+      "permisos": []
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000116",
+      "uid": "fixture-uid-dental-cuenta-inactiva",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "estado": "INACTIVA",
+      "roles": [
+        "ODONTOLOGO"
+      ],
+      "permisos": []
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000117",
+      "uid": "fixture-uid-lab-cuenta-inactiva",
+      "institucion": "LABORATORIO_CLINICO",
+      "estado": "INACTIVA",
+      "roles": [
+        "MEDICO_LABORATORIO"
+      ],
+      "permisos": []
+    },
+    {
+      "cuenta_id": "00000000-0000-4000-8000-000000000118",
+      "uid": "fixture-uid-pediatria-cuenta-inactiva",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "estado": "INACTIVA",
+      "roles": [
+        "PEDIATRA"
+      ],
+      "permisos": []
+    }
+  ],
+  "profesionales": [
+    {
+      "id": "00000000-0000-4000-8000-000000000201",
+      "uid": "fixture-uid-hospital-medico",
+      "institucion": "HOSPITAL_GENERAL",
+      "rol": "MEDICO",
+      "activo": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000202",
+      "uid": "fixture-uid-odontologo",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "rol": "ODONTOLOGO",
+      "activo": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000203",
+      "uid": "fixture-uid-lab-medico",
+      "institucion": "LABORATORIO_CLINICO",
+      "rol": "MEDICO_LABORATORIO",
+      "tipo_solicitante": "MEDICO",
+      "activo": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000204",
+      "uid": "fixture-uid-pediatra",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "rol": "PEDIATRA",
+      "activo": true
+    }
+  ],
+  "pacientes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000301",
+      "institucion": "HOSPITAL_GENERAL",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Identificado Hospital",
+      "fecha_nacimiento": "1990-01-02",
+      "sexo": "FEMENINO",
+      "identificacion": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-HOSP-0001"
+      },
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000302",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Sin Documento Dental",
+      "fecha_nacimiento": "1988-03-04",
+      "sexo": "OTRO",
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000303",
+      "institucion": "LABORATORIO_CLINICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Clinica Laboratorio",
+      "fecha_nacimiento": "1978-05-06",
+      "sexo": "MASCULINO",
+      "identificacion": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-LAB-0001"
+      },
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000304",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Menor Pediatria",
+      "fecha_nacimiento": "2020-10-25",
+      "sexo": "FEMENINO",
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000305",
+      "institucion": "HOSPITAL_GENERAL",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Archivado Con Proceso",
+      "fecha_nacimiento": "1975-07-08",
+      "sexo": "MASCULINO",
+      "estado": "ARCHIVADO",
+      "version": 2,
+      "baja": {
+        "causa": "OTRA_ADMINISTRATIVA",
+        "motivo": "Fixture sintetico",
+        "fecha": "2026-10-25"
+      },
+      "proceso_previo": {
+        "estado": "ABIERTA",
+        "permite_finalizar": true
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000306",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Segundo Menor Pediatria",
+      "fecha_nacimiento": "2019-06-12",
+      "sexo": "MASCULINO",
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000307",
+      "institucion": "HOSPITAL_GENERAL",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Referencia Ajena Hospital",
+      "fecha_nacimiento": "1992-08-10",
+      "sexo": "OTRO",
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000308",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Identificado Dental",
+      "fecha_nacimiento": "1991-02-03",
+      "sexo": "FEMENINO",
+      "identificacion": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-DENT-0001"
+      },
+      "estado": "ACTIVO",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000309",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Archivado Dental",
+      "fecha_nacimiento": "1976-08-09",
+      "sexo": "MASCULINO",
+      "estado": "ARCHIVADO",
+      "version": 2,
+      "baja": {
+        "causa": "OTRA_ADMINISTRATIVA",
+        "motivo": "Fixture sintetico",
+        "fecha": "2026-10-25"
+      },
+      "proceso_previo": {
+        "estado": "ABIERTA",
+        "permite_finalizar": true
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000310",
+      "institucion": "LABORATORIO_CLINICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Archivado Laboratorio",
+      "fecha_nacimiento": "1977-09-10",
+      "sexo": "FEMENINO",
+      "estado": "ARCHIVADO",
+      "version": 2,
+      "baja": {
+        "causa": "OTRA_ADMINISTRATIVA",
+        "motivo": "Fixture sintetico",
+        "fecha": "2026-10-25"
+      },
+      "proceso_previo": {
+        "estado": "ABIERTA",
+        "permite_finalizar": true
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000311",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Archivado Pediatria",
+      "fecha_nacimiento": "2018-04-15",
+      "sexo": "MASCULINO",
+      "estado": "ARCHIVADO",
+      "version": 2,
+      "baja": {
+        "causa": "OTRA_ADMINISTRATIVA",
+        "motivo": "Fixture sintetico",
+        "fecha": "2026-10-25"
+      },
+      "proceso_previo": {
+        "estado": "ABIERTA",
+        "permite_finalizar": true
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000312",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Paciente Sintetico",
+      "apellidos": "Identificado Pediatria",
+      "fecha_nacimiento": "2018-05-16",
+      "sexo": "FEMENINO",
+      "identificacion": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-PED-0001"
+      },
+      "estado": "ACTIVO",
+      "version": 1
+    }
+  ],
+  "responsables": [
+    {
+      "id": "00000000-0000-4000-8000-000000000401",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Responsable Sintetico",
+      "apellidos": "Madre De Prueba",
+      "documento": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-RESP-0001"
+      },
+      "telefono": "00000001",
+      "version": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000402",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "nombres": "Responsable Sintetico",
+      "apellidos": "Abuela De Prueba",
+      "documento": {
+        "tipo": "PASAPORTE",
+        "numero": "TEST-RESP-0002"
+      },
+      "telefono": "00000002",
+      "version": 1
+    }
+  ],
+  "vinculos": [
+    {
+      "id": "vinculo-pediatria-principal-autorizado",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "version_responsable": 1,
+      "parentesco": "Madre",
+      "es_principal": true,
+      "autoriza_atencion": true,
+      "estado": "ACTIVO"
+    },
+    {
+      "id": "vinculo-pediatria-secundario-sin-autorizacion",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "responsable_id": "00000000-0000-4000-8000-000000000402",
+      "version_responsable": 1,
+      "parentesco": "Abuela",
+      "es_principal": false,
+      "autoriza_atencion": false,
+      "estado": "ACTIVO"
+    },
+    {
+      "id": "vinculo-segundo-menor-principal-autorizado",
+      "paciente_id": "00000000-0000-4000-8000-000000000306",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "version_responsable": 1,
+      "parentesco": "Madre",
+      "es_principal": true,
+      "autoriza_atencion": true,
+      "estado": "ACTIVO"
+    },
+    {
+      "id": "vinculo-menor-archivado-principal-autorizado",
+      "paciente_id": "00000000-0000-4000-8000-000000000311",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "version_responsable": 1,
+      "parentesco": "Madre",
+      "es_principal": true,
+      "autoriza_atencion": true,
+      "estado": "ACTIVO"
+    },
+    {
+      "id": "vinculo-menor-identificado-principal-autorizado",
+      "paciente_id": "00000000-0000-4000-8000-000000000312",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "version_responsable": 1,
+      "parentesco": "Madre",
+      "es_principal": true,
+      "autoriza_atencion": true,
+      "estado": "ACTIVO"
+    }
+  ],
+  "variantes_cuenta": [
+    {
+      "id": "hospital-medico-sin-permiso-recetas",
+      "cuenta_uid": "fixture-uid-hospital-medico",
+      "quitar_permisos": [
+        "recetas.emitir"
+      ],
+      "estado": "ACTIVA"
+    },
+    {
+      "id": "odontologia-odontologo-sin-permiso-consulta",
+      "cuenta_uid": "fixture-uid-odontologo",
+      "quitar_permisos": [
+        "consultas.registrar"
+      ],
+      "estado": "ACTIVA"
+    },
+    {
+      "id": "laboratorio-medico-sin-permiso-consulta",
+      "cuenta_uid": "fixture-uid-lab-medico",
+      "quitar_permisos": [
+        "consultas.registrar"
+      ],
+      "estado": "ACTIVA"
+    },
+    {
+      "id": "pediatria-pediatra-sin-permiso-consulta",
+      "cuenta_uid": "fixture-uid-pediatra",
+      "quitar_permisos": [
+        "consultas.registrar"
+      ],
+      "estado": "ACTIVA"
+    }
+  ],
+  "variantes_vinculo": [
+    {
+      "id": "pediatria-principal-sin-autorizacion",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "sobrescribir_vinculo_id": "vinculo-pediatria-principal-autorizado",
+      "cambios": {
+        "autoriza_atencion": false
+      }
+    },
+    {
+      "id": "overlay-menor-sin-principal",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "desactivar_vinculo_ids": [
+        "vinculo-pediatria-principal-autorizado"
+      ]
+    },
+    {
+      "id": "overlay-varios-principales",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "sobrescribir_vinculo_id": "vinculo-pediatria-secundario-sin-autorizacion",
+      "cambios": {
+        "es_principal": true
+      }
+    }
+  ],
+  "citas": [
+    {
+      "id": "00000000-0000-4000-8000-000000000501",
+      "institucion": "HOSPITAL_GENERAL",
+      "paciente_id": "00000000-0000-4000-8000-000000000301",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000201",
+      "fecha": "2026-10-26",
+      "hora_inicio": "09:00",
+      "duracion_minutos": 30,
+      "motivo": "Atencion sintetica",
+      "estado": "PROGRAMADA"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000502",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "paciente_id": "00000000-0000-4000-8000-000000000302",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000202",
+      "fecha": "2026-10-26",
+      "hora_inicio": "10:00",
+      "duracion_minutos": 30,
+      "motivo": "Atencion sintetica",
+      "estado": "PROGRAMADA"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000503",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000204",
+      "fecha": "2026-10-26",
+      "hora_inicio": "11:00",
+      "duracion_minutos": 30,
+      "motivo": "Control sintetico",
+      "estado": "PROGRAMADA"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000504",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "paciente_id": "00000000-0000-4000-8000-000000000302",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000202",
+      "fecha": "2026-10-27",
+      "hora_inicio": "10:00",
+      "duracion_minutos": 30,
+      "motivo": "Cita cancelada sintetica",
+      "estado": "CANCELADA"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000505",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000204",
+      "fecha": "2026-10-24",
+      "hora_inicio": "11:00",
+      "duracion_minutos": 30,
+      "motivo": "Cita atendida sintetica",
+      "estado": "ATENDIDA"
+    }
+  ],
+  "catalogos_sinteticos": [
+    {
+      "id": "catalogo-diagnostico-prueba",
+      "tipo": "DIAGNOSTICO",
+      "nombre": "Diagnostico Sintetico",
+      "activo": true,
+      "version": 1
+    },
+    {
+      "id": "catalogo-tratamiento-prueba",
+      "tipo": "TRATAMIENTO",
+      "nombre": "Tratamiento Sintetico",
+      "activo": true,
+      "version": 1
+    },
+    {
+      "id": "catalogo-prueba-inactivo",
+      "tipo": "PRUEBA_LABORATORIO",
+      "nombre": "Prueba Inactiva Sintetica",
+      "activo": false,
+      "version": 2
+    }
+  ],
+  "escenarios": [
+    {
+      "id": "paciente-identificado",
+      "institucion": "HOSPITAL_GENERAL",
+      "paciente_id": "00000000-0000-4000-8000-000000000301",
+      "pacientes_por_institucion": {
+        "HOSPITAL_GENERAL": "00000000-0000-4000-8000-000000000301",
+        "CLINICA_ODONTOLOGICA": "00000000-0000-4000-8000-000000000308",
+        "LABORATORIO_CLINICO": "00000000-0000-4000-8000-000000000303",
+        "CENTRO_MEDICO_PEDIATRICO": "00000000-0000-4000-8000-000000000312"
+      }
+    },
+    {
+      "id": "paciente-sin-documento",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "paciente_id": "00000000-0000-4000-8000-000000000302"
+    },
+    {
+      "id": "cuenta-inactiva-por-institucion",
+      "cuentas_uids": [
+        "fixture-uid-hospital-cuenta-inactiva",
+        "fixture-uid-dental-cuenta-inactiva",
+        "fixture-uid-lab-cuenta-inactiva",
+        "fixture-uid-pediatria-cuenta-inactiva"
+      ]
+    },
+    {
+      "id": "cuenta-activa-permiso-retirado",
+      "variantes_por_institucion": {
+        "HOSPITAL_GENERAL": {
+          "variante_cuenta_id": "hospital-medico-sin-permiso-recetas",
+          "actor_uid": "fixture-uid-hospital-medico",
+          "permiso_retirado": "recetas.emitir"
+        },
+        "CLINICA_ODONTOLOGICA": {
+          "variante_cuenta_id": "odontologia-odontologo-sin-permiso-consulta",
+          "actor_uid": "fixture-uid-odontologo",
+          "permiso_retirado": "consultas.registrar"
+        },
+        "LABORATORIO_CLINICO": {
+          "variante_cuenta_id": "laboratorio-medico-sin-permiso-consulta",
+          "actor_uid": "fixture-uid-lab-medico",
+          "permiso_retirado": "consultas.registrar"
+        },
+        "CENTRO_MEDICO_PEDIATRICO": {
+          "variante_cuenta_id": "pediatria-pediatra-sin-permiso-consulta",
+          "actor_uid": "fixture-uid-pediatra",
+          "permiso_retirado": "consultas.registrar"
+        }
+      }
+    },
+    {
+      "id": "odontologia-cita-obligatoria",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "actor_uid": "fixture-uid-odontologo",
+      "paciente_id": "00000000-0000-4000-8000-000000000302",
+      "cita_id": "00000000-0000-4000-8000-000000000502",
+      "agenda_visible": true
+    },
+    {
+      "id": "odontologia-cita-cancelada",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "paciente_id": "00000000-0000-4000-8000-000000000302",
+      "cita_id": "00000000-0000-4000-8000-000000000504"
+    },
+    {
+      "id": "pediatria-cita-atendida",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "cita_id": "00000000-0000-4000-8000-000000000505"
+    },
+    {
+      "id": "cita-referencia-ajena",
+      "institucion": "HOSPITAL_GENERAL",
+      "paciente_id": "00000000-0000-4000-8000-000000000307",
+      "cita_id": "00000000-0000-4000-8000-000000000501"
+    },
+    {
+      "id": "laboratorio-clinica-sin-agenda",
+      "institucion": "LABORATORIO_CLINICO",
+      "actor_uid": "fixture-uid-lab-medico",
+      "paciente_id": "00000000-0000-4000-8000-000000000303",
+      "cita_id": null,
+      "agenda_visible": false
+    },
+    {
+      "id": "laboratorio-catalogo-prueba-inactiva",
+      "institucion": "LABORATORIO_CLINICO",
+      "catalogo_id": "catalogo-prueba-inactivo"
+    },
+    {
+      "id": "pediatria-menor-principal-autorizado",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "actor_uid": "fixture-uid-pediatra",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "principal": true,
+      "autoriza_atencion": true,
+      "cita_id": "00000000-0000-4000-8000-000000000503"
+    },
+    {
+      "id": "pediatria-principal-no-autoriza",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "actor_uid": "fixture-uid-pediatra",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "variante_vinculo_id": "pediatria-principal-sin-autorizacion",
+      "principal": true,
+      "autoriza_atencion": false,
+      "resultado_esperado": "RECHAZO_SIN_PERMISO"
+    },
+    {
+      "id": "pediatria-menor-sin-principal",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "variante_vinculo_id": "overlay-menor-sin-principal",
+      "resultado_esperado": "RECHAZO_DE_TRANSICION"
+    },
+    {
+      "id": "pediatria-varios-principales",
+      "paciente_id": "00000000-0000-4000-8000-000000000304",
+      "variante_vinculo_id": "overlay-varios-principales",
+      "resultado_esperado": "VALIDAR_PRINCIPAL_UNICO"
+    },
+    {
+      "id": "pediatria-responsable-compartido",
+      "paciente_ids": [
+        "00000000-0000-4000-8000-000000000304",
+        "00000000-0000-4000-8000-000000000306"
+      ],
+      "responsable_id": "00000000-0000-4000-8000-000000000401",
+      "autorizaciones_independientes": true
+    },
+    {
+      "id": "archivado-proceso-previo-vs-nueva-atencion",
+      "proceso_previo": "PERMITIR_FINALIZACION_AUTORIZADA",
+      "nueva_atencion": "RECHAZAR",
+      "pacientes_por_institucion": {
+        "HOSPITAL_GENERAL": "00000000-0000-4000-8000-000000000305",
+        "CLINICA_ODONTOLOGICA": "00000000-0000-4000-8000-000000000309",
+        "LABORATORIO_CLINICO": "00000000-0000-4000-8000-000000000310",
+        "CENTRO_MEDICO_PEDIATRICO": "00000000-0000-4000-8000-000000000311"
+      }
+    },
+    {
+      "id": "cuentas-secretaria-y-analista",
+      "analista_lab_uid": "fixture-uid-lab-analista",
+      "validador_lab_uid": "fixture-uid-lab-validador",
+      "cuentas_oficina_por_institucion": {
+        "HOSPITAL_GENERAL": "fixture-uid-hospital-secretaria",
+        "CLINICA_ODONTOLOGICA": "fixture-uid-dental-secretaria",
+        "LABORATORIO_CLINICO": "fixture-uid-lab-recepcion",
+        "CENTRO_MEDICO_PEDIATRICO": "fixture-uid-pediatria-secretaria"
+      }
+    }
+  ]
+}

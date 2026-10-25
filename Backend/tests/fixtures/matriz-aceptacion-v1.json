@@ -1,0 +1,508 @@
+{
+  "version": 1,
+  "fuentes": [
+    "plan/04_PRUEBAS_Y_ENTREGA.md §2–3",
+    "Agente/DISENO_PROYECTO.md §9, CA01–CA20",
+    "plan/01_ALCANCE_Y_DECISIONES.md DEC04, DEC05, DEC07 y DEC10"
+  ],
+  "criterios": [
+    {
+      "id": "CA01",
+      "titulo": "Enrutamiento e aislamiento por identidad",
+      "nivel": "API_CON_IDENTIDAD",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "bundle-por-identidad",
+          "modo": "MULTI_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Crear una cuenta activa y un paciente sintético de cada institución.",
+          "accion": "Ejecutar peticiones paralelas; intentar cambiar institución o motor desde la petición y consultar un recurso de otra institución.",
+          "esperado": "La composición elige el bundle de la identidad verificada; el cliente no cambia el destino; el recurso ajeno se oculta con 404/403 y no hay mezcla entre bases.",
+          "variantes_fixture": [
+            "paciente-identificado",
+            "cita-referencia-ajena"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA02",
+      "titulo": "Identidad vigente y autorización tras cambios de cuenta",
+      "nivel": "API_CON_IDENTIDAD",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "sesion-cuenta-y-permiso",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Usar identidades sintéticas por bundle, token expirado/revocado, cuenta inactiva y cuenta cuyo permiso vigente se retira.",
+          "accion": "Repetir una petición tras invalidar el token, desactivar la cuenta y retirar un permiso sin cambiar el token del cliente.",
+          "esperado": "Token vencido/revocado da 401; cuenta o permiso actualizados dan 403 en la siguiente petición.",
+          "variantes_fixture": [
+            "cuenta-inactiva-por-institucion",
+            "cuenta-activa-permiso-retirado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA03",
+      "titulo": "Alta de paciente, identidad e idempotencia",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "alta-y-reintento",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Sembrar identidad ausente y preparar una clave de idempotencia estable.",
+          "accion": "Crear paciente, repetir exactamente la misma clave/carga, intentar la misma identidad con clave distinta y competir dos altas idénticas.",
+          "esperado": "Hay un paciente y un historial; el reintento devuelve el resultado original; la identidad repetida se rechaza sin reservas huérfanas.",
+          "variantes_fixture": [
+            "paciente-identificado"
+          ]
+        },
+        {
+          "id": "alta-sin-documento",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "CLINICA_ODONTOLOGICA"
+          ],
+          "no_aplica": "La política de alta sin identificación corresponde al overlay de odontología; no generalizarla a otras instituciones.",
+          "preparacion": "Usar el fixture sintético sin propiedad identificacion.",
+          "accion": "Crear el paciente odontológico sin identificación y buscar duplicación por identidad disponible.",
+          "esperado": "Acepta identificación ausente según el contrato dental y no inventa una identidad.",
+          "variantes_fixture": [
+            "paciente-sin-documento"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA04",
+      "titulo": "Equivalencia del núcleo común en cuatro bundles",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "perfil-comun-cuatro-adaptadores",
+          "modo": "MULTI_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Preparar el mismo perfil funcional y estado inicial con fixture institucional explícito en cada bundle.",
+          "accion": "Ejecutar la misma entrada del núcleo contra los cuatro adaptadores.",
+          "esperado": "Coinciden DTO, proyección, transición de estado y errores del núcleo; las diferencias quedan limitadas a políticas/capacidades documentadas.",
+          "variantes_fixture": [
+            "paciente-identificado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA05",
+      "titulo": "Atención compuesta, atomicidad, auditoría e idempotencia",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "consulta-completa-y-rollback",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Cuenta clínica autorizada, paciente activo, catálogo válido y cita únicamente donde la política la requiere.",
+          "accion": "Registrar consulta con diagnóstico, tratamiento y receta; inyectar fallos antes de receta y antes de auditoría; repetir una clave tras éxito y tras resultado de commit incierto.",
+          "esperado": "La atención y auditoría quedan completas o no hay escrituras parciales ni operación exitosa; el reintento no duplica.",
+          "variantes_fixture": [
+            "odontologia-cita-obligatoria",
+            "laboratorio-clinica-sin-agenda",
+            "pediatria-menor-principal-autorizado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA06",
+      "titulo": "Agenda, referencias de cita y atención única",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "citas-y-atencion",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "no_aplica": "Laboratorio no publica agenda UI ni requiere cita para consulta clínica (DEC04).",
+          "preparacion": "Citas sintéticas programada, cancelada, atendida y perteneciente a otro paciente.",
+          "accion": "Crear, reprogramar, cancelar y atender; volver a atender la misma cita e intentar usar una cita ajena/cancelada/atendida.",
+          "esperado": "Una cita crea como máximo una consulta; la referencia ajena o estado inválido se rechaza sin cambios; las fechas anteriores permanecen trazables.",
+          "variantes_fixture": [
+            "odontologia-cita-obligatoria",
+            "odontologia-cita-cancelada",
+            "pediatria-cita-atendida",
+            "cita-referencia-ajena"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA07",
+      "titulo": "Filtros, cronología, orden y cursores",
+      "nivel": "API_CON_IDENTIDAD",
+      "prioridad": "MEDIUM",
+      "casos": [
+        {
+          "id": "cronologia-paginada",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Eventos sintéticos con instante repetido y conjunto estable; permisos distintos por rol.",
+          "accion": "Consultar páginas y cursores válidos/incorrectos, fechas límite, filtros vacíos/compuestos y resultados vacíos.",
+          "esperado": "Orden estable por fecha/ID sin omisiones ni duplicados en un conjunto estable; filtros inválidos dan error controlado y se omiten campos no autorizados.",
+          "variantes_fixture": [
+            "paciente-identificado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA08",
+      "titulo": "Archivo, conservación de historia y reactivación acotada",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "archivo-y-proceso-previo",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Paciente archivado con proceso previo abierto y controles de versión.",
+          "accion": "Leer y corregir con permiso, finalizar el proceso autorizado, competir dos nuevas atenciones y buscar el historial anterior.",
+          "esperado": "No se borra historia; se puede finalizar/corregir el proceso previo con permiso; nuevas atenciones se rechazan incluso en carrera.",
+          "variantes_fixture": [
+            "archivado-proceso-previo-vs-nueva-atencion"
+          ]
+        },
+        {
+          "id": "reactivacion-solo-pediatria",
+          "modo": "MULTI_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Paciente archivado y cuenta con permiso vigente en cada bundle.",
+          "accion": "Reactivar con motivo y versión en pediatría; comprobar que los otros bundles no publican esa operación ni revelan si existe el recurso.",
+          "esperado": "Pediatría conserva revisión de baja y reactivación; hospital, odontología y laboratorio rechazan sin revelar existencia.",
+          "variantes_fixture": [
+            "archivado-proceso-previo-vs-nueva-atencion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA09",
+      "titulo": "Responsables pediátricos y autorización independiente",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "vinculos-y-principal",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "no_aplica": "El agregado de responsables pediátricos existe solo en el bundle pediátrico.",
+          "preparacion": "Menor con relación principal/no principal, overlays sin principal y múltiples principales, y responsable compartido por dos menores.",
+          "accion": "Intentar dejar al menor sin principal, crear principales concurrentes, cambiar contacto compartido y variar una autorización sin cambiar el estado principal.",
+          "esperado": "Nunca queda sin principal ni con más de uno; contacto compartido es consistente y la autorización no se infiere del principal.",
+          "variantes_fixture": [
+            "pediatria-menor-principal-autorizado",
+            "pediatria-principal-no-autoriza",
+            "pediatria-menor-sin-principal",
+            "pediatria-varios-principales",
+            "pediatria-responsable-compartido"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA10",
+      "titulo": "Crecimiento, cronología y receta versionada",
+      "nivel": "CONTRATO_PARAMETRIZADO",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "control-crecimiento-y-receta",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "no_aplica": "Los controles de crecimiento y el esquema pediátrico son capacidades del bundle pediátrico.",
+          "preparacion": "Consulta pediátrica, catálogo con versión y receta emitida con snapshot.",
+          "accion": "Agregar controles duplicados, comparar fechas con y sin talla, cambiar catálogo y corregir receta emitida.",
+          "esperado": "Un control lógico; fechas/IMC históricos correctos sin inventar IMC; receta original y catálogo previo siguen consultables.",
+          "variantes_fixture": [
+            "pediatria-menor-principal-autorizado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA11",
+      "titulo": "Esquema, dosis y corrección de vacunación",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "aplicacion-dosis-idempotente",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "no_aplica": "Vacunación es una capacidad del bundle pediátrico.",
+          "preparacion": "Menor, esquema versionado y dosis aún no aplicada.",
+          "accion": "Aplicar la misma dosis con llamadas concurrentes; corregir/anular y recalcular estados por edad y versión del esquema.",
+          "esperado": "Una aplicación lógica; revisiones conservadas y dosis futuras/pendientes/cumplidas recalculadas con la versión correcta.",
+          "variantes_fixture": [
+            "pediatria-menor-principal-autorizado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA12",
+      "titulo": "Muestras, retoma, rectificación y resultado versionado",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "ciclo-de-muestra-y-resultado",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "LABORATORIO_CLINICO"
+          ],
+          "no_aplica": "Muestras y resultados son capacidades del bundle de laboratorio.",
+          "preparacion": "Orden clínica, muestra rechazada o tomada y resultado con versión.",
+          "accion": "Retomar una muestra, rectificar sus datos, corregir un resultado validado y repetir el análisis.",
+          "esperado": "Se conservan muestra/eventos y valores previos; se crea versión o serie según el caso.",
+          "variantes_fixture": [
+            "laboratorio-clinica-sin-agenda",
+            "laboratorio-catalogo-prueba-inactiva"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA13",
+      "titulo": "Validación de muestras e informe inmutable",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "informe-solo-con-resultados-validos",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "LABORATORIO_CLINICO"
+          ],
+          "no_aplica": "Informes y validación de resultados son capacidades del bundle de laboratorio.",
+          "preparacion": "Muestra ajena/rechazada, resultado no validado y archivo sintético con hash.",
+          "accion": "Intentar validar muestra ajena y emitir con resultado no validado; fallar la preparación del archivo; corregir resultado luego de emitir.",
+          "esperado": "Se rechazan referencias e informe prematuro; el fallo conserva borrador; informe emitido mantiene versiones y hash originales.",
+          "variantes_fixture": [
+            "laboratorio-clinica-sin-agenda"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA14",
+      "titulo": "Factura, pagos, saldo y moneda",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "saldo-no-negativo-e-idempotente",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "LABORATORIO_CLINICO"
+          ],
+          "no_aplica": "Facturación y cobros son capacidades del bundle de laboratorio.",
+          "preparacion": "Factura en moneda explícita y saldo con unidades menores enteras.",
+          "accion": "Pagar parcialmente, repetir una clave y competir dos pagos por el saldo final; probar reversión autorizada.",
+          "esperado": "Sin doble pago, sobrepago ni saldo negativo; moneda, versiones y reversión quedan trazables.",
+          "variantes_fixture": [
+            "laboratorio-clinica-sin-agenda"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA15",
+      "titulo": "Existencias, movimientos y consumo concurrente",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "stock-no-negativo",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "LABORATORIO_CLINICO"
+          ],
+          "no_aplica": "Inventario/reactivos son capacidades del bundle de laboratorio.",
+          "preparacion": "Lote sintético con vencimiento, unidad y existencia conocida.",
+          "accion": "Registrar entrada, consumo, ajuste y baja; competir consumos cuya suma excede existencia e intentar consumir lote vencido.",
+          "esperado": "Saldo derivado correcto, nunca negativo; unidad compatible y reintento no duplica movimientos.",
+          "variantes_fixture": [
+            "laboratorio-catalogo-prueba-inactiva"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA16",
+      "titulo": "Versiones de catálogo, calidad y búsquedas",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "catalogo-y-valores-historicos",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "LABORATORIO_CLINICO"
+          ],
+          "no_aplica": "Pruebas, métodos y controles de calidad corresponden al bundle de laboratorio.",
+          "preparacion": "Catálogo sintético activo/inactivo con versiones y órdenes históricas.",
+          "accion": "Versionar y desactivar prueba/método; cambiar límites de calidad y buscar órdenes, muestras y cobros con filtros válidos/incorrectos.",
+          "esperado": "Nuevas órdenes no usan versiones inactivas; valores previos se preservan y filtros respetan permisos.",
+          "variantes_fixture": [
+            "laboratorio-catalogo-prueba-inactiva"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA17",
+      "titulo": "Hospitalización, relaciones y asignación de camas",
+      "nivel": "INTEGRACION_MOTOR",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "ocupacion-y-rollback",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL"
+          ],
+          "no_aplica": "Hospitalización y camas son capacidades exclusivas del bundle hospitalario.",
+          "preparacion": "Paciente, cama libre, diagnóstico/consulta y relación hospitalaria sintéticos.",
+          "accion": "Ingresar, intentar relación ajena, competir por una cama y provocar fallo en traslado.",
+          "esperado": "Una ocupación por período; referencias ajenas se rechazan y traslado fallido se revierte íntegramente.",
+          "variantes_fixture": [
+            "paciente-identificado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA18",
+      "titulo": "Límites de rol y proyección de datos",
+      "nivel": "API_CON_IDENTIDAD",
+      "prioridad": "CRITICAL",
+      "casos": [
+        {
+          "id": "secretaria-y-analista",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Cuenta secretaria en cada institución y analista/validador de laboratorio; recursos sintéticos separados.",
+          "accion": "Forzar lectura de nota clínica y ejecutar cambios, receta o validación que exceden el rol.",
+          "esperado": "Campos restringidos se omiten; acciones denegadas sin cambiar datos ni auditoría clínica.",
+          "variantes_fixture": [
+            "cuentas-secretaria-y-analista"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA19",
+      "titulo": "Integridad de modelos, instalación y restauración",
+      "nivel": "INSTALACION_RESTAURACION",
+      "prioridad": "HIGH",
+      "casos": [
+        {
+          "id": "modelo-migracion-y-restauracion",
+          "modo": "POR_BUNDLE",
+          "aplica_en": [
+            "HOSPITAL_GENERAL",
+            "CLINICA_ODONTOLOGICA",
+            "LABORATORIO_CLINICO",
+            "CENTRO_MEDICO_PEDIATRICO"
+          ],
+          "preparacion": "Entorno aislado exclusivo por motor con artefacto de versión y datos sintéticos.",
+          "accion": "Inspeccionar claves/relaciones/índices, instalar desde cero, migrar un volumen con historia y restaurar respaldo.",
+          "esperado": "Modelo y datos cumplen restricciones sin pérdida; repetición de inicializadores no borra datos.",
+          "variantes_fixture": [
+            "paciente-identificado",
+            "archivado-proceso-previo-vs-nueva-atencion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CA20",
+      "titulo": "Comparativo académico y retroalimentación docente",
+      "nivel": "INSTALACION_RESTAURACION",
+      "prioridad": "MEDIUM",
+      "casos": [
+        {
+          "id": "comparativo-y-observaciones",
+          "modo": "DOCUMENTAL",
+          "aplica_en": [],
+          "preparacion": "Disponer de los cuatro modelos, resultados de CA y fuente docente identificable.",
+          "accion": "Revisar cada criterio comparativo y asociar cada observación docente con decisión/cambio y prueba.",
+          "esperado": "Cada conclusión tiene fuente y resultado real; fuente u observación ausente no se marca PASS.",
+          "variantes_fixture": []
+        }
+      ]
+    }
+  ]
+}
