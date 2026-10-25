@@ -60,7 +60,7 @@ Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PAS
 
 ## Ramas y documentación vigentes
 
-Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se eliminan al integrar. El plan/ es la fuente de ejecución; Agente/DISENO_VISUAL.md conserva la referencia visual v1.1. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.
+Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se eliminan al integrar. El plan/ es la fuente de ejecución; Frontend/README.md es la guía única de la interfaz vigente. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.
 
 ## Política de integración vigente
 

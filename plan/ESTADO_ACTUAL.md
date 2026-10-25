@@ -19,19 +19,23 @@ Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; v
 
 - Ramas permanentes deseadas: main y develop. Ramas de tarea temporales.
 - La consolidación de frontend/documentación PR #2 fue fusionada en GitHub el 24/10/2026 a las 17:46 (America/Guatemala), commit `92ba015`. Fuente: https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/2. develop remoto ya contiene esa consolidación; obtener su versión actual antes de iniciar tareas.
-- Las reglas de continuidad/cola compartida se publican después de esa consolidación desde la rama temporal codex/continuidad-compartida. Confirmar su integración y obtener esos commits en el otro equipo. Frontend ya no debe utilizarse como rama de trabajo; solo main y develop permanecen de forma estable.
-- PR #1 quedó sustituido/cerrado. Backend y codex/flujo-github-tareas se retiraron del remoto.
+- La continuidad/cola compartida del PR #3 ya está fusionada en develop, commit `997c3ec`. La rama temporal se eliminó. Las modificaciones de limpieza se integran después, mediante su propio PR de mantenimiento; verificar referencias actuales.
+- Las ramas Frontend, Backend y codex/flujo-github-tareas ya se retiraron del remoto. Las nuevas ramas de trabajo se eliminan tras su integración para terminar cada flujo con main y develop.
 - GitHub exige PR y contrato-pr; cero aprobaciones humanas obligatorias. Codex es el revisor automático elegido. El propietario confirmó activar su configuración; en el último corte no había respuesta del bot en PR #2. Verificar el estado actual antes de marcar revisión completa.
 - El check contrato-pr no fuerza técnicamente que Codex haya terminado ni acredita funcionalidad. No asumir que verde significa revisión automática aprobada.
 
 ## Próxima entrada de trabajo
 
-La consolidación inicial ya se integró en el corte indicado; verificar referencias remotas y obtener también la actualización de continuidad. No iniciar desde una copia anterior a esos cambios.
+La consolidación inicial ya se integró en el corte indicado; verificar referencias remotas y obtener la versión actual de develop. No iniciar desde una copia anterior a esos cambios.
 
-Las 48 tareas siguen sin ejecución acreditada en el tablero al preparar este corte. En una base consolidada, el helper debe mostrar inicialmente E00-P1-01 y E00-P2-01 disponibles, sujetas a revisar reservas remotas. No hay seguimientos de implementación creados artificialmente.
+La tarea E00-P1-01 ya tiene cambios documentales integrados por PR #4, commit 3dffdd8. Su cierre y la revisión se verifican en el tablero y seguimiento; no marcarla HECHA desde la limpieza. Las siguientes candidatas dependen de ese estado real: ejecutar el helper en lugar de repetir el listado inicial. Los seguimientos existentes son de tareas efectivamente iniciadas.
 
 Leer [continuidad y cola compartida](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md); ejecutar `python3 scripts/github/cola.py`. Daniel y David pueden tomar cualquier lote. Para una tarea activa leer también `plan/seguimiento/ID.md` y su rama/PR.
 
 ## Cómo mantener este archivo
 
 Actualizar al cambiar producto, bloqueos generales o estado de integración. Registrar fecha, fuente/commit/PR observado y próxima entrada. Evitar copiar estados por tarea o logs completos. No incorporar secretos ni depender de mensajes privados del chat.
+
+## Documentación de interfaz
+
+La guía única es Frontend/README.md. Las especificaciones de creación y el informe narrativo de UI se retiraron; sus resultados históricos se resumen allí y la evidencia JSON se conserva en plan/evidencias/UI/2026-10-23/. Los tokens y componentes reales son la referencia de diseño vigente.

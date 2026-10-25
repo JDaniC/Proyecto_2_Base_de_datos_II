@@ -9,7 +9,7 @@ Consigna actual: `Proyecto final bases II (1) (5).pdf`, cuatro páginas, aportad
 | [Diseño](../Agente/DISENO_PROYECTO.md) | Reglas M01–M09 y CA01–CA20. Su inventario del 19/10 es histórico y algunas capacidades visibles se acotaron después. |
 | [RF](../Agente/REQUERIMIENTOS_FUNCIONALES.md), [RNF](../Agente/REQUERIMIENTOS_NO_FUNCIONALES.md) | 69 + 40 requisitos. Aplicar las precisiones de esta guía; no convertir cada verbo «administrar» en una nueva pantalla. |
 | [Auditoría Database](../Database/auditoria/2026-10-24/informe.md) | 234 comprobaciones históricas: 232 PASS, 2 FAIL por A-F01. MySQL/emulador Firestore bloqueados en ese corte. No repetir el conteo antiguo de 350 como prueba actual. |
-| [Auditoría UI](../Frontend/docs/auditoria-producto-final/informe.md) | Alcance visible conservado, 35 pruebas específicas y build en ese corte; usa simuladores. Referencia un adjunto de alcance anterior no presente: no atribuir su texto al PDF nuevo. |
+| [Guía UI y evidencia](../Frontend/README.md) | Alcance visible conservado, 35 pruebas específicas y build en ese corte; usa simuladores. Referencia un adjunto de alcance anterior no presente: no atribuir su texto al PDF nuevo. |
 | [Servicios React](../Frontend/src/services/contracts.ts), [ámbito UI](../Frontend/src/app/productScope.ts) | Implementación actual de la presentación. Tiene contratos sobrantes; no todos representan acciones vigentes. |
 | [Database](../Database/README.md) | Cuatro modelos y herramientas existentes. Backend contiene solo `.gitkeep`; Frontend sí tiene aplicación React. |
 
@@ -31,7 +31,7 @@ Prioridad: instrucciones actuales del usuario; consigna final para criterios aca
 | EF10 | Motor resuelto automáticamente por institución del usuario autenticado | p. 4 |
 | EF11 | Documento breve de modelado, consistencia, seguridad y asignación | p. 4 |
 
-La consigna permite elegir tecnología. NestJS, Firebase Authentication, UUID, revisiones, idempotencia y límites de documentos son decisiones del proyecto, no citas textuales de la rúbrica. No se dispone de fecha de entrega ni de retroalimentación docente identificable; registrar su recepción en E07-P2-01 y actuar antes si llega durante otra fase.
+La consigna permite elegir tecnología. NestJS, Firebase Authentication, UUID, revisiones, idempotencia y límites de documentos son decisiones del proyecto, no citas textuales de la rúbrica. La fecha objetivo indicada por el usuario es el 05/11/2026. No se dispone de retroalimentación docente identificable; registrar su recepción en E07-P2-01 y actuar antes si llega durante otra fase.
 
 ## 3. Decisiones de trabajo que E00 debe reflejar en contratos
 

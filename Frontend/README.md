@@ -1,11 +1,70 @@
-# Frontend clínico
+# Interfaz clínica
 
-React/TypeScript existente con repositorios simulados. La integración HTTP se ejecuta según plan/; el backend todavía está pendiente.
+Guía única del frontend vigente. Sustituye los documentos usados para construir el prototipo, el catálogo de 53 vistas y los informes narrativos anteriores. Para tareas, contratos y decisiones del backend consultar [el plan](../plan/00_PLAN_MAESTRO.md).
+
+## Estado real
+
+React 19, TypeScript y Vite. El código usa repositorios simulados y datos sintéticos; el backend y la persistencia real en los cuatro motores siguen pendientes. La institución del prototipo procede de la sesión simulada. En la entrega deberá proceder de la identidad verificada por el servidor; la UI nunca elige un motor.
+
+## Ejecutar y comprobar
+
+Desde la raíz del repositorio:
 
 ```sh
-npm ci
-npm run dev
-npm run build
+npm --prefix Frontend ci
+npm --prefix Frontend run dev
+npm --prefix Frontend run build
+npm --prefix Frontend test -- src/test/product-scope/ src/services/errors.test.ts src/services/dates.test.ts
 ```
 
-Ejecutar dentro de Frontend/. Auditoría de producto vigente: [informe](docs/auditoria-producto-final/informe.md). Las pruebas históricas de pantallas retiradas no acreditan el alcance actual; consultar el informe y plan/ para las pruebas de integración. Referencia visual: [diseño](../Agente/DISENO_VISUAL.md).
+El servidor local usa el puerto 5173. `build` comprueba tipos y genera `dist/`, que no se versiona. `npm --prefix Frontend run preview` permite probar la compilación. Las dependencias se fijan con package-lock.json.
+
+Las pruebas seleccionadas comprueban el alcance vigente, fechas, mensajes y carga de pantallas. La suite histórica contiene expectativas de pantallas retiradas; no se usa su exclusión como prueba de que todo el producto está validado. Su reconciliación sigue en E06-P2-02 y DEC12 del plan.
+
+## Flujos conservados
+
+| Institución | Secciones y operaciones |
+|---|---|
+| Todas | Acceso, inicio, pacientes, alta/edición, expediente, consulta, diagnósticos, tratamientos, recetas e historial; archivo con causa y confirmación |
+| Hospital | Agenda, ingresos/egresos, disponibilidad y asignación de camas, órdenes/resultados de examen, pólizas y procedimientos del paciente |
+| Odontología | Agenda de secretaría/odontólogo, cita obligatoria, consulta y seguimiento, selectores clínicos y recetas |
+| Laboratorio | Bandeja, órdenes, muestras/eventos, resultados/versiones, informes, cobros, inventario, equipos/calidad, catálogos y cuentas con roles fijos; núcleo clínico común desde expediente |
+| Pediatría | Responsables y autorizaciones, antecedentes/alergias, consulta/crecimiento, vacunas/dosis/aplicaciones, archivo y reactivación |
+
+No se añade editor de permisos, selector de motor, agenda visible de laboratorio, reactivación fuera de pediatría, CRUD de camas/médicos, IA, notificaciones ni pantallas administrativas por cada tabla. Menús y rutas se filtran por institución; el servidor deberá aplicar la autorización real.
+
+## Estructura para trabajar
+
+- `src/app/`: rutas, sesión, alcance por institución y composición de servicios.
+- `src/layouts/`: navegación, cabecera y contenido autenticado.
+- `src/features/`: pantallas y diálogos clínicos por área.
+- `src/design-system/`: componentes, tokens y estilos compartidos.
+- `src/services/`: contratos, tipos, fechas, mensajes y catálogos comunes.
+- `src/mocks/`: adaptadores simulados; reemplazarlos en la frontera de composición según el plan.
+- `src/test/product-scope/`: regresiones del producto vigente y carga de pantallas.
+
+La API no debe confiar en actor, rol o institución enviados por formularios. El backend resolverá permisos y motor; los adaptadores HTTP reemplazarán la inyección simulada en ServiceContext. Ver [contratos](../plan/03_CONTRATOS_Y_FLUJOS.md).
+
+## Diseño implementado
+
+Interfaz clara, sin modo oscuro. Los valores vigentes están en `src/design-system/tokens.ts`, `tokens.css` y `responsive.css`; evitar copiarlos a especificaciones paralelas.
+
+- Primario `#20666B`, texto `#0C3B45`, fondo blanco y superficies verde grisáceo suave.
+- Botones de 16 px de radio, campos 12 px, paneles 16 px y diálogos 20 px. Usar paneles para agrupaciones funcionales.
+- Formularios con etiquetas, errores por campo y mensajes comprensibles. Badges de estado con texto y contraste.
+- Tablas anchas con desplazamiento horizontal; navegación móvil plegable. Conservar foco, teclado y confirmaciones de acciones sensibles.
+- Fechas civiles sin cambios de día por zona horaria; dinero con moneda y formato legible.
+
+## Carga y recuperación
+
+Acceso y estructura común se cargan al inicio; las pantallas autenticadas se descargan al abrirlas. Durante la espera se mantiene la navegación y se anuncia “Cargando pantalla”. Si falla una descarga o el render de una vista, aparece un mensaje de recuperación sin detalles internos; se puede navegar a otra sección o recargar. Recargar puede perder datos de formularios no guardados.
+
+En la compilación de limpieza del 24/10/2026, el JavaScript inicial total pasó de aproximadamente 1,18 MB a 535.540 bytes (aproximadamente 55 % menos), con 25 pantallas diferidas. El archivo mayor quedó en 297.819 bytes. Son medidas del bundle compilado, no tiempos de carga medidos en una red real.
+
+No afirmar que esta optimización implementa persistencia, idempotencia ni transacciones: esas garantías dependen del backend pendiente.
+
+## Evidencia histórica y límites
+
+La auditoría de producto del 23/10/2026 informó 35 pruebas específicas PASS, compilación PASS y 124 combinaciones de ruta/tamaño recorridas con datos sintéticos. Se conservan [inventario](../plan/evidencias/UI/2026-10-23/inventario.json) y [recorrido](../plan/evidencias/UI/2026-10-23/recorrido-playwright.json). Sus conteos y líneas corresponden a ese corte, no al código actual.
+
+Esos resultados acreditan presentación y simulación; no las cuatro bases integradas ni seguridad clínica real. Las precisiones vigentes de responsables compartidos, archivo y contratos están en el plan. La limpieza documental y la carga diferida requieren sus propias comprobaciones actuales; no se presentan como una auditoría completa de todos los flujos.

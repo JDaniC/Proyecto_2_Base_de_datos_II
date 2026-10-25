@@ -5,6 +5,7 @@ import { Header } from '../design-system/components/Header';
 import { Modal } from '../design-system/components/Modal';
 import { Button } from '../design-system/components/Button';
 import { Toast, ToastMessage } from '../design-system/components/Toast';
+import { RouteContent } from '../app/RouteContent';
 import { useAuthSession } from '../app/AuthSessionContext';
 
 export const AuthenticatedLayout: React.FC = () => {
@@ -65,7 +66,9 @@ export const AuthenticatedLayout: React.FC = () => {
         />
 
         <main className="app-main" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-          <Outlet />
+          <RouteContent>
+            <Outlet />
+          </RouteContent>
         </main>
       </div>
 

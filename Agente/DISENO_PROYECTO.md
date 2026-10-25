@@ -411,70 +411,15 @@ Ninguna precisión elimina datos del modelo ni relaja M01–M09.
 | Documentación | Markdown y Swagger UI | Requisitos, decisiones, estructura y contrato de endpoints. |
 | Configuración | Variables de entorno + `.env.example` | URLs, puertos y credenciales por entorno; nunca subir `.env` ni claves de servicio. |
 
-Las versiones cambian. Al inicializar los proyectos, elegir versiones LTS/estables compatibles entre sí y confirmar requisitos de runtime en la documentación oficial vigente. La selección React + Vite es una recomendación para una SPA académica; si el curso exige renderizado de servidor u otro entorno, revisar la elección antes de crear el frontend.
+Las versiones cambian. Al inicializar los proyectos, elegir versiones LTS/estables compatibles entre sí y confirmar requisitos de runtime en la documentación oficial vigente. React + Vite ya está implementado; mantener las versiones fijadas en su lockfile salvo un cambio justificado y verificado.
 
-## 7. Organización inicial propuesta
+## 7. Organización del código
 
-```text
-.
-├── Agente/
-│   ├── AGENTS.md
-│   └── DISENO_PROYECTO.md
-├── Backend/
-│   ├── src/
-│   │   ├── autenticacion/
-│   │   ├── comun/
-│   │   ├── instituciones/
-│   │   ├── pacientes/
-│   │   ├── citas/
-│   │   ├── consultas/
-│   │   ├── hospital/
-│   │   ├── clinica-odontologica/
-│   │   ├── laboratorio/
-│   │   ├── pediatria/
-│   │   └── infraestructura/
-│   │       ├── postgres/
-│   │       ├── mysql/
-│   │       ├── mongodb/
-│   │       └── firestore/
-│   └── .env.example
-├── Database/
-│   ├── clinica_odontologica_mysql.sql
-│   └── hospital_general_postgresql.sql
-├── Frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   ├── components/
-│   │   ├── features/
-│   │   ├── pages/
-│   │   └── services/
-│   └── .env.example
-├── .gitignore
-└── README.md
-```
+La estructura actual se describe en [README](../README.md) y [guía de interfaz](../Frontend/README.md). La construcción del backend sigue [plan/02](../plan/02_ARQUITECTURA_HEXAGONAL.md): dominio y aplicación independientes de adaptadores. No recrear el árbol preliminar ni generar carpetas vacías por cada tabla.
 
-La estructura es una guía, no una obligación de crear todos los módulos desde el inicio. Mantener un límite claro: dominio/aplicación no importan adaptadores. Los archivos `.env.example` solo documentan nombres de variables y valores de ejemplo no sensibles.
+## 8. Interfaz vigente
 
-Cada módulo con lógica contiene `dominio/`, `aplicacion/` y `adaptadores/`; los puertos residen junto a la aplicación que los consume. `infraestructura/` compone conexiones y unidades de trabajo; no contiene una segunda implementación de reglas clínicas. La suite compartida de contrato se ubicará en `Backend/test/contratos/`, las pruebas por institución en `Backend/test/integracion/` y los flujos de interfaz en `Frontend/test/`. Guardar migraciones, validadores e índices versionados por motor dentro de `Database/`, conservando los SQL base.
-
-## 8. Pantallas principales previstas
-
-- Inicio de sesión.
-- Panel inicial contextual a la institución y al rol.
-- Búsqueda y registro de pacientes.
-- Perfil y resumen cronológico del historial.
-- Agenda de citas.
-- Registro y consulta de consultas clínicas.
-- Formularios de diagnósticos, tratamientos y recetas.
-- Vistas de hospitalización, cama y cobertura para el hospital.
-- Flujo de órdenes, muestras, análisis, validación e informes para el laboratorio.
-- Seguimiento de crecimiento, vacunas pendientes y aplicaciones para pediatría.
-- Administración acotada de usuarios, roles y catálogos.
-- Consulta de auditoría según permisos.
-
-No mostrar una pantalla o campo a un rol sin necesidad, y no depender solo de la interfaz para proteger los datos.
-
-Paciente, historial, consulta y receta usan los mismos componentes y contratos en los cuatro motores. Se habilitan campos y módulos por capacidad institucional/rol, nunca por nombre de motor; cambiar el adaptador del perfil de pruebas no modifica la interfaz. El historial integra todos los tipos autorizados, incluidas órdenes e informes del laboratorio, sin ocultarlos por no ser eventos comunes. El flujo de archivo solicita causa/motivo y permite ver el estado y la historia conservada. Pediatría muestra responsables/autorización y comparaciones de crecimiento; laboratorio muestra saldos, existencia y filtros de 3.4.2.
+La única guía de pantallas, alcance visible, diseño implementado y ejecución está en [Frontend/README.md](../Frontend/README.md). Se retiró el catálogo usado para construir el prototipo. Los contratos/decisiones de las secciones anteriores y del plan gobiernan la integración; ocultar controles en React no sustituye autorización del servidor.
 
 ## 9. Criterios de aceptación y demostración
 
@@ -515,27 +460,13 @@ CA03–CA08 se ejecutan en los cuatro adaptadores con el mismo contrato, respeta
 6. Archivar un expediente en cada institución y reactivar uno pediátrico, conservando su historia; demostrar rechazo de relación ajena, acceso sin permiso y cambio de rol con sesión previa.
 7. Presentar comparativo, modelos corregidos, resultados de CA01–CA20 y pendientes reales. No marcar PASS por el solo hecho de tener esta especificación.
 
-## 10. Etapas de implementación recomendadas
+## 10. Ejecución del proyecto
 
-1. **Aplicar decisiones de diseño:** incorporar la retroalimentación cuando esté disponible y generar las migraciones de la sección 14, conservando las fuentes iniciales.
-2. **Preparar contratos:** trasladar 5.5–5.7 a DTOs, OpenAPI, puertos de repositorio, identidad y unidad de trabajo. Fijar fixtures y suite compartida CA03–CA08.
-3. **Construir esqueleto:** crear el backend modular y frontend; configurar `.env.example`, conexiones locales y datos sintéticos.
-4. **Completar un flujo vertical:** autenticación → enrutamiento → búsqueda/registro de paciente → historial, empezando con un motor y manteniendo límites hexagonales.
-5. **Agregar instituciones:** implementar y verificar sus adaptadores y procesos específicos de forma incremental.
-6. **Endurecer consistencia y seguridad:** transacciones, autorización, auditoría, idempotencia, archivo y pruebas de integración con cada motor.
-7. **Entregar comparación y demo:** ejecutar CA01–CA20 y el guion; completar la comparación de diseño de la sección 13 con resultados reales y resolver observaciones docentes con trazabilidad.
+Seguir las fases, dependencias y tareas del [plan maestro](../plan/00_PLAN_MAESTRO.md), el [cronograma](../plan/09_CRONOGRAMA_HASTA_05_NOV.md) y la [cola compartida](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). La UI existente se reutiliza y el backend se implementa según los criterios de cada tarea. No iniciar otro frontend ni un plan paralelo.
 
-## 11. Estado actual y trabajo pendiente
+## 11. Estado y trabajo pendiente
 
-> Estado histórico. El estado vigente se mantiene en `plan/ESTADO_ACTUAL.md` y `plan/06_TABLERO.md` (al 24/10/2026 Frontend React simulado existe y Backend está vacío; DEC01).
-
-Estado actualizado el 19 de octubre de 2026: existen los dos SQL v2 (cierre en sección 16) y `Database/laboratorio_clinico_mongodb.js`, que crea las 27 colecciones MongoDB adoptadas, con validadores estrictos y 63 índices secundarios. `Database/ANALISIS_MONGODB.md` documenta el modelo y su ejecución. La suite `Database/tests/laboratorio_clinico_mongodb.test.js` pasó 102 comprobaciones sobre un replica set temporal MongoDB 8.0.32, incluyendo reejecución, unicidad, validación y rollback real. No se aplicó el script sobre una base compartida.
-
-También existe `Database/centro_pediatrico_firestore.mjs`, con plan offline e inicialización transaccional de configuración y cuatro roles. `Database/firebase/` contiene 22 modelos de documento, reglas que deniegan acceso directo del cliente y diez índices compuestos declarados. `Database/ANALISIS_FIREBASE.md` explica ejecución y límites. Pasaron 181 pruebas (82 de modelo y 99 contra Firestore Emulator 1.22.0), sin escribir en un proyecto Firebase real. Firestore materializa las colecciones al escribir documentos; no se crearon placeholders clínicos. Sus validadores son de servidor y no restricciones nativas del motor; índices/reglas no se han desplegado remotamente.
-
-`Backend/` y `Frontend/` contienen únicamente `.gitkeep`. Siguen pendientes la aplicación, los adaptadores, la migración de instalaciones SQL anteriores, la integración de las reglas transaccionales y validadores, las pruebas de los casos de uso CA01–CA20 y el comparativo final. Tener los modelos de persistencia no demuestra todavía relaciones válidas entre documentos, permisos clínicos, inmutabilidad ni saldos concurrentes: son responsabilidades del backend descritas en los análisis.
-
-El diseño especifica los requisitos y corrige los siete vacíos documentales identificados; no acredita que la entrega funcional esté completada. La tabla de retroalimentación de 14.2 sigue pendiente por falta de observaciones docentes. La sección 13 constituye la comparación de decisiones adoptadas y debe contrastarse con la implementación para entregar el comparativo final.
+El estado vigente se mantiene en [plan/ESTADO_ACTUAL.md](../plan/ESTADO_ACTUAL.md) y [tablero](../plan/06_TABLERO.md). Existe React simulado y cuatro modelos; Backend sigue pendiente. La sección 16 conserva un corte histórico de Database y no acredita ejecución actual. Pruebas clínicas reales, migraciones, cuatro adaptadores y comparativo final se verifican en las tareas del plan. La retroalimentación docente sigue pendiente de fuente identificable.
 
 ## 12. Referencias oficiales de tecnologías
 

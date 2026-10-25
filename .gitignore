@@ -44,3 +44,6 @@ build/
 Database/evidencias_cierre/
 Database/auditoria_evidencias/
 Database/docker/VERIFICACION.json
+
+# Capturas y logs temporales de comprobación en navegador
+.playwright-mcp/
