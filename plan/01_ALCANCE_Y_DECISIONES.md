@@ -57,3 +57,65 @@ E00-P1-01 y E00-P2-02 deben registrar cualquier incompatibilidad adicional antes
 Hospital: paciente/contactos/alergias/antecedentes, agenda, consulta/signos, diagnósticos/tratamientos/recetas, hospitalización/camas, exámenes/resultados, procedimientos y pólizas. Odontología: paciente, antecedentes, agenda de secretaría y odontólogo, atención, seguimiento y recetas. Laboratorio: pacientes/catálogos, órdenes, muestras/eventos, resultados/versiones/series, informes, equipos/calidad, reactivos/lotes/movimientos, facturas/pagos y cuentas con roles fijos; además núcleo clínico por médico autorizado. Pediatría: paciente/responsables, autorizaciones, alergias/antecedentes, agenda/consulta, crecimiento, recetas, esquemas/vacunas, aplicaciones y archivo/reactivación.
 
 No añadir portal externo, IA clínica, notificaciones, firma digital, sincronización de expedientes entre instituciones, panel gerencial ni editor de permisos. No eliminar datos del modelo porque no tengan pantalla propia. Seeds y selectores pueden exponer referencias; no sustituyen operaciones clínicas requeridas.
+
+## 5. Registro de decisiones de alcance (E00-P1-01, 24/10/2026)
+
+Acta y revisión cruzada: [evidencia E00-P1-01](evidencias/E00/E00-P1-01.md). Cada fila conserva su origen; DEC01–DEC12 siguen en la sección 3 y aquí se fija su impacto. Una decisión de proyecto no se presenta como cita de la consigna.
+
+| ID | Fecha | Origen | Decisión | Impacto API | Impacto UI | Prueba / tarea |
+|---|---|---|---|---|---|---|
+| DEC01 | 24/10/2026 | Auditoría de agentes; estado Git | Contexto vigente: React simulado existe, Backend vacío. El estado del 19/10 del diseño queda como histórico. | Ninguno | Reutilizar UI | Revisión documental; E01-P1-01 |
+| DEC02 | 24/10/2026 | Auditoría Database A-F01 | Archivo rechaza nuevas atenciones y admite finalizar/corregir con permiso. | Errores 409 de transición; corrección con versión | Sin cambio visual | E00-P1-02, E03-P1-03; CA08 |
+| DEC03 | 24/10/2026 | SQL MySQL `id_cita NOT NULL`; RF-C04 | Cita obligatoria para consulta odontológica (política institucional, no del motor). | `citaId` requerido en odontología: 400/409 si falta o es ajena | Consulta dental parte de una cita | E04-P1-01; CA06 |
+| DEC04 | 24/10/2026 | `productScope.ts`; M03 | Laboratorio sin agenda visible; consulta clínica común desde expediente por médico individual autorizado. La colección `citas` queda técnica. | Sin endpoint público de agenda de laboratorio; `citaId` ausente válido allí | `/agenda` oculta en laboratorio | E03-P2-01; CA06 no aplica a laboratorio |
+| DEC05 | 24/10/2026 | UI final; consigna p. 4 | Archivo en las cuatro; reactivación pública solo en pediatría. | `POST /pacientes/{id}/reactivacion` solo con capacidad pediátrica; otras instituciones 403/404 sin revelar | Botón Reactivar solo pediatría | E03-P1-03, E04-P2-03; CA08 |
+| DEC06 | 24/10/2026 | Firestore vs `types.ts` | Canónico servidor `CENTRO_MEDICO_PEDIATRICO`; alias UI `CENTRO_PEDIATRICO` por mapper. | Sin alias en requests de autoridad | Mapper de sesión | E01-P1-03, E01-P2-03 |
+| DEC07 | 24/10/2026 | Contratos UI | Actor, rol, institución y profesional se derivan de token + cuenta local. | DTO sin campos de autoridad; se ignoran o rechazan | Mapper omite campos | E01-P1-03; CA01/CA18 |
+| DEC08 | 24/10/2026 | Contratos UI | UUID públicos, `version_esperada` y clave idempotente estable. | Versión obligatoria en cambios; `Idempotency-Key` | Formularios conservan clave en reintento | E00-P1-03; CA03 |
+| DEC09 | 24/10/2026 | UI pacientes/cronología | Búsqueda vacía inválida; orden API ascendente estable. | 400 en búsqueda vacía; cursor por orden | Estado inicial antes de buscar | E00-P1-03, E02-P2-03; CA07 |
+| DEC10 | 24/10/2026 | M04; auditoría UI | Responsables pediátricos referenciados; principal ≠ autorización; snapshot en consulta. | Vínculo con `es_principal` y `autoriza_atencion` separados | Pestaña Responsables | E02-P2-02, E04-P2-01; CA09 |
+| DEC11 | 24/10/2026 | Contratos UI sobrantes | Roles fijos, sin editor de permisos ni CRUD de médicos/camas; catálogos hospital/dental por seed. | No publicar endpoints retirados | Sin pantallas nuevas | E00-P2-02; CA18 |
+| DEC12 | 24/10/2026 | Suite UI histórica | Reconciliar pruebas obsoletas con tabla de sustitución. | Ninguno | Pruebas por alcance vigente | E06-P2-02 |
+| DEC13 | 24/10/2026 | `mockUserRepository.ts` | Roles por institución fijos (sección 7). Los roles mock con `institucionesPermitidas` cruzadas (odontólogo, laboratorio y pediatra en hospital) y `MEDICO` en laboratorio no son norma. | Seed y guards usan la sección 7 | Simuladores se ajustan al conectar API | E00-P2-02, E01-P1-03, E05-P2-03 |
+| DEC14 | 24/10/2026 | SHA-256 de PDF `(4)` y `(5)` | Son el mismo archivo (`bab63053…0b382`). Las citas del diseño a `(4)` siguen válidas; la fuente nominal es `(5)`. | Ninguno | Ninguno | Revisión documental |
+| DEC15 | 24/10/2026 | Diseño §1 | `Agente/AUDITORIA_DISENO_PROYECTO.md` no está en el repositorio. Su referencia queda histórica; la sección 15 del diseño es la traza vigente. | Ninguno | Ninguno | Revisión documental |
+
+Retroalimentación docente de Entrega I: PENDIENTE DE FUENTE. No se atribuyen cambios al docente (EF03, RF-D06, RNF-040); se registrará en E07-P2-01 o antes si llega.
+
+## 6. Matriz de capacidades por institución
+
+Las capacidades se habilitan por política institucional, nunca por nombre de motor. Motores sin repetición: PostgreSQL, MySQL, MongoDB y Firestore aparecen una vez cada uno.
+
+| Capacidad | Hospital · PostgreSQL | Odontología · MySQL | Laboratorio · MongoDB | Pediatría · Firestore |
+|---|---|---|---|---|
+| Alta de paciente + historial (EF07) | Sí | Sí | Sí | Sí, con ≥1 responsable principal |
+| Búsqueda/expediente/cronología (EF06) | Sí | Sí | Sí, incluye órdenes/informes | Sí, incluye crecimiento/vacunas |
+| Agenda visible | Sí | Sí, secretaría gestora | No (DEC04) | Sí |
+| Cita en consulta | Opcional | Obligatoria (DEC03) | No aplica | Opcional |
+| Consulta completa: diagnóstico, tratamiento, receta (EF08) | Sí | Sí | Sí, médico individual autorizado | Sí, con autorización de responsable |
+| Archivo por baja (EF09) | Sí | Sí | Sí | Sí |
+| Reactivación pública | No | No | No | Sí (DEC05) |
+| Procesos propios | Hospitalización/camas, exámenes, procedimientos, seguros | Antecedentes, selectores clínicos | Órdenes, muestras, resultados, informes, calidad, inventario, cobros | Responsables, crecimiento, esquemas y vacunas |
+| Administración de usuarios en UI | No, provisión controlada | No, provisión controlada | Sí, roles fijos | No, provisión controlada |
+| Catálogos en UI | No, seed + selectores | No, seed + selectores | Sí | Sí (vacunas) |
+| Visor de auditoría | No (se registra) | No (se registra) | Sí | Sí |
+
+Fuente UI: [`productScope.ts`](../Frontend/src/app/productScope.ts). Auditoría se escribe en las cuatro aunque solo dos la muestren.
+
+## 7. Roles mínimos (sin editor de permisos)
+
+Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven en la cuenta local de cada base institucional; un rol solo existe en las instituciones marcadas.
+
+| Rol | Instituciones | Permisos mínimos |
+|---|---|---|
+| `ADMIN_INSTITUCIONAL` | Las cuatro | `pacientes.administrar`, `historial.leer`, `historial.archivar`, `citas.administrar`¹, `usuarios.administrar`², `auditoria.leer`³; en laboratorio además `cobros.administrar`, `inventario.administrar` |
+| `SECRETARIA` | Hospital, odontología, pediatría | `pacientes.administrar`, `citas.administrar` (sin campos clínicos) |
+| `MEDICO` | Hospital | `historial.leer`, `consultas.registrar`, `diagnosticos.registrar`, `tratamientos.registrar`, `recetas.emitir` + profesional activo |
+| `ODONTOLOGO` | Odontología | Igual que `MEDICO`, con odontólogo activo |
+| `PEDIATRA` | Pediatría | Igual que `MEDICO`, con pediatra activo |
+| `MEDICO_LABORATORIO` | Laboratorio | Igual que `MEDICO`, solo con solicitante médico individual activo vinculado. No valida resultados por defecto |
+| `ANALISTA_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.analizar` |
+| `VALIDADOR_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.validar`, `informes.emitir` |
+| `SECRETARIA` (recepción) | Laboratorio | `pacientes.administrar`; sin agenda. El permiso de órdenes/muestras no existe en el catálogo actual: definirlo en E00-P1-03 (PENDIENTE) |
+
+¹ Excepto laboratorio. ² Provisión controlada fuera de laboratorio. ³ Visor solo laboratorio/pediatría. Análisis y validación son permisos distintos; la demo puede asignarlos a cuentas diferentes. Administrar usuarios no concede acceso clínico. `historial.archivar` solo administrador; la reactivación pediátrica usa el mismo permiso con motivo.

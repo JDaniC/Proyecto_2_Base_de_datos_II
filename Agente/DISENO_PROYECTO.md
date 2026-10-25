@@ -9,12 +9,12 @@ El proyecto es una aplicación cliente-servidor para historiales clínicos de cu
 ### Fuentes del alcance
 
 - `Primera Entrega Proyecto (1).pdf`: levantamiento, modelos, entidades, atributos, clasificación de información y operaciones previstas.
-- `Proyecto final bases II (1) (4).pdf`: instrucciones de la aplicación final, restricciones de motores y resultados esperados.
+- `Proyecto final bases II (1) (4).pdf`: instrucciones de la aplicación final, restricciones de motores y resultados esperados. Es el mismo archivo que `Proyecto final bases II (1) (5).pdf` (SHA-256 idéntico, verificado el 24/10/2026; DEC14 del plan).
 - `Database/hospital_general_postgresql.sql` y `Database/clinica_odontologica_mysql.sql`: esquemas SQL de partida que ya están en el repositorio.
 
 Los modelos de la primera entrega son una base que puede corregirse con la retroalimentación del curso. Antes de cambiar reglas o datos, documentar cualquier diferencia relevante con estos requisitos.
 
-La consigna final define las obligaciones académicas; la primera entrega aporta el levantamiento y los modelos de partida. Las ampliaciones elegidas por el equipo se identifican expresamente en las secciones 3 y 14. La auditoría `Agente/AUDITORIA_DISENO_PROYECTO.md` conserva el diagnóstico de la versión anterior; la sección 15 traza sus correcciones documentales. No se ha recibido retroalimentación docente que permita certificar ese requisito.
+La consigna final define las obligaciones académicas; la primera entrega aporta el levantamiento y los modelos de partida. Las ampliaciones elegidas por el equipo se identifican expresamente en las secciones 3 y 14. La auditoría `Agente/AUDITORIA_DISENO_PROYECTO.md` conservaba el diagnóstico de la versión anterior (referencia histórica: el archivo no está en el repositorio al 24/10/2026, DEC15); la sección 15 traza sus correcciones documentales. No se ha recibido retroalimentación docente que permita certificar ese requisito.
 
 ## 2. Requisitos del proyecto
 
@@ -139,7 +139,7 @@ Módulos que debe cubrir:
 
 El esquema inicial define 14 entidades en `Database/clinica_odontologica_mysql.sql`. El modelo contempla un historial por paciente y una consulta asociada como máximo a cada cita.
 
-Conservar los atributos de la primera entrega, pp. 24–29. Una cita cancelada no genera consulta; al atenderla se comprueba que paciente, historial y odontólogo correspondan y se marca ATENDIDA en la misma transacción. Se conserva una receta lógica por consulta, con sus medicamentos y revisiones históricas. Agregar identidad, autorización y auditoría sin atribuir una contraseña local a secretarias u odontólogos.
+Conservar los atributos de la primera entrega, pp. 24–29. Toda consulta odontológica requiere una cita PROGRAMADA de la clínica (política institucional, DEC03; el SQL exige `id_cita NOT NULL`). Una cita cancelada no genera consulta; al atenderla se comprueba que paciente, historial y odontólogo correspondan y se marca ATENDIDA en la misma transacción. Se conserva una receta lógica por consulta, con sus medicamentos y revisiones históricas. Agregar identidad, autorización y auditoría sin atribuir una contraseña local a secretarias u odontólogos.
 
 ### 3.4 Laboratorio Clínico — MongoDB
 
@@ -329,19 +329,19 @@ La consistencia visible debe ser equivalente para el usuario aunque la implement
 
 ### 5.5 Núcleo común y equivalencia entre motores
 
-Las cuatro instituciones soportan **registrar paciente y abrir historial, gestionar citas, registrar consulta, agregar diagnóstico/tratamiento, emitir receta, consultar cronología y archivar/reactivar**. Comparten los mismos casos de uso de aplicación y sus invariantes. Una consulta es una atención documentada por un profesional autorizado; un diagnóstico es una conclusión clínica registrada; un resultado de laboratorio conserva su tipo y no sustituye a un diagnóstico.
+Las cuatro instituciones soportan **registrar paciente y abrir historial, registrar consulta, agregar diagnóstico/tratamiento, emitir receta, consultar cronología y archivar**. Gestionar citas aplica a las agendas visibles (hospital, odontología, pediatría) y la reactivación pública solo a pediatría; ver 5.8. Comparten los mismos casos de uso de aplicación y sus invariantes. Una consulta es una atención documentada por un profesional autorizado; un diagnóstico es una conclusión clínica registrada; un resultado de laboratorio conserva su tipo y no sustituye a un diagnóstico.
 
 **Decisión sobre laboratorio:** el levantamiento inicial no incluye atención médica ni recetas. Se adopta una ampliación acotada del modelo para cumplir los ejemplos comunes de la consigna final: `citas` y `consultas_clinicas`, con diagnósticos, tratamientos y receta histórica. Solo una cuenta de médico responsable vinculada a un solicitante médico individual puede efectuar esas acciones. Un solicitante que representa una institución no es un prescriptor. Analistas y secretaría conservan sus funciones propias. Esta ampliación es una decisión del proyecto, no una función atribuida al PDF inicial. La demostración académica usa un profesional y datos sintéticos autorizados por rol.
 
 | Operación compartida | PostgreSQL / hospital | MySQL / clínica | MongoDB / laboratorio | Firestore / pediatría |
 |---|---|---|---|---|
 | Registrar paciente y abrir historial | `paciente` + `historial_clinico` | `paciente` + `historial_clinico` | `pacientes` + cabecera `historial` embebida | `pacientes` + vínculos de responsables requeridos para el menor |
-| Citas | `cita` | `cita`, con secretaria gestora | `citas`, ampliación | `citas` |
+| Citas | `cita` | `cita`, con secretaria gestora; obligatoria para consulta | `citas`, colección técnica sin agenda pública (5.8) | `citas` |
 | Registrar consulta | `consulta` con historial/profesional | `consulta_odontologica` | `consultas_clinicas` con paciente/historial y médico solicitante | `consultas` con paciente/pediatra |
 | Agregar diagnóstico/tratamiento | Tablas y relaciones existentes | Catálogos y relaciones `consulta_*` | Listas embebidas en consulta clínica | Listas embebidas en consulta |
 | Emitir receta | `receta` + `detalle_receta`, con instantánea histórica | `receta` + `detalle_receta`, con instantánea histórica | Objeto receta de consulta clínica | Objeto receta de consulta |
 | Cronología | Consultas/resultados/ingresos por historial | Consultas por historial | Consultas, órdenes, resultados e informes por paciente | Consultas y vacunas por paciente |
-| Archivar/reactivar | Estado/motivo en historial | Estado/motivo en historial | Estado/motivo en cabecera `historial` | Estado/motivo en perfil del paciente |
+| Archivar (reactivar solo pediatría, 5.8) | Estado/motivo en historial | Estado/motivo en historial | Estado/motivo en cabecera `historial` | Estado/motivo en perfil del paciente |
 
 El contrato común define una receta lógica por consulta, con revisiones inmutables tras emisión. Los adaptadores traducen catálogos, claves numéricas y objetos embebidos al mismo modelo de aplicación. Las especializaciones agregan campos y eventos conservando los campos comunes. El alta pediátrica exige responsables y la cita odontológica exige secretaria; estas son políticas institucionales explícitas y no diferencias provocadas por el motor.
 
@@ -362,7 +362,7 @@ Todos los recursos expuestos usan ID público UUID como texto. Los SQL conservan
 | `EmitirReceta` / `POST /consultas/{id}/receta` | Medicamentos con nombre/presentación/concentración, dosis, frecuencia, duración, vía e indicaciones | `201`; prescriptor activo y con permiso; contenido histórico inmutable. Segunda emisión ordinaria produce `409 RECETA_EXISTENTE`; corrección crea revisión. |
 | `FinalizarConsulta` / `POST /consultas/{id}/finalizacion` | Versión esperada | Consulta FINALIZADA; sus datos clínicos posteriores solo se corrigen mediante revisión con motivo. |
 | `ConsultarHistorial` / `GET /pacientes/{id}/historial` | Tipos de evento, rango de fechas, cursor y límite | `200`, cabecera/estado y eventos con `id`, `tipo`, `fecha`, `profesional` y detalle autorizado; campos especializados amplían el mismo contrato. |
-| `ArchivarHistorial` / `POST /pacientes/{id}/archivo`; `ReactivarHistorial` / `POST /pacientes/{id}/reactivacion` | Motivo, versión y permiso administrativo | `200`, nuevo estado y evento de baja/reactivación; no borra atenciones previas. |
+| `ArchivarHistorial` / `POST /pacientes/{id}/archivo`; `ReactivarHistorial` / `POST /pacientes/{id}/reactivacion` | Motivo, versión y permiso administrativo | `200`, nuevo estado y evento de baja/reactivación; no borra atenciones previas. Reactivación disponible solo con la capacidad pediátrica (5.8). |
 
 La búsqueda por prefijo usa nombre canónico normalizado de igual manera en los cuatro motores; búsquedas de texto libre no son parte del contrato común inicial. El registro sin identificación exige revisión administrativa de posibles coincidencias; no se promete detección infalible de una misma persona sin identificador. Una reserva de identidad única y la clave de idempotencia evitan altas concurrentes de la misma identidad o reintento. Identidades de menores pueden añadirse después mediante una operación validada y auditada, sin recrear su expediente.
 
@@ -376,11 +376,24 @@ Todo comando de creación o movimiento admite `Idempotency-Key` obligatoria: ám
 
 ### 5.7 Estados, archivo y correcciones
 
-- Historial: ACTIVO → ARCHIVADO con causa TRASLADO, FALLECIMIENTO u OTRA_ADMINISTRATIVA, observación, actor y fecha; ARCHIVADO → ACTIVO exige permiso y motivo de reactivación. La reactivación tras causa de fallecimiento requiere corrección justificada de la baja, no una nueva alta clínica.
+- Historial: ACTIVO → ARCHIVADO con causa TRASLADO, FALLECIMIENTO u OTRA_ADMINISTRATIVA, observación, actor y fecha; ARCHIVADO → ACTIVO exige permiso y motivo de reactivación y solo se publica en pediatría (5.8); en las demás instituciones el archivo es definitivo desde la API. La reactivación tras causa de fallecimiento requiere corrección justificada de la baja, no una nueva alta clínica.
 - Archivar no elimina datos ni pacientes. El expediente archivado sigue legible para roles autorizados; no admite nuevas citas, consultas, órdenes ni aplicaciones de vacuna. Se permite terminar procesos ya iniciados y registrar cobros o correcciones históricas con permiso específico y trazabilidad. No se reutiliza el ID de un expediente para otra persona.
 - Cita: PROGRAMADA → ATENDIDA o CANCELADA; reprogramar solo PROGRAMADA y conserva la fecha previa en auditoría. Una cita atendida se vincula como máximo a una consulta. Canceladas/atendidas no se reprograman; se crea otra cita cuando corresponda.
 - Consulta: ABIERTA → FINALIZADA. Se agregan datos a ABIERTA; correcciones sobre FINALIZADA o receta EMITIDA generan versiones con motivo, actor, fecha, referencia al original y contenido anterior protegido. No se borran físicamente eventos clínicos desde la API.
 - Las revisiones de resultados, informes, facturas, vacunas y datos clínicos son append-only. El recurso lógico apunta a su versión vigente para consulta habitual, y el historial permite acceder a las previas con permiso. Los documentos emitidos conservan sus referencias históricas aunque cambie la versión vigente de otro recurso.
+
+### 5.8 Precisiones de alcance vigentes (E00-P1-01, 24/10/2026)
+
+Estas precisiones prevalecen sobre textos anteriores de este documento que las contradigan. Su registro con origen e impacto está en `plan/01_ALCANCE_Y_DECISIONES.md`, secciones 3 y 5–7.
+
+- **Agenda de laboratorio (DEC04):** no hay agenda pública de laboratorio. La colección `citas` de M03 se conserva como estructura técnica. La consulta clínica común inicia desde el expediente y solo la registra un médico vinculado a un solicitante médico individual activo.
+- **Reactivación (DEC05):** el archivo por baja aplica a las cuatro instituciones. La reactivación pública, con motivo y permiso, solo existe en pediatría. La consigna exige archivo, no reactivación universal.
+- **Cita odontológica (DEC03):** obligatoria para toda consulta odontológica; se marca ATENDIDA en la misma transacción.
+- **Responsables pediátricos (DEC10):** se usa el modelo referenciado de M04. Ser principal no implica autorizar; la consulta conserva la autorización utilizada.
+- **Identificador pediátrico (DEC06):** el servidor y la persistencia usan `CENTRO_MEDICO_PEDIATRICO`; `CENTRO_PEDIATRICO` es solo un alias de la UI resuelto por mapper.
+- **Roles y capacidades (DEC11, DEC13):** roles fijos por institución, sin editor de permisos. La matriz mínima está en el plan, sección 7. Fuera de laboratorio, las cuentas se provisionan de forma controlada y los catálogos hospital/dental llegan por seed y selectores.
+
+Ninguna precisión elimina datos del modelo ni relaja M01–M09.
 
 ## 6. Tecnologías elegidas
 
@@ -474,9 +487,9 @@ Los siguientes casos están **diseñados, no ejecutados**. Usar datos sintético
 | CA03 | Registrar paciente identificado; repetir clave; dos altas concurrentes de la misma identidad | Un paciente y un expediente; reintento devuelve recurso original; alta distinta de misma identidad devuelve 409 | Paciente nuevo/existente |
 | CA04 | Ejecutar núcleo con el mismo perfil/entradas y cada adaptador en base aislada | Mismo contrato, proyección clínica, transiciones y errores; no cambiar casos de uso ni frontend | Equivalencia, H01 |
 | CA05 | Registrar consulta completa con diagnóstico, tratamiento y receta; provocar fallo antes de receta y antes de auditoría | Éxito conserva todas las relaciones; fallo no deja consulta ni datos parciales ni operación idempotente confirmada | Atomicidad cuatro motores |
-| CA06 | Crear/reprogramar/cancelar/atender cita; intentar otra consulta para la misma cita y cita de otro paciente | Fechas previas trazables; estados correctos; duplicación o relación ajena rechazada sin cambios | Agenda y relaciones |
+| CA06 | Crear/reprogramar/cancelar/atender cita; intentar otra consulta para la misma cita y cita de otro paciente | Fechas previas trazables; estados correctos; duplicación o relación ajena rechazada sin cambios | Agenda y relaciones; aplica a hospital, odontología (cita obligatoria) y pediatría, no a laboratorio (5.8) |
 | CA07 | Consultar cronología con mismo instante, filtros, páginas y rango vacío/incorrecto | Orden por fecha/ID estable; sin omisiones/duplicados en conjunto sin cambios; error controlado en filtros inválidos | Consultas equivalentes e interfaz |
-| CA08 | Archivar por traslado/fallecimiento/otra causa; consultar, crear nueva atención y reactivar | Historia legible sin borrado; nueva atención rechazada; reactivación trazable; corrección de baja por fallecimiento justificada | Archivo y mantenimiento |
+| CA08 | Archivar por traslado/fallecimiento/otra causa; consultar, crear nueva atención y reactivar | Historia legible sin borrado; nueva atención rechazada; reactivación trazable; corrección de baja por fallecimiento justificada | Archivo en los cuatro; subcaso de reactivación solo pediatría y rechazo controlado en las demás (5.8) |
 | CA09 | Alta de menor sin principal; quitar últimos principales concurrentemente; cambiar contacto de responsable de dos menores | Operación inválida rechazada; al menos un principal conservado; contacto compartido consistente y autorizaciones independientes | Pediatría, H03 |
 | CA10 | Agregar segundo control a consulta; comparar fechas; corregir receta emitida y modificar catálogo | Máximo un control lógico; comparación histórica; receta original inalterada y corrección como revisión | Crecimiento y receta histórica |
 | CA11 | Aplicar misma dosis concurrentemente; corregir/anular y recalcular pendientes según edad/esquema | Una aplicación lógica; revisiones preservadas; clasificación futura/pendiente/cumplida correcta | Vacunación |
@@ -490,16 +503,16 @@ Los siguientes casos están **diseñados, no ejecutados**. Usar datos sintético
 | CA19 | Revisar ER, relaciones, dependencias y migraciones; ejecutar instalación limpia | Modelos relacionales normalizados con PK/FK/unicidad/validaciones, sin pérdida de datos; modelo documental e índices acordes a 3.4/3.5 | Modelado y reproducibilidad |
 | CA20 | Entregar comparativo y tabla de retroalimentación con evidencia | Cada criterio de la sección 13 tiene resultado observado; cada observación docente tiene cambio verificable o justificación | Documentación final |
 
-CA03–CA08 se ejecutan en los cuatro adaptadores con el mismo contrato. CA09–CA17 verifican las especializaciones en el motor asignado. Añadir a cada comando casos con campos ausentes/nulos, tipos inválidos, límites de longitud/cantidad y estado previo inválido; comprobar que no generen escrituras. CA07 no promete una instantánea entre páginas si hay escrituras concurrentes: el cursor conserva el orden y la interfaz puede recargar para incorporar nuevos eventos.
+CA03–CA08 se ejecutan en los cuatro adaptadores con el mismo contrato, respetando la aplicabilidad institucional de CA06 y del subcaso de reactivación de CA08 (5.8). CA09–CA17 verifican las especializaciones en el motor asignado. Añadir a cada comando casos con campos ausentes/nulos, tipos inválidos, límites de longitud/cantidad y estado previo inválido; comprobar que no generen escrituras. CA07 no promete una instantánea entre páginas si hay escrituras concurrentes: el cursor conserva el orden y la interfaz puede recargar para incorporar nuevos eventos.
 
 ### Guion de demostración de la entrega
 
 1. Mostrar cuatro cuentas institucionales y su enrutamiento automático; usar la misma interfaz, sin selector de motor.
 2. Registrar paciente nuevo, encontrarlo otra vez y reutilizar su historial; en pediatría incluir el responsable requerido.
-3. Por institución, registrar cita, consulta, diagnóstico, tratamiento y receta con un profesional clínico sintético autorizado; mostrar la cronología y la receta emitida. En laboratorio usar la ampliación clínica de 5.5 y después el circuito independiente de pruebas/muestras/resultados.
+3. Por institución, registrar cita (donde hay agenda visible), consulta, diagnóstico, tratamiento y receta con un profesional clínico sintético autorizado; mostrar la cronología y la receta emitida. En laboratorio usar la ampliación clínica de 5.5 desde el expediente, sin cita, y después el circuito independiente de pruebas/muestras/resultados.
 4. Ejecutar la prueba común de fallo/rollback y reintento sobre los cuatro motores y mostrar sus resultados sin cambiar reglas ni casos de uso.
 5. Mostrar hospitalización/cama/seguro; agenda odontológica; informe versionado, saldo y reactivo; crecimiento, responsable compartido y vacunación.
-6. Archivar y reactivar un expediente, conservando su historia; demostrar rechazo de relación ajena, acceso sin permiso y cambio de rol con sesión previa.
+6. Archivar un expediente en cada institución y reactivar uno pediátrico, conservando su historia; demostrar rechazo de relación ajena, acceso sin permiso y cambio de rol con sesión previa.
 7. Presentar comparativo, modelos corregidos, resultados de CA01–CA20 y pendientes reales. No marcar PASS por el solo hecho de tener esta especificación.
 
 ## 10. Etapas de implementación recomendadas
@@ -513,6 +526,8 @@ CA03–CA08 se ejecutan en los cuatro adaptadores con el mismo contrato. CA09–
 7. **Entregar comparación y demo:** ejecutar CA01–CA20 y el guion; completar la comparación de diseño de la sección 13 con resultados reales y resolver observaciones docentes con trazabilidad.
 
 ## 11. Estado actual y trabajo pendiente
+
+> Estado histórico. El estado vigente se mantiene en `plan/ESTADO_ACTUAL.md` y `plan/06_TABLERO.md` (al 24/10/2026 Frontend React simulado existe y Backend está vacío; DEC01).
 
 Estado actualizado el 19 de octubre de 2026: existen los dos SQL v2 (cierre en sección 16) y `Database/laboratorio_clinico_mongodb.js`, que crea las 27 colecciones MongoDB adoptadas, con validadores estrictos y 63 índices secundarios. `Database/ANALISIS_MONGODB.md` documenta el modelo y su ejecución. La suite `Database/tests/laboratorio_clinico_mongodb.test.js` pasó 102 comprobaciones sobre un replica set temporal MongoDB 8.0.32, incluyendo reejecución, unicidad, validación y rollback real. No se aplicó el script sobre una base compartida.
 
