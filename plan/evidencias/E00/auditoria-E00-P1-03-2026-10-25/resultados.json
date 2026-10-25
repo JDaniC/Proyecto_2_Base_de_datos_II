@@ -1,0 +1,306 @@
+{
+  "commit_auditado": "126bf9b09435bc21ee5b72d35031e4aea27926ac",
+  "alcance": "E00-P1-03",
+  "inventario": {
+    "ENDPOINT_ESPECIFICADO": 26,
+    "ESQUEMA": 88,
+    "TIPO_DISENO": 15,
+    "INTERFAZ_DISENO": 51,
+    "METODO_DISENO": 24,
+    "FUNCION_PYTHON": 4,
+    "TRAZA_UI": 117
+  },
+  "total_unidades_incluye_trazas": 325,
+  "resultados": {
+    "PASS": 22,
+    "FAIL": 3
+  },
+  "pruebas": [
+    {
+      "id": "T01",
+      "categoria": "Sintaxis/fixtures/mapa",
+      "resultado": "PASS",
+      "evidencia": {
+        "resultado": "PASS",
+        "tipo": "CONTRATO_OFFLINE_SIN_API_NI_MOTORES",
+        "openapi": "3.1.0",
+        "rutas": 22,
+        "operaciones": 26,
+        "esquemas": 88,
+        "fixtures": 169,
+        "metodos_ui": 117,
+        "vigentes_ui": 96,
+        "herramientas": {
+          "openapi-spec-validator": "0.7.2",
+          "jsonschema": "4.23.0",
+          "PyYAML": "6.0.2"
+        }
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T02",
+      "categoria": "Funciones: Decimal recursivo",
+      "resultado": "PASS",
+      "evidencia": "Decimal conserva precisión, booleanos y null en objetos/arreglos.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T03",
+      "categoria": "Funciones: entero matemático y tipo incorrecto",
+      "resultado": "PASS",
+      "evidencia": "120.0 aceptado; 120.5, booleano e infinito rechazados como integer.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T04",
+      "categoria": "Funciones: excepción controlada",
+      "resultado": "PASS",
+      "evidencia": "require(True) continúa; require(False) lanza ValueError con mensaje esperado.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T05",
+      "categoria": "Funciones: rechazo de artefacto inconsistente",
+      "resultado": "PASS",
+      "evidencia": "Fixture con resultado incorrecto: pacienteCrear-valido — se aceptó la entrada inválida",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T06",
+      "categoria": "Funciones: rechazo de artefacto inconsistente",
+      "resultado": "PASS",
+      "evidencia": "Destino común ausente: AuthRepository.iniciarSesion",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-bisiesto válido",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "FechaCivil",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-día inexistente",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "FechaCivil",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-evento sin Z",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "InstanteUTC",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-ID nativo",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "UUID",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor vacío",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor en límite sintáctico",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor sobre límite",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-precisión decimal válida",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-precisión excedida",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-presión fraccionaria",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-PATCH vacío",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-retirar opcional",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-retirar obligatorio",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-actor",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-motor",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-institucion",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T09",
+      "categoria": "Conservación de lectura legada",
+      "resultado": "FAIL",
+      "evidencia": {
+        "longitud_nombres": 81,
+        "errores": [
+          "'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB' is too long"
+        ],
+        "esperado": "Lectura válida sin truncar grupos permitidos en el modelo físico."
+      },
+      "hallazgo": "AF01",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T10",
+      "categoria": "Compatibilidad declarada con modelo dental",
+      "resultado": "FAIL",
+      "evidencia": {
+        "contrato_acepta": true,
+        "longitud": 181,
+        "limite_columna_actual": 180,
+        "tipo": "CONTRASTE_ESTATICO; no inserción SQL ni adaptador ejecutado",
+        "esperado": "Límite compatible o decisión de extensión/mapeo explícita antes de congelar."
+      },
+      "hallazgo": "AF02",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T11",
+      "categoria": "Resolución de evento tras corrección",
+      "resultado": "FAIL",
+      "evidencia": {
+        "evento_correccion_y_respuesta_validos": true,
+        "uuid_hijo_en_lectura_vigente": false,
+        "evento_tiene_version_consulta": false,
+        "GET_consulta_admite_version": false,
+        "esperado": "Evento histórico conserva enlace inequívoco a su snapshot sin barrer revisiones.",
+        "tipo": "CONTRAEJEMPLO_DOCUMENTAL; no servidor ni corrección persistida ejecutados"
+      },
+      "hallazgo": "AF03",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    }
+  ]
+}

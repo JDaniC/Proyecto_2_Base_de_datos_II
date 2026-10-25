@@ -1,0 +1,371 @@
+{
+  "base_git": "001d786297b956b44d6d9c90f7f420f35a5bd3f4",
+  "incluye_cambios_locales": true,
+  "sha256_artefactos": {
+    "Backend/docs/openapi.yaml": "8fb77e0799d00e1aeaa46c449fa77b028e172fbbf3649f59096022005624718d",
+    "Backend/docs/puertos-v1.ts": "fd0f3e5111e7f86822cce3a5a79f19275a8ee51e1af08c4031d8e966e5bd6167",
+    "Backend/docs/fixtures/contrato-v1.json": "370a074f288f9f4fb49ece8fdd545e07459e1b06c9303d0318fc53bdadfa64c2"
+  },
+  "alcance": "E00-P1-03",
+  "inventario": {
+    "ENDPOINT_ESPECIFICADO": 26,
+    "ESQUEMA": 99,
+    "TIPO_DISENO": 15,
+    "INTERFAZ_DISENO": 51,
+    "METODO_DISENO": 25,
+    "FUNCION_PYTHON": 4,
+    "TRAZA_UI": 117
+  },
+  "total_unidades_incluye_trazas": 337,
+  "resultados": {
+    "PASS": 29
+  },
+  "pruebas": [
+    {
+      "id": "T01",
+      "categoria": "Sintaxis/fixtures/mapa",
+      "resultado": "PASS",
+      "evidencia": {
+        "resultado": "PASS",
+        "tipo": "CONTRATO_OFFLINE_SIN_API_NI_MOTORES",
+        "openapi": "3.1.0",
+        "rutas": 22,
+        "operaciones": 26,
+        "esquemas": 99,
+        "fixtures": 230,
+        "metodos_ui": 117,
+        "vigentes_ui": 96,
+        "herramientas": {
+          "openapi-spec-validator": "0.7.2",
+          "jsonschema": "4.23.0",
+          "PyYAML": "6.0.2"
+        }
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T02",
+      "categoria": "Funciones: Decimal recursivo",
+      "resultado": "PASS",
+      "evidencia": "Decimal conserva precisión, booleanos y null en objetos/arreglos.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T03",
+      "categoria": "Funciones: entero matemático y tipo incorrecto",
+      "resultado": "PASS",
+      "evidencia": "120.0 aceptado; 120.5, booleano e infinito rechazados como integer.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T04",
+      "categoria": "Funciones: excepción controlada",
+      "resultado": "PASS",
+      "evidencia": "require(True) continúa; require(False) lanza ValueError con mensaje esperado.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T05",
+      "categoria": "Funciones: rechazo de artefacto inconsistente",
+      "resultado": "PASS",
+      "evidencia": "Fixture con resultado incorrecto: pacienteCrear-valido — se aceptó la entrada inválida",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T06",
+      "categoria": "Funciones: rechazo de artefacto inconsistente",
+      "resultado": "PASS",
+      "evidencia": "Destino común ausente: AuthRepository.iniciarSesion",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-bisiesto válido",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "FechaCivil",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-día inexistente",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "FechaCivil",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-evento sin Z",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "InstanteUTC",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-ID nativo",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "UUID",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor vacío",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor en límite sintáctico",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-cursor sobre límite",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "Cursor",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-precisión decimal válida",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-precisión excedida",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-presión fraccionaria",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "SignosVitales",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-PATCH vacío",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-retirar opcional",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": true,
+        "observado_valido": true
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T07-retirar obligatorio",
+      "categoria": "Entrada/límite/fecha",
+      "resultado": "PASS",
+      "evidencia": {
+        "esquema": "CambioPaciente",
+        "esperado_valido": false,
+        "observado_valido": false
+      },
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-actor",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-motor",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T08-institucion",
+      "categoria": "Entrada cerrada",
+      "resultado": "PASS",
+      "evidencia": "Campo desconocido rechazado por esquema; no prueba autenticación efectiva.",
+      "hallazgo": null,
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T09",
+      "categoria": "Conservación de lectura legada",
+      "resultado": "PASS",
+      "evidencia": {
+        "longitud_nombres": 81,
+        "errores": [],
+        "esperado": "Lectura válida sin truncar grupos permitidos en el modelo físico."
+      },
+      "hallazgo": "AF01",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T10",
+      "categoria": "Compatibilidad declarada con modelo dental",
+      "resultado": "PASS",
+      "evidencia": {
+        "contrato_acepta": false,
+        "longitud": 181,
+        "limite_columna_actual": 180,
+        "tipo": "CONTRASTE_ESTATICO; no inserción SQL ni adaptador ejecutado",
+        "esperado": "Límite compatible o decisión de extensión/mapeo explícita antes de congelar."
+      },
+      "hallazgo": "AF02",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T11",
+      "categoria": "Resolución de evento tras corrección",
+      "resultado": "PASS",
+      "evidencia": {
+        "evento_correccion_y_respuesta_validos": true,
+        "uuid_hijo_en_lectura_seleccionada": true,
+        "seleccion": "version_exacta",
+        "evento_tiene_version_consulta": true,
+        "GET_consulta_admite_version": true,
+        "esperado": "Evento histórico conserva enlace inequívoco a su snapshot sin barrer revisiones.",
+        "tipo": "CONTRAEJEMPLO_DOCUMENTAL; no servidor ni corrección persistida ejecutados"
+      },
+      "hallazgo": "AF03",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T12",
+      "categoria": "Conservación de lecturas legadas y límites de captura",
+      "resultado": "PASS",
+      "evidencia": {
+        "paciente_legado_valido_en_ficha_lista_y_expediente": true,
+        "longitudes_direccion_leida": [
+          501,
+          4000,
+          4001
+        ],
+        "alta_rechaza_direccion_501": true,
+        "cambio_rechaza_direccion_501": true,
+        "responsable_legado_valido": true,
+        "tipo": "CONTRATO_OFFLINE; no API ni motores ejecutados"
+      },
+      "hallazgo": "AF04",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T13",
+      "categoria": "Snapshot de autorización conserva identificación legada sin ampliar captura",
+      "resultado": "PASS",
+      "evidencia": {
+        "snapshot_usa_tipo_de_lectura": true,
+        "alta_responsable_usa_tipo_de_captura": true,
+        "fixture_tipo_legado_y_rechazo_de_captura": true,
+        "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
+      },
+      "hallazgo": "AF05",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T14",
+      "categoria": "Liberación conserva identidad legada y reserva nueva conserva catálogo",
+      "resultado": "PASS",
+      "evidencia": {
+        "liberacion_usa_identidad_leida": true,
+        "reserva_usa_identidad_de_captura": true,
+        "fixture_acepta_liberacion_y_rechaza_reserva_legada": true,
+        "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
+      },
+      "hallazgo": "AF06",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T15",
+      "categoria": "Etiqueta de tratamiento mapeada y límites por modelo/lectura/corrección",
+      "resultado": "PASS",
+      "evidencia": {
+        "mapeo_persistencia_explicito": true,
+        "captura_comun_1_a_200": true,
+        "consulta_y_adicion_dental_rechazan_181": true,
+        "correccion_hospital_conserva_2000_y_rechaza_2001": true,
+        "correcciones_dental_laboratorio_pediatria_rechazan_201_o_mas": true,
+        "lectura_historica_2000_y_rechazo_2001": true,
+        "tipo": "CONTRATO_OFFLINE; no API ni motores ejecutados"
+      },
+      "hallazgo": "AF07",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    }
+  ]
+}

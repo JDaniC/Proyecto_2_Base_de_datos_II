@@ -1,0 +1,542 @@
+[
+  {
+    "unidad": "UUID",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 6
+  },
+  {
+    "unidad": "Version",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 7
+  },
+  {
+    "unidad": "FechaCivil",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 8
+  },
+  {
+    "unidad": "InstanteUTC",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 9
+  },
+  {
+    "unidad": "Institucion",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 10
+  },
+  {
+    "unidad": "Permiso",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 12
+  },
+  {
+    "unidad": "Rol",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 18
+  },
+  {
+    "unidad": "IdentidadVerificada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 20
+  },
+  {
+    "unidad": "Cuenta",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 25
+  },
+  {
+    "unidad": "ContextoAutenticado",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 36
+  },
+  {
+    "unidad": "VerificadorIdentidad",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 41
+  },
+  {
+    "unidad": "VerificadorIdentidad.verificar",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 43
+  },
+  {
+    "unidad": "VerificadorIdentidad.revocarSesiones",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 44
+  },
+  {
+    "unidad": "RepositorioCuenta",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 46
+  },
+  {
+    "unidad": "RepositorioCuenta.porUid",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 48
+  },
+  {
+    "unidad": "Reloj",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 50
+  },
+  {
+    "unidad": "Reloj.ahora",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 50
+  },
+  {
+    "unidad": "GeneradorIds",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 51
+  },
+  {
+    "unidad": "GeneradorIds.nuevo",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 51
+  },
+  {
+    "unidad": "Identificacion",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 52
+  },
+  {
+    "unidad": "PerfilPaciente",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 53
+  },
+  {
+    "unidad": "CausaArchivo",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 61
+  },
+  {
+    "unidad": "ArchivoRegistrado",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 62
+  },
+  {
+    "unidad": "Paciente",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 66
+  },
+  {
+    "unidad": "CambioPerfilPaciente",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 75
+  },
+  {
+    "unidad": "CambioDemografico",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 82
+  },
+  {
+    "unidad": "EventoEstadoPaciente",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 85
+  },
+  {
+    "unidad": "Cita",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 93
+  },
+  {
+    "unidad": "RangoInstantes",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 103
+  },
+  {
+    "unidad": "RevisionCita",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 107
+  },
+  {
+    "unidad": "RevisionPaciente",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 112
+  },
+  {
+    "unidad": "SignosVitales",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 119
+  },
+  {
+    "unidad": "DiagnosticoEntrada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 126
+  },
+  {
+    "unidad": "TratamientoEntrada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 130
+  },
+  {
+    "unidad": "MedicamentoEntrada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 131
+  },
+  {
+    "unidad": "RecetaEntrada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 136
+  },
+  {
+    "unidad": "RecetaEmitida",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 139
+  },
+  {
+    "unidad": "ContenidoClinicoEntrada",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 145
+  },
+  {
+    "unidad": "Diagnostico",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 152
+  },
+  {
+    "unidad": "Tratamiento",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 155
+  },
+  {
+    "unidad": "Medicamento",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 158
+  },
+  {
+    "unidad": "ContenidoClinico",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 159
+  },
+  {
+    "unidad": "Consulta",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 163
+  },
+  {
+    "unidad": "VinculoResponsable",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 173
+  },
+  {
+    "unidad": "RevisionConsulta",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 179
+  },
+  {
+    "unidad": "Pagina",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 183
+  },
+  {
+    "unidad": "FiltrosPagina",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 184
+  },
+  {
+    "unidad": "TipoEventoHistorial",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 185
+  },
+  {
+    "unidad": "EventoHistorial",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 188
+  },
+  {
+    "unidad": "RepositorioPaciente",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 196
+  },
+  {
+    "unidad": "RepositorioPaciente.porId",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 197
+  },
+  {
+    "unidad": "RepositorioPaciente.historialEstados",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 198
+  },
+  {
+    "unidad": "RepositorioPaciente.buscar",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 199
+  },
+  {
+    "unidad": "FiltrosCitas",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 201
+  },
+  {
+    "unidad": "RepositorioCita",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 205
+  },
+  {
+    "unidad": "RepositorioCita.porId",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 206
+  },
+  {
+    "unidad": "RepositorioCita.revisiones",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 207
+  },
+  {
+    "unidad": "RepositorioCita.listar",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 209
+  },
+  {
+    "unidad": "RepositorioCita.solapamientos",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 211
+  },
+  {
+    "unidad": "RepositorioConsulta",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 213
+  },
+  {
+    "unidad": "RepositorioConsulta.porCita",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 215
+  },
+  {
+    "unidad": "RepositorioConsulta.porId",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 216
+  },
+  {
+    "unidad": "RepositorioConsulta.revisiones",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 217
+  },
+  {
+    "unidad": "ConsultaHistorial",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 219
+  },
+  {
+    "unidad": "ConsultaHistorial.eventos",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 221
+  },
+  {
+    "unidad": "RepositorioIdentidades",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 225
+  },
+  {
+    "unidad": "RepositorioIdentidades.titular",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 226
+  },
+  {
+    "unidad": "Responsable",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 228
+  },
+  {
+    "unidad": "ProfesionalHistorico",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 233
+  },
+  {
+    "unidad": "RepositorioProfesional",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 237
+  },
+  {
+    "unidad": "RepositorioProfesional.porId",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 238
+  },
+  {
+    "unidad": "ResponsablePaciente",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 240
+  },
+  {
+    "unidad": "RepositorioResponsables",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 244
+  },
+  {
+    "unidad": "RepositorioResponsables.porPaciente",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 246
+  },
+  {
+    "unidad": "RepositorioResponsables.porId",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 247
+  },
+  {
+    "unidad": "RepositorioResponsables.porDocumento",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 248
+  },
+  {
+    "unidad": "RepositorioResponsables.vinculo",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 249
+  },
+  {
+    "unidad": "ComandoEstable",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 251
+  },
+  {
+    "unidad": "ResultadoDurable",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 257
+  },
+  {
+    "unidad": "Operacion",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 262
+  },
+  {
+    "unidad": "RepositorioOperaciones",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 266
+  },
+  {
+    "unidad": "RepositorioOperaciones.porClave",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 268
+  },
+  {
+    "unidad": "LectorTransaccional",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 270
+  },
+  {
+    "unidad": "CambioComun",
+    "tipo": "TIPO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 281
+  },
+  {
+    "unidad": "EventoAuditoria",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 291
+  },
+  {
+    "unidad": "PlanConfirmacion",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 296
+  },
+  {
+    "unidad": "PlanRepeticion",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 309
+  },
+  {
+    "unidad": "UnidadDeTrabajo",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 312
+  },
+  {
+    "unidad": "UnidadDeTrabajo.ejecutar",
+    "tipo": "METODO_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 320
+  },
+  {
+    "unidad": "BundleInstitucional",
+    "tipo": "INTERFAZ_DISENO",
+    "archivo": "Backend/docs/puertos-v1.ts",
+    "linea": 325
+  }
+]

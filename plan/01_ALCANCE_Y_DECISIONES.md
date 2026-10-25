@@ -79,6 +79,7 @@ Acta y revisión cruzada: [evidencia E00-P1-01](evidencias/E00/E00-P1-01.md). Ca
 | DEC13 | 24/10/2026 | `mockUserRepository.ts` | Roles por institución fijos (sección 7). Los roles mock con `institucionesPermitidas` cruzadas (odontólogo, laboratorio y pediatra en hospital) y `MEDICO` en laboratorio no son norma. | Seed y guards usan la sección 7 | Simuladores se ajustan al conectar API | E00-P2-02, E01-P1-03, E05-P2-03 |
 | DEC14 | 24/10/2026 | SHA-256 de PDF `(4)` y `(5)` | Son el mismo archivo (`bab63053…0b382`). Las citas del diseño a `(4)` siguen válidas; la fuente nominal es `(5)`. | Ninguno | Ninguno | Revisión documental |
 | DEC15 | 24/10/2026 | Diseño §1 | `Agente/AUDITORIA_DISENO_PROYECTO.md` no está en el repositorio. Su referencia queda histórica; la sección 15 del diseño es la traza vigente. | Ninguno | Ninguno | Revisión documental |
+| DEC16 | 25/10/2026 | Contraste OpenAPI con SQL, consultas_clinicas M03 y raíz M04 en revisión de #15 | Conservar contrato común con extensiones tipadas y migraciones explícitas E02/E03 antes de habilitar adaptadores; capturar apellido de contacto, conservar legado desconocido sin inventarlo | Signos comunes preservados, contacto explícito, lecturas legadas nullable; DTO sin truncamiento | E02/E03 adaptan captura y “Sin dato”; se conserva diseño vigente | [Compatibilidad física](../Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md), pruebas nueva/existente y recuperación antes de publicar adaptador |
 
 Retroalimentación docente de Entrega I: PENDIENTE DE FUENTE. No se atribuyen cambios al docente (EF03, RF-D06, RNF-040); se registrará en E07-P2-01 o antes si llega.
 
@@ -108,7 +109,7 @@ Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven 
 
 | Rol | Instituciones | Permisos mínimos |
 |---|---|---|
-| `ADMIN_INSTITUCIONAL` | Las cuatro | `pacientes.administrar`, `historial.leer`, `historial.archivar`, `citas.administrar`¹, `usuarios.administrar`², `auditoria.leer`³; en laboratorio además `cobros.administrar`, `inventario.administrar` |
+| `ADMIN_INSTITUCIONAL` | Las cuatro | `pacientes.administrar`, `historial.leer`, `historial.archivar`, `citas.administrar`¹, `usuarios.administrar`², `auditoria.leer`³; en laboratorio además `cobros.administrar`, `inventario.administrar`, `ordenes.administrar`, `muestras.administrar` |
 | `SECRETARIA` | Hospital, odontología, pediatría | `pacientes.administrar`, `citas.administrar` (sin campos clínicos) |
 | `MEDICO` | Hospital | `historial.leer`, `consultas.registrar`, `diagnosticos.registrar`, `tratamientos.registrar`, `recetas.emitir` + profesional activo |
 | `ODONTOLOGO` | Odontología | Igual que `MEDICO`, con odontólogo activo |
@@ -116,6 +117,8 @@ Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven 
 | `MEDICO_LABORATORIO` | Laboratorio | Igual que `MEDICO`, solo con solicitante médico individual activo vinculado. No valida resultados por defecto |
 | `ANALISTA_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.analizar` |
 | `VALIDADOR_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.validar`, `informes.emitir` |
-| `SECRETARIA` (recepción) | Laboratorio | `pacientes.administrar`; sin agenda. El permiso de órdenes/muestras no existe en el catálogo actual: definirlo en E00-P1-03 (PENDIENTE) |
+| `SECRETARIA` (recepción) | Laboratorio | `pacientes.administrar`, `ordenes.administrar`, `muestras.administrar`; sin agenda ni permisos clínicos/analíticos. Definidos en E00-P1-03, materialización en E01/E05 |
 
 ¹ Excepto laboratorio. ² Provisión controlada fuera de laboratorio. ³ Visor solo laboratorio/pediatría. Análisis y validación son permisos distintos; la demo puede asignarlos a cuentas diferentes. Administrar usuarios no concede acceso clínico. `historial.archivar` solo administrador; la reactivación pediátrica usa el mismo permiso con motivo.
+
+Recepción de laboratorio (E00-P1-03, 25/10/2026): `ordenes.administrar` cubre registro/consulta administrativa de órdenes y `muestras.administrar` su cadena de custodia. Se asignan solo a SECRETARIA y ADMIN_INSTITUCIONAL de laboratorio, sin otorgar análisis, validación ni prescripción. Contrato y límites: [plan/03 §7](03_CONTRATOS_Y_FLUJOS.md#7-congelación-del-contrato-común-v1--e00-p1-03). Es una decisión del proyecto que resuelve la brecha de DEC13, no una instrucción docente. Los tipos/guards UI y backend se implementan al conectar E01/E05.
