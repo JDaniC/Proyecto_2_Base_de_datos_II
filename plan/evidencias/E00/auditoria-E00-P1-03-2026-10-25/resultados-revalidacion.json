@@ -1,9 +1,9 @@
 {
-  "base_git": "3cd02b193a2baad245dd6721e3ff80b7d040ed84",
+  "base_git": "320b911dcb74af021209d0ef677743082b279d95",
   "incluye_cambios_locales": true,
   "sha256_artefactos": {
     "Backend/docs/openapi.yaml": "a2757b2c2b9842588ac0e868c32854f0dae1872c78f1dfa8265f971660986fc9",
-    "Backend/docs/puertos-v1.ts": "2ad7f21ee150c7808f41952700244f00ab24562277cdc4a8153e30d403a293c9",
+    "Backend/docs/puertos-v1.ts": "9700c8bbb0ac9907a7ad8d2d4bb41cb404e4b0f3f8e8b4487f0faf90fecdfec5",
     "Backend/docs/fixtures/contrato-v1.json": "370a074f288f9f4fb49ece8fdd545e07459e1b06c9303d0318fc53bdadfa64c2"
   },
   "alcance": "E00-P1-03",
@@ -18,7 +18,7 @@
   },
   "total_unidades_incluye_trazas": 333,
   "resultados": {
-    "PASS": 26
+    "PASS": 27
   },
   "pruebas": [
     {
@@ -323,6 +323,19 @@
         "tipo": "CONTRATO_OFFLINE; no API ni motores ejecutados"
       },
       "hallazgo": "AF04",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T13",
+      "categoria": "Snapshot de autorización conserva identificación legada sin ampliar captura",
+      "resultado": "PASS",
+      "evidencia": {
+        "snapshot_usa_tipo_de_lectura": true,
+        "alta_responsable_usa_tipo_de_captura": true,
+        "fixture_tipo_legado_y_rechazo_de_captura": true,
+        "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
+      },
+      "hallazgo": "AF05",
       "entorno": "OFFLINE_SIN_API_NI_MOTORES"
     }
   ]

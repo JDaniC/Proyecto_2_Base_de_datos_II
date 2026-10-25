@@ -1,8 +1,8 @@
-# Revalidación funcional AF01–AF04 — E00-P1-03
+# Revalidación funcional AF01–AF05 — E00-P1-03
 
-25/10/2026. Se conserva el informe inicial como corte histórico. Esta revalidación comprueba sus tres correcciones y el nuevo hallazgo AF04 del revisor Codex en el SHA publicado `3cd02b1`.
+25/10/2026. Se conserva el informe inicial como corte histórico. Esta revalidación comprueba las correcciones previas y los hallazgos AF04/AF05 de Codex en los SHA publicados `3cd02b1` y `320b911`.
 
-**Auditoría contractual: PASS, 26 comprobaciones y cero fallos.** No acredita un servidor ni persistencia ejecutados. El nuevo comentario de dirección legada quedó reproducido en una respuesta de contrato; la lectura real en motores sigue pendiente para E02–E03.
+**Auditoría contractual: PASS, 27 comprobaciones y cero fallos.** No acredita un servidor ni persistencia ejecutados. Los hallazgos de compatibilidad de lectura quedaron reproducidos en respuestas y tipos de contrato; la lectura real en motores sigue pendiente para E02–E03.
 
 | Hallazgo | Corrección | Evidencia |
 |---|---|---|
@@ -10,8 +10,9 @@
 | AF02 | Política odontológica ≤180 en los tres comandos; las otras instituciones mantienen 200 para conservar correcciones de legado. | T10 PASS; fronteras 180/181/200/201 y overlays vinculados a cada operación |
 | AF03 | Evento clínico con versión de consulta; HTTP y puerto leen exactamente esa versión. Sin fallback si falta. | T11 PASS; referencia obligatoria y snapshots históricos tras modificación/retiro |
 | AF04 | DTO de lectura separado de captura: dirección sin límite API (PostgreSQL TEXT), teléfono hasta 254, correo como cadena heredada, sexo e identificación sin catálogo de escritura y grupo sanguíneo conservado como texto. Responsable lee identificación hasta 120, teléfono hasta 40 y nombre compuesto hasta 401. Los comandos mantienen sus límites originales. | T12 PASS; respuesta de paciente con dirección de 501 caracteres para ficha/lista/expediente, límites 501/4000/4001, y responsable legado; altas siguen rechazando dirección de 501 |
+| AF05 | La autorización histórica de consulta usa IdentificacionLeida; ALTA_RESPONSABLE usa un tipo de captura con catálogo CUI/PASAPORTE. | T13 PASS; fixture TypeScript acepta documento legado en snapshot y rechaza reutilizarlo en captura nueva |
 
-Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción identifica base Git `3cd02b1`, cambios locales y SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **5 tests**; las pruebas de tipos compilaron.
+Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción identifica base Git `320b911`, cambios locales y SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **6 tests**; las pruebas de tipos compilaron.
 
 Reproducción desde la raíz con las dependencias de `Backend/docs/requirements-contrato.txt`:
 

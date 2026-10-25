@@ -1,4 +1,4 @@
-"""Regresiones de diseño AF01–AF03, sin API/motores ni dobles de persistencia.
+"""Regresiones de diseño AF01–AF05, sin API/motores ni dobles de persistencia.
 
 Valida representabilidad y coherencia de los fixtures/contratos; no demuestra
 que un adaptador guarde, recupere o autorice versiones en ejecución.
@@ -89,6 +89,14 @@ class RegresionesContrato(unittest.TestCase):
             'vinculo': link,
             'version_vinculo': 1,
         }))
+
+    def test_af05_snapshot_de_autorizacion_acepta_identificacion_legada(self):
+        ports = (DOCS / 'puertos-v1.ts').read_text()
+        type_fixtures = (DOCS / 'fixtures/puertos-v1.test-d.ts').read_text()
+        self.assertRegex(ports, r'identificacionHistorica:\s*IdentificacionLeida')
+        self.assertRegex(ports, r"tipo: 'ALTA_RESPONSABLE'; readonly responsable: ResponsableCapturado")
+        self.assertIn("tipo: 'DOCUMENTO_LEGADO'", type_fixtures)
+        self.assertIn('@ts-expect-error La captura nueva sigue restringida a CUI/PASAPORTE.', type_fixtures)
 
     def test_af02_limite_dental_se_aplica_a_los_tres_comandos(self):
         sql = (ROOT / 'Database/clinica_odontologica_mysql.sql').read_text()

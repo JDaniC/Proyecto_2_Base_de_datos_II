@@ -6,7 +6,7 @@ Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 |---|---|---|---|---|---|
 | [E00-P1-01](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | P1 | JDaniC | HECHA | Puerta de fase | PR #4 (`3dffdd8`); [acta](evidencias/E00/E00-P1-01.md); 24/10/2026 |
 | [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | P1 | JDaniC | HECHA | E00-P1-01 | PR #11 (`39714de`); [evidencia](evidencias/E00/E00-P1-02.md); 24/10/2026 |
-| [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | JDaniC | EN_REVISION | E00-P1-01, E00-P2-02 | [PR #15](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/15); AF01–AF04 corregidos y publicados (`32ea678`, HEAD `586b2e6`); [revalidación](evidencias/E00/auditoria-E00-P1-03-2026-10-25/REVALIDACION.md) 26 PASS; revisión Codex pendiente |
+| [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | JDaniC | EN_REVISION | E00-P1-01, E00-P2-02 | [PR #15](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/15); AF01–AF04 publicados, AF05 en corrección local; [revalidación](evidencias/E00/auditoria-E00-P1-03-2026-10-25/REVALIDACION.md) 27 PASS; Codex encontró AF05 en `320b911` |
 | [E00-P2-01](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 | JDaniC | HECHA | Puerta de fase | PR #7 (`8c85f30`); [evidencia](evidencias/E00/E00-P2-01.md); 24/10/2026 |
 | [E00-P2-02](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | P2 | JDaniC | HECHA | E00-P1-01 | PR #13 (`484d5bf`); [evidencia](evidencias/E00/E00-P2-02.md); 25/10/2026 |
 | [E00-P2-03](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | P2 | — | PENDIENTE | E00-P1-03, E00-P2-01 | Sin ejecución registrada |

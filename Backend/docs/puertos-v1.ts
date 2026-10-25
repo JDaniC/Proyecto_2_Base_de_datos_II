@@ -172,7 +172,7 @@ export interface Consulta extends ContenidoClinico {
   readonly estado: 'ABIERTA' | 'FINALIZADA'; readonly fechaHora: InstanteUTC;
   readonly autorizacion?: {
     readonly responsableId: UUID; readonly versionVinculo: Version; readonly autorizaba: true;
-    readonly identificacionHistorica: Identificacion; readonly nombreHistorico: string;
+    readonly identificacionHistorica: IdentificacionLeida; readonly nombreHistorico: string;
     readonly fechaHora: InstanteUTC;
   };
 }
@@ -245,6 +245,10 @@ export interface Responsable {
   readonly nombres: string; readonly apellidos: string; readonly nombre: string;
   readonly telefono: string; readonly documento: IdentificacionLeida;
 }
+/** Captura nueva conserva el catálogo; el snapshot de lectura admite tipos legados. */
+export type ResponsableCapturado = Omit<Responsable, 'documento'> & {
+  readonly documento: Identificacion;
+};
 export interface ProfesionalHistorico {
   readonly id: UUID; readonly nombre: string; readonly rol: Rol;
   readonly colegiado: string; readonly entidadColegiacion: string;
@@ -301,7 +305,7 @@ export type CambioComun =
   | { readonly tipo: 'RESERVAR_IDENTIDAD'; readonly identidad: Identificacion; readonly pacienteId: UUID }
   | { readonly tipo: 'LIBERAR_IDENTIDAD'; readonly identidad: Identificacion; readonly pacienteId: UUID }
   | { readonly tipo: 'AVANZAR_HISTORIAL'; readonly pacienteId: UUID; readonly anterior: Version }
-  | { readonly tipo: 'ALTA_RESPONSABLE'; readonly responsable: Responsable }
+  | { readonly tipo: 'ALTA_RESPONSABLE'; readonly responsable: ResponsableCapturado }
   | { readonly tipo: 'VINCULAR_RESPONSABLE'; readonly vinculo: VinculoResponsable };
 export interface EventoAuditoria {
   readonly id: UUID; readonly actorId: UUID; readonly caso: string;

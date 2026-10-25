@@ -252,6 +252,21 @@ record('T12', 'Conservación de lecturas legadas y límites de captura',
         'responsable_legado_valido': responsable_read_valid,
         'tipo': 'CONTRATO_OFFLINE; no API ni motores ejecutados'}, 'AF04')
 
+# AF05: el snapshot de autorización de consulta conserva identidad legada,
+# mientras el tipo del cambio de alta mantiene el catálogo de captura.
+ports = (ROOT / 'Backend/docs/puertos-v1.ts').read_text()
+type_fixtures = (c.DOCS / 'fixtures/puertos-v1.test-d.ts').read_text()
+authorization_read = 'readonly identificacionHistorica: IdentificacionLeida' in ports
+responsible_capture = "readonly tipo: 'ALTA_RESPONSABLE'; readonly responsable: ResponsableCapturado" in ports
+legacy_type_fixture = "tipo: 'DOCUMENTO_LEGADO'" in type_fixtures
+capture_rejection_fixture = '@ts-expect-error La captura nueva sigue restringida a CUI/PASAPORTE.' in type_fixtures
+record('T13', 'Snapshot de autorización conserva identificación legada sin ampliar captura',
+       authorization_read and responsible_capture and legacy_type_fixture and capture_rejection_fixture,
+       {'snapshot_usa_tipo_de_lectura': authorization_read,
+        'alta_responsable_usa_tipo_de_captura': responsible_capture,
+        'fixture_tipo_legado_y_rechazo_de_captura': legacy_type_fixture and capture_rejection_fixture,
+        'tipo': 'CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados'}, 'AF05')
+
 output = {'base_git': base, 'incluye_cambios_locales': bool(subprocess.run(
               ['git', 'diff', '--quiet', 'HEAD', '--', 'Backend'], cwd=ROOT).returncode),
           'sha256_artefactos': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
