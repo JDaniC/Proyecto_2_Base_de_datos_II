@@ -1838,13 +1838,31 @@
           {
             "codigo_cie": "Z00",
             "nombre": "Ejemplo sintético",
-            "es_principal": true
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "tratamientos": [
           {
             "descripcion": "Ejemplo académico",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "id": "00000000-0000-4000-8000-000000000005",
@@ -1933,13 +1951,31 @@
               {
                 "codigo_cie": "Z00",
                 "nombre": "Ejemplo sintético",
-                "es_principal": true
+                "es_principal": true,
+                "id": "00000000-0000-4000-8000-000000000071",
+                "fecha_registro": "2026-10-25T12:10:00Z",
+                "registrado_por": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "nombre": "Profesional sintético",
+                  "rol": "MEDICO",
+                  "colegiado": "SINTETICO-001",
+                  "entidad_colegiacion": "Entidad sintética"
+                }
               }
             ],
             "tratamientos": [
               {
                 "descripcion": "Ejemplo académico",
-                "indicaciones": "Sin uso clínico"
+                "indicaciones": "Sin uso clínico",
+                "id": "00000000-0000-4000-8000-000000000073",
+                "fecha_registro": "2026-10-25T12:10:00Z",
+                "registrado_por": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "nombre": "Profesional sintético",
+                  "rol": "MEDICO",
+                  "colegiado": "SINTETICO-001",
+                  "entidad_colegiacion": "Entidad sintética"
+                }
               }
             ],
             "id": "00000000-0000-4000-8000-000000000005",
@@ -2769,13 +2805,31 @@
           {
             "codigo_cie": "Z00",
             "nombre": "Ejemplo sintético",
-            "es_principal": true
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "tratamientos": [
           {
             "descripcion": "Ejemplo académico",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "id": "00000000-0000-4000-8000-000000000005",
@@ -2799,7 +2853,8 @@
               "duracion": "Ejemplo",
               "via": "Ejemplo",
               "indicaciones": "Sin uso clínico",
-              "concentracion": "Concentración sintética"
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
             }
           ],
           "id": "00000000-0000-4000-8000-000000000070",
@@ -2837,13 +2892,31 @@
           {
             "codigo_cie": "Z00",
             "nombre": "Ejemplo sintético",
-            "es_principal": true
+            "es_principal": true,
+            "id": "00000000-0000-4000-8000-000000000071",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "tratamientos": [
           {
             "descripcion": "Ejemplo académico",
-            "indicaciones": "Sin uso clínico"
+            "indicaciones": "Sin uso clínico",
+            "id": "00000000-0000-4000-8000-000000000073",
+            "fecha_registro": "2026-10-25T12:10:00Z",
+            "registrado_por": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "colegiado": "SINTETICO-001",
+              "entidad_colegiacion": "Entidad sintética"
+            }
           }
         ],
         "id": "00000000-0000-4000-8000-000000000005",
@@ -2867,7 +2940,8 @@
               "duracion": "Ejemplo",
               "via": "Ejemplo",
               "indicaciones": "Sin uso clínico",
-              "concentracion": "Concentración sintética"
+              "concentracion": "Concentración sintética",
+              "id": "00000000-0000-4000-8000-000000000072"
             }
           ],
           "id": "00000000-0000-4000-8000-000000000070",
@@ -3082,6 +3156,20 @@
             "indicaciones": "Sin uso clínico"
           }
         ]
+      }
+    }
+  },
+  {
+    "id": "diagnostico-fecha-servidor-no-controlable",
+    "schema": "AgregarDiagnostico",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "Ejemplo sintético",
+        "es_principal": true,
+        "fecha_registro": "2026-10-25T12:10:00Z"
       }
     }
   }

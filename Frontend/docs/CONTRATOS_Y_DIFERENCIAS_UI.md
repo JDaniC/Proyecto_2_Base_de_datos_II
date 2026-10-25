@@ -399,3 +399,6 @@ Responsables/recetas (tercera revisión de E00-P1-03): alta de responsable pedi�
 
 
 Invariante común de recetas (quinta revisión E00-P1-03): concentración e indicaciones no pueden estar vacías ni contener solo espacios en ninguna institución; vía ≤100 caracteres. La UI debe validar esos campos en E03, sin inventar instrucciones. El adaptador combina dosis + unidad de captura en dosis textual antes del envío; lectura/impresión usa ese texto. Cita.fecha_creacion se mapea a fechaCreacion y no se deriva del horario reprogramado.
+
+
+Lectura clínica: DiagnosticoRegistrado y TratamientoRegistrado exponen id, fecha_registro y registrado_por propios del componente. MedicamentoPrescrito incluye id; RecetaEmitida conserva fecha_emision propia. El mapper alimenta DiagnosticoHistorial.fechaRegistro/registradoPor y RecetaHistorial.fechaEmision con esos campos, sin inferirlos de la consulta. DTO de entrada no acepta esos sellos. E03 implementa su proyección transaccional antes de conectar la UI.

@@ -4,8 +4,8 @@
   "openapi": "3.1.0",
   "rutas": 22,
   "operaciones": 26,
-  "esquemas": 85,
-  "fixtures": 145,
+  "esquemas": 88,
+  "fixtures": 146,
   "metodos_ui": 117,
   "vigentes_ui": 96,
   "herramientas": {

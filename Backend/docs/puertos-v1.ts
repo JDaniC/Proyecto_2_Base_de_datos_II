@@ -118,32 +118,41 @@ export interface SignosVitales {
   readonly frecuenciaRespiratoriaRpm?: number | null; readonly saturacionOxigenoPct?: number | null;
   readonly perimetroCefalicoCm?: number | null;
 }
-export interface Diagnostico {
+export interface DiagnosticoEntrada {
   readonly codigoCie: string; readonly nombre: string;
   readonly esPrincipal: boolean; readonly observacion?: string;
 }
-export interface Tratamiento { readonly descripcion: string; readonly indicaciones: string; }
-export interface Medicamento {
+export interface TratamientoEntrada { readonly descripcion: string; readonly indicaciones: string; }
+export interface MedicamentoEntrada {
   readonly nombre: string; readonly presentacion: string; readonly concentracion: string;
   readonly dosis: string; readonly frecuencia: string;
   readonly duracion: string; readonly via: string; readonly indicaciones: string;
 }
 export interface RecetaEntrada {
-  readonly medicamentos: readonly Medicamento[]; readonly observaciones?: string;
+  readonly medicamentos: readonly MedicamentoEntrada[]; readonly observaciones?: string;
 }
-export interface RecetaEmitida extends RecetaEntrada {
+export interface RecetaEmitida extends Omit<RecetaEntrada, 'medicamentos'> {
+  readonly medicamentos: readonly Medicamento[];
   readonly id: UUID; readonly codigoLegible: string; readonly version: Version;
   readonly estado: 'EMITIDA' | 'ANULADA'; readonly fechaEmision: InstanteUTC;
   readonly prescriptor: ProfesionalHistorico;
 }
 export interface ContenidoClinicoEntrada {
   readonly motivo: string; readonly sintomas: string; readonly observaciones?: string;
-  readonly signosVitales: SignosVitales; readonly diagnosticos: readonly Diagnostico[];
-  readonly tratamientos: readonly Tratamiento[];
+  readonly signosVitales: SignosVitales; readonly diagnosticos: readonly DiagnosticoEntrada[];
+  readonly tratamientos: readonly TratamientoEntrada[];
   readonly receta?: RecetaEntrada;
 }
 /** Snapshot persistido/lectura; fecha de receta es propia, sellada por el servidor. */
-export interface ContenidoClinico extends Omit<ContenidoClinicoEntrada, 'receta'> {
+export interface Diagnostico extends DiagnosticoEntrada {
+  readonly id: UUID; readonly fechaRegistro: InstanteUTC; readonly registradoPor: ProfesionalHistorico;
+}
+export interface Tratamiento extends TratamientoEntrada {
+  readonly id: UUID; readonly fechaRegistro: InstanteUTC; readonly registradoPor: ProfesionalHistorico;
+}
+export interface Medicamento extends MedicamentoEntrada { readonly id: UUID; }
+export interface ContenidoClinico extends Omit<ContenidoClinicoEntrada, 'receta' | 'diagnosticos' | 'tratamientos'> {
+  readonly diagnosticos: readonly Diagnostico[]; readonly tratamientos: readonly Tratamiento[];
   readonly receta?: RecetaEmitida;
 }
 export interface Consulta extends ContenidoClinico {
@@ -279,6 +288,7 @@ export interface PlanConfirmacion<T> {
   readonly revisiones: readonly RevisionConsulta[];
   readonly revisionesCita: readonly RevisionCita[];
   readonly revisionesPaciente: readonly RevisionPaciente[];
+  readonly eventosHistorial: readonly EventoHistorial[];
   /** Persistir con el cambio de estado; conserva causa/motivo después de reactivar. */
   readonly estadosPaciente: readonly EventoEstadoPaciente[];
   readonly auditoria: readonly EventoAuditoria[];

@@ -2298,8 +2298,28 @@ components:
         sintomas: *id026
         observaciones: *id027
         signos_vitales: *id028
-        diagnosticos: *id029
-        tratamientos: *id030
+        diagnosticos:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiagnosticoRegistrado'
+          maxItems: 100
+          anyOf:
+          - maxItems: 0
+          - minItems: 1
+            contains:
+              required:
+              - es_principal
+              properties:
+                es_principal:
+                  const: true
+            minContains: 1
+            maxContains: 1
+        tratamientos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TratamientoRegistrado'
+          minItems: 0
+          maxItems: 100
         receta:
           $ref: '#/components/schemas/RecetaEmitida'
         id:
@@ -2977,7 +2997,7 @@ components:
         medicamentos:
           type: array
           items:
-            $ref: '#/components/schemas/Medicamento'
+            $ref: '#/components/schemas/MedicamentoPrescrito'
           minItems: 1
           maxItems: 100
         observaciones:
@@ -3047,6 +3067,126 @@ components:
             properties:
               receta:
                 $ref: '#/components/schemas/RecetaPediatricaEntrada'
+    DiagnosticoRegistrado:
+      type: object
+      additionalProperties: false
+      properties:
+        codigo_cie:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: \S
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        es_principal:
+          type: boolean
+        observacion:
+          type: string
+          maxLength: 2000
+        id:
+          $ref: '#/components/schemas/UUID'
+        fecha_registro:
+          $ref: '#/components/schemas/InstanteUTC'
+        registrado_por:
+          $ref: '#/components/schemas/PrescriptorHistorico'
+      required:
+      - codigo_cie
+      - nombre
+      - es_principal
+      - id
+      - fecha_registro
+      - registrado_por
+      description: 'Lectura/persistencia: UUID y fecha/autor reales del componente, no inferidos de fecha de apertura
+        de consulta. Solo servidor.'
+    TratamientoRegistrado:
+      type: object
+      additionalProperties: false
+      properties:
+        descripcion:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        indicaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        id:
+          $ref: '#/components/schemas/UUID'
+        fecha_registro:
+          $ref: '#/components/schemas/InstanteUTC'
+        registrado_por:
+          $ref: '#/components/schemas/PrescriptorHistorico'
+      required:
+      - descripcion
+      - indicaciones
+      - id
+      - fecha_registro
+      - registrado_por
+      description: 'Lectura/persistencia: UUID y fecha/autor reales del componente, no inferidos de fecha de apertura
+        de consulta. Solo servidor.'
+    MedicamentoPrescrito:
+      type: object
+      additionalProperties: false
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        presentacion:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        concentracion:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: \S
+        dosis:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+          description: Texto de dosis completo con unidad. Mapper combina dosis/unidad de captura en este texto
+            antes del envío; lectura/impresión usa el texto preservado.
+        frecuencia:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        duracion:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        via:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+        indicaciones:
+          type: string
+          maxLength: 500
+          minLength: 1
+          pattern: \S
+        id:
+          $ref: '#/components/schemas/UUID'
+      required:
+      - nombre
+      - presentacion
+      - dosis
+      - frecuencia
+      - duracion
+      - via
+      - indicaciones
+      - concentracion
+      - id
   parameters:
     Idempotencia:
       name: Idempotency-Key
