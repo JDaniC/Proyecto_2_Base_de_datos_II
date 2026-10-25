@@ -12,6 +12,10 @@
     assert.equal(await laboratorio.pacientes.countDocuments({ codigo_paciente: 'DOCKER-SINTETICO' }), 1);
     print('PASS persistencia MongoDB');
   } else {
+    await assert.rejects(async () => {
+      const ok = await nueva().getDB('laboratorio_clinico').auth('laboratorio_app', 'invalida');
+      assert.equal(ok, 1);
+    });
     await permisoDenegado(() => nueva().getDB('laboratorio_clinico').pacientes.findOne());
     await permisoDenegado(() => laboratorio.runCommand({ create: 'no_permitida' }));
     await permisoDenegado(() => app.getDB('admin').system.users.findOne());

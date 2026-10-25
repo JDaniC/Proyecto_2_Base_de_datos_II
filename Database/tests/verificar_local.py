@@ -17,6 +17,73 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / 'Database'
 
+RUTAS_POSTGRES = (
+    '/opt/homebrew/opt/postgresql@18/bin',
+    '/opt/homebrew/opt/postgresql@17/bin',
+    '/opt/homebrew/opt/postgresql/bin',
+    '/usr/local/opt/postgresql@18/bin',
+    '/usr/local/opt/postgresql@17/bin',
+    '/usr/local/opt/postgresql/bin',
+)
+RUTAS_MYSQL = (
+    '/opt/homebrew/opt/mysql@8.4/bin',
+    '/opt/homebrew/opt/mysql/bin',
+    '/usr/local/opt/mysql@8.4/bin',
+    '/usr/local/opt/mysql/bin',
+    '/usr/local/mysql/bin',
+)
+RUTAS_JAVA_HOME = (
+    '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
+    '/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
+    '/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home',
+    '/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home',
+    '/Applications/DBeaver.app/Contents/Eclipse/jre/Contents/Home',
+    '/Applications/DataGrip.app/Contents/jbr/Contents/Home',
+    '/Applications/Android Studio.app/Contents/jbr/Contents/Home',
+)
+
+
+def buscar_binario_dir(explicito, ejecutable, candidatos):
+    if explicito:
+        ruta = Path(explicito)
+        if (ruta / ejecutable).is_file():
+            return ruta
+        raise RuntimeError(f'No se encontro {ejecutable} en {ruta}')
+    en_path = shutil.which(ejecutable)
+    if en_path:
+        return Path(en_path).parent
+    for candidato in candidatos:
+        ruta = Path(candidato)
+        if (ruta / ejecutable).is_file():
+            return ruta
+    return None
+
+
+def entorno_java():
+    env = os.environ.copy()
+    candidatos = []
+    if env.get('JAVA_HOME'):
+        candidatos.append(Path(env['JAVA_HOME']))
+    en_path = shutil.which('java')
+    if en_path:
+        candidatos.append(Path(en_path).resolve().parent.parent)
+    candidatos.extend(Path(p) for p in RUTAS_JAVA_HOME)
+    for home in candidatos:
+        java_bin = home / 'bin' / 'java'
+        if not java_bin.is_file():
+            continue
+        try:
+            r = subprocess.run([str(java_bin), '-version'], capture_output=True, text=True, timeout=5)
+            if r.returncode == 0 and ('version "21' in r.stderr or 'version "22' in r.stderr or
+                                       'version "23' in r.stderr or 'version "24' in r.stderr or
+                                       'version "25' in r.stderr):
+                env['JAVA_HOME'] = str(home)
+                env['PATH'] = f"{home / 'bin'}:{env.get('PATH', '')}"
+                return env
+        except OSError:
+            continue
+    return env
+
 
 def puerto():
     with socket.socket() as conexion:
@@ -46,7 +113,9 @@ class Verificacion:
         return resultado
 
     def postgres(self):
-        base = Path(self.args.postgres_bin or Path(shutil.which('initdb') or '').parent)
+        base = buscar_binario_dir(self.args.postgres_bin, 'initdb', RUTAS_POSTGRES)
+        if not base:
+            raise RuntimeError('Falta PostgreSQL 15+: indicar --postgres-bin DIRECTORIO')
         data, port = self.carpeta / 'pg', puerto()
         self.ejecutar([base/'initdb', '-D', data, '-A', 'trust', '--no-locale'], nombre='postgres_inicializacion')
         self.ejecutar([base/'pg_ctl', '-D', data, '-l', self.carpeta/'postgres.log', '-o',
@@ -110,9 +179,9 @@ class Verificacion:
                 proceso.wait(timeout=10)
 
     def mysql(self):
-        if not self.args.mysql_bin and not shutil.which('mysqld'):
+        base = buscar_binario_dir(self.args.mysql_bin, 'mysqld', RUTAS_MYSQL)
+        if not base:
             raise RuntimeError('Falta MySQL 8.4+: indicar --mysql-bin DIRECTORIO')
-        base = Path(self.args.mysql_bin or Path(shutil.which('mysqld')).parent)
         data, sock, port = self.carpeta/'mysql', self.carpeta/'mysql.sock', puerto()
         self.ejecutar([base/'mysqld', '--no-defaults', '--initialize-insecure', f'--basedir={base.parent}',
                       f'--datadir={data}'], nombre='mysql_inicializacion')
@@ -160,11 +229,28 @@ class Verificacion:
             log.close()
 
     def mongo(self):
-        port, data = puerto(), self.carpeta/'mongo'
-        data.mkdir()
         mongod = shutil.which('mongod')
         mongosh = shutil.which('mongosh')
         if not mongod or not mongosh: raise RuntimeError('Faltan mongod y mongosh')
+        port_standalone, data_standalone = puerto(), self.carpeta/'mongo_standalone'
+        data_standalone.mkdir()
+        log_standalone = (self.carpeta/'mongo-standalone.log').open('w')
+        proc_standalone = subprocess.Popen([mongod, '--dbpath', str(data_standalone), '--bind_ip', '127.0.0.1',
+            '--port', str(port_standalone), '--logpath', str(self.carpeta/'mongo_standalone_server.log')],
+            stdout=log_standalone, stderr=log_standalone)
+        try:
+            for _ in range(100):
+                try:
+                    with socket.create_connection(('127.0.0.1',port_standalone),timeout=.1): break
+                except OSError: time.sleep(.1)
+            fallo = self.ejecutar([mongosh,f'mongodb://127.0.0.1:{port_standalone}/?directConnection=true','--norc','--quiet','--file',DB/'laboratorio_clinico_mongodb.js'],
+                                  esperado=1,nombre='mongo_standalone_rechazo')
+            assert 'standalone' in (fallo.stdout + fallo.stderr)
+            self.registrar('MongoDB','rechazo de instancia standalone')
+        finally:
+            proc_standalone.terminate(); proc_standalone.wait(timeout=30); log_standalone.close()
+        port, data = puerto(), self.carpeta/'mongo'
+        data.mkdir()
         log = (self.carpeta/'mongo-process.log').open('w')
         proceso = subprocess.Popen([mongod, '--dbpath', str(data), '--bind_ip', '127.0.0.1', '--port', str(port),
             '--replSet', 'bdii_test_rs', '--logpath', str(self.carpeta/'mongo.log')], stdout=log, stderr=log)
@@ -188,14 +274,17 @@ class Verificacion:
         conf = json.loads((DB/'firebase/firebase.json').read_text())
         conf['firestore']['rules'] = str(DB/'firebase/firestore.rules')
         conf['firestore']['indexes'] = str(DB/'firebase/firestore.indexes.json')
-        for name in ['firestore','hub','logging']: conf['emulators'][name]['port']=puerto()
+        for name in ('auth', 'firestore', 'hub', 'logging'):
+            if name in conf['emulators']:
+                conf['emulators'][name]['port'] = puerto()
         config=self.carpeta/'firebase.json';config.write_text(json.dumps(conf))
-        env=os.environ.copy();env['XDG_CONFIG_HOME']=str(self.carpeta/'firebase-config')
+        env=entorno_java();env['XDG_CONFIG_HOME']=str(self.carpeta/'firebase-config')
         env.pop('FIRESTORE_EMULATOR_HOST',None)
-        self.ejecutar(['firebase','emulators:exec','--only','firestore','--project','demo-bdii-cierre','--config',config,
+        env.pop('FIREBASE_AUTH_EMULATOR_HOST',None)
+        self.ejecutar(['firebase','emulators:exec','--only','auth,firestore','--project','demo-bdii-cierre','--config',config,
                      'node --test '+shlex.quote(str(DB/'tests/centro_pediatrico_firestore.emulator.test.mjs'))],
                      cwd=self.carpeta,env=env,nombre='firestore_emulador')
-        self.registrar('Firestore','99 pruebas en emulador')
+        self.registrar('Firestore','99 pruebas en emulador (auth + firestore aislados)')
 
 
 def main():
@@ -206,14 +295,21 @@ def main():
     parser.add_argument('--evidencias',default=str(ROOT/'.test-results/database'))
     args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='bdii-test-') as carpeta:
-        v=Verificacion(args,Path(carpeta))
+        ruta_temporal = Path(carpeta)
+        v=Verificacion(args,ruta_temporal)
         try:
             for motor in args.motores: getattr(v,motor)()
         except Exception:
             (v.evidencias/'resultado.json').write_text(json.dumps({'estado':'FAIL','grupos_completados':v.resultados},indent=2))
             raise
-        (v.evidencias/'resultado.json').write_text(json.dumps({'estado':'PASS','grupos_completados':v.resultados},indent=2))
-        print('PASS: todos los motores solicitados. Procesos detenidos y datos temporales eliminados.',flush=True)
+    limpio = not ruta_temporal.exists()
+    assert limpio, f'Directorio temporal no eliminado: {ruta_temporal}'
+    (v.evidencias/'resultado.json').write_text(json.dumps({
+        'estado':'PASS',
+        'limpieza_temporal':limpio,
+        'grupos_completados':v.resultados,
+    },indent=2))
+    print('PASS: todos los motores solicitados. Procesos detenidos y datos temporales eliminados.',flush=True)
 
 
 if __name__=='__main__': main()
