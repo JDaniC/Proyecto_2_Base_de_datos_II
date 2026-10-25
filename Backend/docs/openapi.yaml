@@ -747,7 +747,8 @@ paths:
     patch:
       operationId: citaReprogramar
       summary: citaReprogramar
-      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      description: Cambia horario y conserva motivo de reprogramación, horario anterior/actual, actor y fecha en
+        revisión atómica. No reemplaza el motivo de atención. Revalidar disponibilidad antes de confirmar.
       tags:
       - citas
       x-permisos:
@@ -794,7 +795,8 @@ paths:
     post:
       operationId: citaCancelar
       summary: citaCancelar
-      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      description: Cancela con motivo_cancelacion propio sin sobrescribir el motivo de atención. Revisión anterior/actual
+        y justificación se guardan atómicamente con la cita, operación y auditoría.
       tags:
       - citas
       x-permisos:
@@ -1263,6 +1265,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RespuestaRevisiones'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarRevisiones'
+  /citas/{id}/revisiones:
+    get:
+      operationId: citaRevisiones
+      summary: citaRevisiones
+      description: Historial paginado de cancelaciones/reprogramaciones, con motivo propio, actor, fecha y snapshot
+        anterior/actual. Aplicar rango antes de paginar; filtro vinculado al cursor. No sustituye el motivo original
+        de atención.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar|consultas.registrar
+      x-instituciones: *id008
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/Cursor'
+      - name: limite
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: orden
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ASC
+          - DESC
+          default: ASC
+      - name: desde
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/InstanteUTC'
+      - name: hasta
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/InstanteUTC'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCambiosCita'
         '400':
           $ref: '#/components/responses/Error400'
         '401':
@@ -2362,6 +2440,11 @@ components:
           maxLength: 100
           pattern: \S
         estado: *id032
+        motivo_cancelacion:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
       required:
       - id
       - version
@@ -2372,6 +2455,20 @@ components:
       - hora_fin
       - motivo
       - estado
+      allOf:
+      - if:
+          properties:
+            estado:
+              const: CANCELADA
+          required:
+          - estado
+        then:
+          required:
+          - motivo_cancelacion
+        else:
+          not:
+            required:
+            - motivo_cancelacion
     EventoHistorial:
       type: object
       additionalProperties: false
@@ -2768,6 +2865,49 @@ components:
       - motivo
       - fecha_hora
       - actor_id
+    RevisionCita:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          $ref: '#/components/schemas/Version'
+        fecha_hora:
+          $ref: '#/components/schemas/InstanteUTC'
+        actor_id:
+          $ref: '#/components/schemas/UUID'
+        motivo_cambio:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        anterior:
+          $ref: '#/components/schemas/Cita'
+        actual:
+          $ref: '#/components/schemas/Cita'
+      required:
+      - id
+      - version
+      - fecha_hora
+      - actor_id
+      - motivo_cambio
+      - anterior
+      - actual
+    RespuestaCambiosCita:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevisionCita'
+          maxItems: 100
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
   parameters:
     Idempotencia:
       name: Idempotency-Key

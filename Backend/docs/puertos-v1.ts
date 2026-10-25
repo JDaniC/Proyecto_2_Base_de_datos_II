@@ -65,6 +65,7 @@ export interface ArchivoRegistrado {
 }
 export type Paciente = PerfilPaciente & {
   readonly id: UUID; readonly historialId: UUID; readonly version: Version;
+  readonly codigoLegible: string; readonly fechaRegistro: InstanteUTC;
 } & (
   | { readonly estado: 'ACTIVO'; readonly baja?: never }
   | { readonly estado: 'ARCHIVADO'; readonly baja: ArchivoRegistrado }
@@ -88,11 +89,26 @@ export type EventoEstadoPaciente = {
   | { readonly tipo: 'REACTIVACION'; readonly bajaAnterior: ArchivoRegistrado;
       readonly motivo: string; readonly correccionFallecimiento: boolean }
 );
-export interface Cita {
+export type Cita = {
   readonly id: UUID; readonly pacienteId: UUID; readonly profesionalId: UUID;
   readonly fecha: FechaCivil; readonly horaInicio: string; readonly horaFin: string;
-  readonly motivo: string; readonly consultorio?: string;
-  readonly version: Version; readonly estado: 'PROGRAMADA' | 'EN_CURSO' | 'ATENDIDA' | 'CANCELADA';
+  readonly motivo: string; readonly consultorio?: string; readonly version: Version;
+} & (
+  | { readonly estado: 'PROGRAMADA' | 'EN_CURSO' | 'ATENDIDA'; readonly motivoCancelacion?: never }
+  | { readonly estado: 'CANCELADA'; readonly motivoCancelacion: string }
+);
+export interface RangoInstantes {
+  readonly desde?: InstanteUTC; readonly hastaExclusiva?: InstanteUTC;
+}
+/** Cancelación/reprogramación conserva motivo propio, horario y estado anteriores. */
+export interface RevisionCita {
+  readonly id: UUID; readonly citaId: UUID; readonly version: Version;
+  readonly fechaHora: InstanteUTC; readonly actorId: UUID; readonly motivoCambio: string;
+  readonly anterior: Cita; readonly actual: Cita;
+}
+export interface RevisionPaciente {
+  readonly id: UUID; readonly pacienteId: UUID; readonly anterior: Paciente;
+  readonly actorId: UUID; readonly fechaHora: InstanteUTC;
 }
 export interface SignosVitales {
   readonly pesoKg?: number | null; readonly tallaCm?: number | null;
@@ -119,9 +135,13 @@ export interface ContenidoClinico {
 }
 export interface Consulta extends ContenidoClinico {
   readonly id: UUID; readonly pacienteId: UUID; readonly citaId?: UUID;
-  readonly profesionalId: UUID; readonly version: Version;
+  readonly profesionalId: UUID; readonly profesionalHistorico: ProfesionalHistorico; readonly version: Version;
   readonly estado: 'ABIERTA' | 'FINALIZADA'; readonly fechaHora: InstanteUTC;
-  readonly autorizacion?: { readonly responsableId: UUID; readonly versionVinculo: Version; readonly autorizaba: true };
+  readonly autorizacion?: {
+    readonly responsableId: UUID; readonly versionVinculo: Version; readonly autorizaba: true;
+    readonly identificacionHistorica: Identificacion; readonly nombreHistorico: string;
+    readonly fechaHora: InstanteUTC;
+  };
 }
 export interface VinculoResponsable {
   readonly responsableId: UUID; readonly pacienteId: UUID;
@@ -153,6 +173,7 @@ export interface FiltrosCitas {
 }
 export interface RepositorioCita {
   porId(id: UUID): Promise<Cita | null>;
+  revisiones(id: UUID, pagina: FiltrosPagina, rango?: RangoInstantes): Promise<Pagina<RevisionCita>>;
   /** Aplicar TODOS los filtros antes de paginar y vincularlos al cursor. */
   listar(filtros: FiltrosCitas, pagina: FiltrosPagina): Promise<Pagina<Cita>>;
   /** Bloquea/reserva el intervalo en la misma transacción, no valida fuera de UoW. */
@@ -160,12 +181,12 @@ export interface RepositorioCita {
 }
 export interface RepositorioConsulta {
   porId(id: UUID): Promise<Consulta | null>;
-  revisiones(id: UUID, pagina: FiltrosPagina): Promise<Pagina<RevisionConsulta>>;
+  revisiones(id: UUID, pagina: FiltrosPagina, rango?: RangoInstantes): Promise<Pagina<RevisionConsulta>>;
 }
 export interface ConsultaHistorial {
   /** Mezcla paginada por (fecha_hora, UUID); filtros/ámbito atados al cursor. */
   eventos(pacienteId: UUID, pagina: FiltrosPagina,
-    rango?: { readonly desde?: InstanteUTC; readonly hastaExclusiva?: InstanteUTC },
+    rango?: RangoInstantes,
     tipo?: EventoHistorial['tipo']): Promise<Pagina<EventoHistorial>>;
 }
 export interface RepositorioIdentidades {
@@ -175,8 +196,12 @@ export interface Responsable {
   readonly id: UUID; readonly version: Version; readonly nombre: string;
   readonly telefono: string; readonly documento?: Identificacion;
 }
+export interface ProfesionalHistorico {
+  readonly id: UUID; readonly nombre: string; readonly rol: Rol;
+  readonly colegiado: string; readonly entidadColegiacion: string;
+}
 export interface RepositorioProfesional {
-  porId(id: UUID): Promise<{ readonly id: UUID; readonly activo: boolean } | null>;
+  porId(id: UUID): Promise<(ProfesionalHistorico & { readonly activo: boolean }) | null>;
 }
 export interface RepositorioResponsables {
   porId(id: UUID): Promise<Responsable | null>;
@@ -232,6 +257,8 @@ export interface PlanConfirmacion<T> {
   readonly tipo: 'CONFIRMAR';
   readonly cambios: readonly CambioComun[];
   readonly revisiones: readonly RevisionConsulta[];
+  readonly revisionesCita: readonly RevisionCita[];
+  readonly revisionesPaciente: readonly RevisionPaciente[];
   /** Persistir con el cambio de estado; conserva causa/motivo después de reactivar. */
   readonly estadosPaciente: readonly EventoEstadoPaciente[];
   readonly auditoria: readonly EventoAuditoria[];

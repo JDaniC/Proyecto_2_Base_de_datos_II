@@ -390,3 +390,6 @@ El contrato incorpora rechazos de actor, motor, institución y propiedades desco
 
 
 Edición demográfica (revisión de E00-P1-03): una propiedad omitida conserva su valor, null elimina opcionales y un valor nuevo lo reemplaza. El adaptador debe distinguir campos no editados de correo/documento/contacto borrado explícitamente; estos últimos viajan como null. Nombres, apellidos, sexo y fecha de nacimiento nunca se borran con null. Respuestas omiten campos retirados. Archivo devuelve baja con causa/motivo/fecha/actor y reactivación conserva el registro previo en el historial del servidor. El parentesco forma parte del vínculo referenciado, no de los datos globales del responsable.
+
+
+Agenda (segunda revisión de E00-P1-03): motivo_cancelacion se mapea a motivoCancelacion y no sobrescribe motivo de atención. El detalle compone `GET /citas/{id}` con `GET /citas/{id}/revisiones` paginado para historialReprogramaciones, conservando motivo, actor y horario anterior/actual. Rangos de revisiones se filtran antes de paginar; el cliente continúa el cursor si necesita más cambios históricos.

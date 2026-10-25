@@ -1,8 +1,8 @@
 # Contrato común v1 — E00-P1-03
 
-Este directorio define el contrato, **no un servidor operativo**. Las 25 operaciones están `NOT_IMPLEMENTED` hasta sus tareas E01–E03/E04. No hay persistencia UI→API acreditada por estas pruebas.
+Este directorio define el contrato, **no un servidor operativo**. Las 26 operaciones están `NOT_IMPLEMENTED` hasta sus tareas E01–E03/E04. No hay persistencia UI→API acreditada por estas pruebas.
 
-- [`openapi.yaml`](openapi.yaml): fuente canónica OpenAPI 3.1.0; 21 rutas bajo `/api/v1`, DTO cerrados, políticas, respuestas y errores.
+- [`openapi.yaml`](openapi.yaml): fuente canónica OpenAPI 3.1.0; 22 rutas bajo `/api/v1`, DTO cerrados, políticas, respuestas y errores.
 - [`puertos-v1.ts`](puertos-v1.ts): firmas de diseño compilables, puras, sin framework/SDK/motor. E01-P1-02 las materializa con tipos de dominio; no importar este documento desde producción.
 - [`mapa-ui-v1.json`](mapa-ui-v1.json): los 117 métodos de presentación, incluidos los 96 activos, clasificados como `COMUN_V1`, `EXTENSION_PENDIENTE` o `EXCLUIDO`. Las propuestas históricas de rutas se conservan como fuente, nunca como autorización para implementarlas.
 - [`fixtures/contrato-v1.json`](fixtures/contrato-v1.json): solicitudes/respuestas sintéticas y rechazos de esquema reutilizables por ambos integrantes.
@@ -55,3 +55,6 @@ Se fijó OpenAPI 3.1.0 deliberadamente; no se sigue automáticamente la versión
 En PATCH, omitir un campo conserva el valor anterior; enviar null elimina solo campos opcionales; un valor lo reemplaza. Correo vacío o identificación/contacto borrados explícitamente en UI se mapean a null. El snapshot de respuesta omite campos retirados. La reserva de identificación cambia o se libera atómicamente con la demografía y su revisión histórica. La creación no acepta null como sustituto de campos requeridos.
 
 Paciente archivado contiene baja con causa, motivo, fecha y actor; la lectura y el plan de confirmación la conservan. Reactivación guarda la baja previa y justificación en eventos de estado antes de retirar la baja vigente. El vínculo pediátrico conserva parentesco. Los filtros estado/q de agenda llegan al repositorio antes de paginar; no filtrar una página ya seleccionada.
+
+
+Las cancelaciones conservan motivo_cancelacion sin reemplazar el motivo de atención. Cancelación/reprogramación producen revisiones atómicas con horarios/estados anterior y actual; GET /citas/{id}/revisiones las pagina para el historial de agenda. Los puertos de revisiones de consulta y cita reciben el rango temporal antes de paginar. Los snapshots clínicos incluyen datos históricos del profesional y autorización; las revisiones de paciente preservan demografía previa.

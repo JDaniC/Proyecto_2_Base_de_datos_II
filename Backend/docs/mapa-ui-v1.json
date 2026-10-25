@@ -271,9 +271,12 @@
     "destino": "COMUN_V1",
     "operationId": "citaObtener",
     "responsable": "E03-P2-01",
-    "regla": "UUID, versión; recurso ajeno 404.",
+    "regla": "UUID, versión; recurso ajeno 404. Consultar citaRevisiones para historialReprogramaciones mediante cursor; motivo_cancelacion → motivoCancelacion sin alterar motivo de atención.",
     "fuente_ui": "`features/consultations/NewConsultationWizardPage.tsx:159`",
-    "propuesta_inventario": "`GET /api/v1/citas/{id}`"
+    "propuesta_inventario": "`GET /api/v1/citas/{id}`",
+    "operationIds_adicionales": [
+      "citaRevisiones"
+    ]
   },
   {
     "metodo": "AppointmentRepository.crear",

@@ -23,7 +23,7 @@ Contrato común v1 especificado en E00-P1-03: [OpenAPI](../Backend/docs/openapi.
 | Pediatría | `/pacientes/{id}/responsables`, `/alergias`, `/antecedentes`, `/crecimiento`, `/esquemas`; `/vacunas`, `/{id}/versiones`; `/aplicaciones-vacuna`, `/{id}/correcciones`, `/{id}/anulacion` | Crecimiento es consulta de mediciones; registrar/corregir desde consulta. E04-P2 |
 | Cuentas/auditoría | `/usuarios`, `/{id}/estado`, `/auditoria`, `/{id}` | UI cuentas solo laboratorio; auditoría visible laboratorio/pediatría. Roles fijos, sin edición de matriz; E05-P2-03 |
 
-Las rutas comunes congeladas son exclusivamente las 25 operaciones del OpenAPI. Las familias especializadas de esta tabla son propuestas, no endpoints especificados; su tarea E04/E05 fija URI completa y métodos antes de conectarlas al cliente HTTP. La §7 y el mapa v1 fijan precedencia y responsables. Los endpoints de catálogo solo lectura hospital/dental alimentan formularios; los catálogos documentales sí tienen mantenimiento documentado. No aceptar un evento de auditoría arbitrario enviado por React: lo genera el caso de uso del servidor.
+Las rutas comunes congeladas son exclusivamente las 26 operaciones del OpenAPI. Las familias especializadas de esta tabla son propuestas, no endpoints especificados; su tarea E04/E05 fija URI completa y métodos antes de conectarlas al cliente HTTP. La §7 y el mapa v1 fijan precedencia y responsables. Los endpoints de catálogo solo lectura hospital/dental alimentan formularios; los catálogos documentales sí tienen mantenimiento documentado. No aceptar un evento de auditoría arbitrario enviado por React: lo genera el caso de uso del servidor.
 
 ## 3. Flujo común de éxito
 
@@ -130,3 +130,10 @@ Fuente primaria de canonización de reintentos: [RFC 8785, JSON Canonicalization
 - Paciente ARCHIVADO contiene baja tipada con causa, motivo, fecha y actor. El plan de confirmación persiste también EventoEstadoPaciente; la reactivación conserva bajaAnterior con su causa/motivo y la justificación de corrección de fallecimiento en ese historial. Paciente ACTIVO no mantiene una baja vigente. El lector de paciente recupera baja actual e historial paginado de estados para validar y reconstruir sin pérdida.
 - VinculoResponsable en aplicación conserva parentesco además de versiones, principal, autorización y estado; el adaptador no infiere ni inventa esa relación.
 - RepositorioCita.listar recibe FiltrosCitas completo (rango, profesional, estado, q) más paginación; filtrar en persistencia antes de seleccionar la página. Todos los filtros se vinculan al cursor.
+
+
+### Conservación de agenda y filtros de revisiones (segunda revisión de 2bc43e0)
+
+Cita CANCELADA exige motivo_cancelacion tanto en lectura/plan de escritura como en la respuesta HTTP. El motivo de asistencia permanece independiente. Cancelar/reprogramar guarda RevisionCita (motivo de cambio, actor, fecha, snapshot anterior y actual) en el mismo commit; las revisiones se leen paginadas en `GET /citas/{id}/revisiones`. El adaptador React compone este endpoint con el detalle para mostrar historialReprogramaciones; nunca devuelve un array ilimitado. CitaRevisiones conserva la misma capacidad de agenda y permisos que su detalle.
+
+RepositorioConsulta.revisiones y RepositorioCita.revisiones reciben RangoInstantes opcional además de FiltrosPagina. Persistencia filtra [desde,hasta) antes de seleccionar página y vincula rango/orden al cursor. El plan tipa revisiones de citas y de pacientes para conservar el estado anterior de cambios demográficos; el snapshot de consulta incluye datos históricos del profesional y autorización pediátrica (identificación, nombre y fecha), sin reconstruir historia desde datos actuales que puedan cambiar.

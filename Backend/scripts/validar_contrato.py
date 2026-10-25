@@ -78,6 +78,8 @@ def validate_artifacts():
     for row in mapping:
         if row['destino'] == 'COMUN_V1':
             require(row['operationId'] in operations, 'Destino común ausente: ' + row['metodo'])
+            require(all(op in operations for op in row.get('operationIds_adicionales', [])),
+                    'Destino compuesto ausente: ' + row['metodo'])
         elif row['destino'] == 'EXTENSION_PENDIENTE':
             require(row['responsable'] and row['regla'], 'Extensión sin puerta contractual')
     return {'resultado': 'PASS', 'tipo': 'CONTRATO_OFFLINE_SIN_API_NI_MOTORES',
