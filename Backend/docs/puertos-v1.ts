@@ -133,6 +133,12 @@ export interface DiagnosticoEntrada {
   readonly codigoCie: string; readonly nombre: string;
   readonly esPrincipal: boolean; readonly observacion?: string;
 }
+/**
+ * Etiqueta visible en UI (“Tratamiento / Procedimiento”) e indicaciones.
+ * Captura: etiqueta <=200 caracteres (<=180 en odontología); los adaptadores
+ * la mapean al nombre obligatorio de odontología/documentos o a descripcion
+ * en Hospital. No es una nota narrativa independiente.
+ */
 export interface TratamientoEntrada { readonly descripcion: string; readonly indicaciones: string; }
 export interface MedicamentoEntrada {
   readonly nombre: string; readonly presentacion: string; readonly concentracion: string;
@@ -158,7 +164,9 @@ export interface ContenidoClinicoEntrada {
 export interface Diagnostico extends DiagnosticoEntrada {
   readonly id: UUID; readonly fechaRegistro: InstanteUTC; readonly registradoPor: ProfesionalHistorico;
 }
-export interface Tratamiento extends TratamientoEntrada {
+/** Snapshot de lectura: conserva la etiqueta histórica, hasta el límite API de 2000. */
+export interface Tratamiento {
+  readonly descripcion: string; readonly indicaciones: string;
   readonly id: UUID; readonly fechaRegistro: InstanteUTC; readonly registradoPor: ProfesionalHistorico;
 }
 export interface Medicamento extends MedicamentoEntrada { readonly id: UUID; }

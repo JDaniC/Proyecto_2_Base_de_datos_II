@@ -1,24 +1,24 @@
 {
-  "base_git": "7d4a1e7697b6c6003858f44898449707aace42bc",
+  "base_git": "001d786297b956b44d6d9c90f7f420f35a5bd3f4",
   "incluye_cambios_locales": true,
   "sha256_artefactos": {
-    "Backend/docs/openapi.yaml": "a2757b2c2b9842588ac0e868c32854f0dae1872c78f1dfa8265f971660986fc9",
-    "Backend/docs/puertos-v1.ts": "3110c469ec02377a90649a12fce68a20864a9c231ba56454a0eaf1e39af475f5",
+    "Backend/docs/openapi.yaml": "8fb77e0799d00e1aeaa46c449fa77b028e172fbbf3649f59096022005624718d",
+    "Backend/docs/puertos-v1.ts": "fd0f3e5111e7f86822cce3a5a79f19275a8ee51e1af08c4031d8e966e5bd6167",
     "Backend/docs/fixtures/contrato-v1.json": "370a074f288f9f4fb49ece8fdd545e07459e1b06c9303d0318fc53bdadfa64c2"
   },
   "alcance": "E00-P1-03",
   "inventario": {
     "ENDPOINT_ESPECIFICADO": 26,
-    "ESQUEMA": 95,
+    "ESQUEMA": 99,
     "TIPO_DISENO": 15,
     "INTERFAZ_DISENO": 51,
     "METODO_DISENO": 25,
     "FUNCION_PYTHON": 4,
     "TRAZA_UI": 117
   },
-  "total_unidades_incluye_trazas": 333,
+  "total_unidades_incluye_trazas": 337,
   "resultados": {
-    "PASS": 28
+    "PASS": 29
   },
   "pruebas": [
     {
@@ -31,7 +31,7 @@
         "openapi": "3.1.0",
         "rutas": 22,
         "operaciones": 26,
-        "esquemas": 95,
+        "esquemas": 99,
         "fixtures": 230,
         "metodos_ui": 117,
         "vigentes_ui": 96,
@@ -349,6 +349,22 @@
         "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
       },
       "hallazgo": "AF06",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T15",
+      "categoria": "Etiqueta de tratamiento mapeada y límites por modelo/lectura/corrección",
+      "resultado": "PASS",
+      "evidencia": {
+        "mapeo_persistencia_explicito": true,
+        "captura_comun_1_a_200": true,
+        "consulta_y_adicion_dental_rechazan_181": true,
+        "correccion_hospital_conserva_2000_y_rechaza_2001": true,
+        "correcciones_dental_laboratorio_pediatria_rechazan_201_o_mas": true,
+        "lectura_historica_2000_y_rechazo_2001": true,
+        "tipo": "CONTRATO_OFFLINE; no API ni motores ejecutados"
+      },
+      "hallazgo": "AF07",
       "entorno": "OFFLINE_SIN_API_NI_MOTORES"
     }
   ]

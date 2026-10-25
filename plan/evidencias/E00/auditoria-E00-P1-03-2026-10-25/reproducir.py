@@ -280,6 +280,61 @@ record('T14', 'Liberación conserva identidad legada y reserva nueva conserva ca
         'fixture_acepta_liberacion_y_rechaza_reserva_legada': legacy_release_fixture and legacy_reservation_rejected,
         'tipo': 'CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados'}, 'AF06')
 
+# AF07: the UI's treatment label maps explicitly to each model's required
+# storage field, with input, correction and read limits tested independently.
+treatment_map = schemas['Tratamiento'].get('x-mapeo-persistencia', {})
+complete = copy.deepcopy(by_id['consultaCompleta-valido'])
+complete_dental = copy.deepcopy(by_id['completa-CLINICA_ODONTOLOGICA'])
+add = copy.deepcopy(by_id['consultaTratamiento-valido'])
+correction = copy.deepcopy(by_id['consultaCorregir-valido'])
+complete_overlay = spec['paths']['/consultas/completas']['post']['x-esquemas-institucionales']
+add_dental = spec['paths']['/consultas/{id}/tratamientos']['post']['x-esquemas-institucionales']
+correction_overlays = spec['paths']['/consultas/{id}/correcciones']['post']['x-esquemas-institucionales']
+complete_rules = spec['paths']['/consultas/completas']['post']['x-reglas-institucionales']
+add_rules = spec['paths']['/consultas/{id}/tratamientos']['post']['x-reglas-institucionales']
+correction_rules = spec['paths']['/consultas/{id}/correcciones']['post']['x-reglas-institucionales']
+mapping_valid = treatment_map == {
+    'HOSPITAL_GENERAL': 'tratamiento.descripcion',
+    'CLINICA_ODONTOLOGICA': 'tratamiento.nombre',
+    'LABORATORIO_CLINICO': 'consultas_clinicas.tratamientos[].nombre',
+    'CENTRO_MEDICO_PEDIATRICO': 'consultas.tratamientos[].nombre',
+} and complete_overlay['CLINICA_ODONTOLOGICA']['$ref'].endswith('/ConsultaDental') \
+    and add_dental['CLINICA_ODONTOLOGICA']['$ref'].endswith('/AgregarTratamientoDental') \
+    and all(name in correction_overlays for name in ('CLINICA_ODONTOLOGICA', 'LABORATORIO_CLINICO',
+                                                      'CENTRO_MEDICO_PEDIATRICO')) \
+    and '400 SOLICITUD_INVALIDA' in complete_rules['CLINICA_ODONTOLOGICA'] \
+    and '409 ESTADO_INVALIDO' in add_rules['CLINICA_ODONTOLOGICA'] \
+    and '400 SOLICITUD_INVALIDA' in correction_rules['CLINICA_ODONTOLOGICA']
+input_limits = all(not errors('Tratamiento', {'descripcion': 'T' * size, 'indicaciones': 'Indicaciones'})
+                   for size in (1, 180, 200)) and bool(errors('Tratamiento', {
+                       'descripcion': 'T' * 201, 'indicaciones': 'Indicaciones'}))
+complete['tratamientos'][0]['descripcion'] = 'T' * 181
+complete_dental['tratamientos'][0]['descripcion'] = 'T' * 181
+add['tratamiento']['descripcion'] = 'T' * 181
+dental_limit = bool(errors('ConsultaDental', complete_dental)) and bool(errors('AgregarTratamientoDental', add))
+correction['contenido']['tratamientos'][0]['descripcion'] = 'T' * 2000
+hospital_correction = not errors('CorregirConsulta', correction)
+correction['contenido']['tratamientos'][0]['descripcion'] = 'T' * 2001
+hospital_overflow_rejected = bool(errors('CorregirConsulta', correction))
+correction['contenido']['tratamientos'][0]['descripcion'] = 'T' * 201
+bounded_corrections = all(bool(errors(schema, correction)) for schema in (
+    'CorregirConsultaDental', 'CorregirConsultaPediatrica', 'CorregirConsultaLaboratorio'))
+legacy = copy.deepcopy(by_id['respuesta-Consulta']['data']['tratamientos'][0])
+legacy['descripcion'] = 'T' * 2000
+legacy_read = not errors('TratamientoRegistrado', legacy)
+legacy['descripcion'] += 'T'
+legacy_overflow_rejected = bool(errors('TratamientoRegistrado', legacy))
+record('T15', 'Etiqueta de tratamiento mapeada y límites por modelo/lectura/corrección',
+       mapping_valid and input_limits and dental_limit and hospital_correction
+       and hospital_overflow_rejected and bounded_corrections and legacy_read and legacy_overflow_rejected,
+       {'mapeo_persistencia_explicito': mapping_valid,
+        'captura_comun_1_a_200': input_limits,
+        'consulta_y_adicion_dental_rechazan_181': dental_limit,
+        'correccion_hospital_conserva_2000_y_rechaza_2001': hospital_correction and hospital_overflow_rejected,
+        'correcciones_dental_laboratorio_pediatria_rechazan_201_o_mas': bounded_corrections,
+        'lectura_historica_2000_y_rechazo_2001': legacy_read and legacy_overflow_rejected,
+        'tipo': 'CONTRATO_OFFLINE; no API ni motores ejecutados'}, 'AF07')
+
 output = {'base_git': base, 'incluye_cambios_locales': bool(subprocess.run(
               ['git', 'diff', '--quiet', 'HEAD', '--', 'Backend'], cwd=ROOT).returncode),
           'sha256_artefactos': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()

@@ -941,6 +941,10 @@ paths:
           $ref: '#/components/schemas/ConsultaDental'
         CENTRO_MEDICO_PEDIATRICO:
           $ref: '#/components/schemas/ConsultaPediatrica'
+      x-reglas-institucionales:
+        CLINICA_ODONTOLOGICA: >-
+          En tratamientos, descripcion es el nombre del catálogo y no se repite
+          dentro de la solicitud; una repetición devuelve 400 SOLICITUD_INVALIDA.
   /consultas/{id}:
     get:
       operationId: consultaObtener
@@ -1136,6 +1140,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AgregarTratamiento'
+      x-esquemas-institucionales:
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/AgregarTratamientoDental'
+      x-reglas-institucionales:
+        CLINICA_ODONTOLOGICA: >-
+          Si el nombre ya está enlazado a esta consulta, devolver 409
+          ESTADO_INVALIDO antes de escribir; no fusionar indicaciones ni omitirlo.
   /consultas/{id}/receta:
     post:
       operationId: consultaReceta
@@ -1243,6 +1254,13 @@ paths:
           $ref: '#/components/schemas/CorregirConsultaDental'
         CENTRO_MEDICO_PEDIATRICO:
           $ref: '#/components/schemas/CorregirConsultaPediatrica'
+        LABORATORIO_CLINICO:
+          $ref: '#/components/schemas/CorregirConsultaLaboratorio'
+      x-reglas-institucionales:
+        CLINICA_ODONTOLOGICA: >-
+          descripcion es el nombre de catálogo y no se repite en el snapshot;
+          la repetición devuelve 400 SOLICITUD_INVALIDA. Resolver colisiones
+          del índice único existente dentro de la UoW, sin crear filas duplicadas.
   /consultas/{id}/revisiones:
     get:
       operationId: consultaRevisiones
@@ -2185,11 +2203,17 @@ components:
     Tratamiento:
       type: object
       additionalProperties: false
+      description: 'descripcion es la etiqueta capturada por la UI bajo “Tratamiento / Procedimiento”; el adaptador la guarda como nombre obligatorio en motores documentales/odontología y como tratamiento.descripcion en Hospital. La lectura devuelve esa misma etiqueta. No representa un texto narrativo adicional.'
+      x-mapeo-persistencia:
+        HOSPITAL_GENERAL: tratamiento.descripcion
+        CLINICA_ODONTOLOGICA: tratamiento.nombre
+        LABORATORIO_CLINICO: consultas_clinicas.tratamientos[].nombre
+        CENTRO_MEDICO_PEDIATRICO: consultas.tratamientos[].nombre
       properties:
         descripcion:
           type: string
           minLength: 1
-          maxLength: 2000
+          maxLength: 200
           pattern: \S
         indicaciones:
           type: string
@@ -2378,6 +2402,9 @@ components:
           diagnosticos:
             items:
               $ref: '#/components/schemas/DiagnosticoDental'
+          tratamientos:
+            items:
+              $ref: '#/components/schemas/TratamientoDental'
     DiagnosticoDental:
       description: Política odontológica explícita, nombre máximo 180, preservable en el catálogo existente.
       allOf:
@@ -2385,12 +2412,46 @@ components:
       - properties:
           nombre:
             maxLength: 180
+    TratamientoDental:
+      description: El tratamiento odontológico se guarda como nombre de catálogo con máximo 180 caracteres.
+      allOf:
+      - $ref: '#/components/schemas/Tratamiento'
+      - properties:
+          descripcion:
+            maxLength: 180
+    TratamientoCorreccion:
+      type: object
+      additionalProperties: false
+      description: >-
+        Etiqueta histórica reenviada al reemplazar el snapshot clínico. Hospital permite
+        hasta 2000 caracteres para preservar su valor TEXT; odontología, laboratorio y
+        pediatría aplican los límites de sus overlays institucionales.
+      properties:
+        descripcion:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        indicaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+      required:
+      - descripcion
+      - indicaciones
     AgregarDiagnosticoDental:
       allOf:
       - $ref: '#/components/schemas/AgregarDiagnostico'
       - properties:
           diagnostico:
             $ref: '#/components/schemas/DiagnosticoDental'
+    AgregarTratamientoDental:
+      allOf:
+      - $ref: '#/components/schemas/AgregarTratamiento'
+      - properties:
+          tratamiento:
+            $ref: '#/components/schemas/TratamientoDental'
     CorregirConsultaDental:
       allOf:
       - $ref: '#/components/schemas/CorregirConsulta'
@@ -2400,6 +2461,18 @@ components:
               diagnosticos:
                 items:
                   $ref: '#/components/schemas/DiagnosticoDental'
+              tratamientos:
+                items:
+                  $ref: '#/components/schemas/TratamientoDental'
+    CorregirConsultaLaboratorio:
+      allOf:
+      - $ref: '#/components/schemas/CorregirConsulta'
+      - properties:
+          contenido:
+            properties:
+              tratamientos:
+                items:
+                  $ref: '#/components/schemas/Tratamiento'
     ConsultaPediatrica:
       allOf:
       - $ref: '#/components/schemas/ConsultaCompleta'
@@ -2437,7 +2510,12 @@ components:
             observaciones: *id027
             signos_vitales: *id028
             diagnosticos: *id029
-            tratamientos: *id030
+            tratamientos:
+              type: array
+              items:
+                $ref: '#/components/schemas/TratamientoCorreccion'
+              minItems: 0
+              maxItems: 100
             receta: *id031
           required:
           - motivo
@@ -3313,6 +3391,9 @@ components:
       - properties:
           contenido:
             properties:
+              tratamientos:
+                items:
+                  $ref: '#/components/schemas/Tratamiento'
               receta:
                 $ref: '#/components/schemas/RecetaPediatricaEntrada'
     DiagnosticoRegistrado:

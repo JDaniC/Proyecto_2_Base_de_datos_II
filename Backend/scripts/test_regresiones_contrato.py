@@ -1,4 +1,4 @@
-"""Regresiones de diseño AF01–AF06, sin API/motores ni dobles de persistencia.
+"""Regresiones de diseño AF01–AF07, sin API/motores ni dobles de persistencia.
 
 Valida representabilidad y coherencia de los fixtures/contratos; no demuestra
 que un adaptador guarde, recupere o autorice versiones en ejecución.
@@ -105,6 +105,72 @@ class RegresionesContrato(unittest.TestCase):
         self.assertRegex(ports, r"tipo: 'RESERVAR_IDENTIDAD'; readonly identidad: Identificacion")
         self.assertIn("tipo: 'LIBERAR_IDENTIDAD', identidad: legacyIdentity", type_fixtures)
         self.assertIn('@ts-expect-error La reserva recibe solo Identificacion del catálogo de captura.', type_fixtures)
+
+    def test_af07_tratamiento_etiqueta_se_mapea_a_nombre_con_limites_por_modelo(self):
+        treatment = self.components['schemas']['Tratamiento']
+        self.assertEqual(treatment['x-mapeo-persistencia'], {
+            'HOSPITAL_GENERAL': 'tratamiento.descripcion',
+            'CLINICA_ODONTOLOGICA': 'tratamiento.nombre',
+            'LABORATORIO_CLINICO': 'consultas_clinicas.tratamientos[].nombre',
+            'CENTRO_MEDICO_PEDIATRICO': 'consultas.tratamientos[].nombre',
+        })
+        self.assertIn('Tratamiento / Procedimiento',
+                      (ROOT / 'Frontend/src/features/consultations/NewConsultationWizardPage.tsx').read_text())
+        compat = (DOCS / 'COMPATIBILIDAD_PERSISTENCIA_V1.md').read_text()
+        self.assertIn('AF07:', compat)
+        self.assertIn('consulta_tratamiento', compat)
+        complete_rules = self.spec['paths']['/consultas/completas']['post']['x-reglas-institucionales']['CLINICA_ODONTOLOGICA']
+        add_rules = self.spec['paths']['/consultas/{id}/tratamientos']['post']['x-reglas-institucionales']['CLINICA_ODONTOLOGICA']
+        correction_rules = self.spec['paths']['/consultas/{id}/correcciones']['post']['x-reglas-institucionales']['CLINICA_ODONTOLOGICA']
+        self.assertIn('400 SOLICITUD_INVALIDA', complete_rules)
+        self.assertIn('409 ESTADO_INVALIDO', add_rules)
+        self.assertIn('400 SOLICITUD_INVALIDA', correction_rules)
+
+        complete = copy.deepcopy(self.fixtures['consultaCompleta-valido'])
+        dental_complete = copy.deepcopy(self.fixtures['completa-CLINICA_ODONTOLOGICA'])
+        add = copy.deepcopy(self.fixtures['consultaTratamiento-valido'])
+        correction = copy.deepcopy(self.fixtures['consultaCorregir-valido'])
+        correction['contenido']['tratamientos'][0]['descripcion'] = 'L' * 2000
+        read_treatment = copy.deepcopy(self.fixtures['respuesta-Consulta']['data']['tratamientos'][0])
+        read_treatment['descripcion'] = 'L' * 2000
+
+        # New capture is <=200 for three institutions; dentistry uses <=180.
+        for length in (180, 181, 200, 201):
+            complete['tratamientos'][0]['descripcion'] = 'N' * length
+            add['tratamiento']['descripcion'] = 'N' * length
+            with self.subTest(captura=length):
+                self.assertEqual(self.valid('ConsultaCompleta', complete), length <= 200)
+                self.assertEqual(self.valid('AgregarTratamiento', add), length <= 200)
+        for schema, value, field in [
+            ('ConsultaDental', dental_complete, 'tratamientos'),
+            ('AgregarTratamientoDental', add, 'tratamiento'),
+        ]:
+            for length in (180, 181):
+                candidate = copy.deepcopy(value)
+                target = candidate[field][0] if field == 'tratamientos' else candidate[field]
+                target['descripcion'] = 'D' * length
+                with self.subTest(esquema=schema, captura=length):
+                    self.assertEqual(self.valid(schema, candidate), length <= 180)
+
+        # Correction replaces a full snapshot: Hospital can replay legacy TEXT;
+        # the other three engines remain bounded by their persisted name fields.
+        for length in (200, 201, 2000, 2001):
+            candidate = copy.deepcopy(correction)
+            candidate['contenido']['tratamientos'][0]['descripcion'] = 'H' * length
+            with self.subTest(correccion='HOSPITAL_GENERAL', length=length):
+                self.assertEqual(self.valid('CorregirConsulta', candidate), length <= 2000)
+        for schema, maximum in [('CorregirConsultaDental', 180),
+                                ('CorregirConsultaPediatrica', 200),
+                                ('CorregirConsultaLaboratorio', 200)]:
+            for length in (maximum, maximum + 1):
+                candidate = copy.deepcopy(correction)
+                candidate['contenido']['tratamientos'][0]['descripcion'] = 'C' * length
+                with self.subTest(correccion=schema, length=length):
+                    self.assertEqual(self.valid(schema, candidate), length <= maximum)
+
+        self.assertTrue(self.valid('TratamientoRegistrado', read_treatment))
+        read_treatment['descripcion'] += 'X'
+        self.assertFalse(self.valid('TratamientoRegistrado', read_treatment))
 
     def test_af02_limite_dental_se_aplica_a_los_tres_comandos(self):
         sql = (ROOT / 'Database/clinica_odontologica_mysql.sql').read_text()

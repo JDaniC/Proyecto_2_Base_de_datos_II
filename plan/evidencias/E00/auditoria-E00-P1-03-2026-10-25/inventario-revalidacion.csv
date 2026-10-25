@@ -65,8 +65,12 @@ AbrirConsulta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.AbrirCon
 ConsultaCompleta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.ConsultaCompleta,VALIDACION_OFFLINE
 ConsultaDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.ConsultaDental,VALIDACION_OFFLINE
 DiagnosticoDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.DiagnosticoDental,VALIDACION_OFFLINE
+TratamientoDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.TratamientoDental,VALIDACION_OFFLINE
+TratamientoCorreccion,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.TratamientoCorreccion,VALIDACION_OFFLINE
 AgregarDiagnosticoDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.AgregarDiagnosticoDental,VALIDACION_OFFLINE
+AgregarTratamientoDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.AgregarTratamientoDental,VALIDACION_OFFLINE
 CorregirConsultaDental,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.CorregirConsultaDental,VALIDACION_OFFLINE
+CorregirConsultaLaboratorio,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.CorregirConsultaLaboratorio,VALIDACION_OFFLINE
 ConsultaPediatrica,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.ConsultaPediatrica,VALIDACION_OFFLINE
 FinalizarConsulta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.FinalizarConsulta,VALIDACION_OFFLINE
 CorregirConsulta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.CorregirConsulta,VALIDACION_OFFLINE
