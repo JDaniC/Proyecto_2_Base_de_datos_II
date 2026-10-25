@@ -12,7 +12,7 @@
 | AF04 | DTO de lectura separado de captura: dirección sin límite API (PostgreSQL TEXT), teléfono hasta 254, correo como cadena heredada, sexo e identificación sin catálogo de escritura y grupo sanguíneo conservado como texto. Responsable lee identificación hasta 120, teléfono hasta 40 y nombre compuesto hasta 401. Los comandos mantienen sus límites originales. | T12 PASS; respuesta de paciente con dirección de 501 caracteres para ficha/lista/expediente, límites 501/4000/4001, y responsable legado; altas siguen rechazando dirección de 501 |
 | AF05 | La autorización histórica de consulta usa IdentificacionLeida; ALTA_RESPONSABLE usa un tipo de captura con catálogo CUI/PASAPORTE. | T13 PASS; fixture TypeScript acepta documento legado en snapshot y rechaza reutilizarlo en captura nueva |
 
-Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción identifica base Git `320b911`, cambios locales y SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **6 tests**; las pruebas de tipos compilaron.
+Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción parte de Git `320b911` con la corrección local, después publicada en `c6442df`, y registra los SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **6 tests**; las pruebas de tipos compilaron.
 
 Reproducción desde la raíz con las dependencias de `Backend/docs/requirements-contrato.txt`:
 
