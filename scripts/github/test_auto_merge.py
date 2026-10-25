@@ -59,3 +59,38 @@ class CodexTests(unittest.TestCase):
         item['performed_via_github_app'] = None
         self.assertEqual(verdict([item], SHA)[0], 'pending')
         self.assertEqual(verdict([comment(status={})], SHA)[0], 'pending')
+
+    def test_pending_no_habilita_merge_y_publica_pending(self):
+        from unittest.mock import patch
+        from auto_merge import process
+        pr = {'state': 'open', 'draft': False, 'base': {'ref': 'develop'},
+              'head': {'sha': SHA, 'repo': {'full_name': 'owner/repo'}}, 'html_url': 'https://github.com/owner/repo/pull/7'}
+        with patch('auto_merge.gh_api', side_effect=[pr, pr, {}]) as api, patch('auto_merge.comments_for', return_value=[]), patch('auto_merge.subprocess.run') as run:
+            process('owner/repo', 7)
+            self.assertEqual(api.call_args.args[1]['state'], 'pending')
+            run.assert_not_called()
+
+    def test_success_solicita_auto_merge_del_sha_exacto(self):
+        from unittest.mock import patch
+        from auto_merge import process
+        pr = {'state': 'open', 'draft': False, 'base': {'ref': 'develop'},
+              'head': {'sha': SHA, 'repo': {'full_name': 'owner/repo'}}, 'html_url': 'https://github.com/owner/repo/pull/7'}
+        with patch('auto_merge.gh_api', side_effect=[pr, pr, {}]) as api, patch('auto_merge.comments_for', return_value=[comment()]), patch('auto_merge.subprocess.run') as run:
+            process('owner/repo', 7)
+            self.assertEqual(api.call_args.args[1]['state'], 'success')
+            args = run.call_args.args[0]
+            self.assertIn('--auto', args)
+            self.assertIn('--match-head-commit', args)
+            self.assertEqual(args[-1], SHA)
+            self.assertNotIn('--admin', args)
+
+    def test_cambio_de_cabeza_no_publica_ni_integra_resultado_viejo(self):
+        from unittest.mock import patch
+        from auto_merge import process
+        pr = {'state': 'open', 'draft': False, 'base': {'ref': 'develop'},
+              'head': {'sha': SHA, 'repo': {'full_name': 'owner/repo'}}, 'html_url': 'https://github.com/owner/repo/pull/7'}
+        newer = dict(pr, head={'sha': 'b' * 40, 'repo': {'full_name': 'owner/repo'}})
+        with patch('auto_merge.gh_api', side_effect=[pr, newer]) as api, patch('auto_merge.comments_for', return_value=[comment()]), patch('auto_merge.subprocess.run') as run:
+            process('owner/repo', 7)
+            self.assertEqual(api.call_count, 2)
+            run.assert_not_called()
