@@ -303,7 +303,7 @@ export type CambioComun =
   | { readonly tipo: 'GUARDAR_CITA'; readonly anterior: Version | null; readonly cita: Cita }
   | { readonly tipo: 'GUARDAR_CONSULTA'; readonly anterior: Version | null; readonly consulta: Consulta }
   | { readonly tipo: 'RESERVAR_IDENTIDAD'; readonly identidad: Identificacion; readonly pacienteId: UUID }
-  | { readonly tipo: 'LIBERAR_IDENTIDAD'; readonly identidad: Identificacion; readonly pacienteId: UUID }
+  | { readonly tipo: 'LIBERAR_IDENTIDAD'; readonly identidad: IdentificacionLeida; readonly pacienteId: UUID }
   | { readonly tipo: 'AVANZAR_HISTORIAL'; readonly pacienteId: UUID; readonly anterior: Version }
   | { readonly tipo: 'ALTA_RESPONSABLE'; readonly responsable: ResponsableCapturado }
   | { readonly tipo: 'VINCULAR_RESPONSABLE'; readonly vinculo: VinculoResponsable };

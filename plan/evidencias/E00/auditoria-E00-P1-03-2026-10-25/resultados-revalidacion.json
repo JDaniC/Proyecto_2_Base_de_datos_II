@@ -1,9 +1,9 @@
 {
-  "base_git": "320b911dcb74af021209d0ef677743082b279d95",
+  "base_git": "7d4a1e7697b6c6003858f44898449707aace42bc",
   "incluye_cambios_locales": true,
   "sha256_artefactos": {
     "Backend/docs/openapi.yaml": "a2757b2c2b9842588ac0e868c32854f0dae1872c78f1dfa8265f971660986fc9",
-    "Backend/docs/puertos-v1.ts": "9700c8bbb0ac9907a7ad8d2d4bb41cb404e4b0f3f8e8b4487f0faf90fecdfec5",
+    "Backend/docs/puertos-v1.ts": "3110c469ec02377a90649a12fce68a20864a9c231ba56454a0eaf1e39af475f5",
     "Backend/docs/fixtures/contrato-v1.json": "370a074f288f9f4fb49ece8fdd545e07459e1b06c9303d0318fc53bdadfa64c2"
   },
   "alcance": "E00-P1-03",
@@ -18,7 +18,7 @@
   },
   "total_unidades_incluye_trazas": 333,
   "resultados": {
-    "PASS": 27
+    "PASS": 28
   },
   "pruebas": [
     {
@@ -336,6 +336,19 @@
         "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
       },
       "hallazgo": "AF05",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T14",
+      "categoria": "Liberación conserva identidad legada y reserva nueva conserva catálogo",
+      "resultado": "PASS",
+      "evidencia": {
+        "liberacion_usa_identidad_leida": true,
+        "reserva_usa_identidad_de_captura": true,
+        "fixture_acepta_liberacion_y_rechaza_reserva_legada": true,
+        "tipo": "CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados"
+      },
+      "hallazgo": "AF06",
       "entorno": "OFFLINE_SIN_API_NI_MOTORES"
     }
   ]

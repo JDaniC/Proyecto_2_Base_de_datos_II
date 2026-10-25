@@ -1,4 +1,4 @@
-import type { CambioComun, EventoHistorial, Identificacion, RepositorioConsulta, Consulta, ResponsableCapturado, UUID } from '../puertos-v1';
+import type { CambioComun, EventoHistorial, Identificacion, IdentificacionLeida, RepositorioConsulta, Consulta, ResponsableCapturado, UUID } from '../puertos-v1';
 
 declare const uuid: UUID;
 declare const reader: RepositorioConsulta;
@@ -21,6 +21,15 @@ const legacyResponsible: ResponsableCapturado = {
   // @ts-expect-error La captura nueva sigue restringida a CUI/PASAPORTE.
   documento: { tipo: 'DOCUMENTO_LEGADO', numero: 'LEG-001' },
 };
+const legacyIdentity: IdentificacionLeida = { tipo: 'DOCUMENTO_LEGADO', numero: 'LEG-001' };
+const releaseLegacyIdentity: CambioComun = {
+  tipo: 'LIBERAR_IDENTIDAD', identidad: legacyIdentity, pacienteId: uuid,
+};
+const reserveLegacyIdentity: Extract<CambioComun, { readonly tipo: 'RESERVAR_IDENTIDAD' }> = {
+  tipo: 'RESERVAR_IDENTIDAD',
+  // @ts-expect-error La reserva recibe solo Identificacion del catálogo de captura.
+  identidad: legacyIdentity, pacienteId: uuid,
+};
 const event: EventoHistorial = {
   id: uuid, fechaHora: '2026-10-25T12:00:00Z', titulo: 'Sintético',
   tipo: 'DIAGNOSTICO', recursoId: uuid, consultaId: uuid, versionConsulta: 1,
@@ -33,4 +42,5 @@ const missingVersion: EventoHistorial = {
 // @ts-expect-error No se solicita una versión indeterminada ni textual.
 reader.porVersion(uuid, 'vigente');
 void historical; void authorization; void capturedIdentity; void capturedResponsible; void legacyResponsible;
+void legacyIdentity; void releaseLegacyIdentity; void reserveLegacyIdentity;
 void event; void missingVersion;

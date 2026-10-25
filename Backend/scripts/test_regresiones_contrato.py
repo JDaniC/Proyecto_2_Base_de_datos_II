@@ -1,4 +1,4 @@
-"""Regresiones de diseño AF01–AF05, sin API/motores ni dobles de persistencia.
+"""Regresiones de diseño AF01–AF06, sin API/motores ni dobles de persistencia.
 
 Valida representabilidad y coherencia de los fixtures/contratos; no demuestra
 que un adaptador guarde, recupere o autorice versiones en ejecución.
@@ -97,6 +97,14 @@ class RegresionesContrato(unittest.TestCase):
         self.assertRegex(ports, r"tipo: 'ALTA_RESPONSABLE'; readonly responsable: ResponsableCapturado")
         self.assertIn("tipo: 'DOCUMENTO_LEGADO'", type_fixtures)
         self.assertIn('@ts-expect-error La captura nueva sigue restringida a CUI/PASAPORTE.', type_fixtures)
+
+    def test_af06_liberacion_acepta_identidad_legada_reserva_restringida(self):
+        ports = (DOCS / 'puertos-v1.ts').read_text()
+        type_fixtures = (DOCS / 'fixtures/puertos-v1.test-d.ts').read_text()
+        self.assertRegex(ports, r"tipo: 'LIBERAR_IDENTIDAD'; readonly identidad: IdentificacionLeida")
+        self.assertRegex(ports, r"tipo: 'RESERVAR_IDENTIDAD'; readonly identidad: Identificacion")
+        self.assertIn("tipo: 'LIBERAR_IDENTIDAD', identidad: legacyIdentity", type_fixtures)
+        self.assertIn('@ts-expect-error La reserva recibe solo Identificacion del catálogo de captura.', type_fixtures)
 
     def test_af02_limite_dental_se_aplica_a_los_tres_comandos(self):
         sql = (ROOT / 'Database/clinica_odontologica_mysql.sql').read_text()

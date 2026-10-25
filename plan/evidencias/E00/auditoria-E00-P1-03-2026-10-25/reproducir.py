@@ -267,6 +267,19 @@ record('T13', 'Snapshot de autorización conserva identificación legada sin amp
         'fixture_tipo_legado_y_rechazo_de_captura': legacy_type_fixture and capture_rejection_fixture,
         'tipo': 'CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados'}, 'AF05')
 
+# AF06: se puede liberar la reserva con el valor legado exacto, pero las
+# reservas nuevas siguen usando el catálogo de captura.
+release_legacy = "readonly tipo: 'LIBERAR_IDENTIDAD'; readonly identidad: IdentificacionLeida" in ports
+reserve_capture = "readonly tipo: 'RESERVAR_IDENTIDAD'; readonly identidad: Identificacion" in ports
+legacy_release_fixture = "tipo: 'LIBERAR_IDENTIDAD', identidad: legacyIdentity" in type_fixtures
+legacy_reservation_rejected = '@ts-expect-error La reserva recibe solo Identificacion del catálogo de captura.' in type_fixtures
+record('T14', 'Liberación conserva identidad legada y reserva nueva conserva catálogo',
+       release_legacy and reserve_capture and legacy_release_fixture and legacy_reservation_rejected,
+       {'liberacion_usa_identidad_leida': release_legacy,
+        'reserva_usa_identidad_de_captura': reserve_capture,
+        'fixture_acepta_liberacion_y_rechaza_reserva_legada': legacy_release_fixture and legacy_reservation_rejected,
+        'tipo': 'CONTRATO_DE_TIPOS; tsc separado; no servidor ni motores ejecutados'}, 'AF06')
+
 output = {'base_git': base, 'incluye_cambios_locales': bool(subprocess.run(
               ['git', 'diff', '--quiet', 'HEAD', '--', 'Backend'], cwd=ROOT).returncode),
           'sha256_artefactos': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
