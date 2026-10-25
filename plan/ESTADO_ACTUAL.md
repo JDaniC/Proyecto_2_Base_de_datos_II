@@ -22,7 +22,7 @@ Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; v
 - La continuidad/cola compartida del PR #3 ya está fusionada en develop, commit `997c3ec`. La rama temporal se eliminó. Las modificaciones de limpieza se integran después, mediante su propio PR de mantenimiento; verificar referencias actuales.
 - Las ramas Frontend, Backend y codex/flujo-github-tareas ya se retiraron del remoto. Las nuevas ramas de trabajo se eliminan tras su integración para terminar cada flujo con main y develop.
 - GitHub exige PR y contrato-pr; cero aprobaciones humanas obligatorias. Codex es el revisor automático elegido. El propietario confirmó activar su configuración; en el último corte no había respuesta del bot en PR #2. Verificar el estado actual antes de marcar revisión completa.
-- El check contrato-pr no fuerza técnicamente que Codex haya terminado ni acredita funcionalidad. No asumir que verde significa revisión automática aprobada.
+- El check contrato-pr acredita el contrato; revision-codex acredita el resultado nativo del bot para el SHA actual. Ninguno sustituye las pruebas funcionales de la tarea.
 
 ## Próxima entrada de trabajo
 
