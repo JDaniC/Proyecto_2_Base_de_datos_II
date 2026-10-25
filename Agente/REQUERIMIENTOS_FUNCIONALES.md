@@ -24,8 +24,8 @@ Los requerimientos describen el comportamiento esperado; no afirman que las func
 | RF-005 | El sistema permitirá registrar pacientes y abrir su historial clínico con los datos requeridos por la institución. | Académico obligatorio y base de Entrega I. |
 | RF-006 | El sistema permitirá buscar, consultar y actualizar pacientes sin crear otro expediente cuando corresponda reutilizar el existente. | Base de Entrega I; reglas de duplicidad del diseño adoptado. |
 | RF-007 | El sistema permitirá consultar el historial y sus eventos en orden cronológico, con filtros y paginación. | Base de Entrega I y diseño adoptado. |
-| RF-008 | El sistema permitirá archivar/desactivar y reactivar un historial con motivo y trazabilidad, preservando sus registros anteriores. | Académico obligatorio: mantener historiales sin borrar la historia clínica. |
-| RF-009 | El sistema permitirá programar, consultar, reprogramar y cancelar citas según el rol y las reglas de la institución. | Diseño adoptado a partir de los procesos institucionales. |
+| RF-008 | El sistema permitirá archivar/desactivar un historial con motivo y trazabilidad, preservando sus registros anteriores, en las cuatro instituciones. La reactivación pública solo existe en pediatría (DEC05). | Académico obligatorio: mantener historiales sin borrar la historia clínica. |
+| RF-009 | El sistema permitirá programar, consultar, reprogramar y cancelar citas según el rol y las reglas de la institución, en hospital, odontología y pediatría. Laboratorio no publica agenda (DEC04). | Diseño adoptado a partir de los procesos institucionales. |
 | RF-010 | El sistema permitirá registrar una consulta vinculada al paciente y al profesional responsable; podrá vincularse también a una cita cuando aplique. | Académico obligatorio y diseño adoptado. |
 | RF-011 | El sistema permitirá agregar diagnósticos y tratamientos a una consulta, manteniendo la relación con el paciente y el profesional. | Académico obligatorio. |
 | RF-012 | El sistema permitirá emitir recetas y registrar medicamentos con los atributos definidos para cada institución. | Académico obligatorio y base de Entrega I. |
@@ -61,7 +61,7 @@ Los requerimientos describen el comportamiento esperado; no afirman que las func
 | RF-C01 | Mantener pacientes e historial clínico odontológico. | Base de Entrega I. |
 | RF-C02 | Administrar secretarías y odontólogos, incluyendo el dato profesional requerido por el modelo. | Base de Entrega I. |
 | RF-C03 | Gestionar citas vinculadas con paciente, odontólogo y secretaria que las administra. | Base de Entrega I. |
-| RF-C04 | Registrar antecedentes y consultas odontológicas vinculadas al historial y, cuando aplique, a una cita. | Base de Entrega I. |
+| RF-C04 | Registrar antecedentes y consultas odontológicas vinculadas al historial y a una cita obligatoria (DEC03). | Base de Entrega I. |
 | RF-C05 | Registrar diagnósticos y tratamientos odontológicos usando los catálogos definidos. | Base de Entrega I. |
 | RF-C06 | Emitir recetas odontológicas y registrar sus medicamentos. | Base de Entrega I y requisito académico. |
 | RF-C07 | Al atender una cita, comprobar que paciente, historial y odontólogo estén relacionados correctamente; una cita cancelada no generará una consulta. | Diseño adoptado. |
@@ -84,7 +84,7 @@ Los requerimientos describen el comportamiento esperado; no afirman que las func
 | RF-L11 | Emitir facturas y registrar pagos, saldos y reversiones; impedir pagos duplicados o superiores al saldo dentro del alcance académico. | Diseño adoptado. |
 | RF-L12 | Buscar órdenes, muestras, resultados, informes, facturas, pagos y movimientos por los criterios definidos para cada recurso. | Diseño adoptado. |
 | RF-L13 | Administrar usuarios y roles de laboratorio; una función clínica se permitirá solo a un profesional médico autorizado y vinculado a un solicitante individual. | Ampliación adoptada para satisfacer el núcleo común; no es función de la primera entrega. |
-| RF-L14 | Ofrecer el núcleo común de citas, consultas, diagnósticos, tratamientos y recetas mediante `citas` y `consultas_clinicas`. | Ampliación adoptada por el equipo a partir de la consigna final. |
+| RF-L14 | Ofrecer el núcleo común de consultas, diagnósticos, tratamientos y recetas mediante `consultas_clinicas`, iniciado desde el expediente. `citas` se conserva como colección técnica sin agenda pública (DEC04). | Ampliación adoptada por el equipo a partir de la consigna final. |
 
 ### 3.4 Centro Médico Pediátrico — Cloud Firestore
 
@@ -101,7 +101,7 @@ Los requerimientos describen el comportamiento esperado; no afirman que las func
 | RF-P09 | Administrar vacunas, versiones de esquemas y dosis recomendadas por edad. | Base de Entrega I y diseño adoptado. |
 | RF-P10 | Registrar aplicaciones con paciente, vacuna/dosis, fecha, lote, sitio y pediatra responsable, impidiendo duplicar la misma aplicación lógica. | Base de Entrega I y diseño adoptado. |
 | RF-P11 | Consultar vacunas futuras, pendientes y aplicadas de acuerdo con el esquema asignado al paciente. | Diseño adoptado. |
-| RF-P12 | Mostrar cronológicamente consultas, controles y vacunas y permitir archivar/reactivar el historial sin eliminar eventos. | Base de Entrega I y requisito académico. |
+| RF-P12 | Mostrar cronológicamente consultas, controles y vacunas y permitir archivar/reactivar el historial sin eliminar eventos. Es la única institución con reactivación pública. | Base de Entrega I y requisito académico. |
 
 ## 4. Requerimientos de información y entregables documentales
 
@@ -119,4 +119,5 @@ Los requerimientos describen el comportamiento esperado; no afirman que las func
 - Los requisitos académicos obligatorios se originan principalmente en `Proyecto final bases II (1) (4).pdf`; los datos y procesos de partida se encuentran en `Primera Entrega Proyecto (1).pdf`.
 - El documento [`DISENO_PROYECTO.md`](DISENO_PROYECTO.md) detalla modelos, reglas, estados, contratos API y criterios CA01–CA20 que complementan estos requisitos.
 - Las reglas específicas marcadas como diseño adoptado pueden ajustarse, pero cualquier cambio debe actualizar este inventario, el diseño y sus criterios de aceptación.
+- Precisiones del 24/10/2026 (E00-P1-01): «administrar» personal, camas, catálogos, usuarios o roles (RF-H02, RF-H06, RF-H09, RF-C02, RF-C08) no implica una pantalla CRUD. Fuera de laboratorio se cubre con seed, selectores y provisión controlada de cuentas con roles fijos; las camas solo se consultan y asignan por ingreso (DEC11). La matriz de capacidades y roles está en `plan/01_ALCANCE_Y_DECISIONES.md`, secciones 6 y 7.
 - La retroalimentación de Entrega I no se considera resuelta hasta incluir las observaciones recibidas y evidencia verificable de los cambios.
