@@ -13,7 +13,7 @@
 | AF05 | La autorización histórica de consulta usa IdentificacionLeida; ALTA_RESPONSABLE usa un tipo de captura con catálogo CUI/PASAPORTE. | T13 PASS; fixture TypeScript acepta documento legado en snapshot y rechaza reutilizarlo en captura nueva |
 | AF06 | LIBERAR_IDENTIDAD acepta IdentificacionLeida para soltar la reserva original; RESERVAR_IDENTIDAD conserva Identificacion para altas nuevas. | T14 PASS; fixture TypeScript permite liberar DOCUMENTO_LEGADO y rechaza reservarlo |
 
-Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción parte de Git `7d4a1e7` con la corrección AF06 local y registra los SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **7 tests**; las pruebas de tipos compilaron.
+Artefactos: [resultados](resultados-revalidacion.json), [trazabilidad](trazabilidad-revalidacion.csv), [inventario](inventario-revalidacion.csv). La reproducción parte de Git `7d4a1e7` con la corrección AF06 local que se publicó en `9baec4b`, y registra los SHA-256 de OpenAPI, puertos y fixtures. El validador estructural pasó **230 fixtures y 95 esquemas**. La suite de regresiones pasó **7 tests**; las pruebas de tipos compilaron.
 
 Reproducción desde la raíz con las dependencias de `Backend/docs/requirements-contrato.txt`:
 
