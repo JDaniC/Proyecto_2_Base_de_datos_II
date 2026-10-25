@@ -63,7 +63,7 @@ Verificadores Database crean entornos aislados según sus guías. La suite hist�
 
 Comandos **a implementar** en Backend durante E01/E06: `build`, `test:unit`, `test:contract`, `test:integration`, `test:security`, `test:e2e`, `lint:architecture`, ejecutables mediante `npm --prefix Backend run <script>`. Hoy no existen. La suite parametrizada recibe un bundle de prueba en configuración; el request productivo nunca selecciona motor.
 
-**Inicio del arnés E00-P2-03 (25/10/2026):** `Backend/tests/contratos/` contiene una guardia que permite solo loopback y base/proyecto demo únicos por ejecución, un formato de resultados explícito y verificaciones estructurales de semillas sintéticas para los cuatro bundles. Se ejecuta con `node --test Backend/tests/contratos/*.test.mjs`. Este primer corte no arranca API, drivers ni motores, y no acredita CA01–CA20 ni persistencia. Consultar [`Backend/tests/README.md`](../Backend/tests/README.md) para el alcance.
+**Arnés E00-P2-03 (25/10/2026):** `Backend/tests/contratos/` contiene guardia de destino, formato de resultado, fixtures sintéticos para los cuatro bundles y una suite parametrizada que mapea CA01–CA20 a escenarios, niveles y aplicabilidad. Ejecutar `node --test Backend/tests/contratos/*.test.mjs` para verificar el arnés y `node Backend/tests/contratos/suite-aceptacion.mjs --resumen` para ver los estados pendientes del plan. No arranca API, drivers ni motores: CA funcionales no ejecutados permanecen `NOT_IMPLEMENTED`, por lo que el arnés no acredita persistencia ni comportamiento del backend. Consultar [`Backend/tests/README.md`](../Backend/tests/README.md) para el alcance.
 
 ## 5. Evidencia portable
 

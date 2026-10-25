@@ -68,17 +68,83 @@ test('incluye paciente con y sin identificación, y conserva límites institucio
   assert.equal(contextos.citas.some(({ institucion }) => institucion === 'LABORATORIO_CLINICO'), false);
 });
 
-test('mantiene separadas relación principal y autorización pediátrica, e incluye archivo con proceso previo', () => {
+test('mantiene un principal por menor y expresa las variantes sin contradecir la semilla base', () => {
   const autorizado = porId(contextos.vinculos, 'vinculo-pediatria-principal-autorizado');
-  const noAutorizado = porId(contextos.vinculos, 'vinculo-pediatria-principal-sin-autorizacion');
+  const secundario = porId(contextos.vinculos, 'vinculo-pediatria-secundario-sin-autorizacion');
   assert.equal(autorizado.es_principal, true);
   assert.equal(autorizado.autoriza_atencion, true);
-  assert.equal(noAutorizado.es_principal, true);
-  assert.equal(noAutorizado.autoriza_atencion, false);
-  assert.notEqual(autorizado.responsable_id, noAutorizado.responsable_id);
+  assert.equal(secundario.es_principal, false);
+  assert.equal(secundario.autoriza_atencion, false);
+
+  for (const paciente of contextos.pacientes.filter(({ institucion }) => institucion === 'CENTRO_MEDICO_PEDIATRICO')) {
+    const vinculosActivos = contextos.vinculos.filter((vinculo) =>
+      vinculo.paciente_id === paciente.id && vinculo.estado === 'ACTIVO',
+    );
+    assert.equal(vinculosActivos.filter(({ es_principal }) => es_principal).length, 1);
+  }
+
+  const noAutoriza = porId(contextos.variantes_vinculo, 'pediatria-principal-sin-autorizacion');
+  assert.equal(noAutoriza.sobrescribir_vinculo_id, autorizado.id);
+  assert.deepEqual(noAutoriza.cambios, { autoriza_atencion: false });
+  assert.equal(autorizado.autoriza_atencion, true, 'el overlay no muta la semilla compartida');
+
+  const variosPrincipales = porId(contextos.variantes_vinculo, 'overlay-varios-principales');
+  assert.equal(variosPrincipales.sobrescribir_vinculo_id, secundario.id);
+  assert.equal(variosPrincipales.cambios.es_principal, true);
+
+  const responsables = new Set(contextos.responsables.map(({ id }) => id));
+  for (const vinculo of contextos.vinculos) {
+    assert.ok(responsables.has(vinculo.responsable_id));
+    assert.ok(contextos.pacientes.some(({ id }) => id === vinculo.paciente_id));
+  }
+
+  const compartido = porId(contextos.escenarios, 'pediatria-responsable-compartido');
+  assert.equal(compartido.autorizaciones_independientes, true);
+  assert.ok(contextos.vinculos.filter(({ responsable_id }) => responsable_id === compartido.responsable_id).length >= 2);
+});
+
+test('incluye cuentas inactivas, citas de frontera y catálogo inactivo como semillas separadas', () => {
+  const cuentasInactivas = porId(contextos.escenarios, 'cuenta-inactiva-por-institucion').cuentas_uids;
+  assert.equal(cuentasInactivas.length, 4);
+  for (const uid of cuentasInactivas) {
+    assert.equal(contextos.cuentas.find((cuenta) => cuenta.uid === uid)?.estado, 'INACTIVA');
+  }
+  assert.equal(porId(contextos.citas, '00000000-0000-4000-8000-000000000504').estado, 'CANCELADA');
+  assert.equal(porId(contextos.citas, '00000000-0000-4000-8000-000000000505').estado, 'ATENDIDA');
+  assert.equal(porId(contextos.catalogos_sinteticos, 'catalogo-prueba-inactivo').activo, false);
 
   const archivado = contextos.pacientes.find(({ estado }) => estado === 'ARCHIVADO');
   assert.ok(archivado);
   assert.equal(archivado.proceso_previo.permite_finalizar, true);
   assert.equal(porId(contextos.escenarios, 'archivado-proceso-previo-vs-nueva-atencion').nueva_atencion, 'RECHAZAR');
+});
+
+test('los escenarios parametrizados resuelven paciente y permisos vigentes en cada institución', () => {
+  const instituciones = contextos.bundles_prueba.map(({ institucion }) => institucion);
+  const paciente = porId(contextos.escenarios, 'paciente-identificado');
+  const archivado = porId(contextos.escenarios, 'archivado-proceso-previo-vs-nueva-atencion');
+  const permisoRetirado = porId(contextos.escenarios, 'cuenta-activa-permiso-retirado');
+  const roles = porId(contextos.escenarios, 'cuentas-secretaria-y-analista');
+
+  for (const institucion of instituciones) {
+    const identificado = contextos.pacientes.find(({ id }) => id === paciente.pacientes_por_institucion[institucion]);
+    const archivadoPorInstitucion = contextos.pacientes.find(({ id }) => id === archivado.pacientes_por_institucion[institucion]);
+    const variante = contextos.variantes_cuenta.find(({ id }) =>
+      id === permisoRetirado.variantes_por_institucion[institucion].variante_cuenta_id,
+    );
+    const cuenta = contextos.cuentas.find(({ uid }) => uid === roles.cuentas_oficina_por_institucion[institucion]);
+
+    assert.equal(identificado.institucion, institucion);
+    assert.ok(identificado.identificacion);
+    assert.equal(archivadoPorInstitucion.institucion, institucion);
+    assert.equal(archivadoPorInstitucion.estado, 'ARCHIVADO');
+    assert.equal(variante.cuenta_uid, permisoRetirado.variantes_por_institucion[institucion].actor_uid);
+    assert.ok(variante.quitar_permisos.includes(permisoRetirado.variantes_por_institucion[institucion].permiso_retirado));
+    assert.equal(cuenta.institucion, institucion);
+    assert.equal(cuenta.estado, 'ACTIVA');
+    assert.ok(cuenta.roles.includes('SECRETARIA'));
+  }
+
+  assert.equal(contextos.cuentas.find(({ uid }) => uid === roles.analista_lab_uid).institucion, 'LABORATORIO_CLINICO');
+  assert.equal(contextos.cuentas.find(({ uid }) => uid === roles.validador_lab_uid).institucion, 'LABORATORIO_CLINICO');
 });

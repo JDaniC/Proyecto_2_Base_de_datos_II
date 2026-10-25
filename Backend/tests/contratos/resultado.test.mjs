@@ -25,6 +25,22 @@ test('no etiqueta como PASS una prueba vacía ni sin evidencia', () => {
     escenario: 'sin-evidencia', nivel: 'DOMINIO_CON_DOBLES', estado: 'PASS',
     esperado: 'x', observado: 'x', evidencia: '   ',
   }), /requiere evidencia portable/);
+
+  assert.throws(() => crearResultado({
+    escenario: 'observacion-vacia', nivel: 'DOMINIO_CON_DOBLES', estado: 'PASS',
+    esperado: 'resultado definido', observado: ' ', evidencia: 'evidencia.txt',
+  }), /requiere esperado y observado/);
+});
+
+test('FAIL también requiere descripciones y evidencia para reproducir la divergencia', () => {
+  assert.throws(() => crearResultado({
+    escenario: 'fallo-sin-detalle', nivel: 'CONTRATO_PARAMETRIZADO', estado: 'FAIL',
+    esperado: 'respuesta 409', observado: '', evidencia: 'reproducible.txt',
+  }), /requiere esperado y observado/);
+  assert.equal(crearResultado({
+    escenario: 'fallo-evidenciado', nivel: 'CONTRATO_PARAMETRIZADO', estado: 'FAIL',
+    esperado: 'respuesta 409', observado: 'respuesta 500', evidencia: 'salida saneada en artefacto.txt',
+  }).estado, 'FAIL');
 });
 
 test('NOT_IMPLEMENTED y BLOCKED requieren una causa explícita', () => {

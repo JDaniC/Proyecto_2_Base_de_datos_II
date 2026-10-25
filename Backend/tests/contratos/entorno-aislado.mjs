@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
 const MOTORES = new Set(['postgresql', 'mysql', 'mongodb', 'firestore']);
-const HOSTS_LOCALES = new Set(['127.0.0.1', 'localhost', '::1']);
+const HOSTS_LOCALES = new Set(['127.0.0.1', '::1']);
 const ID_EJECUCION = /^[a-f0-9]{32}$/i;
 
 function destinoInseguro(motivo) {
@@ -58,9 +58,9 @@ export function crearRunId() {
 }
 
 /**
- * Ejecuta callbacks de prueba solo después de validar el destino. `limpiar`
- * recibe únicamente el recurso creado por `preparar` y se ejecuta aun si el
- * escenario falla. No configura ni conecta drivers por sí misma.
+ * Ejecuta callbacks de prueba solo después de validar el destino. `preparar`
+ * puede registrar un handle que agrupe recursos parciales para que `limpiar`
+ * también se ejecute si la preparación falla. No configura ni conecta drivers.
  */
 export async function ejecutarEnDestinoAislado({ destino, entorno = process.env, preparar, ejecutar, limpiar }) {
   if (typeof preparar !== 'function' || typeof ejecutar !== 'function' || typeof limpiar !== 'function') {
@@ -69,12 +69,42 @@ export async function ejecutarEnDestinoAislado({ destino, entorno = process.env,
 
   const destinoSeguro = validarDestinoAislado(destino, entorno);
   let recurso;
-  let preparado = false;
+  let limpiezaRegistrada = false;
+  let falloPrincipal = false;
+  let errorPrincipal;
+  let falloLimpieza = false;
+  let errorLimpieza;
+  let resultado;
+  const registrarParaLimpieza = (valor) => {
+    recurso = valor;
+    limpiezaRegistrada = true;
+  };
+
   try {
-    recurso = await preparar(destinoSeguro);
-    preparado = true;
-    return await ejecutar(recurso, destinoSeguro);
-  } finally {
-    if (preparado) await limpiar(recurso, destinoSeguro);
+    const recursoPreparado = await preparar(destinoSeguro, registrarParaLimpieza);
+    if (recursoPreparado !== undefined || !limpiezaRegistrada) {
+      recurso = recursoPreparado;
+    }
+    limpiezaRegistrada = true;
+    resultado = await ejecutar(recurso, destinoSeguro);
+  } catch (error) {
+    falloPrincipal = true;
+    errorPrincipal = error;
   }
+
+  if (limpiezaRegistrada) {
+    try {
+      await limpiar(recurso, destinoSeguro);
+    } catch (error) {
+      falloLimpieza = true;
+      errorLimpieza = error;
+    }
+  }
+
+  if (falloPrincipal && falloLimpieza) {
+    throw new AggregateError([errorPrincipal, errorLimpieza], 'Fallaron el escenario y la limpieza del destino aislado.');
+  }
+  if (falloPrincipal) throw errorPrincipal;
+  if (falloLimpieza) throw errorLimpieza;
+  return resultado;
 }

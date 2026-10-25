@@ -29,7 +29,7 @@ export function crearResultado({
 
   const ejecutado = estado === 'PASS' || estado === 'FAIL';
   if (ejecutado) {
-    if (esperado === undefined || observado === undefined) {
+    if (!noVacio(esperado) || !noVacio(observado)) {
       throw new TypeError(`${estado} requiere esperado y observado`);
     }
     if (!noVacio(evidencia)) throw new TypeError(`${estado} requiere evidencia portable`);
