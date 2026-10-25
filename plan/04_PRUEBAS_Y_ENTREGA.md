@@ -63,6 +63,8 @@ Verificadores Database crean entornos aislados según sus guías. La suite hist�
 
 Comandos **a implementar** en Backend durante E01/E06: `build`, `test:unit`, `test:contract`, `test:integration`, `test:security`, `test:e2e`, `lint:architecture`, ejecutables mediante `npm --prefix Backend run <script>`. Hoy no existen. La suite parametrizada recibe un bundle de prueba en configuración; el request productivo nunca selecciona motor.
 
+**Inicio del arnés E00-P2-03 (25/10/2026):** `Backend/tests/contratos/` contiene una guardia que permite solo loopback y base/proyecto demo únicos por ejecución, un formato de resultados explícito y verificaciones estructurales de semillas sintéticas para los cuatro bundles. Se ejecuta con `node --test Backend/tests/contratos/*.test.mjs`. Este primer corte no arranca API, drivers ni motores, y no acredita CA01–CA20 ni persistencia. Consultar [`Backend/tests/README.md`](../Backend/tests/README.md) para el alcance.
+
 ## 5. Evidencia portable
 
 Cada tarea crea `plan/evidencias/EXX/EXX-PX-NN.md` al ejecutarse: requisito/escenario, commit, fecha, versión de motores, preparación sintética, comando/pasos, esperado, observado y resultado. Enlazar resumen de log saneado o artefacto reproducible. Logs crudos pueden quedar en `.test-results/` ignorada; el compañero debe acceder a evidencia versionada sin secretos/datos reales. No usar únicamente rutas de `/tmp` o Downloads.
