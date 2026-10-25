@@ -44,6 +44,8 @@ Contacto,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.Contacto,VALI
 ContactoLectura,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.ContactoLectura,VALIDACION_OFFLINE
 SeleccionConsulta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.SeleccionConsulta,VALIDACION_OFFLINE
 Identificacion,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.Identificacion,VALIDACION_OFFLINE
+IdentificacionPacienteLeida,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.IdentificacionPacienteLeida,VALIDACION_OFFLINE
+IdentificacionResponsableLeida,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.IdentificacionResponsableLeida,VALIDACION_OFFLINE
 VinculoResponsable,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.VinculoResponsable,VALIDACION_OFFLINE
 NuevoResponsable,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.NuevoResponsable,VALIDACION_OFFLINE
 ResponsableAlta,ESQUEMA,HIGH,Backend/docs/openapi.yaml,components.schemas.ResponsableAlta,VALIDACION_OFFLINE

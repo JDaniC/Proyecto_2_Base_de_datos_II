@@ -1,24 +1,24 @@
 {
-  "base_git": "126bf9b09435bc21ee5b72d35031e4aea27926ac",
+  "base_git": "3cd02b193a2baad245dd6721e3ff80b7d040ed84",
   "incluye_cambios_locales": true,
   "sha256_artefactos": {
-    "Backend/docs/openapi.yaml": "55d5d3af96e5bf621129f2ddb48bcb4f0c0a36b864f0babf08ca050a41a23c8b",
-    "Backend/docs/puertos-v1.ts": "60df4fb1815c7b13965517951c3a43ea664a7b2ade1610643c3e2a0e5bd0b1bd",
-    "Backend/docs/fixtures/contrato-v1.json": "be4a2feba7c911c0b3d43457a23622811a729a1946fadf89b3cc104c8a1c4fa5"
+    "Backend/docs/openapi.yaml": "a2757b2c2b9842588ac0e868c32854f0dae1872c78f1dfa8265f971660986fc9",
+    "Backend/docs/puertos-v1.ts": "2ad7f21ee150c7808f41952700244f00ab24562277cdc4a8153e30d403a293c9",
+    "Backend/docs/fixtures/contrato-v1.json": "370a074f288f9f4fb49ece8fdd545e07459e1b06c9303d0318fc53bdadfa64c2"
   },
   "alcance": "E00-P1-03",
   "inventario": {
     "ENDPOINT_ESPECIFICADO": 26,
-    "ESQUEMA": 93,
+    "ESQUEMA": 95,
     "TIPO_DISENO": 15,
     "INTERFAZ_DISENO": 51,
     "METODO_DISENO": 25,
     "FUNCION_PYTHON": 4,
     "TRAZA_UI": 117
   },
-  "total_unidades_incluye_trazas": 331,
+  "total_unidades_incluye_trazas": 333,
   "resultados": {
-    "PASS": 25
+    "PASS": 26
   },
   "pruebas": [
     {
@@ -31,8 +31,8 @@
         "openapi": "3.1.0",
         "rutas": 22,
         "operaciones": 26,
-        "esquemas": 93,
-        "fixtures": 229,
+        "esquemas": 95,
+        "fixtures": 230,
         "metodos_ui": 117,
         "vigentes_ui": 96,
         "herramientas": {
@@ -304,6 +304,25 @@
         "tipo": "CONTRAEJEMPLO_DOCUMENTAL; no servidor ni corrección persistida ejecutados"
       },
       "hallazgo": "AF03",
+      "entorno": "OFFLINE_SIN_API_NI_MOTORES"
+    },
+    {
+      "id": "T12",
+      "categoria": "Conservación de lecturas legadas y límites de captura",
+      "resultado": "PASS",
+      "evidencia": {
+        "paciente_legado_valido_en_ficha_lista_y_expediente": true,
+        "longitudes_direccion_leida": [
+          501,
+          4000,
+          4001
+        ],
+        "alta_rechaza_direccion_501": true,
+        "cambio_rechaza_direccion_501": true,
+        "responsable_legado_valido": true,
+        "tipo": "CONTRATO_OFFLINE; no API ni motores ejecutados"
+      },
+      "hallazgo": "AF04",
       "entorno": "OFFLINE_SIN_API_NI_MOTORES"
     }
   ]

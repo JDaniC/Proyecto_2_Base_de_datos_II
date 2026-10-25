@@ -210,6 +210,48 @@ record('T11', 'Resolución de evento tras corrección', values_valid and resolve
         'esperado': 'Evento histórico conserva enlace inequívoco a su snapshot sin barrer revisiones.',
         'tipo': 'CONTRAEJEMPLO_DOCUMENTAL; no servidor ni corrección persistida ejecutados'}, 'AF03')
 
+# AF04: la lectura conserva valores legados que los modelos almacenan con
+# límites/formas más amplios que los comandos de alta y cambio.
+legacy_patient = copy.deepcopy(by_id['respuesta-Paciente-campos-legados'])
+legacy_data = legacy_patient['data']
+read_valid = not errors('RespuestaPaciente', legacy_patient)
+read_valid = read_valid and not errors('RespuestaPacientes', {
+    'data': [legacy_data], 'meta': legacy_patient['meta']})
+expediente = copy.deepcopy(by_id['respuesta-Expediente'])
+expediente['data']['paciente'] = legacy_data
+read_valid = read_valid and not errors('RespuestaExpediente', expediente)
+for length in (501, 4000, 4001):
+    candidate = copy.deepcopy(legacy_patient)
+    candidate['data']['direccion'] = 'D' * length
+    read_valid = read_valid and not errors('RespuestaPaciente', candidate)
+write = copy.deepcopy(by_id['pacienteCrear-valido'])
+write['direccion'] = 'D' * 501
+create_rejects_over_limit = bool(errors('AltaPaciente', write))
+patch_rejects_over_limit = bool(errors('CambioPaciente', {'version_esperada': 1, 'direccion': 'D' * 501}))
+responsable = {
+    'id': '00000000-0000-4000-8000-000000000003',
+    'nombre': 'N' * 401,
+    'telefono': 'T' * 40,
+    'documento': {'tipo': 'DOCUMENTO_LEGADO', 'numero': 'I' * 120},
+    'version': 1,
+    'nombres': 'N' * 200,
+    'apellidos': 'A' * 200,
+}
+vinculo = {
+    'responsable_id': responsable['id'], 'version_responsable': 1, 'parentesco': 'Madre',
+    'es_principal': True, 'autoriza_atencion': True,
+}
+responsable_read_valid = not errors('ResponsablePaciente', {
+    'responsable': responsable, 'vinculo': vinculo, 'version_vinculo': 1})
+record('T12', 'Conservación de lecturas legadas y límites de captura',
+       read_valid and create_rejects_over_limit and patch_rejects_over_limit and responsable_read_valid,
+       {'paciente_legado_valido_en_ficha_lista_y_expediente': read_valid,
+        'longitudes_direccion_leida': [501, 4000, 4001],
+        'alta_rechaza_direccion_501': create_rejects_over_limit,
+        'cambio_rechaza_direccion_501': patch_rejects_over_limit,
+        'responsable_legado_valido': responsable_read_valid,
+        'tipo': 'CONTRATO_OFFLINE; no API ni motores ejecutados'}, 'AF04')
+
 output = {'base_git': base, 'incluye_cambios_locales': bool(subprocess.run(
               ['git', 'diff', '--quiet', 'HEAD', '--', 'Backend'], cwd=ROOT).returncode),
           'sha256_artefactos': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()

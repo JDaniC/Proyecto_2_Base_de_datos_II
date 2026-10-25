@@ -1699,6 +1699,42 @@ components:
           properties:
             numero:
               maxLength: 20
+    IdentificacionPacienteLeida:
+      type: object
+      additionalProperties: false
+      description: Conserva el valor heredado; captura nueva usa Identificacion y sus límites de entrada.
+      properties:
+        tipo:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: \S
+        numero:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+      required:
+      - tipo
+      - numero
+    IdentificacionResponsableLeida:
+      type: object
+      additionalProperties: false
+      description: El modelo pediátrico existente permite hasta 120 caracteres en identificacion.
+      properties:
+        tipo:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: \S
+        numero:
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: \S
+      required:
+      - tipo
+      - numero
     VinculoResponsable:
       type: object
       additionalProperties: false
@@ -1937,17 +1973,27 @@ components:
         sexo:
           anyOf:
           - type: string
-            enum:
-            - MASCULINO
-            - FEMENINO
-            - OTRO
+            maxLength: 40
           - type: 'null'
-          description: null solo en lectura de registros históricos sin este dato; altas requieren dato válido.
-        identificacion: *id013
-        telefono: *id014
-        correo: *id015
-        direccion: *id016
-        grupo_sanguineo: *id017
+          description: Conserva etiquetas legadas; null representa dato ausente. Alta/cambio conservan su enum.
+        identificacion:
+          $ref: '#/components/schemas/IdentificacionPacienteLeida'
+        telefono:
+          type: string
+          maxLength: 254
+          description: Lectura del contacto legado sin aplicar el límite de captura.
+        correo:
+          type: string
+          description: Conserva cadenas heredadas sin revalidar el formato de captura.
+        direccion:
+          type: string
+          description: Conserva íntegro el valor persistido; la captura nueva mantiene su límite propio.
+        grupo_sanguineo:
+          type: string
+          maxLength: 10
+          description: Conserva el texto heredado de Hospital; alta/cambio aceptan solo el catálogo vigente.
+          x-instituciones:
+          - HOSPITAL_GENERAL
         contacto_emergencia:
           $ref: '#/components/schemas/ContactoLectura'
           x-instituciones:
@@ -2939,15 +2985,15 @@ components:
         nombre:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 401
           pattern: \S
         telefono:
           type: string
           minLength: 1
-          maxLength: 30
+          maxLength: 40
           pattern: \S
         documento:
-          $ref: '#/components/schemas/Identificacion'
+          $ref: '#/components/schemas/IdentificacionResponsableLeida'
         version:
           $ref: '#/components/schemas/Version'
         nombres:

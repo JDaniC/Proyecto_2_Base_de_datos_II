@@ -50,6 +50,8 @@ export interface RepositorioCuenta {
 export interface Reloj { ahora(): InstanteUTC; }
 export interface GeneradorIds { nuevo(): UUID; }
 export interface Identificacion { readonly tipo: 'CUI' | 'PASAPORTE'; readonly numero: string; }
+/** Proyección de identidad leída sin límites ni catálogo de captura. */
+export interface IdentificacionLeida { readonly tipo: string; readonly numero: string; }
 export interface PerfilPaciente {
   readonly nombres: string; readonly apellidos: string;
   readonly fechaNacimiento: FechaCivil; readonly sexo: 'MASCULINO' | 'FEMENINO' | 'OTRO';
@@ -63,8 +65,12 @@ export interface ArchivoRegistrado {
   readonly causa: CausaArchivo; readonly motivo: string;
   readonly fechaHora: InstanteUTC; readonly actorId: UUID;
 }
-export type Paciente = Omit<PerfilPaciente, 'fechaNacimiento' | 'sexo'> & {
-  readonly fechaNacimiento: FechaCivil | null; readonly sexo: PerfilPaciente['sexo'] | null;
+export type Paciente = Omit<PerfilPaciente,
+  'fechaNacimiento' | 'sexo' | 'identificacion' | 'telefono' | 'correo' | 'direccion' | 'grupoSanguineo'> & {
+  readonly fechaNacimiento: FechaCivil | null; readonly sexo: string | null;
+  readonly identificacion?: IdentificacionLeida;
+  readonly telefono?: string; readonly correo?: string; readonly direccion?: string;
+  readonly grupoSanguineo?: string;
   readonly id: UUID; readonly historialId: UUID; readonly version: Version;
   readonly codigoLegible: string; readonly fechaRegistro: InstanteUTC;
 } & (
@@ -237,7 +243,7 @@ export interface RepositorioIdentidades {
 export interface Responsable {
   readonly id: UUID; readonly version: Version;
   readonly nombres: string; readonly apellidos: string; readonly nombre: string;
-  readonly telefono: string; readonly documento: Identificacion;
+  readonly telefono: string; readonly documento: IdentificacionLeida;
 }
 export interface ProfesionalHistorico {
   readonly id: UUID; readonly nombre: string; readonly rol: Rol;

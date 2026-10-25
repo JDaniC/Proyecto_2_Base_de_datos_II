@@ -38,6 +38,58 @@ class RegresionesContrato(unittest.TestCase):
                 self.assertFalse(self.valid('AltaPaciente', {'nombres': 'A' * limit, 'apellidos': 'B',
                                                            'fecha_nacimiento': '2015-01-01', 'sexo': 'OTRO'}))
 
+    def test_af04_lecturas_preservan_campos_legados_sin_ampliar_captura(self):
+        response = copy.deepcopy(self.fixtures['respuesta-Paciente-campos-legados'])
+        patient = response['data']
+        self.assertEqual(len(patient['direccion']), 501)
+        self.assertTrue(self.valid('RespuestaPaciente', response))
+        self.assertTrue(self.valid('RespuestaPacientes', {'data': [patient], 'meta': response['meta']}))
+        record = copy.deepcopy(self.fixtures['respuesta-Expediente'])
+        record['data']['paciente'] = patient
+        self.assertTrue(self.valid('RespuestaExpediente', record))
+
+        for length in (500, 501, 4000, 4001):
+            patient['direccion'] = 'D' * length
+            with self.subTest(direccion=length):
+                self.assertTrue(self.valid('RespuestaPaciente', response))
+
+        capture = self.fixtures['pacienteCrear-valido']
+        invalid_capture = [
+            ('sexo', 'F'),
+            ('identificacion', {'tipo': 'DOCUMENTO_LEGADO', 'numero': 'I' * 80}),
+            ('telefono', 'T' * 31),
+            ('correo', 'correo legado sin formato'),
+            ('direccion', 'D' * 501),
+            ('grupo_sanguineo', 'SIN SABER'),
+        ]
+        for field, value in invalid_capture:
+            candidate = copy.deepcopy(capture)
+            candidate[field] = value
+            with self.subTest(captura=field):
+                self.assertFalse(self.valid('AltaPaciente', candidate))
+
+        responsible = {
+            'id': '00000000-0000-4000-8000-000000000003',
+            'nombre': 'N' * 401,
+            'telefono': 'T' * 40,
+            'documento': {'tipo': 'DOCUMENTO_LEGADO', 'numero': 'I' * 120},
+            'version': 1,
+            'nombres': 'N' * 200,
+            'apellidos': 'A' * 200,
+        }
+        link = {
+            'responsable_id': responsible['id'],
+            'version_responsable': 1,
+            'parentesco': 'Madre',
+            'es_principal': True,
+            'autoriza_atencion': True,
+        }
+        self.assertTrue(self.valid('ResponsablePaciente', {
+            'responsable': responsible,
+            'vinculo': link,
+            'version_vinculo': 1,
+        }))
+
     def test_af02_limite_dental_se_aplica_a_los_tres_comandos(self):
         sql = (ROOT / 'Database/clinica_odontologica_mysql.sql').read_text()
         table = sql.split('CREATE TABLE IF NOT EXISTS diagnostico (', 1)[1].split(') ENGINE=InnoDB;', 1)[0]
