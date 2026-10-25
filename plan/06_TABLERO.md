@@ -7,7 +7,7 @@ Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E00-P1-01](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | P1 | JDaniC | EN_REVISION | Puerta de fase | PR #4; [acta](evidencias/E00/E00-P1-01.md); 24/10/2026 |
 | [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | P1 | — | PENDIENTE | E00-P1-01 | Sin ejecución registrada |
 | [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | — | PENDIENTE | E00-P1-01, E00-P2-02 | Sin ejecución registrada |
-| [E00-P2-01](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
+| [E00-P2-01](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 | JDaniC | EN_CURSO | Puerta de fase | reservada; codex/e00-p2-01-entornos-ensayo; 24/10/2026 |
 | [E00-P2-02](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | P2 | — | PENDIENTE | E00-P1-01 | Sin ejecución registrada |
 | [E00-P2-03](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | P2 | — | PENDIENTE | E00-P1-03, E00-P2-01 | Sin ejecución registrada |
 | [E01-P1-01](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
