@@ -36,9 +36,10 @@ actor_baja=(SELECT id_publico FROM usuario WHERE id_usuario=91001) WHERE id_hist
 
 
 def main():
-    base = Path(shutil.which("initdb") or "").parent
+    base = modulo.buscar_binario_dir(None, "initdb", modulo.RUTAS_POSTGRES) or Path(shutil.which("initdb") or "").parent
     if not (base / "initdb").is_file():
         raise RuntimeError("Falta PostgreSQL nativo: prueba bloqueada.")
+    SALIDA.mkdir(parents=True, exist_ok=True)
     resultados = []
     with tempfile.TemporaryDirectory(prefix="bdii-auditoria-pg-") as temporal:
         carpeta = Path(temporal)
