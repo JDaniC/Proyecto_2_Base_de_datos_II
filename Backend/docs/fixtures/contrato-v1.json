@@ -3172,5 +3172,345 @@
         "fecha_registro": "2026-10-25T12:10:00Z"
       }
     }
+  },
+  {
+    "id": "signo-fraccionario-presion_sistolica",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "presion_sistolica": 120.5
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signo-fraccionario-presion_diastolica",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "presion_diastolica": 120.5
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signo-fraccionario-frecuencia_cardiaca_lpm",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "frecuencia_cardiaca_lpm": 60.5
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signo-fraccionario-frecuencia_respiratoria_rpm",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "frecuencia_respiratoria_rpm": 60.5
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signos-precision-valida",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 37.123,
+        "talla_cm": 140.25,
+        "temperatura_c": 36.7,
+        "saturacion_oxigeno_pct": 98.25,
+        "presion_sistolica": 120,
+        "presion_diastolica": 80,
+        "frecuencia_cardiaca_lpm": 75,
+        "frecuencia_respiratoria_rpm": 18
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signos-precision-excedida-peso_kg",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 37.1234,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "signos-precision-excedida-temperatura_c",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "temperatura_c": 36.75
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "historial-padre-DIAGNOSTICO",
+    "schema": "EventoHistorial",
+    "valid": true,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "historial-sin-padre-DIAGNOSTICO",
+    "schema": "EventoHistorial",
+    "valid": false,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "DIAGNOSTICO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "historial-padre-TRATAMIENTO",
+    "schema": "EventoHistorial",
+    "valid": true,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "historial-sin-padre-TRATAMIENTO",
+    "schema": "EventoHistorial",
+    "valid": false,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "TRATAMIENTO",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "historial-padre-RECETA",
+    "schema": "EventoHistorial",
+    "valid": true,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "consulta_id": "00000000-0000-4000-8000-000000000005",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "historial-sin-padre-RECETA",
+    "schema": "EventoHistorial",
+    "valid": false,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "fecha_hora": "2026-10-25T12:10:00Z",
+      "tipo": "RECETA",
+      "recurso_id": "00000000-0000-4000-8000-000000000071",
+      "titulo": "Diagnóstico sintético"
+    }
+  },
+  {
+    "id": "temperatura-decimal-exacto-36-3",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "temperatura_c": 36.3
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "entero-expresado-con-decimal-cero",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140,
+        "presion_sistolica": 120.0
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
   }
 ]

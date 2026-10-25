@@ -4,16 +4,39 @@ Uso: python Backend/scripts/validar_contrato.py
 Instalar primero Backend/docs/requirements-contrato.txt en un venv.
 """
 import json
+from decimal import Decimal
 from pathlib import Path
 import re
 from importlib.metadata import version
 
 import yaml
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator, FormatChecker, validators
 from openapi_spec_validator import validate_spec
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / 'Backend/docs'
+
+
+def decimal_values(value):
+    """Evita falsos rechazos de multipleOf debidos a división binaria de floats."""
+    if isinstance(value, float):
+        return Decimal(str(value))
+    if isinstance(value, dict):
+        return {key: decimal_values(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [decimal_values(item) for item in value]
+    return value
+
+
+def is_integer(checker, value):
+    return (Draft202012Validator.TYPE_CHECKER.is_type(value, 'integer')
+            or isinstance(value, Decimal) and value.is_finite() and value == value.to_integral_value())
+
+
+ExactValidator = validators.extend(
+    Draft202012Validator,
+    type_checker=Draft202012Validator.TYPE_CHECKER.redefine('integer', is_integer),
+)
 
 
 def require(condition, message):
@@ -25,12 +48,13 @@ def validate_artifacts():
     spec = yaml.safe_load((DOCS / 'openapi.yaml').read_text())
     validate_spec(spec)
     schemas = spec['components']['schemas']
+    components = decimal_values(spec['components'])
     for name, schema in schemas.items():
         Draft202012Validator.check_schema(schema)
     operations = {op['operationId']: op for item in spec['paths'].values()
                   for method, op in item.items() if method in {'get', 'post', 'patch', 'put', 'delete'}}
     require(len(operations) == sum(len(item) for item in spec['paths'].values()), 'operationId duplicado')
-    fixtures = json.loads((DOCS / 'fixtures/contrato-v1.json').read_text())
+    fixtures = json.loads((DOCS / 'fixtures/contrato-v1.json').read_text(), parse_float=Decimal)
     ids = set()
     request_coverage = set()
     for case in fixtures:
@@ -38,7 +62,7 @@ def validate_artifacts():
         ids.add(case['id'])
         target = case['schema']
         require(target in schemas, 'Esquema inexistente: ' + target)
-        validator = Draft202012Validator({'components': spec['components'], '$ref': '#/components/schemas/' + target},
+        validator = ExactValidator({'components': components, '$ref': '#/components/schemas/' + target},
                                         format_checker=FormatChecker())
         errors = list(validator.iter_errors(case['value']))
         require((not errors) == case['valid'], 'Fixture con resultado incorrecto: ' + case['id'] +
@@ -51,7 +75,7 @@ def validate_artifacts():
     # Los ejemplos embebidos en errores también deben cumplir su esquema.
     for response in spec['components']['responses'].values():
         media = response['content']['application/json']
-        validator = Draft202012Validator({'components': spec['components'], 'allOf': [media['schema']]},
+        validator = ExactValidator({'components': components, 'allOf': [media['schema']]},
                                         format_checker=FormatChecker())
         validator.validate(media['example'])
     for name, op in operations.items():

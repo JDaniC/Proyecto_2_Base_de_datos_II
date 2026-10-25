@@ -1943,40 +1943,43 @@ components:
           - type: number
             minimum: 0.1
             maximum: 500
+            multipleOf: 0.001
           - type: 'null'
         talla_cm:
           anyOf:
           - type: number
             minimum: 10
             maximum: 300
+            multipleOf: 0.01
           - type: 'null'
         temperatura_c:
           anyOf:
           - type: number
             minimum: 20
             maximum: 50
+            multipleOf: 0.1
           - type: 'null'
         presion_sistolica:
           anyOf:
-          - type: number
+          - type: integer
             minimum: 10
             maximum: 300
           - type: 'null'
         presion_diastolica:
           anyOf:
-          - type: number
+          - type: integer
             minimum: 10
             maximum: 200
           - type: 'null'
         frecuencia_cardiaca_lpm:
           anyOf:
-          - type: number
+          - type: integer
             minimum: 10
             maximum: 300
           - type: 'null'
         frecuencia_respiratoria_rpm:
           anyOf:
-          - type: number
+          - type: integer
             minimum: 1
             maximum: 150
           - type: 'null'
@@ -1985,6 +1988,7 @@ components:
           - type: number
             minimum: 0
             maximum: 100
+            multipleOf: 0.01
           - type: 'null'
         perimetro_cefalico_cm:
           anyOf:
@@ -1993,6 +1997,8 @@ components:
             maximum: 100
           - type: 'null'
       required: []
+      description: Presiones y frecuencias enteras; peso hasta 3 decimales, talla y saturación hasta 2, temperatura
+        hasta 1. Rechazar precisión excedida sin redondear datos clínicos silenciosamente.
     Diagnostico:
       type: object
       additionalProperties: false
@@ -2528,12 +2534,30 @@ components:
           pattern: \S
         profesional:
           $ref: '#/components/schemas/Profesional'
+        consulta_id:
+          $ref: '#/components/schemas/UUID'
       required:
       - id
       - fecha_hora
       - tipo
       - recurso_id
       - titulo
+      allOf:
+      - if:
+          properties:
+            tipo:
+              enum:
+              - DIAGNOSTICO
+              - TRATAMIENTO
+              - RECETA
+          required:
+          - tipo
+        then:
+          required:
+          - consulta_id
+      description: En componentes clínicos recurso_id identifica el componente y consulta_id su padre, para cargar
+        GET /consultas/{consulta_id} sin barrer historia. En tipo CONSULTA, recurso_id ya es la consulta. Referencias
+        del mismo paciente/ámbito; selladas por servidor.
     Historial:
       type: object
       additionalProperties: false

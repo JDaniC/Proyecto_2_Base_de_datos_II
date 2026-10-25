@@ -111,6 +111,9 @@ export interface RevisionPaciente {
   readonly id: UUID; readonly pacienteId: UUID; readonly anterior: Paciente;
   readonly actorId: UUID; readonly fechaHora: InstanteUTC;
 }
+/** Presiones/frecuencias enteras; escala peso 3, talla/saturación 2, temperatura 1.
+ * DTO inválido se rechaza; no redondear mediciones en adaptadores.
+ */
 export interface SignosVitales {
   readonly pesoKg?: number | null; readonly tallaCm?: number | null;
   readonly temperaturaC?: number | null; readonly presionSistolica?: number | null;
@@ -177,13 +180,17 @@ export interface RevisionConsulta {
 }
 export interface Pagina<T> { readonly elementos: readonly T[]; readonly siguienteCursor?: string; }
 export interface FiltrosPagina { readonly limite: number; readonly cursor?: string; readonly orden: 'ASC' | 'DESC'; }
-export interface EventoHistorial {
+export type TipoEventoHistorial = 'CONSULTA' | 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA' | 'ARCHIVO'
+  | 'REACTIVACION' | 'HOSPITALIZACION' | 'EXAMEN' | 'ORDEN_LAB' | 'RESULTADO_LAB'
+  | 'INFORME_LAB' | 'VACUNA' | 'CRECIMIENTO';
+export type EventoHistorial = {
   readonly id: UUID; readonly fechaHora: InstanteUTC; readonly recursoId: UUID;
-  readonly tipo: 'CONSULTA' | 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA' | 'ARCHIVO'
-    | 'REACTIVACION' | 'HOSPITALIZACION' | 'EXAMEN' | 'ORDEN_LAB' | 'RESULTADO_LAB'
-    | 'INFORME_LAB' | 'VACUNA' | 'CRECIMIENTO';
   readonly titulo: string;
-}
+} & (
+  | { readonly tipo: 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'; readonly consultaId: UUID }
+  | { readonly tipo: Exclude<TipoEventoHistorial, 'DIAGNOSTICO' | 'TRATAMIENTO' | 'RECETA'>;
+      readonly consultaId?: UUID }
+);
 export interface RepositorioPaciente {
   porId(id: UUID): Promise<Paciente | null>;
   historialEstados(id: UUID, pagina: FiltrosPagina): Promise<Pagina<EventoEstadoPaciente>>;

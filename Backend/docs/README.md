@@ -73,3 +73,8 @@ Invariante común comprobada contra los cuatro modelos: concentración e indicac
 
 
 La revisión propia de lectura clínica separa además entradas de diagnósticos/tratamientos/medicamentos de sus snapshots registrados. Respuesta contiene UUID de cada componente y fecha/autor reales de diagnóstico/tratamiento; el cliente no controla esos metadatos ni los deriva de fecha de consulta. El plan confirma eventos del historial con UUID del componente para preservar fecha/autor cuando el modelo físico los guarda en eventos/revisiones en vez de embebidos. E03 debe materializar esa proyección transaccional y cualquier migración explícita antes de conectar la lectura; no modifica los modelos desde este contrato.
+
+
+Historial de componentes clínicos: los eventos DIAGNOSTICO/TRATAMIENTO/RECETA incluyen consulta_id padre y recurso_id del componente. El cliente carga GET /consultas/{consulta_id} y selecciona ese UUID dentro del agregado; nunca pasa el UUID hijo como consulta ni barre todas las consultas para localizarlo. Las referencias se generan/revalidan en el mismo ámbito y paciente.
+
+Precisión de signos: presiones sistólica/diastólica y frecuencias cardiaca/respiratoria son enteras. Peso admite 3 decimales, talla/saturación 2, temperatura 1, según capacidad común preservable en el modelo hospitalario; rechazar precisión excedida sin redondeo clínico. El validador documental usa Decimal para evaluar multipleOf de forma exacta y acepta enteros matemáticos como 120.0; E01/E03 deben evitar residuos binarios de flotantes al aplicar esa validación.

@@ -402,3 +402,6 @@ Invariante común de recetas (quinta revisión E00-P1-03): concentración e indi
 
 
 Lectura clínica: DiagnosticoRegistrado y TratamientoRegistrado exponen id, fecha_registro y registrado_por propios del componente. MedicamentoPrescrito incluye id; RecetaEmitida conserva fecha_emision propia. El mapper alimenta DiagnosticoHistorial.fechaRegistro/registradoPor y RecetaHistorial.fechaEmision con esos campos, sin inferirlos de la consulta. DTO de entrada no acepta esos sellos. E03 implementa su proyección transaccional antes de conectar la UI.
+
+
+Historial y signos (sexta revisión E00-P1-03): eventos de diagnóstico/tratamiento/receta llevan consulta_id para cargar su padre directamente y recurso_id para seleccionar el componente, incluso con filtro de tipo. Presiones/frecuencias aceptan valores enteros; peso máximo 3 decimales, talla/saturación 2, temperatura 1. UI valida antes de enviar, sin redondear mediciones para conseguir una escritura válida.

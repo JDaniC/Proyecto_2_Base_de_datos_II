@@ -156,3 +156,8 @@ Los campos clínicos opcionales vacíos (síntomas/observaciones de consulta, ob
 
 
 Lectura clínica por componente: DiagnosticoRegistrado/TratamientoRegistrado preservan UUID, fecha_registro y registrado_por propios; MedicamentoPrescrito preserva UUID. Las entradas conservan DTO separados y rechazan fecha/autor/IDs del servidor. No reutilizar fecha de apertura como fecha de alta de diagnóstico añadido posteriormente. PlanConfirmacion incluye eventosHistorial transaccionales por UUID del componente; E03 materializa índices/proyecciones y cualquier migración necesaria antes de conectar lecturas, sin alterar M01–M09 de forma silenciosa. Las revisiones guardan snapshots de lectura completos con esos metadatos.
+
+
+Historial de componentes clínicos: los eventos DIAGNOSTICO/TRATAMIENTO/RECETA incluyen consulta_id padre y recurso_id del componente. El cliente carga GET /consultas/{consulta_id} y selecciona ese UUID dentro del agregado; nunca pasa el UUID hijo como consulta ni barre todas las consultas para localizarlo. Las referencias se generan/revalidan en el mismo ámbito y paciente.
+
+Precisión de signos: presiones sistólica/diastólica y frecuencias cardiaca/respiratoria son enteras. Peso admite 3 decimales, talla/saturación 2, temperatura 1, según capacidad común preservable en el modelo hospitalario; rechazar precisión excedida sin redondeo clínico. El validador documental usa Decimal para evaluar multipleOf de forma exacta y acepta enteros matemáticos como 120.0; E01/E03 deben evitar residuos binarios de flotantes al aplicar esa validación.
