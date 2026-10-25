@@ -1,12 +1,12 @@
 # Tablero de ejecución
 
-Actualizado: 24/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 25/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
 | [E00-P1-01](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01) | P1 | JDaniC | HECHA | Puerta de fase | PR #4 (`3dffdd8`); [acta](evidencias/E00/E00-P1-01.md); 24/10/2026 |
 | [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02) | P1 | JDaniC | HECHA | E00-P1-01 | PR #11 (`39714de`); [evidencia](evidencias/E00/E00-P1-02.md); 24/10/2026 |
-| [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | JDaniC | EN_REVISION | E00-P1-01, E00-P2-02 | [PR #15](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/15); AF01–AF06 corregidos/publicados (`AF06: 9baec4b`); [revalidación](evidencias/E00/auditoria-E00-P1-03-2026-10-25/REVALIDACION.md) 28 PASS; revisión final pendiente |
+| [E00-P1-03](entregas/E00_base_y_contratos/01_P1.md#e00-p1-03) | P1 | JDaniC | HECHA | E00-P1-01, E00-P2-02 | [PR #15 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/15) (`445974f`); Codex limpio sobre `679ecc9`; `revision-codex` y `contrato-pr` success; [evidencia](evidencias/E00/E00-P1-03.md), [revalidación](evidencias/E00/auditoria-E00-P1-03-2026-10-25/REVALIDACION.md) 29 PASS; 25/10/2026 |
 | [E00-P2-01](entregas/E00_base_y_contratos/02_P2.md#e00-p2-01) | P2 | JDaniC | HECHA | Puerta de fase | PR #7 (`8c85f30`); [evidencia](evidencias/E00/E00-P2-01.md); 24/10/2026 |
 | [E00-P2-02](entregas/E00_base_y_contratos/02_P2.md#e00-p2-02) | P2 | JDaniC | HECHA | E00-P1-01 | PR #13 (`484d5bf`); [evidencia](evidencias/E00/E00-P2-02.md); 25/10/2026 |
 | [E00-P2-03](entregas/E00_base_y_contratos/02_P2.md#e00-p2-03) | P2 | — | PENDIENTE | E00-P1-03, E00-P2-01 | Sin ejecución registrada |

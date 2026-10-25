@@ -1,6 +1,6 @@
 # Estado para continuar en un chat nuevo
 
-Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
+Corte observado: 25/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
 
 ## Producto y entradas
 
@@ -40,4 +40,4 @@ Actualizar al cambiar producto, bloqueos generales o estado de integración. Reg
 
 La guía única es Frontend/README.md. Las especificaciones de creación y el informe narrativo de UI se retiraron; sus resultados históricos se resumen allí y la evidencia JSON se conserva en plan/evidencias/UI/2026-10-23/. Los tokens y componentes reales son la referencia de diseño vigente.
 
-Corte documental E00-P1-03 (25/10/2026): contrato y validación en Backend/docs y Backend/scripts; reserva/revisión en PR #15, estado oficial en tablero. Evidencia offline en plan/evidencias/E00/E00-P1-03.md. No iniciar backend por la existencia de sus contratos; E00-P2-03 y cierre de fase conservan sus dependencias.
+Corte E00-P1-03 (25/10/2026): PR #15 integrado en develop como `445974f` tras revisión Codex limpia de `679ecc9`; `contrato-pr` y `revision-codex` success. La evidencia está en plan/evidencias/E00/E00-P1-03.md. Este PR [PLAN] registra HECHA en el tablero; E00-P2-03 se inicia solo después de integrar ese cierre. Backend operativo y persistencia real siguen pendientes.
