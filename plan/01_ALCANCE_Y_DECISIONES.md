@@ -108,7 +108,7 @@ Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven 
 
 | Rol | Instituciones | Permisos mínimos |
 |---|---|---|
-| `ADMIN_INSTITUCIONAL` | Las cuatro | `pacientes.administrar`, `historial.leer`, `historial.archivar`, `citas.administrar`¹, `usuarios.administrar`², `auditoria.leer`³; en laboratorio además `cobros.administrar`, `inventario.administrar` |
+| `ADMIN_INSTITUCIONAL` | Las cuatro | `pacientes.administrar`, `historial.leer`, `historial.archivar`, `citas.administrar`¹, `usuarios.administrar`², `auditoria.leer`³; en laboratorio además `cobros.administrar`, `inventario.administrar`, `ordenes.administrar`, `muestras.administrar` |
 | `SECRETARIA` | Hospital, odontología, pediatría | `pacientes.administrar`, `citas.administrar` (sin campos clínicos) |
 | `MEDICO` | Hospital | `historial.leer`, `consultas.registrar`, `diagnosticos.registrar`, `tratamientos.registrar`, `recetas.emitir` + profesional activo |
 | `ODONTOLOGO` | Odontología | Igual que `MEDICO`, con odontólogo activo |
@@ -116,6 +116,8 @@ Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven 
 | `MEDICO_LABORATORIO` | Laboratorio | Igual que `MEDICO`, solo con solicitante médico individual activo vinculado. No valida resultados por defecto |
 | `ANALISTA_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.analizar` |
 | `VALIDADOR_LABORATORIO` | Laboratorio | `historial.leer`, `resultados.validar`, `informes.emitir` |
-| `SECRETARIA` (recepción) | Laboratorio | `pacientes.administrar`; sin agenda. El permiso de órdenes/muestras no existe en el catálogo actual: definirlo en E00-P1-03 (PENDIENTE) |
+| `SECRETARIA` (recepción) | Laboratorio | `pacientes.administrar`, `ordenes.administrar`, `muestras.administrar`; sin agenda ni permisos clínicos/analíticos. Definidos en E00-P1-03, materialización en E01/E05 |
 
 ¹ Excepto laboratorio. ² Provisión controlada fuera de laboratorio. ³ Visor solo laboratorio/pediatría. Análisis y validación son permisos distintos; la demo puede asignarlos a cuentas diferentes. Administrar usuarios no concede acceso clínico. `historial.archivar` solo administrador; la reactivación pediátrica usa el mismo permiso con motivo.
+
+Recepción de laboratorio (E00-P1-03, 25/10/2026): `ordenes.administrar` cubre registro/consulta administrativa de órdenes y `muestras.administrar` su cadena de custodia. Se asignan solo a SECRETARIA y ADMIN_INSTITUCIONAL de laboratorio, sin otorgar análisis, validación ni prescripción. Contrato y límites: [plan/03 §7](03_CONTRATOS_Y_FLUJOS.md#7-congelación-del-contrato-común-v1--e00-p1-03). Es una decisión del proyecto que resuelve la brecha de DEC13, no una instrucción docente. Los tipos/guards UI y backend se implementan al conectar E01/E05.

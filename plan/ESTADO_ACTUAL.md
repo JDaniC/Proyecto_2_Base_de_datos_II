@@ -6,7 +6,7 @@ Corte observado: 24/10/2026, America/Guatemala. Es un índice de orientación; v
 
 - Entrega final objetivo: 05/11/2026; [cronograma](09_CRONOGRAMA_HASTA_05_NOV.md). La estimación original excede la capacidad supuesta; recalibrar en E00.
 - Cuatro modelos y herramientas en Database/. Hospital→PostgreSQL, dental→MySQL, laboratorio→MongoDB y pediatría→Firestore.
-- Frontend/ React implementado con simuladores. Backend/ solo contiene .gitkeep: no afirmar persistencia UI→API real. Reutilizar UI; no reconstruirla desde cero.
+- Frontend/ React implementado con simuladores. Backend/ incluye contrato común OpenAPI, firmas de diseño, fixtures y validador documental de E00-P1-03; todavía no contiene servidor/casos de uso/adaptadores implementados. No afirmar persistencia UI→API real. Reutilizar UI; no reconstruirla desde cero.
 - [Alcance portable](01_ALCANCE_Y_DECISIONES.md), [arquitectura](02_ARQUITECTURA_HEXAGONAL.md), [contratos](03_CONTRATOS_Y_FLUJOS.md) y [plan maestro](00_PLAN_MAESTRO.md).
 
 ## Estado técnico que no debe confundirse con pruebas actuales
@@ -39,3 +39,5 @@ Actualizar al cambiar producto, bloqueos generales o estado de integración. Reg
 ## Documentación de interfaz
 
 La guía única es Frontend/README.md. Las especificaciones de creación y el informe narrativo de UI se retiraron; sus resultados históricos se resumen allí y la evidencia JSON se conserva en plan/evidencias/UI/2026-10-23/. Los tokens y componentes reales son la referencia de diseño vigente.
+
+Corte documental E00-P1-03 (25/10/2026): contrato y validación en Backend/docs y Backend/scripts; reserva/revisión en PR #15, estado oficial en tablero. Evidencia offline en plan/evidencias/E00/E00-P1-03.md. No iniciar backend por la existencia de sus contratos; E00-P2-03 y cierre de fase conservan sus dependencias.

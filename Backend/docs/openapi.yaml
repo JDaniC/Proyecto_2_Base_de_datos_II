@@ -1,0 +1,2791 @@
+openapi: 3.1.0
+info:
+  title: Entrega II — contrato común
+  version: 1.0.0
+  description: E00-P1-03. Especificación, no implementación. Extensiones institucionales se congelan en E04/E05
+    antes de conectarlas. Solo datos sintéticos en ejemplos.
+servers:
+- url: /api/v1
+security:
+- FirebaseBearer: []
+x-limites:
+  max_bytes_utf8: 262144
+  max_items: 100
+  max_intentos_transitorios: 3
+paths:
+  /sesion:
+    post:
+      operationId: sesionEstablecer
+      summary: sesionEstablecer
+      description: Firebase Auth inicia sesión en cliente. Verificar Bearer con revocación y cuenta local; sin email/password,
+        selector de institución ni cookie alternativa.
+      tags:
+      - sesion
+      x-permisos: []
+      x-instituciones: &id001
+      - HOSPITAL_GENERAL
+      - CLINICA_ODONTOLOGICA
+      - LABORATORIO_CLINICO
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: NOT_IMPLEMENTED
+      parameters: []
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSesion'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+    get:
+      operationId: sesionActual
+      summary: sesionActual
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - sesion
+      x-permisos: []
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters: []
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaSesion'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /sesion/cierre:
+    post:
+      operationId: sesionCerrar
+      summary: sesionCerrar
+      description: Revocar refresh tokens del UID verificado fuera de UoW clínica (E01-P1-03); rechazar ID tokens
+        revocados. Después el cliente ejecuta signOut. Si Auth falla responder 503 IDENTIDAD_NO_DISPONIBLE; no afirmar
+        cierre global.
+      tags:
+      - sesion
+      x-permisos: []
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters: []
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCierreSesion'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /pacientes:
+    post:
+      operationId: pacienteCrear
+      summary: pacienteCrear
+      description: Alta e historial/reservas/auditoría atómicos. Pediatría valida AltaPediatrica; odontología admite
+        identificación ausente. Responsables nuevos se crean y vinculan atómicamente, existentes se referencian
+        y revalidan.
+      tags:
+      - pacientes
+      x-permisos:
+      - pacientes.administrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '201':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPaciente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AltaPaciente'
+      x-esquemas-institucionales:
+        CENTRO_MEDICO_PEDIATRICO:
+          $ref: '#/components/schemas/AltaPediatrica'
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/AltaDental'
+    get:
+      operationId: pacienteBuscar
+      summary: pacienteBuscar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - pacientes.administrar|historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema: &id002
+          $ref: '#/components/schemas/Cursor'
+      - name: limite
+        in: query
+        required: false
+        schema: &id003
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: orden
+        in: query
+        required: false
+        schema: &id004
+          type: string
+          enum:
+          - ASC
+          - DESC
+          default: ASC
+      - name: q
+        in: query
+        required: true
+        schema: &id033
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: \S
+      - name: estado
+        in: query
+        required: false
+        schema: &id034
+          type: string
+          enum:
+          - ACTIVO
+          - ARCHIVADO
+          - TODOS
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPacientes'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarPacientes'
+  /pacientes/{id}:
+    get:
+      operationId: pacienteObtener
+      summary: pacienteObtener
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - pacientes.administrar|historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPaciente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+    patch:
+      operationId: pacienteActualizar
+      summary: pacienteActualizar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - pacientes.administrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPaciente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioPaciente'
+  /pacientes/{id}/historial:
+    get:
+      operationId: pacienteHistorial
+      summary: pacienteHistorial
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: cursor
+        in: query
+        required: false
+        schema: *id002
+      - name: limite
+        in: query
+        required: false
+        schema: *id003
+      - name: orden
+        in: query
+        required: false
+        schema: *id004
+      - name: desde
+        in: query
+        required: false
+        schema: &id005
+          $ref: '#/components/schemas/InstanteUTC'
+      - name: hasta
+        in: query
+        required: false
+        schema: &id006
+          $ref: '#/components/schemas/InstanteUTC'
+      - name: tipo
+        in: query
+        required: false
+        schema: &id007
+          type: string
+          enum:
+          - CONSULTA
+          - DIAGNOSTICO
+          - TRATAMIENTO
+          - RECETA
+          - ARCHIVO
+          - REACTIVACION
+          - HOSPITALIZACION
+          - EXAMEN
+          - ORDEN_LAB
+          - RESULTADO_LAB
+          - INFORME_LAB
+          - VACUNA
+          - CRECIMIENTO
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHistorial'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarHistorial'
+  /pacientes/{id}/expediente:
+    get:
+      operationId: pacienteExpediente
+      summary: pacienteExpediente
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: cursor
+        in: query
+        required: false
+        schema: *id002
+      - name: limite
+        in: query
+        required: false
+        schema: *id003
+      - name: orden
+        in: query
+        required: false
+        schema: *id004
+      - name: desde
+        in: query
+        required: false
+        schema: *id005
+      - name: hasta
+        in: query
+        required: false
+        schema: *id006
+      - name: tipo
+        in: query
+        required: false
+        schema: *id007
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaExpediente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarHistorial'
+  /pacientes/{id}/archivo:
+    post:
+      operationId: pacienteArchivar
+      summary: pacienteArchivar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - historial.archivar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPaciente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivoPaciente'
+  /pacientes/{id}/reactivacion:
+    post:
+      operationId: pacienteReactivar
+      summary: pacienteReactivar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - pacientes
+      x-permisos:
+      - historial.archivar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPaciente'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactivacionPaciente'
+  /citas:
+    get:
+      operationId: citaListar
+      summary: citaListar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar|consultas.registrar
+      x-instituciones: &id008
+      - HOSPITAL_GENERAL
+      - CLINICA_ODONTOLOGICA
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema: *id002
+      - name: limite
+        in: query
+        required: false
+        schema: *id003
+      - name: orden
+        in: query
+        required: false
+        schema: *id004
+      - name: fecha_desde
+        in: query
+        required: true
+        schema: &id035
+          $ref: '#/components/schemas/FechaCivil'
+      - name: fecha_hasta
+        in: query
+        required: true
+        schema: &id036
+          $ref: '#/components/schemas/FechaCivil'
+      - name: profesional_id
+        in: query
+        required: false
+        schema: &id037
+          $ref: '#/components/schemas/UUID'
+      - name: estado
+        in: query
+        required: false
+        schema: &id032
+          type: string
+          enum:
+          - PROGRAMADA
+          - EN_CURSO
+          - ATENDIDA
+          - CANCELADA
+      - name: q
+        in: query
+        required: false
+        schema: &id038
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: \S
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCitas'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarCitas'
+    post:
+      operationId: citaCrear
+      summary: citaCrear
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar
+      x-instituciones: *id008
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '201':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCita'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearCita'
+  /citas/{id}:
+    get:
+      operationId: citaObtener
+      summary: citaObtener
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar|consultas.registrar
+      x-instituciones: *id008
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCita'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /citas/{id}/reprogramacion:
+    patch:
+      operationId: citaReprogramar
+      summary: citaReprogramar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar
+      x-instituciones: *id008
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCita'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReprogramarCita'
+  /citas/{id}/cancelacion:
+    post:
+      operationId: citaCancelar
+      summary: citaCancelar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - citas
+      x-permisos:
+      - citas.administrar
+      x-instituciones: *id008
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaCita'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelarCita'
+  /consultas:
+    post:
+      operationId: consultaAbrir
+      summary: consultaAbrir
+      description: 'Abrir ABIERTA con las mismas precondiciones institucionales que consultaCompleta: cita dental
+        obligatoria; autorización pediátrica vigente; profesional médico individual en laboratorio. Bloquear archivo
+        concurrente mediante versión_paciente y avance de revisión. Sin receta hasta comando autorizado.'
+      tags:
+      - consultas
+      x-permisos:
+      - consultas.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '201':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbrirConsulta'
+      x-esquemas-institucionales:
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/AperturaDental'
+        CENTRO_MEDICO_PEDIATRICO:
+          $ref: '#/components/schemas/AperturaPediatrica'
+  /consultas/completas:
+    post:
+      operationId: consultaCompleta
+      summary: consultaCompleta
+      description: 'Unidad atómica: consulta FINALIZADA, diagnósticos con exactamente un principal si no vacíos,
+        tratamientos, receta opcional (exige recetas.emitir), cita atendida, revisión/auditoría/operación. Profesional
+        activo de cuenta. Revalidar y avanzar versión de paciente/historial; versión de cita y vínculo si presentes.
+        Dental requiere cita PROGRAMADA propia y profesional coincidente; pediatría autorización vigente; laboratorio
+        médico individual vinculado activo. Falla de cualquier parte revierte todo.'
+      tags:
+      - consultas
+      x-permisos:
+      - consultas.registrar
+      - diagnosticos.registrar
+      - tratamientos.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '201':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsultaCompleta'
+      x-esquemas-institucionales:
+        CLINICA_ODONTOLOGICA:
+          $ref: '#/components/schemas/ConsultaDental'
+        CENTRO_MEDICO_PEDIATRICO:
+          $ref: '#/components/schemas/ConsultaPediatrica'
+  /consultas/{id}:
+    get:
+      operationId: consultaObtener
+      summary: consultaObtener
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /consultas/{id}/finalizacion:
+    post:
+      operationId: consultaFinalizar
+      summary: consultaFinalizar
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - consultas.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalizarConsulta'
+  /consultas/{id}/diagnosticos:
+    post:
+      operationId: consultaDiagnostico
+      summary: consultaDiagnostico
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - diagnosticos.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgregarDiagnostico'
+  /consultas/{id}/tratamientos:
+    post:
+      operationId: consultaTratamiento
+      summary: consultaTratamiento
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - tratamientos.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgregarTratamiento'
+  /consultas/{id}/receta:
+    post:
+      operationId: consultaReceta
+      summary: consultaReceta
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - recetas.emitir
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmitirReceta'
+  /consultas/{id}/correcciones:
+    post:
+      operationId: consultaCorregir
+      summary: consultaCorregir
+      description: FINALIZADA admite reemplazo clínico completo autorizado con motivo y versión, incluida después
+        de archivo. Conservar snapshot anterior y versión de receta; no cambiar paciente, cita ni profesional. Si
+        cambia receta exige recetas.emitir. Revalidar permiso sobre cada sección cambiada; omitir receta en snapshot
+        significa retirar la receta vigente preservando historia y exige recetas.emitir también.
+      tags:
+      - consultas
+      x-permisos:
+      - consultas.registrar
+      - diagnosticos.registrar
+      - tratamientos.registrar
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - $ref: '#/components/parameters/Idempotencia'
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaConsulta'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorregirConsulta'
+  /consultas/{id}/revisiones:
+    get:
+      operationId: consultaRevisiones
+      summary: consultaRevisiones
+      description: Ámbito institucional y autorización de la cuenta verificada; no acepta autoridad del cliente.
+      tags:
+      - consultas
+      x-permisos:
+      - historial.leer
+      x-instituciones: *id001
+      x-implementacion: NOT_IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/UUID'
+      - name: cursor
+        in: query
+        required: false
+        schema: *id002
+      - name: limite
+        in: query
+        required: false
+        schema: *id003
+      - name: orden
+        in: query
+        required: false
+        schema: *id004
+      - name: desde
+        in: query
+        required: false
+        schema: *id005
+      - name: hasta
+        in: query
+        required: false
+        schema: *id006
+      responses:
+        '200':
+          description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaRevisiones'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-query-schema:
+        $ref: '#/components/schemas/BuscarRevisiones'
+components:
+  securitySchemes:
+    FirebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID token
+      description: Verificación de firma/emisor/audiencia/vencimiento/revocación más cuenta local/roles actuales.
+        Sin autoridad enviada por cliente.
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+    Version:
+      type: integer
+      minimum: 1
+      maximum: 9007199254740991
+    FechaCivil:
+      type: string
+      format: date
+      pattern: ^\d{4}-\d{2}-\d{2}$
+    InstanteUTC:
+      type: string
+      format: date-time
+      pattern: Z$
+    HoraCivil:
+      type: string
+      pattern: ^([01]\d|2[0-3]):[0-5]\d$
+    Cursor:
+      type: string
+      minLength: 1
+      maxLength: 2048
+      pattern: ^[A-Za-z0-9_-]+$
+    Institucion:
+      type: string
+      enum:
+      - HOSPITAL_GENERAL
+      - CLINICA_ODONTOLOGICA
+      - LABORATORIO_CLINICO
+      - CENTRO_MEDICO_PEDIATRICO
+    Rol:
+      type: string
+      enum:
+      - ADMIN_INSTITUCIONAL
+      - SECRETARIA
+      - MEDICO
+      - ODONTOLOGO
+      - PEDIATRA
+      - MEDICO_LABORATORIO
+      - ANALISTA_LABORATORIO
+      - VALIDADOR_LABORATORIO
+    Permiso:
+      type: string
+      enum:
+      - pacientes.administrar
+      - historial.leer
+      - historial.archivar
+      - citas.administrar
+      - consultas.registrar
+      - diagnosticos.registrar
+      - tratamientos.registrar
+      - recetas.emitir
+      - usuarios.administrar
+      - auditoria.leer
+      - resultados.analizar
+      - resultados.validar
+      - informes.emitir
+      - cobros.administrar
+      - inventario.administrar
+      - ordenes.administrar
+      - muestras.administrar
+    Meta:
+      type: object
+      additionalProperties: false
+      properties:
+        correlacion:
+          $ref: '#/components/schemas/UUID'
+        siguiente_cursor:
+          $ref: '#/components/schemas/Cursor'
+      required:
+      - correlacion
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          properties:
+            codigo:
+              type: string
+              enum:
+              - SOLICITUD_INVALIDA
+              - NO_AUTENTICADO
+              - CUENTA_NO_HABILITADA
+              - SIN_PERMISO
+              - RECURSO_NO_ENCONTRADO
+              - PACIENTE_DUPLICADO
+              - CLAVE_REUTILIZADA
+              - VERSION_DESACTUALIZADA
+              - ESTADO_INVALIDO
+              - REFERENCIA_INCOMPATIBLE
+              - RECETA_EXISTENTE
+              - CITA_SOLAPADA
+              - CAMA_NO_DISPONIBLE
+              - STOCK_INSUFICIENTE
+              - SALDO_INSUFICIENTE
+              - DOSIS_DUPLICADA
+              - LIMITE_AGREGADO
+              - PERSISTENCIA_NO_DISPONIBLE
+              - IDENTIDAD_NO_DISPONIBLE
+              - ARCHIVO_NO_DISPONIBLE
+              - ERROR_INTERNO
+            mensaje:
+              type: string
+              minLength: 1
+              maxLength: 300
+              pattern: \S
+            campos:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  campo:
+                    type: string
+                    minLength: 1
+                    maxLength: 100
+                    pattern: \S
+                  codigo:
+                    type: string
+                    enum:
+                    - REQUERIDO
+                    - FORMATO
+                    - RANGO
+                    - NO_PERMITIDO
+                required:
+                - campo
+                - codigo
+              minItems: 0
+              maxItems: 100
+          required:
+          - codigo
+          - mensaje
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - error
+      - meta
+    Dinero:
+      type: object
+      additionalProperties: false
+      properties:
+        centavos:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        moneda:
+          type: string
+          enum:
+          - GTQ
+      required:
+      - centavos
+      - moneda
+    Profesional:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        rol:
+          $ref: '#/components/schemas/Rol'
+        activo:
+          const: true
+      required:
+      - id
+      - nombre
+      - rol
+      - activo
+    Sesion:
+      type: object
+      additionalProperties: false
+      properties:
+        cuenta_id:
+          $ref: '#/components/schemas/UUID'
+        institucion:
+          $ref: '#/components/schemas/Institucion'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rol'
+          minItems: 1
+          maxItems: 100
+        permisos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permiso'
+          minItems: 0
+          maxItems: 100
+        profesional:
+          $ref: '#/components/schemas/Profesional'
+        version:
+          $ref: '#/components/schemas/Version'
+      required:
+      - cuenta_id
+      - institucion
+      - roles
+      - permisos
+      - version
+    CierreSesion:
+      type: object
+      additionalProperties: false
+      properties:
+        cerrada:
+          const: true
+      required:
+      - cerrada
+    Contacto:
+      type: object
+      additionalProperties: false
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: \S
+      required:
+      - nombre
+      - parentesco
+      - telefono
+    Identificacion:
+      type: object
+      additionalProperties: false
+      properties:
+        tipo:
+          type: string
+          enum:
+          - CUI
+          - PASAPORTE
+        numero:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: \S
+      required:
+      - tipo
+      - numero
+    VinculoResponsable:
+      type: object
+      additionalProperties: false
+      properties:
+        responsable_id:
+          $ref: '#/components/schemas/UUID'
+        version_responsable:
+          $ref: '#/components/schemas/Version'
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        es_principal:
+          type: boolean
+        autoriza_atencion:
+          type: boolean
+      required:
+      - responsable_id
+      - version_responsable
+      - parentesco
+      - es_principal
+      - autoriza_atencion
+    NuevoResponsable:
+      type: object
+      additionalProperties: false
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        documento:
+          $ref: '#/components/schemas/Identificacion'
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: \S
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        es_principal:
+          type: boolean
+        autoriza_atencion:
+          type: boolean
+      required:
+      - nombre
+      - telefono
+      - parentesco
+      - es_principal
+      - autoriza_atencion
+    ResponsableAlta:
+      oneOf:
+      - $ref: '#/components/schemas/VinculoResponsable'
+      - $ref: '#/components/schemas/NuevoResponsable'
+    AltaPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        nombres: &id009
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: \S
+        apellidos: &id010
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: \S
+        fecha_nacimiento: &id011
+          $ref: '#/components/schemas/FechaCivil'
+        sexo: &id012
+          type: string
+          enum:
+          - MASCULINO
+          - FEMENINO
+          - OTRO
+        identificacion: &id013
+          $ref: '#/components/schemas/Identificacion'
+        telefono: &id014
+          type: string
+          maxLength: 30
+        correo: &id015
+          type: string
+          format: email
+          maxLength: 254
+        direccion: &id016
+          type: string
+          maxLength: 500
+        grupo_sanguineo: &id017
+          type: string
+          enum:
+          - A+
+          - A-
+          - B+
+          - B-
+          - AB+
+          - AB-
+          - O+
+          - O-
+        contacto_emergencia: &id018
+          $ref: '#/components/schemas/Contacto'
+        responsables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponsableAlta'
+          minItems: 1
+          maxItems: 100
+      required:
+      - nombres
+      - apellidos
+      - fecha_nacimiento
+      - sexo
+    AltaPediatrica:
+      allOf:
+      - $ref: '#/components/schemas/AltaPaciente'
+      - required:
+        - responsables
+        properties:
+          responsables:
+            contains:
+              required:
+              - es_principal
+              properties:
+                es_principal:
+                  const: true
+            minContains: 1
+    AltaDental:
+      allOf:
+      - $ref: '#/components/schemas/AltaPaciente'
+    CambioPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        nombres: *id009
+        apellidos: *id010
+        fecha_nacimiento: *id011
+        sexo: *id012
+        identificacion: *id013
+        telefono: *id014
+        correo: *id015
+        direccion: *id016
+        grupo_sanguineo: *id017
+        contacto_emergencia: *id018
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+      required:
+      - version_esperada
+      minProperties: 2
+    Paciente:
+      type: object
+      additionalProperties: false
+      properties:
+        nombres: *id009
+        apellidos: *id010
+        fecha_nacimiento: *id011
+        sexo: *id012
+        identificacion: *id013
+        telefono: *id014
+        correo: *id015
+        direccion: *id016
+        grupo_sanguineo: *id017
+        contacto_emergencia: *id018
+        id:
+          $ref: '#/components/schemas/UUID'
+        codigo_legible:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: \S
+        institucion:
+          $ref: '#/components/schemas/Institucion'
+        estado:
+          type: string
+          enum:
+          - ACTIVO
+          - ARCHIVADO
+        version:
+          $ref: '#/components/schemas/Version'
+        fecha_registro:
+          $ref: '#/components/schemas/InstanteUTC'
+        responsables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponsablePaciente'
+          minItems: 1
+          maxItems: 100
+      required:
+      - id
+      - codigo_legible
+      - institucion
+      - nombres
+      - apellidos
+      - fecha_nacimiento
+      - sexo
+      - estado
+      - version
+      - fecha_registro
+    ArchivoPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        causa:
+          type: string
+          enum:
+          - TRASLADO
+          - FALLECIMIENTO
+          - OTRA_ADMINISTRATIVA
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+      required:
+      - version_esperada
+      - causa
+      - motivo
+    ReactivacionPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        correccion_fallecimiento:
+          type: boolean
+      required:
+      - version_esperada
+      - motivo
+    SignosVitales:
+      type: object
+      additionalProperties: false
+      properties:
+        peso_kg:
+          anyOf:
+          - type: number
+            minimum: 0.1
+            maximum: 500
+          - type: 'null'
+        talla_cm:
+          anyOf:
+          - type: number
+            minimum: 10
+            maximum: 300
+          - type: 'null'
+        temperatura_c:
+          anyOf:
+          - type: number
+            minimum: 20
+            maximum: 50
+          - type: 'null'
+        presion_sistolica:
+          anyOf:
+          - type: number
+            minimum: 10
+            maximum: 300
+          - type: 'null'
+        presion_diastolica:
+          anyOf:
+          - type: number
+            minimum: 10
+            maximum: 200
+          - type: 'null'
+        frecuencia_cardiaca_lpm:
+          anyOf:
+          - type: number
+            minimum: 10
+            maximum: 300
+          - type: 'null'
+        frecuencia_respiratoria_rpm:
+          anyOf:
+          - type: number
+            minimum: 1
+            maximum: 150
+          - type: 'null'
+        saturacion_oxigeno_pct:
+          anyOf:
+          - type: number
+            minimum: 0
+            maximum: 100
+          - type: 'null'
+        perimetro_cefalico_cm:
+          anyOf:
+          - type: number
+            minimum: 10
+            maximum: 100
+          - type: 'null'
+      required: []
+    Diagnostico:
+      type: object
+      additionalProperties: false
+      properties:
+        codigo_cie:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: \S
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        es_principal:
+          type: boolean
+        observacion:
+          type: string
+          maxLength: 2000
+      required:
+      - codigo_cie
+      - nombre
+      - es_principal
+    Tratamiento:
+      type: object
+      additionalProperties: false
+      properties:
+        descripcion:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        indicaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+      required:
+      - descripcion
+      - indicaciones
+    Medicamento:
+      type: object
+      additionalProperties: false
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        presentacion:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        concentracion:
+          type: string
+          maxLength: 200
+        dosis:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        unidad:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        frecuencia:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        duracion:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        via:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        indicaciones:
+          type: string
+          maxLength: 500
+      required:
+      - nombre
+      - presentacion
+      - dosis
+      - frecuencia
+      - duracion
+      - via
+      - indicaciones
+    Receta:
+      type: object
+      additionalProperties: false
+      properties:
+        medicamentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Medicamento'
+          minItems: 1
+          maxItems: 100
+        observaciones:
+          type: string
+          maxLength: 2000
+      required:
+      - medicamentos
+    AbrirConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        paciente_id: &id019
+          $ref: '#/components/schemas/UUID'
+        version_paciente: &id020
+          $ref: '#/components/schemas/Version'
+        cita_id: &id021
+          $ref: '#/components/schemas/UUID'
+        version_cita: &id022
+          $ref: '#/components/schemas/Version'
+        responsable_id: &id023
+          $ref: '#/components/schemas/UUID'
+        version_vinculo: &id024
+          $ref: '#/components/schemas/Version'
+        motivo: &id025
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        sintomas: &id026
+          type: string
+          maxLength: 4000
+        signos_vitales:
+          $ref: '#/components/schemas/SignosVitales'
+      required:
+      - paciente_id
+      - version_paciente
+      - motivo
+      - sintomas
+      - signos_vitales
+      dependentRequired:
+        cita_id:
+        - version_cita
+        version_cita:
+        - cita_id
+        responsable_id:
+        - version_vinculo
+        version_vinculo:
+        - responsable_id
+    ConsultaCompleta:
+      type: object
+      additionalProperties: false
+      properties:
+        paciente_id: *id019
+        version_paciente: *id020
+        cita_id: *id021
+        version_cita: *id022
+        responsable_id: *id023
+        version_vinculo: *id024
+        motivo: *id025
+        sintomas: *id026
+        observaciones: &id027
+          type: string
+          maxLength: 4000
+        signos_vitales: &id028
+          $ref: '#/components/schemas/SignosVitales'
+        diagnosticos: &id029
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostico'
+          maxItems: 100
+          anyOf:
+          - maxItems: 0
+          - minItems: 1
+            contains:
+              required:
+              - es_principal
+              properties:
+                es_principal:
+                  const: true
+            minContains: 1
+            maxContains: 1
+        tratamientos: &id030
+          type: array
+          items:
+            $ref: '#/components/schemas/Tratamiento'
+          minItems: 0
+          maxItems: 100
+        receta: &id031
+          $ref: '#/components/schemas/Receta'
+      required:
+      - paciente_id
+      - version_paciente
+      - motivo
+      - sintomas
+      - signos_vitales
+      - diagnosticos
+      - tratamientos
+      dependentRequired:
+        cita_id:
+        - version_cita
+        version_cita:
+        - cita_id
+        responsable_id:
+        - version_vinculo
+        version_vinculo:
+        - responsable_id
+    ConsultaDental:
+      allOf:
+      - $ref: '#/components/schemas/ConsultaCompleta'
+      - required:
+        - cita_id
+        - version_cita
+    ConsultaPediatrica:
+      allOf:
+      - $ref: '#/components/schemas/ConsultaCompleta'
+      - required:
+        - responsable_id
+        - version_vinculo
+    FinalizarConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+      required:
+      - version_esperada
+    CorregirConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        motivo_correccion:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        contenido:
+          type: object
+          additionalProperties: false
+          properties:
+            motivo: *id025
+            sintomas: *id026
+            observaciones: *id027
+            signos_vitales: *id028
+            diagnosticos: *id029
+            tratamientos: *id030
+            receta: *id031
+          required:
+          - motivo
+          - sintomas
+          - signos_vitales
+          - diagnosticos
+          - tratamientos
+      required:
+      - version_esperada
+      - motivo_correccion
+      - contenido
+    AgregarDiagnostico:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        diagnostico:
+          $ref: '#/components/schemas/Diagnostico'
+      required:
+      - version_esperada
+      - diagnostico
+    AgregarTratamiento:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        tratamiento:
+          $ref: '#/components/schemas/Tratamiento'
+      required:
+      - version_esperada
+      - tratamiento
+    EmitirReceta:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        receta:
+          $ref: '#/components/schemas/Receta'
+      required:
+      - version_esperada
+      - receta
+    Consulta:
+      type: object
+      additionalProperties: false
+      properties:
+        motivo: *id025
+        sintomas: *id026
+        observaciones: *id027
+        signos_vitales: *id028
+        diagnosticos: *id029
+        tratamientos: *id030
+        receta: *id031
+        id:
+          $ref: '#/components/schemas/UUID'
+        paciente_id:
+          $ref: '#/components/schemas/UUID'
+        cita_id:
+          $ref: '#/components/schemas/UUID'
+        responsable_id:
+          $ref: '#/components/schemas/UUID'
+        fecha_hora:
+          $ref: '#/components/schemas/InstanteUTC'
+        profesional:
+          $ref: '#/components/schemas/Profesional'
+        estado:
+          type: string
+          enum:
+          - ABIERTA
+          - FINALIZADA
+        version:
+          $ref: '#/components/schemas/Version'
+        receta_id:
+          $ref: '#/components/schemas/UUID'
+        version_receta:
+          $ref: '#/components/schemas/Version'
+      required:
+      - id
+      - paciente_id
+      - fecha_hora
+      - profesional
+      - estado
+      - version
+      - motivo
+      - sintomas
+      - signos_vitales
+      - diagnosticos
+      - tratamientos
+    RevisionConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          $ref: '#/components/schemas/Version'
+        fecha_hora:
+          $ref: '#/components/schemas/InstanteUTC'
+        autor_id:
+          $ref: '#/components/schemas/UUID'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        anterior:
+          $ref: '#/components/schemas/Consulta'
+      required:
+      - id
+      - version
+      - fecha_hora
+      - autor_id
+      - motivo
+      - anterior
+    CrearCita:
+      type: object
+      additionalProperties: false
+      properties:
+        paciente_id:
+          $ref: '#/components/schemas/UUID'
+        version_paciente:
+          $ref: '#/components/schemas/Version'
+        profesional_id:
+          $ref: '#/components/schemas/UUID'
+        fecha:
+          $ref: '#/components/schemas/FechaCivil'
+        hora_inicio:
+          $ref: '#/components/schemas/HoraCivil'
+        duracion_minutos:
+          type: integer
+          minimum: 5
+          maximum: 480
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        consultorio:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+      required:
+      - paciente_id
+      - version_paciente
+      - profesional_id
+      - fecha
+      - hora_inicio
+      - duracion_minutos
+      - motivo
+    ReprogramarCita:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        fecha:
+          $ref: '#/components/schemas/FechaCivil'
+        hora_inicio:
+          $ref: '#/components/schemas/HoraCivil'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+      required:
+      - version_esperada
+      - fecha
+      - hora_inicio
+      - motivo
+    CancelarCita:
+      type: object
+      additionalProperties: false
+      properties:
+        version_esperada:
+          $ref: '#/components/schemas/Version'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+      required:
+      - version_esperada
+      - motivo
+    Cita:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          $ref: '#/components/schemas/Version'
+        paciente_id:
+          $ref: '#/components/schemas/UUID'
+        profesional_id:
+          $ref: '#/components/schemas/UUID'
+        fecha:
+          $ref: '#/components/schemas/FechaCivil'
+        hora_inicio:
+          $ref: '#/components/schemas/HoraCivil'
+        hora_fin:
+          $ref: '#/components/schemas/HoraCivil'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        consultorio:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+        estado: *id032
+      required:
+      - id
+      - version
+      - paciente_id
+      - profesional_id
+      - fecha
+      - hora_inicio
+      - hora_fin
+      - motivo
+      - estado
+    EventoHistorial:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        fecha_hora:
+          $ref: '#/components/schemas/InstanteUTC'
+        tipo: *id007
+        recurso_id:
+          $ref: '#/components/schemas/UUID'
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        profesional:
+          $ref: '#/components/schemas/Profesional'
+      required:
+      - id
+      - fecha_hora
+      - tipo
+      - recurso_id
+      - titulo
+    Historial:
+      type: object
+      additionalProperties: false
+      properties:
+        paciente_id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          $ref: '#/components/schemas/Version'
+        estado:
+          type: string
+          enum:
+          - ACTIVO
+          - ARCHIVADO
+        eventos:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventoHistorial'
+          minItems: 0
+          maxItems: 100
+      required:
+      - paciente_id
+      - version
+      - estado
+      - eventos
+    Expediente:
+      type: object
+      additionalProperties: false
+      properties:
+        paciente:
+          $ref: '#/components/schemas/Paciente'
+        historial:
+          $ref: '#/components/schemas/Historial'
+      required:
+      - paciente
+      - historial
+    BuscarPacientes:
+      type: object
+      additionalProperties: false
+      properties:
+        cursor: *id002
+        limite: *id003
+        orden: *id004
+        q: *id033
+        estado: *id034
+      required:
+      - q
+    BuscarHistorial:
+      type: object
+      additionalProperties: false
+      properties:
+        cursor: *id002
+        limite: *id003
+        orden: *id004
+        desde: *id005
+        hasta: *id006
+        tipo: *id007
+      required: &id039 []
+    BuscarCitas:
+      type: object
+      additionalProperties: false
+      properties:
+        cursor: *id002
+        limite: *id003
+        orden: *id004
+        fecha_desde: *id035
+        fecha_hasta: *id036
+        profesional_id: *id037
+        estado: *id032
+        q: *id038
+      required:
+      - fecha_desde
+      - fecha_hasta
+    RespuestaSesion:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Sesion'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaCierreSesion:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CierreSesion'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Paciente'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaPacientes:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Paciente'
+          minItems: 0
+          maxItems: 100
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaCita:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Cita'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaCitas:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cita'
+          minItems: 0
+          maxItems: 100
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaConsulta:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Consulta'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaRevisiones:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevisionConsulta'
+          minItems: 0
+          maxItems: 100
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaHistorial:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Historial'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    RespuestaExpediente:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Expediente'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+    Responsable:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: \S
+        documento:
+          $ref: '#/components/schemas/Identificacion'
+        version:
+          $ref: '#/components/schemas/Version'
+      required:
+      - id
+      - nombre
+      - telefono
+      - version
+    ResponsablePaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        responsable:
+          $ref: '#/components/schemas/Responsable'
+        vinculo:
+          $ref: '#/components/schemas/VinculoResponsable'
+        version_vinculo:
+          $ref: '#/components/schemas/Version'
+      required:
+      - responsable
+      - vinculo
+      - version_vinculo
+    Error400:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - SOLICITUD_INVALIDA
+    Error401:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - NO_AUTENTICADO
+    Error403:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - CUENTA_NO_HABILITADA
+                - SIN_PERMISO
+    Error404:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - RECURSO_NO_ENCONTRADO
+    Error409:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - PACIENTE_DUPLICADO
+                - CLAVE_REUTILIZADA
+                - VERSION_DESACTUALIZADA
+                - ESTADO_INVALIDO
+                - REFERENCIA_INCOMPATIBLE
+                - RECETA_EXISTENTE
+                - CITA_SOLAPADA
+                - CAMA_NO_DISPONIBLE
+                - STOCK_INSUFICIENTE
+                - SALDO_INSUFICIENTE
+                - DOSIS_DUPLICADA
+    Error413:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - LIMITE_AGREGADO
+    Error500:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - ERROR_INTERNO
+    Error503:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - properties:
+          error:
+            properties:
+              codigo:
+                type: string
+                enum:
+                - PERSISTENCIA_NO_DISPONIBLE
+                - IDENTIDAD_NO_DISPONIBLE
+                - ARCHIVO_NO_DISPONIBLE
+    AperturaDental:
+      allOf:
+      - $ref: '#/components/schemas/AbrirConsulta'
+      - required:
+        - cita_id
+        - version_cita
+    AperturaPediatrica:
+      allOf:
+      - $ref: '#/components/schemas/AbrirConsulta'
+      - required:
+        - responsable_id
+        - version_vinculo
+    BuscarRevisiones:
+      type: object
+      additionalProperties: false
+      properties:
+        cursor: *id002
+        limite: *id003
+        orden: *id004
+        desde: *id005
+        hasta: *id006
+      required: *id039
+  parameters:
+    Idempotencia:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID estable por intención; todas las mutaciones clínicas. Misma clave y hash reproducen resultado
+        durable; hash distinto → 409 CLAVE_REUTILIZADA.
+      schema:
+        $ref: '#/components/schemas/UUID'
+  responses:
+    Error400:
+      description: Entrada, fecha, cursor o campo de autoridad inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+          example:
+            error:
+              codigo: SOLICITUD_INVALIDA
+              mensaje: Entrada, fecha, cursor o campo de autoridad inválido.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error401:
+      description: Token ausente, inválido, vencido o revocado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+          example:
+            error:
+              codigo: NO_AUTENTICADO
+              mensaje: Token ausente, inválido, vencido o revocado.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error403:
+      description: Permiso/capacidad ausente o cuenta no habilitada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+          example:
+            error:
+              codigo: SIN_PERMISO
+              mensaje: Permiso/capacidad ausente o cuenta no habilitada.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error404:
+      description: Inexistente o ajeno; no revelar existencia.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+          example:
+            error:
+              codigo: RECURSO_NO_ENCONTRADO
+              mensaje: Inexistente o ajeno; no revelar existencia.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error409:
+      description: Conflicto de versión, clave, estado, identidad o referencia; cero efectos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error409'
+          example:
+            error:
+              codigo: ESTADO_INVALIDO
+              mensaje: Conflicto de versión, clave, estado, identidad o referencia; cero efectos.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error413:
+      description: Más de 262144 bytes UTF-8 o más de 100 elementos; no truncar.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error413'
+          example:
+            error:
+              codigo: LIMITE_AGREGADO
+              mensaje: Más de 262144 bytes UTF-8 o más de 100 elementos; no truncar.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error500:
+      description: Rollback, mensaje neutral, correlación.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error500'
+          example:
+            error:
+              codigo: ERROR_INTERNO
+              mensaje: Rollback, mensaje neutral, correlación.
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090
+    Error503:
+      description: 'Dependencia no disponible o commit incierto: reconciliar misma clave.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error503'
+          example:
+            error:
+              codigo: PERSISTENCIA_NO_DISPONIBLE
+              mensaje: 'Dependencia no disponible o commit incierto: reconciliar misma clave.'
+            meta:
+              correlacion: 00000000-0000-4000-8000-000000000090

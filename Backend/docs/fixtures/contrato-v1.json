@@ -1,0 +1,2409 @@
+[
+  {
+    "id": "pacienteCrear-valido",
+    "schema": "AltaPaciente",
+    "valid": true,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO"
+    },
+    "operationId": "pacienteCrear"
+  },
+  {
+    "id": "pacienteCrear-actor",
+    "schema": "AltaPaciente",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "pacienteCrear"
+  },
+  {
+    "id": "pacienteActualizar-valido",
+    "schema": "CambioPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "telefono": "00000000"
+    },
+    "operationId": "pacienteActualizar"
+  },
+  {
+    "id": "pacienteActualizar-actor",
+    "schema": "CambioPaciente",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "telefono": "00000000",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "pacienteActualizar"
+  },
+  {
+    "id": "pacienteActualizar-sin-version",
+    "schema": "CambioPaciente",
+    "valid": false,
+    "value": {
+      "telefono": "00000000"
+    },
+    "operationId": "pacienteActualizar"
+  },
+  {
+    "id": "pacienteArchivar-valido",
+    "schema": "ArchivoPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "causa": "OTRA_ADMINISTRATIVA",
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "pacienteArchivar"
+  },
+  {
+    "id": "pacienteArchivar-actor",
+    "schema": "ArchivoPaciente",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "causa": "OTRA_ADMINISTRATIVA",
+      "motivo": "Prueba sintética",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "pacienteArchivar"
+  },
+  {
+    "id": "pacienteArchivar-sin-version",
+    "schema": "ArchivoPaciente",
+    "valid": false,
+    "value": {
+      "causa": "OTRA_ADMINISTRATIVA",
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "pacienteArchivar"
+  },
+  {
+    "id": "pacienteReactivar-valido",
+    "schema": "ReactivacionPaciente",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "pacienteReactivar"
+  },
+  {
+    "id": "pacienteReactivar-actor",
+    "schema": "ReactivacionPaciente",
+    "valid": false,
+    "value": {
+      "version_esperada": 2,
+      "motivo": "Prueba sintética",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "pacienteReactivar"
+  },
+  {
+    "id": "pacienteReactivar-sin-version",
+    "schema": "ReactivacionPaciente",
+    "valid": false,
+    "value": {
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "pacienteReactivar"
+  },
+  {
+    "id": "citaCrear-valido",
+    "schema": "CrearCita",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000002",
+      "fecha": "2026-10-25",
+      "hora_inicio": "10:00",
+      "duracion_minutos": 30,
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "citaCrear"
+  },
+  {
+    "id": "citaCrear-actor",
+    "schema": "CrearCita",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "profesional_id": "00000000-0000-4000-8000-000000000002",
+      "fecha": "2026-10-25",
+      "hora_inicio": "10:00",
+      "duracion_minutos": 30,
+      "motivo": "Prueba sintética",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "citaCrear"
+  },
+  {
+    "id": "citaReprogramar-valido",
+    "schema": "ReprogramarCita",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "fecha": "2026-10-26",
+      "hora_inicio": "11:00",
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "citaReprogramar"
+  },
+  {
+    "id": "citaReprogramar-actor",
+    "schema": "ReprogramarCita",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "fecha": "2026-10-26",
+      "hora_inicio": "11:00",
+      "motivo": "Prueba sintética",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "citaReprogramar"
+  },
+  {
+    "id": "citaReprogramar-sin-version",
+    "schema": "ReprogramarCita",
+    "valid": false,
+    "value": {
+      "fecha": "2026-10-26",
+      "hora_inicio": "11:00",
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "citaReprogramar"
+  },
+  {
+    "id": "citaCancelar-valido",
+    "schema": "CancelarCita",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "citaCancelar"
+  },
+  {
+    "id": "citaCancelar-actor",
+    "schema": "CancelarCita",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "motivo": "Prueba sintética",
+      "actor": "actor-falsificado"
+    },
+    "operationId": "citaCancelar"
+  },
+  {
+    "id": "citaCancelar-sin-version",
+    "schema": "CancelarCita",
+    "valid": false,
+    "value": {
+      "motivo": "Prueba sintética"
+    },
+    "operationId": "citaCancelar"
+  },
+  {
+    "id": "consultaAbrir-valido",
+    "schema": "AbrirConsulta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      }
+    },
+    "operationId": "consultaAbrir"
+  },
+  {
+    "id": "consultaAbrir-actor",
+    "schema": "AbrirConsulta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaAbrir"
+  },
+  {
+    "id": "consultaCompleta-valido",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    },
+    "operationId": "consultaCompleta"
+  },
+  {
+    "id": "consultaCompleta-actor",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaCompleta"
+  },
+  {
+    "id": "consultaFinalizar-valido",
+    "schema": "FinalizarConsulta",
+    "valid": true,
+    "value": {
+      "version_esperada": 1
+    },
+    "operationId": "consultaFinalizar"
+  },
+  {
+    "id": "consultaFinalizar-actor",
+    "schema": "FinalizarConsulta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaFinalizar"
+  },
+  {
+    "id": "consultaFinalizar-sin-version",
+    "schema": "FinalizarConsulta",
+    "valid": false,
+    "value": {},
+    "operationId": "consultaFinalizar"
+  },
+  {
+    "id": "consultaDiagnostico-valido",
+    "schema": "AgregarDiagnostico",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "Ejemplo sintético",
+        "es_principal": true
+      }
+    },
+    "operationId": "consultaDiagnostico"
+  },
+  {
+    "id": "consultaDiagnostico-actor",
+    "schema": "AgregarDiagnostico",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "Ejemplo sintético",
+        "es_principal": true
+      },
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaDiagnostico"
+  },
+  {
+    "id": "consultaDiagnostico-sin-version",
+    "schema": "AgregarDiagnostico",
+    "valid": false,
+    "value": {
+      "diagnostico": {
+        "codigo_cie": "Z00",
+        "nombre": "Ejemplo sintético",
+        "es_principal": true
+      }
+    },
+    "operationId": "consultaDiagnostico"
+  },
+  {
+    "id": "consultaTratamiento-valido",
+    "schema": "AgregarTratamiento",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "tratamiento": {
+        "descripcion": "Ejemplo académico",
+        "indicaciones": "Sin uso clínico"
+      }
+    },
+    "operationId": "consultaTratamiento"
+  },
+  {
+    "id": "consultaTratamiento-actor",
+    "schema": "AgregarTratamiento",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "tratamiento": {
+        "descripcion": "Ejemplo académico",
+        "indicaciones": "Sin uso clínico"
+      },
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaTratamiento"
+  },
+  {
+    "id": "consultaTratamiento-sin-version",
+    "schema": "AgregarTratamiento",
+    "valid": false,
+    "value": {
+      "tratamiento": {
+        "descripcion": "Ejemplo académico",
+        "indicaciones": "Sin uso clínico"
+      }
+    },
+    "operationId": "consultaTratamiento"
+  },
+  {
+    "id": "consultaReceta-valido",
+    "schema": "EmitirReceta",
+    "valid": true,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "operationId": "consultaReceta"
+  },
+  {
+    "id": "consultaReceta-actor",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "version_esperada": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      },
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaReceta"
+  },
+  {
+    "id": "consultaReceta-sin-version",
+    "schema": "EmitirReceta",
+    "valid": false,
+    "value": {
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "operationId": "consultaReceta"
+  },
+  {
+    "id": "consultaCorregir-valido",
+    "schema": "CorregirConsulta",
+    "valid": true,
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "operationId": "consultaCorregir"
+  },
+  {
+    "id": "consultaCorregir-actor",
+    "schema": "CorregirConsulta",
+    "valid": false,
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      },
+      "actor": "actor-falsificado"
+    },
+    "operationId": "consultaCorregir"
+  },
+  {
+    "id": "consultaCorregir-sin-version",
+    "schema": "CorregirConsulta",
+    "valid": false,
+    "value": {
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "operationId": "consultaCorregir"
+  },
+  {
+    "id": "completa-HOSPITAL_GENERAL",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "institucion": "HOSPITAL_GENERAL"
+  },
+  {
+    "id": "completa-CLINICA_ODONTOLOGICA",
+    "schema": "ConsultaDental",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003",
+      "version_cita": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "institucion": "CLINICA_ODONTOLOGICA"
+  },
+  {
+    "id": "completa-LABORATORIO_CLINICO",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "institucion": "LABORATORIO_CLINICO"
+  },
+  {
+    "id": "completa-CENTRO_MEDICO_PEDIATRICO",
+    "schema": "ConsultaPediatrica",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "responsable_id": "00000000-0000-4000-8000-000000000004",
+      "version_vinculo": 1,
+      "receta": {
+        "medicamentos": [
+          {
+            "nombre": "Producto sintético",
+            "presentacion": "Ejemplo",
+            "dosis": "Ejemplo académico",
+            "frecuencia": "Ejemplo",
+            "duracion": "Ejemplo",
+            "via": "Ejemplo",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      }
+    },
+    "institucion": "CENTRO_MEDICO_PEDIATRICO"
+  },
+  {
+    "id": "alta-pediatrica-principal-sin-autorizacion",
+    "schema": "AltaPediatrica",
+    "valid": true,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "responsables": [
+        {
+          "nombre": "Responsable sintético",
+          "telefono": "00000000",
+          "parentesco": "TUTOR",
+          "es_principal": true,
+          "autoriza_atencion": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "alta-pediatrica-sin-principal",
+    "schema": "AltaPediatrica",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "responsables": [
+        {
+          "nombre": "Responsable sintético",
+          "telefono": "00000000",
+          "parentesco": "TUTOR",
+          "es_principal": false,
+          "autoriza_atencion": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "alta-pediatrica-sin-responsables",
+    "schema": "AltaPediatrica",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO"
+    }
+  },
+  {
+    "id": "alta-pediatrica-referencia-existente",
+    "schema": "AltaPediatrica",
+    "valid": true,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "responsables": [
+        {
+          "responsable_id": "00000000-0000-4000-8000-000000000004",
+          "version_responsable": 1,
+          "parentesco": "TUTOR",
+          "es_principal": true,
+          "autoriza_atencion": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "dental-sin-cita",
+    "schema": "ConsultaDental",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "pediatrica-sin-vinculo",
+    "schema": "ConsultaPediatrica",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "apertura-dental-sin-cita",
+    "schema": "AperturaDental",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      }
+    }
+  },
+  {
+    "id": "apertura-pediatrica-sin-vinculo",
+    "schema": "AperturaPediatrica",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      }
+    }
+  },
+  {
+    "id": "identidad-dental-ausente",
+    "schema": "AltaDental",
+    "valid": true,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO"
+    }
+  },
+  {
+    "id": "identidad-vacia",
+    "schema": "AltaPaciente",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25",
+      "sexo": "OTRO",
+      "identificacion": {
+        "tipo": "CUI",
+        "numero": ""
+      }
+    }
+  },
+  {
+    "id": "fecha-inexistente",
+    "schema": "AltaPaciente",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2026-02-30",
+      "sexo": "OTRO"
+    }
+  },
+  {
+    "id": "fecha-con-zona",
+    "schema": "AltaPaciente",
+    "valid": false,
+    "value": {
+      "nombres": "Paciente sintético",
+      "apellidos": "Contrato E00",
+      "fecha_nacimiento": "2015-10-25T00:00:00Z",
+      "sexo": "OTRO"
+    }
+  },
+  {
+    "id": "institucion-falsificada",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "motor-falsificado",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "motor": "postgresql"
+    }
+  },
+  {
+    "id": "consulta-id-nativo",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "507f1f77bcf86cd799439011",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "consulta-sin-version-paciente",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "consulta-dos-principales",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        },
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "consulta-sin-principal",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": false
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "consulta-sin-diagnosticos",
+    "schema": "ConsultaCompleta",
+    "valid": true,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "consulta-cita-sin-version",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ],
+      "cita_id": "00000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "id": "correccion-reasigna-paciente",
+    "schema": "CorregirConsulta",
+    "valid": false,
+    "value": {
+      "version_esperada": 2,
+      "motivo_correccion": "Corrección sintética",
+      "contenido": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ]
+      },
+      "paciente_id": "00000000-0000-4000-8000-000000000009"
+    }
+  },
+  {
+    "id": "lista-mayor-100",
+    "schema": "ConsultaCompleta",
+    "valid": false,
+    "value": {
+      "paciente_id": "00000000-0000-4000-8000-000000000001",
+      "version_paciente": 1,
+      "motivo": "Seguimiento sintético",
+      "sintomas": "Sin datos reales",
+      "signos_vitales": {
+        "peso_kg": 35,
+        "talla_cm": 140
+      },
+      "diagnosticos": [
+        {
+          "codigo_cie": "Z00",
+          "nombre": "Ejemplo sintético",
+          "es_principal": true
+        }
+      ],
+      "tratamientos": [
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        },
+        {
+          "descripcion": "Ejemplo académico",
+          "indicaciones": "Sin uso clínico"
+        }
+      ]
+    }
+  },
+  {
+    "id": "busqueda-valida",
+    "schema": "BuscarPacientes",
+    "valid": true,
+    "value": {
+      "q": "Sintético",
+      "limite": 20,
+      "orden": "ASC"
+    }
+  },
+  {
+    "id": "busqueda-vacia",
+    "schema": "BuscarPacientes",
+    "valid": false,
+    "value": {
+      "q": ""
+    }
+  },
+  {
+    "id": "busqueda-espacios",
+    "schema": "BuscarPacientes",
+    "valid": false,
+    "value": {
+      "q": "   "
+    }
+  },
+  {
+    "id": "cursor-mal-formado",
+    "schema": "BuscarHistorial",
+    "valid": false,
+    "value": {
+      "cursor": "cursor+falso/="
+    }
+  },
+  {
+    "id": "paginacion-desc",
+    "schema": "BuscarHistorial",
+    "valid": true,
+    "value": {
+      "orden": "DESC",
+      "limite": 100,
+      "desde": "2026-10-24T00:00:00Z",
+      "hasta": "2026-10-26T00:00:00Z"
+    }
+  },
+  {
+    "id": "fecha-evento-no-utc",
+    "schema": "BuscarHistorial",
+    "valid": false,
+    "value": {
+      "desde": "2026-10-24T00:00:00-06:00"
+    }
+  },
+  {
+    "id": "limite-fuera-rango",
+    "schema": "BuscarHistorial",
+    "valid": false,
+    "value": {
+      "limite": 101
+    }
+  },
+  {
+    "id": "dinero-entero",
+    "schema": "Dinero",
+    "valid": true,
+    "value": {
+      "centavos": 12345,
+      "moneda": "GTQ"
+    }
+  },
+  {
+    "id": "dinero-decimal",
+    "schema": "Dinero",
+    "valid": false,
+    "value": {
+      "centavos": 1.25,
+      "moneda": "GTQ"
+    }
+  },
+  {
+    "id": "institucion-alias-rechazado",
+    "schema": "Institucion",
+    "valid": false,
+    "value": "CENTRO_PEDIATRICO"
+  },
+  {
+    "id": "respuesta-Sesion",
+    "schema": "RespuestaSesion",
+    "valid": true,
+    "value": {
+      "data": {
+        "cuenta_id": "00000000-0000-4000-8000-000000000006",
+        "institucion": "HOSPITAL_GENERAL",
+        "roles": [
+          "MEDICO"
+        ],
+        "permisos": [
+          "historial.leer",
+          "consultas.registrar"
+        ],
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "version": 1
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-CierreSesion",
+    "schema": "RespuestaCierreSesion",
+    "valid": true,
+    "value": {
+      "data": {
+        "cerrada": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Paciente",
+    "schema": "RespuestaPaciente",
+    "valid": true,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Pacientes",
+    "schema": "RespuestaPacientes",
+    "valid": true,
+    "value": {
+      "data": [
+        {
+          "nombres": "Paciente sintético",
+          "apellidos": "Contrato E00",
+          "fecha_nacimiento": "2015-10-25",
+          "sexo": "OTRO",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "codigo_legible": "SINTETICO-001",
+          "institucion": "HOSPITAL_GENERAL",
+          "estado": "ACTIVO",
+          "version": 1,
+          "fecha_registro": "2026-10-25T12:00:00Z"
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Consulta",
+    "schema": "RespuestaConsulta",
+    "valid": true,
+    "value": {
+      "data": {
+        "motivo": "Seguimiento sintético",
+        "sintomas": "Sin datos reales",
+        "signos_vitales": {
+          "peso_kg": 35,
+          "talla_cm": 140
+        },
+        "diagnosticos": [
+          {
+            "codigo_cie": "Z00",
+            "nombre": "Ejemplo sintético",
+            "es_principal": true
+          }
+        ],
+        "tratamientos": [
+          {
+            "descripcion": "Ejemplo académico",
+            "indicaciones": "Sin uso clínico"
+          }
+        ],
+        "id": "00000000-0000-4000-8000-000000000005",
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "fecha_hora": "2026-10-25T12:00:00Z",
+        "profesional": {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "nombre": "Profesional sintético",
+          "rol": "MEDICO",
+          "activo": true
+        },
+        "estado": "FINALIZADA",
+        "version": 1
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Cita",
+    "schema": "RespuestaCita",
+    "valid": true,
+    "value": {
+      "data": {
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "profesional_id": "00000000-0000-4000-8000-000000000002",
+        "fecha": "2026-10-25",
+        "hora_inicio": "10:00",
+        "motivo": "Prueba sintética",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "version": 1,
+        "estado": "PROGRAMADA",
+        "hora_fin": "10:30"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Citas",
+    "schema": "RespuestaCitas",
+    "valid": true,
+    "value": {
+      "data": [
+        {
+          "paciente_id": "00000000-0000-4000-8000-000000000001",
+          "profesional_id": "00000000-0000-4000-8000-000000000002",
+          "fecha": "2026-10-25",
+          "hora_inicio": "10:00",
+          "motivo": "Prueba sintética",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "version": 1,
+          "estado": "PROGRAMADA",
+          "hora_fin": "10:30"
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Revisiones",
+    "schema": "RespuestaRevisiones",
+    "valid": true,
+    "value": {
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "version": 2,
+          "fecha_hora": "2026-10-25T12:01:00Z",
+          "autor_id": "00000000-0000-4000-8000-000000000006",
+          "motivo": "Corrección sintética",
+          "anterior": {
+            "motivo": "Seguimiento sintético",
+            "sintomas": "Sin datos reales",
+            "signos_vitales": {
+              "peso_kg": 35,
+              "talla_cm": 140
+            },
+            "diagnosticos": [
+              {
+                "codigo_cie": "Z00",
+                "nombre": "Ejemplo sintético",
+                "es_principal": true
+              }
+            ],
+            "tratamientos": [
+              {
+                "descripcion": "Ejemplo académico",
+                "indicaciones": "Sin uso clínico"
+              }
+            ],
+            "id": "00000000-0000-4000-8000-000000000005",
+            "paciente_id": "00000000-0000-4000-8000-000000000001",
+            "fecha_hora": "2026-10-25T12:00:00Z",
+            "profesional": {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "nombre": "Profesional sintético",
+              "rol": "MEDICO",
+              "activo": true
+            },
+            "estado": "FINALIZADA",
+            "version": 1
+          }
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Historial",
+    "schema": "RespuestaHistorial",
+    "valid": true,
+    "value": {
+      "data": {
+        "paciente_id": "00000000-0000-4000-8000-000000000001",
+        "version": 1,
+        "estado": "ACTIVO",
+        "eventos": [
+          {
+            "id": "00000000-0000-4000-8000-000000000010",
+            "fecha_hora": "2026-10-25T12:00:00Z",
+            "tipo": "CONSULTA",
+            "recurso_id": "00000000-0000-4000-8000-000000000005",
+            "titulo": "Consulta sintética"
+          }
+        ]
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-Expediente",
+    "schema": "RespuestaExpediente",
+    "valid": true,
+    "value": {
+      "data": {
+        "paciente": {
+          "nombres": "Paciente sintético",
+          "apellidos": "Contrato E00",
+          "fecha_nacimiento": "2015-10-25",
+          "sexo": "OTRO",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "codigo_legible": "SINTETICO-001",
+          "institucion": "HOSPITAL_GENERAL",
+          "estado": "ACTIVO",
+          "version": 1,
+          "fecha_registro": "2026-10-25T12:00:00Z"
+        },
+        "historial": {
+          "paciente_id": "00000000-0000-4000-8000-000000000001",
+          "version": 1,
+          "estado": "ACTIVO",
+          "eventos": [
+            {
+              "id": "00000000-0000-4000-8000-000000000010",
+              "fecha_hora": "2026-10-25T12:00:00Z",
+              "tipo": "CONSULTA",
+              "recurso_id": "00000000-0000-4000-8000-000000000005",
+              "titulo": "Consulta sintética"
+            }
+          ]
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-id-nativo",
+    "schema": "RespuestaPaciente",
+    "valid": false,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "42",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "respuesta-campo-proveedor",
+    "schema": "RespuestaPaciente",
+    "valid": false,
+    "value": {
+      "data": {
+        "nombres": "Paciente sintético",
+        "apellidos": "Contrato E00",
+        "fecha_nacimiento": "2015-10-25",
+        "sexo": "OTRO",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "codigo_legible": "SINTETICO-001",
+        "institucion": "HOSPITAL_GENERAL",
+        "estado": "ACTIVO",
+        "version": 1,
+        "fecha_registro": "2026-10-25T12:00:00Z",
+        "_id": "00000000-0000-4000-8000-000000000099"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-SOLICITUD_INVALIDA",
+    "schema": "Error400",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "SOLICITUD_INVALIDA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-NO_AUTENTICADO",
+    "schema": "Error401",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "NO_AUTENTICADO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-CUENTA_NO_HABILITADA",
+    "schema": "Error403",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "CUENTA_NO_HABILITADA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-SIN_PERMISO",
+    "schema": "Error403",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "SIN_PERMISO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-RECURSO_NO_ENCONTRADO",
+    "schema": "Error404",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "RECURSO_NO_ENCONTRADO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-PACIENTE_DUPLICADO",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "PACIENTE_DUPLICADO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-CLAVE_REUTILIZADA",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "CLAVE_REUTILIZADA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-VERSION_DESACTUALIZADA",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "VERSION_DESACTUALIZADA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-ESTADO_INVALIDO",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "ESTADO_INVALIDO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-REFERENCIA_INCOMPATIBLE",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "REFERENCIA_INCOMPATIBLE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-RECETA_EXISTENTE",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "RECETA_EXISTENTE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-CITA_SOLAPADA",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "CITA_SOLAPADA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-CAMA_NO_DISPONIBLE",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "CAMA_NO_DISPONIBLE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-STOCK_INSUFICIENTE",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "STOCK_INSUFICIENTE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-SALDO_INSUFICIENTE",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "SALDO_INSUFICIENTE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-DOSIS_DUPLICADA",
+    "schema": "Error409",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "DOSIS_DUPLICADA",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-LIMITE_AGREGADO",
+    "schema": "Error413",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "LIMITE_AGREGADO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-ERROR_INTERNO",
+    "schema": "Error500",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "ERROR_INTERNO",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-PERSISTENCIA_NO_DISPONIBLE",
+    "schema": "Error503",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "PERSISTENCIA_NO_DISPONIBLE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-IDENTIDAD_NO_DISPONIBLE",
+    "schema": "Error503",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "IDENTIDAD_NO_DISPONIBLE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "error-ARCHIVO_NO_DISPONIBLE",
+    "schema": "Error503",
+    "valid": true,
+    "value": {
+      "error": {
+        "codigo": "ARCHIVO_NO_DISPONIBLE",
+        "mensaje": "Mensaje neutral de prueba"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    }
+  },
+  {
+    "id": "clave-idempotente-uuid",
+    "schema": "UUID",
+    "value": "00000000-0000-4000-8000-000000000080",
+    "valid": true
+  },
+  {
+    "id": "clave-idempotente-no-uuid",
+    "schema": "UUID",
+    "value": "demo-key-1",
+    "valid": false
+  },
+  {
+    "id": "version-cero",
+    "schema": "Version",
+    "value": 0,
+    "valid": false
+  },
+  {
+    "id": "version-entera",
+    "schema": "Version",
+    "value": 1,
+    "valid": true
+  },
+  {
+    "id": "busqueda-institucion-ajena",
+    "schema": "BuscarPacientes",
+    "value": {
+      "q": "sintético",
+      "institucion": "HOSPITAL_GENERAL"
+    },
+    "valid": false
+  },
+  {
+    "id": "revision-filtro-ajeno",
+    "schema": "BuscarRevisiones",
+    "value": {
+      "tipo": "VACUNA"
+    },
+    "valid": false
+  },
+  {
+    "id": "respuesta-sin-correlacion",
+    "schema": "RespuestaPaciente",
+    "value": {
+      "data": {}
+    },
+    "valid": false
+  },
+  {
+    "id": "error-codigo-ajeno-http",
+    "schema": "Error401",
+    "value": {
+      "error": {
+        "codigo": "PACIENTE_DUPLICADO",
+        "mensaje": "Mensaje sintético"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000090"
+      }
+    },
+    "valid": false
+  }
+]

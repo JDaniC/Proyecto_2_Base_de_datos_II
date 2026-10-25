@@ -1,0 +1,1033 @@
+[
+  {
+    "metodo": "AuthRepository.obtenerCuentasDemo",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "AuthRepository.iniciarSesion",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "sesionEstablecer",
+    "responsable": "E01-P1-03",
+    "regla": "Firebase SDK autentica; POST /sesion sin body con Bearer, después hidrata sesión.",
+    "fuente_ui": "`app/AuthSessionContext.tsx:40` (invocado desde `features/auth/LoginPage.tsx`)",
+    "propuesta_inventario": "Firebase Auth SDK + `GET /api/v1/auth/me`"
+  },
+  {
+    "metodo": "AuthRepository.cerrarSesion",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "sesionCerrar",
+    "responsable": "E01-P1-03",
+    "regla": "POST /sesion/cierre revoca tokens del UID verificado; luego signOut cliente.",
+    "fuente_ui": "`app/AuthSessionContext.tsx:46`",
+    "propuesta_inventario": "Firebase Auth `signOut()` + `POST /api/v1/auth/logout` (opcional)"
+  },
+  {
+    "metodo": "AuthRepository.obtenerSesionActual",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "sesionActual",
+    "responsable": "E01-P1-03",
+    "regla": "GET /sesion con verificación de revocación y cuenta local actual.",
+    "fuente_ui": "`app/AuthSessionContext.tsx:22`",
+    "propuesta_inventario": "`GET /api/v1/auth/me`"
+  },
+  {
+    "metodo": "DashboardRepository.obtenerDashboard",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "PatientRepository.buscar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteBuscar",
+    "responsable": "E02-P2-03",
+    "regla": "q no vacío; cursor/orden explícitos. No traducir página numérica a offset.",
+    "fuente_ui": "`features/patients/PatientsListPage.tsx:53`, `features/appointments/CrearCitaModal.tsx:63`, `features/laboratory/NewOrderPage.tsx:60`, `features/hospital/HospitalizationAdmissionPage.tsx:64`, `features/hospital/components/NuevaOrdenExamenModal.tsx:55`",
+    "propuesta_inventario": "`GET /api/v1/pacientes?q={q}&estado={estado}&cursor={cursor}&limite={limite}`"
+  },
+  {
+    "metodo": "PatientRepository.obtenerPorId",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteObtener",
+    "responsable": "E02-P1-03",
+    "regla": "UUID y perfil administrativo; nunca notas clínicas para secretaría.",
+    "fuente_ui": "`features/patients/PatientFormPage.tsx:76`, `features/consultations/NewConsultationWizardPage.tsx:158`, `features/consultations/ConsultationDetailPage.tsx:92`",
+    "propuesta_inventario": "`GET /api/v1/pacientes/{id}`"
+  },
+  {
+    "metodo": "PatientRepository.obtenerExpedienteCompleto",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteExpediente",
+    "responsable": "E02-P2-03",
+    "regla": "Página de eventos y recursos autorizados; detalle con endpoints por recurso. Nunca cargar todo el historial. Extensiones clínicas E04/E05 amplían la proyección antes de conectarla.",
+    "fuente_ui": "`features/patients/PatientRecordPage.tsx:106`",
+    "propuesta_inventario": "`GET /api/v1/pacientes/{id}/expediente?orden=ASC\\|DESC&cursor={c}&limite={n}`"
+  },
+  {
+    "metodo": "PatientRepository.crear",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteCrear",
+    "responsable": "E02-P1-03",
+    "regla": "Identificación ausente se omite; nuevo responsable sin ID o referencia con UUID/version; alta pediátrica exige principal, autorización independiente.",
+    "fuente_ui": "`features/patients/PatientFormPage.tsx:222`",
+    "propuesta_inventario": "`POST /api/v1/pacientes`"
+  },
+  {
+    "metodo": "PatientRepository.actualizar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteActualizar",
+    "responsable": "E02-P1-03",
+    "regla": "Cambios de perfil con version_esperada. Cambios de responsables usan extensión pediátrica separada; no reemplazar vínculos al editar demografía.",
+    "fuente_ui": "`features/patients/PatientFormPage.tsx:205`",
+    "propuesta_inventario": "`PATCH /api/v1/pacientes/{id}`"
+  },
+  {
+    "metodo": "PatientRepository.archivar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteArchivar",
+    "responsable": "E03-P1-03",
+    "regla": "Causa exacta de types.ts: TRASLADO/FALLECIMIENTO/OTRA_ADMINISTRATIVA; motivo, versión y clave.",
+    "fuente_ui": "`features/patients/PatientRecordPage.tsx:121`",
+    "propuesta_inventario": "`POST /api/v1/pacientes/{id}/archivo`"
+  },
+  {
+    "metodo": "PatientRepository.reactivar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteReactivar",
+    "responsable": "E04-P2-03",
+    "regla": "Solo pediatría; 403 SIN_PERMISO en otras instituciones. Corrección de fallecimiento exige motivo/revalidación.",
+    "fuente_ui": "`features/patients/PatientRecordPage.tsx:128`",
+    "propuesta_inventario": "`POST /api/v1/pacientes/{id}/reactivacion`"
+  },
+  {
+    "metodo": "PatientRepository.agregarDiagnostico",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "consultaDiagnostico",
+    "responsable": "E03-P1-02",
+    "regla": "Seleccionar consulta ABIERTA del expediente, obtener consultaId y versión. Nunca crear diagnóstico sin consulta. Firma UI debe ampliarse en E03; no inferir la última consulta.",
+    "fuente_ui": "`features/consultations/AgregarDiagnosticoModal.tsx:74`",
+    "propuesta_inventario": "`POST /api/v1/pacientes/{pacienteId}/diagnosticos`"
+  },
+  {
+    "metodo": "PatientRepository.emitirReceta",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "consultaReceta",
+    "responsable": "E03-P1-02",
+    "regla": "Seleccionar consulta ABIERTA y versión; ampliar firma UI en E03. Solo una receta ordinaria por consulta; correcciones versionadas.",
+    "fuente_ui": "`features/consultations/EmitirRecetaModal.tsx:119`",
+    "propuesta_inventario": "`POST /api/v1/pacientes/{pacienteId}/recetas`"
+  },
+  {
+    "metodo": "PatientRepository.obtenerPolizasSeguro",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:52`",
+    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`"
+  },
+  {
+    "metodo": "PatientRepository.afiliarPolizaSeguro",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:69`",
+    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`"
+  },
+  {
+    "metodo": "PatientRepository.cambiarEstadoPoliza",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:76`",
+    "propuesta_inventario": "`PATCH /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro/{polizaId}`"
+  },
+  {
+    "metodo": "PatientRepository.obtenerProcedimientosPaciente",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientProceduresView.tsx:49`",
+    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/procedimientos`"
+  },
+  {
+    "metodo": "PatientRepository.registrarProcedimientoPaciente",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientProceduresView.tsx:68`",
+    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/procedimientos`"
+  },
+  {
+    "metodo": "PatientRepository.agregarResponsable",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricGuardiansView.tsx:104`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/responsables`"
+  },
+  {
+    "metodo": "PatientRepository.actualizarResponsable",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricGuardiansView.tsx:143`, `189`",
+    "propuesta_inventario": "`PATCH /api/v1/pediatria/pacientes/{pacienteId}/responsables/{responsableId}`"
+  },
+  {
+    "metodo": "PatientRepository.eliminarResponsable",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricGuardiansView.tsx:174`",
+    "propuesta_inventario": "`DELETE /api/v1/pediatria/pacientes/{pacienteId}/responsables/{responsableId}`"
+  },
+  {
+    "metodo": "PatientRepository.obtenerAntecedentes",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "PatientRepository.actualizarAntecedentes",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "PatientRepository.confirmarSinAlergias",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:97`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias/confirmar-sin-alergias`"
+  },
+  {
+    "metodo": "PatientRepository.registrarAlergia",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:124`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias`"
+  },
+  {
+    "metodo": "PatientRepository.eliminarAlergia",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:154`",
+    "propuesta_inventario": "`DELETE /api/v1/pediatria/pacientes/{pacienteId}/alergias?sustancia={sustancia}`"
+  },
+  {
+    "metodo": "PatientRepository.actualizarPerinatales",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:184`",
+    "propuesta_inventario": "`PUT /api/v1/pediatria/pacientes/{pacienteId}/antecedentes-perinatales`"
+  },
+  {
+    "metodo": "AppointmentRepository.obtenerCitas",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaListar",
+    "responsable": "E03-P2-01",
+    "regla": "fechaDesde/fechaHasta → fecha_desde/fecha_hasta con hasta exclusiva; sin agenda laboratorio.",
+    "fuente_ui": "`features/appointments/AppointmentsCalendarPage.tsx:75`",
+    "propuesta_inventario": "`GET /api/v1/citas?fechaDesde={f1}&fechaHasta={f2}&profesionalId={id}&estado={est}&q={q}`"
+  },
+  {
+    "metodo": "AppointmentRepository.obtenerPorId",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaObtener",
+    "responsable": "E03-P2-01",
+    "regla": "UUID, versión; recurso ajeno 404.",
+    "fuente_ui": "`features/consultations/NewConsultationWizardPage.tsx:159`",
+    "propuesta_inventario": "`GET /api/v1/citas/{id}`"
+  },
+  {
+    "metodo": "AppointmentRepository.crear",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaCrear",
+    "responsable": "E03-P2-01",
+    "regla": "Omitir secretariaGestora; resolver versión_paciente al elegir paciente. Colisión → 409 CITA_SOLAPADA.",
+    "fuente_ui": "`features/appointments/CrearCitaModal.tsx:116`",
+    "propuesta_inventario": "`POST /api/v1/citas`"
+  },
+  {
+    "metodo": "AppointmentRepository.reprogramar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaReprogramar",
+    "responsable": "E03-P2-01",
+    "regla": "nuevaFecha/nuevaHora → fecha/hora_inicio; motivo, versión y clave.",
+    "fuente_ui": "`features/appointments/ReprogramarCitaModal.tsx:69`",
+    "propuesta_inventario": "`PATCH /api/v1/citas/{id}/reprogramacion`"
+  },
+  {
+    "metodo": "AppointmentRepository.cancelar",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaCancelar",
+    "responsable": "E03-P2-01",
+    "regla": "motivoCancelacion → motivo; versión y clave.",
+    "fuente_ui": "`features/appointments/CancelarCitaModal.tsx:51`",
+    "propuesta_inventario": "`POST /api/v1/citas/{id}/cancelacion`"
+  },
+  {
+    "metodo": "ConsultationRepository.registrarConsultaCompleta",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "consultaCompleta",
+    "responsable": "E03-P2-03",
+    "regla": "Omitir profesional; versiones paciente/cita/vínculo; IDs del contexto seleccionado. Dental cita obligatoria, pediatría autorización.",
+    "fuente_ui": "`features/consultations/NewConsultationWizardPage.tsx:405`",
+    "propuesta_inventario": "`POST /api/v1/consultas`"
+  },
+  {
+    "metodo": "ConsultationRepository.obtenerPorId",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "consultaObtener",
+    "responsable": "E03-P2-03",
+    "regla": "GET por consulta UUID; comprobar paciente_id recibido contra expediente seleccionado.",
+    "fuente_ui": "`features/consultations/ConsultationDetailPage.tsx:93`",
+    "propuesta_inventario": "`GET /api/v1/pacientes/{pacienteId}/consultas/{consultaId}`"
+  },
+  {
+    "metodo": "ConsultationRepository.actualizarConsultaFinalizada",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "consultaCorregir",
+    "responsable": "E03-P2-03",
+    "regla": "Enviar snapshot clínico completo a contenido con motivo_correccion/version_esperada. Mezclar cambios con lectura vigente en cliente y conservar versión; servidor nunca fusiona con versión desconocida. Omitir autor.",
+    "fuente_ui": "`features/consultations/ModificarConsultaModal.tsx:66`",
+    "propuesta_inventario": "`PATCH /api/v1/pacientes/{pacienteId}/consultas/{consultaId}`"
+  },
+  {
+    "metodo": "ConsultationRepository.agregarProcedimiento",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/consultations/ConsultationDetailPage.tsx:55`",
+    "propuesta_inventario": "`POST /api/v1/pacientes/{pacienteId}/consultas/{consultaId}/procedimientos`"
+  },
+  {
+    "metodo": "UserRepository.listarUsuarios",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/UsersManagementPage.tsx:40`",
+    "propuesta_inventario": "`GET /api/v1/usuarios`"
+  },
+  {
+    "metodo": "UserRepository.crearUsuario",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/CrearUsuarioModal.tsx:77`",
+    "propuesta_inventario": "`POST /api/v1/usuarios`"
+  },
+  {
+    "metodo": "UserRepository.cambiarEstado",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/UsersManagementPage.tsx:56`",
+    "propuesta_inventario": "`PATCH /api/v1/usuarios/{usuarioId}/estado`"
+  },
+  {
+    "metodo": "UserRepository.obtenerRolesInstitucionales",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "UserRepository.obtenerCatalogoPermisos",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "UserRepository.actualizarPermisosRol",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "CatalogRepository.obtenerReferenciasLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/InventoryPage.tsx:68`, `features/laboratory/NewOrderPage.tsx:62`, `features/admin/LaboratoryReferencesView.tsx:24`, `features/admin/RegistrarPruebaLabModal.tsx:46`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/referencias?categoria={categoria}`"
+  },
+  {
+    "metodo": "CatalogRepository.guardarReferenciaLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/LaboratoryReferencesView.tsx:29`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/referencias` (alta) / `PATCH /api/v1/laboratorio/referencias/{id}` (edición)"
+  },
+  {
+    "metodo": "CatalogRepository.obtenerMedicos",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E03-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationAdmissionPage.tsx:65` (y conectar en `AppointmentsCalendarPage.tsx` / `CrearCitaModal.tsx`)",
+    "propuesta_inventario": "`GET /api/v1/catalogos/medicos`"
+  },
+  {
+    "metodo": "CatalogRepository.crearMedico",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "CatalogRepository.cambiarEstadoMedico",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "CatalogRepository.obtenerAseguradoras",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:53`",
+    "propuesta_inventario": "`GET /api/v1/hospital/catalogos/aseguradoras`"
+  },
+  {
+    "metodo": "CatalogRepository.obtenerProcedimientosOdontologicos",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "CatalogRepository.crearProcedimientoOdontologico",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "CatalogRepository.obtenerPruebasLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/NewOrderPage.tsx:61`, `features/admin/CatalogosManagementPage.tsx:46`, `features/hospital/components/NuevaOrdenExamenModal.tsx:51`, `features/hospital/components/RegistrarResultadosModal.tsx:49`",
+    "propuesta_inventario": "`GET /api/v1/catalogos/pruebas-laboratorio`"
+  },
+  {
+    "metodo": "CatalogRepository.crearPruebaLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/RegistrarPruebaLabModal.tsx:172`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/catalogo-pruebas`"
+  },
+  {
+    "metodo": "CatalogRepository.crearNuevaVersionPruebaLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/RegistrarPruebaLabModal.tsx:152`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/catalogo-pruebas/{pruebaId}/versiones`"
+  },
+  {
+    "metodo": "CatalogRepository.cambiarEstadoPruebaLaboratorio",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/CatalogosManagementPage.tsx:60`",
+    "propuesta_inventario": "`PATCH /api/v1/laboratorio/catalogo-pruebas/{pruebaId}/estado`"
+  },
+  {
+    "metodo": "CatalogRepository.obtenerVacunas",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/CatalogosManagementPage.tsx:47`, `features/patients/components/PediatricVaccinesScheduleView.tsx:76`",
+    "propuesta_inventario": "`GET /api/v1/pediatria/catalogos/vacunas`"
+  },
+  {
+    "metodo": "CatalogRepository.crearVacuna",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/RegistrarVacunaModal.tsx:126`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/catalogos/vacunas`"
+  },
+  {
+    "metodo": "CatalogRepository.crearVersionEsquemaVacuna",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/RegistrarVacunaModal.tsx:124`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/catalogos/vacunas/{vacunaId}/versiones`"
+  },
+  {
+    "metodo": "VaccineRepository.obtenerAplicaciones",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricVaccinesScheduleView.tsx:75`",
+    "propuesta_inventario": "`GET /api/v1/pediatria/pacientes/{pacienteId}/vacunacion/aplicaciones`"
+  },
+  {
+    "metodo": "VaccineRepository.obtenerEsquemaCompletoPaciente",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PediatricVaccinesScheduleView.tsx:74`",
+    "propuesta_inventario": "`GET /api/v1/pediatria/pacientes/{pacienteId}/vacunacion/esquema?edadMeses={edadMeses}`"
+  },
+  {
+    "metodo": "VaccineRepository.registrarAplicacion",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/RegistrarAplicacionVacunaModal.tsx:96`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/vacunacion/aplicaciones`"
+  },
+  {
+    "metodo": "VaccineRepository.corregirAplicacion",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/CorregirAplicacionVacunaModal.tsx:65`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/vacunacion/aplicaciones/{aplicacionId}/correcciones`"
+  },
+  {
+    "metodo": "VaccineRepository.anularAplicacion",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/CorregirAplicacionVacunaModal.tsx:58`",
+    "propuesta_inventario": "`POST /api/v1/pediatria/vacunacion/aplicaciones/{aplicacionId}/anulacion`"
+  },
+  {
+    "metodo": "AuditRepository.consultarEventos",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/admin/AuditSearchPage.tsx:42`, `65`",
+    "propuesta_inventario": "`GET /api/v1/auditoria?fechaDesde={f1}&fechaHasta={f2}&usuarioId={u}&rol={r}&accion={a}&entidad={e}&entidadId={id}&q={q}`"
+  },
+  {
+    "metodo": "AuditRepository.obtenerEventoPorId",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "AuditRepository.registrarEvento",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "HospitalizationRepository.listarHospitalizaciones",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationsListPage.tsx:44`, `features/hospital/HospitalBedsMapPage.tsx:66`",
+    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones?estado={filtroEstado}`"
+  },
+  {
+    "metodo": "HospitalizationRepository.obtenerHospitalizacionPorId",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:67`",
+    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones/{id}`"
+  },
+  {
+    "metodo": "HospitalizationRepository.obtenerHospitalizacionesPorPaciente",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "HospitalizationRepository.crearIngreso",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationAdmissionPage.tsx:160`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones`"
+  },
+  {
+    "metodo": "HospitalizationRepository.registrarEgreso",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:85`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/egreso`"
+  },
+  {
+    "metodo": "HospitalizationRepository.listarCamas",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationsListPage.tsx:45`, `features/hospital/HospitalBedsMapPage.tsx:65`, `features/hospital/HospitalizationAdmissionPage.tsx:66`, `features/hospital/HospitalizationDetailPage.tsx:68`, `88`, `98`",
+    "propuesta_inventario": "`GET /api/v1/hospital/camas`"
+  },
+  {
+    "metodo": "HospitalizationRepository.asignarCama",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalBedsMapPage.tsx:130`, `features/hospital/HospitalizationDetailPage.tsx:95`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/asignacion-cama`"
+  },
+  {
+    "metodo": "HospitalizationRepository.liberarCama",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalBedsMapPage.tsx:141`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/liberacion-cama`"
+  },
+  {
+    "metodo": "HospitalizationRepository.cambiarEstadoCama",
+    "categoria": "EXCLUIDO_ALCANCE_O_SOLO_MOCK",
+    "destino": "EXCLUIDO",
+    "responsable": "DEC11",
+    "regla": "No publicar endpoint. Solo simulación o capacidad retirada."
+  },
+  {
+    "metodo": "HospitalizationRepository.agregarNotaEvolucion",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:108`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/notas-evolucion`"
+  },
+  {
+    "metodo": "HospitalizationRepository.agregarProcedimiento",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:131`",
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/procedimientos`"
+  },
+  {
+    "metodo": "HospitalExamRepository.listarOrdenes",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalExamOrdersPage.tsx:51`",
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?estado={filtroEstado}`"
+  },
+  {
+    "metodo": "HospitalExamRepository.obtenerOrdenPorId",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "HospitalExamRepository.obtenerOrdenesPorPaciente",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/patients/components/PatientExamsView.tsx:50`",
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?pacienteId={pacienteId}`"
+  },
+  {
+    "metodo": "HospitalExamRepository.crearOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/components/NuevaOrdenExamenModal.tsx:107`",
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes`"
+  },
+  {
+    "metodo": "HospitalExamRepository.cancelarOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/HospitalExamOrdersPage.tsx:69`",
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/cancelacion`"
+  },
+  {
+    "metodo": "HospitalExamRepository.obtenerResultadosPorOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/components/DetalleOrdenResultadosModal.tsx:43`",
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`"
+  },
+  {
+    "metodo": "HospitalExamRepository.obtenerResultadoPorId",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "HospitalExamRepository.obtenerResultadosPorPaciente",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "HospitalExamRepository.registrarResultado",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E04-P1-03 / E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/hospital/components/RegistrarResultadosModal.tsx:140`",
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerBandeja",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/WorklistPage.tsx:44`, `features/laboratory/ResultsValidationPage.tsx:53`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/ordenes?estado={est}&prioridad={pri}&q={busqueda}&seccion={sec}`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerOrdenPorId",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/OrderDetailPage.tsx:44`, `features/laboratory/LabReportPage.tsx:45`, `115`, `features/laboratory/ResultsCapturePage.tsx:71`, `230`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/ordenes/{ordenId}`"
+  },
+  {
+    "metodo": "LaboratoryRepository.crearOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/NewOrderPage.tsx:157`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/ordenes`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarTrasladoMuestra",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/SamplesManagementPage.tsx:541`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/muestras/{muestraId}/traslados`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerMuestras",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/SamplesManagementPage.tsx:63`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/muestras?ordenId={ordenId}`"
+  },
+  {
+    "metodo": "LaboratoryRepository.actualizarEstadoMuestra",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/SamplesManagementPage.tsx:114`, `139`",
+    "propuesta_inventario": "`PATCH /api/v1/laboratorio/muestras/{muestraId}/estado`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarRetomaMuestra",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/SamplesManagementPage.tsx:165`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/muestras/{muestraRechazadaId}/retoma`"
+  },
+  {
+    "metodo": "LaboratoryRepository.rectificarDatoMuestra",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/SamplesManagementPage.tsx:189`",
+    "propuesta_inventario": "`PATCH /api/v1/laboratorio/muestras/{muestraId}/rectificacion`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerResultadosPorOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/LabReportPage.tsx:52`, `features/laboratory/ResultsCapturePage.tsx:78`, `226`, `794`, `features/laboratory/ResultsValidationPage.tsx:57`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/ordenes/{ordenId}/resultados`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerResultadoPorId",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "LaboratoryRepository.guardarResultadoBorrador",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/ResultsCapturePage.tsx:200`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/ordenes/{ordenId}/resultados`"
+  },
+  {
+    "metodo": "LaboratoryRepository.validarResultado",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/ResultsValidationPage.tsx:123`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/resultados/{resultadoId}/validacion`"
+  },
+  {
+    "metodo": "LaboratoryRepository.corregirResultado",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/components/CorrectionRepetitionModal.tsx:102`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/resultados/{resultadoId}/correcciones`"
+  },
+  {
+    "metodo": "LaboratoryRepository.repetirAnalisis",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-01",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/components/CorrectionRepetitionModal.tsx:133`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/ordenes/{ordenId}/items/{itemOrdenId}/repeticiones`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerInformePorOrden",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/LabReportPage.tsx:55`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/ordenes/{ordenId}/informe`"
+  },
+  {
+    "metodo": "LaboratoryRepository.emitirInforme",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/LabReportPage.tsx:102`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/ordenes/{ordenId}/informe`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerEquipos",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/QualityControlPage.tsx:77`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/equipos`"
+  },
+  {
+    "metodo": "LaboratoryRepository.cambiarEstadoEquipo",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/QualityControlPage.tsx:189`",
+    "propuesta_inventario": "`PATCH /api/v1/laboratorio/equipos/{equipoId}/estado`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarEquipo",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/QualityControlPage.tsx:161`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/equipos`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerControlesCalidad",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/QualityControlPage.tsx:78`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/controles-calidad?equipoId={id}&evaluacion={ev}&q={busqueda}`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarControlCalidad",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/QualityControlPage.tsx:119`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/controles-calidad`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerLotesReactivos",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/InventoryPage.tsx:82`, `142`, `204`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/inventario/lotes`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerMovimientosInventario",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/InventoryPage.tsx:83`, `205`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/inventario/movimientos?loteId={loteId}`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarMovimientoInventario",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/InventoryPage.tsx:129`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/inventario/movimientos`"
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarNuevoLoteReactivo",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P1-03",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/InventoryPage.tsx:187`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/inventario/lotes`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerFacturas",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:77`",
+    "propuesta_inventario": "`GET /api/v1/laboratorio/facturas`"
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerFacturaPorId",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "LaboratoryRepository.obtenerFacturaPorOrden",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+  },
+  {
+    "metodo": "LaboratoryRepository.registrarPagoFactura",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:183`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/pagos`"
+  },
+  {
+    "metodo": "LaboratoryRepository.revertirPagoFactura",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:229`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/pagos/{pagoId}/reversion`"
+  },
+  {
+    "metodo": "LaboratoryRepository.anularFactura",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PENDIENTE",
+    "responsable": "E05-P2-02",
+    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:275`",
+    "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/anulacion`"
+  }
+]
