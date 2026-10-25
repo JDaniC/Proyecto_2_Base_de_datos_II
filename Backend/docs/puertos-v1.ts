@@ -56,14 +56,15 @@ export interface PerfilPaciente {
   readonly identificacion?: Identificacion;
   readonly telefono?: string; readonly correo?: string; readonly direccion?: string;
   readonly grupoSanguineo?: string;
-  readonly contactoEmergencia?: { readonly nombre: string; readonly parentesco: string; readonly telefono: string };
+  readonly contactoEmergencia?: { readonly nombres: string; readonly apellidos: string; readonly parentesco: string; readonly telefono: string };
 }
 export type CausaArchivo = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
 export interface ArchivoRegistrado {
   readonly causa: CausaArchivo; readonly motivo: string;
   readonly fechaHora: InstanteUTC; readonly actorId: UUID;
 }
-export type Paciente = PerfilPaciente & {
+export type Paciente = Omit<PerfilPaciente, 'fechaNacimiento' | 'sexo'> & {
+  readonly fechaNacimiento: FechaCivil | null; readonly sexo: PerfilPaciente['sexo'] | null;
   readonly id: UUID; readonly historialId: UUID; readonly version: Version;
   readonly codigoLegible: string; readonly fechaRegistro: InstanteUTC;
 } & (
@@ -91,7 +92,8 @@ export type EventoEstadoPaciente = {
 );
 export type Cita = {
   readonly id: UUID; readonly pacienteId: UUID; readonly profesionalId: UUID;
-  readonly fecha: FechaCivil; readonly horaInicio: string; readonly horaFin: string;
+  readonly fecha: FechaCivil; readonly horaInicio: string; readonly horaFin: string | null;
+  readonly duracionMinutos: number | null;
   readonly motivo: string; readonly consultorio?: string; readonly version: Version;
   readonly fechaCreacion: InstanteUTC;
 } & (
@@ -209,6 +211,8 @@ export interface RepositorioCita {
   solapamientos(profesionalId: UUID, fecha: FechaCivil, inicio: string, fin: string): Promise<readonly Cita[]>;
 }
 export interface RepositorioConsulta {
+  /** Una cita identifica a lo sumo una consulta; permite estado EN_CURSO derivado. */
+  porCita(citaId: UUID): Promise<Consulta | null>;
   porId(id: UUID): Promise<Consulta | null>;
   revisiones(id: UUID, pagina: FiltrosPagina, rango?: RangoInstantes): Promise<Pagina<RevisionConsulta>>;
 }

@@ -80,6 +80,8 @@ Acta y revisión cruzada: [evidencia E00-P1-01](evidencias/E00/E00-P1-01.md). Ca
 | DEC14 | 24/10/2026 | SHA-256 de PDF `(4)` y `(5)` | Son el mismo archivo (`bab63053…0b382`). Las citas del diseño a `(4)` siguen válidas; la fuente nominal es `(5)`. | Ninguno | Ninguno | Revisión documental |
 | DEC15 | 24/10/2026 | Diseño §1 | `Agente/AUDITORIA_DISENO_PROYECTO.md` no está en el repositorio. Su referencia queda histórica; la sección 15 del diseño es la traza vigente. | Ninguno | Ninguno | Revisión documental |
 
+| DEC16 | 25/10/2026 | Contraste OpenAPI con SQL, consultas_clinicas M03 y raíz M04 en revisión de #15 | Conservar contrato común con extensiones tipadas y migraciones explícitas E02/E03 antes de habilitar adaptadores; capturar apellido de contacto, conservar legado desconocido sin inventarlo | Signos comunes preservados, contacto explícito, lecturas legadas nullable; DTO sin truncamiento | E02/E03 adaptan captura y “Sin dato”; se conserva diseño vigente | [Compatibilidad física](../Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md), pruebas nueva/existente y recuperación antes de publicar adaptador |
+
 Retroalimentación docente de Entrega I: PENDIENTE DE FUENTE. No se atribuyen cambios al docente (EF03, RF-D06, RNF-040); se registrará en E07-P2-01 o antes si llega.
 
 ## 6. Matriz de capacidades por institución

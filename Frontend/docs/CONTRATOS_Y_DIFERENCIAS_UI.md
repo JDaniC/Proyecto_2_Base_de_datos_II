@@ -405,3 +405,6 @@ Lectura clínica: DiagnosticoRegistrado y TratamientoRegistrado exponen id, fech
 
 
 Historial y signos (sexta revisión E00-P1-03): eventos de diagnóstico/tratamiento/receta llevan consulta_id para cargar su padre directamente y recurso_id para seleccionar el componente, incluso con filtro de tipo. Presiones/frecuencias aceptan valores enteros; peso máximo 3 decimales, talla/saturación 2, temperatura 1. UI valida antes de enviar, sin redondear mediciones para conseguir una escritura válida.
+
+
+Compatibilidad DEC16 (séptima revisión): contacto de emergencia hospitalario captura nombres/apellidos separados (E02); no deducir apellido del antiguo nombre libre. Nombres/apellidos de paciente ≤80 por grupo; CUI ≤20. Lecturas legadas de fecha_nacimiento/sexo y fin/duración de cita pueden devolver null: mostrar “Sin dato”, sin fecha o sexo ficticios. Altas siguen requiriendo fecha/sexo; reprogramar legado sin duración exige captura explícita en E03. Extensiones de persistencia comunes quedan definidas en Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md; ningún adaptador se conecta antes de migración explícita y prueba nueva/existente.

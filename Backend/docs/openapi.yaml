@@ -1591,25 +1591,33 @@ components:
       type: object
       additionalProperties: false
       properties:
-        nombre:
-          type: string
-          minLength: 1
-          maxLength: 200
-          pattern: \S
         parentesco:
           type: string
           minLength: 1
-          maxLength: 80
+          maxLength: 60
           pattern: \S
         telefono:
           type: string
           minLength: 1
           maxLength: 30
           pattern: \S
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
       required:
-      - nombre
+      - nombres
+      - apellidos
       - parentesco
       - telefono
+      description: Contacto de emergencia hospitalario con nombres y apellidos explícitos; no dividir ni inventar
+        apellido desde el antiguo nombre libre.
     Identificacion:
       type: object
       additionalProperties: false
@@ -1627,6 +1635,17 @@ components:
       required:
       - tipo
       - numero
+      allOf:
+      - if:
+          properties:
+            tipo:
+              const: CUI
+          required:
+          - tipo
+        then:
+          properties:
+            numero:
+              maxLength: 20
     VinculoResponsable:
       type: object
       additionalProperties: false
@@ -1702,12 +1721,12 @@ components:
         nombres: &id009
           type: string
           minLength: 1
-          maxLength: 120
+          maxLength: 80
           pattern: \S
         apellidos: &id010
           type: string
           minLength: 1
-          maxLength: 120
+          maxLength: 80
           pattern: \S
         fecha_nacimiento: &id011
           $ref: '#/components/schemas/FechaCivil'
@@ -1740,14 +1759,20 @@ components:
           - AB-
           - O+
           - O-
+          x-instituciones:
+          - HOSPITAL_GENERAL
         contacto_emergencia: &id018
           $ref: '#/components/schemas/Contacto'
+          x-instituciones:
+          - HOSPITAL_GENERAL
         responsables:
           type: array
           items:
             $ref: '#/components/schemas/ResponsableAlta'
           minItems: 1
           maxItems: 100
+          x-instituciones:
+          - CENTRO_MEDICO_PEDIATRICO
       required:
       - nombres
       - apellidos
@@ -1820,11 +1845,15 @@ components:
             - O+
             - O-
           - type: 'null'
+          x-instituciones:
+          - HOSPITAL_GENERAL
         contacto_emergencia:
           description: Omitir conserva; null elimina el valor previo; un valor no nulo lo reemplaza.
           anyOf:
           - $ref: '#/components/schemas/Contacto'
           - type: 'null'
+          x-instituciones:
+          - HOSPITAL_GENERAL
         version_esperada:
           $ref: '#/components/schemas/Version'
       required:
@@ -1838,8 +1867,20 @@ components:
       properties:
         nombres: *id009
         apellidos: *id010
-        fecha_nacimiento: *id011
-        sexo: *id012
+        fecha_nacimiento:
+          anyOf:
+          - $ref: '#/components/schemas/FechaCivil'
+          - type: 'null'
+          description: null solo en lectura de registros históricos sin este dato; altas requieren dato válido.
+        sexo:
+          anyOf:
+          - type: string
+            enum:
+            - MASCULINO
+            - FEMENINO
+            - OTRO
+          - type: 'null'
+          description: null solo en lectura de registros históricos sin este dato; altas requieren dato válido.
         identificacion: *id013
         telefono: *id014
         correo: *id015
@@ -1851,7 +1892,7 @@ components:
         codigo_legible:
           type: string
           minLength: 1
-          maxLength: 50
+          maxLength: 60
           pattern: \S
         institucion:
           $ref: '#/components/schemas/Institucion'
@@ -1996,9 +2037,17 @@ components:
             minimum: 10
             maximum: 100
           - type: 'null'
+          x-instituciones:
+          - CENTRO_MEDICO_PEDIATRICO
       required: []
       description: Presiones y frecuencias enteras; peso hasta 3 decimales, talla y saturación hasta 2, temperatura
         hasta 1. Rechazar precisión excedida sin redondear datos clínicos silenciosamente.
+      x-persistencia-requerida:
+        HOSPITAL_GENERAL: 'Existente: tabla signos_vitales; perímetro solo pediatría.'
+        CLINICA_ODONTOLOGICA: 'E03-P1-02: nueva tabla tipada signos_vitales_consulta 1:1, migración y manifiesto.'
+        LABORATORIO_CLINICO: 'E03-P2-01: consultas_clinicas.signos_vitales tipado, collMod + actualización manifiesto
+          y migración.'
+        CENTRO_MEDICO_PEDIATRICO: 'E03-P2-02: consultas.signos_vitales tipado y migración M04 conservando control_crecimiento.'
     Diagnostico:
       type: object
       additionalProperties: false
@@ -2436,6 +2485,12 @@ components:
           minLength: 1
           maxLength: 1000
           pattern: \S
+        duracion_minutos:
+          type: integer
+          minimum: 5
+          maximum: 480
+          description: Obligatoria por regla de negocio cuando la cita legada no tiene duración conocida; se captura
+            explícitamente, no se infiere.
       required:
       - version_esperada
       - fecha
@@ -2472,7 +2527,10 @@ components:
         hora_inicio:
           $ref: '#/components/schemas/HoraCivil'
         hora_fin:
-          $ref: '#/components/schemas/HoraCivil'
+          anyOf:
+          - $ref: '#/components/schemas/HoraCivil'
+          - type: 'null'
+          description: null solo para citas legadas sin duración registrada; no inventar hora de fin.
         motivo:
           type: string
           minLength: 1
@@ -2491,6 +2549,13 @@ components:
           pattern: \S
         fecha_creacion:
           $ref: '#/components/schemas/InstanteUTC'
+        duracion_minutos:
+          anyOf:
+          - type: integer
+            minimum: 5
+            maximum: 480
+          - type: 'null'
+          description: Conocida en nuevas citas; null para legado sin duración verificable.
       required:
       - id
       - version
@@ -2502,6 +2567,7 @@ components:
       - motivo
       - estado
       - fecha_creacion
+      - duracion_minutos
       allOf:
       - if:
           properties:
@@ -3317,3 +3383,9 @@ components:
               mensaje: 'Dependencia no disponible o commit incierto: reconciliar misma clave.'
             meta:
               correlacion: 00000000-0000-4000-8000-000000000090
+x-compatibilidad-persistencia:
+  decision: DEC16
+  documento: COMPATIBILIDAD_PERSISTENCIA_V1.md
+  estado: ESPECIFICADA_NO_IMPLEMENTADA
+  puerta: Migración explícita e integración nueva/existente por tarea antes de implementar/conectar adaptador; no
+    descartar campos del DTO.
