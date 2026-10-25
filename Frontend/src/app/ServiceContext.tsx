@@ -13,6 +13,8 @@ import {
   LaboratoryRepository,
   VaccineRepository
 } from '../services/contracts';
+import { ModoServiciosFrontend } from '../services/types';
+import { resolveServiceMode } from './productScope';
 import { MockAuthRepository } from '../mocks/mockAuthRepository';
 import { MockDashboardRepository } from '../mocks/mockDashboardRepository';
 import { MockPatientRepository } from '../mocks/mockPatientRepository';
@@ -27,6 +29,7 @@ import { MockLaboratoryRepository } from '../mocks/mockLaboratoryRepository';
 import { MockVaccineRepository } from '../mocks/mockVaccineRepository';
 
 interface ServiceContainer {
+  mode: ModoServiciosFrontend;
   authRepository: AuthRepository;
   dashboardRepository: DashboardRepository;
   patientRepository: PatientRepository;
@@ -45,6 +48,7 @@ const ServiceContext = createContext<ServiceContainer | null>(null);
 
 export interface ServiceProviderProps {
   children: React.ReactNode;
+  mode?: ModoServiciosFrontend;
   customAuthRepository?: AuthRepository;
   customDashboardRepository?: DashboardRepository;
   customPatientRepository?: PatientRepository;
@@ -59,8 +63,51 @@ export interface ServiceProviderProps {
   customVaccineRepository?: VaccineRepository;
 }
 
+export interface ApiAdapterUnavailableError extends Error {
+  readonly code: 'PERSISTENCIA_NO_DISPONIBLE' | 'NOT_IMPLEMENTED';
+  readonly status: 503 | 501;
+  readonly repository: string;
+  readonly method?: string;
+}
+
+export function createApiAdapterUnavailableError(
+  repository: string,
+  method?: string,
+  status: 503 | 501 = 503,
+  code: 'PERSISTENCIA_NO_DISPONIBLE' | 'NOT_IMPLEMENTED' = 'PERSISTENCIA_NO_DISPONIBLE'
+): ApiAdapterUnavailableError {
+  const target = method ? `${repository}.${method}` : repository;
+  const err = new Error(
+    `${status} ${code}: Modo API activo sin adaptador HTTP configurado para ${target}. Prohibido el fallback automático a simuladores.`
+  ) as ApiAdapterUnavailableError;
+  Object.defineProperties(err, {
+    code: { value: code, enumerable: true },
+    status: { value: status, enumerable: true },
+    repository: { value: repository, enumerable: true },
+    method: { value: method, enumerable: true },
+  });
+  return err;
+}
+
+export function requireApiAdapter<T extends object>(adapter: T | undefined, name: string): T {
+  if (adapter) {
+    return adapter;
+  }
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      if (typeof prop === 'symbol' || prop === 'then') {
+        return undefined;
+      }
+      return async () => {
+        throw createApiAdapterUnavailableError(name, String(prop), 503, 'PERSISTENCIA_NO_DISPONIBLE');
+      };
+    },
+  });
+}
+
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   children,
+  mode,
   customAuthRepository,
   customDashboardRepository,
   customPatientRepository,
@@ -74,8 +121,38 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
   customLaboratoryRepository,
   customVaccineRepository,
 }) => {
+  const resolvedMode = resolveServiceMode(mode);
+
   const services = useMemo<ServiceContainer>(() => {
+    if (resolvedMode === 'api') {
+      return {
+        mode: 'api',
+        authRepository: requireApiAdapter(customAuthRepository, 'authRepository'),
+        dashboardRepository: customDashboardRepository || {
+          obtenerDashboard: async () => {
+            throw createApiAdapterUnavailableError(
+              'dashboardRepository',
+              'obtenerDashboard',
+              501,
+              'NOT_IMPLEMENTED'
+            );
+          }
+        },
+        patientRepository: requireApiAdapter(customPatientRepository, 'patientRepository'),
+        appointmentRepository: requireApiAdapter(customAppointmentRepository, 'appointmentRepository'),
+        consultationRepository: requireApiAdapter(customConsultationRepository, 'consultationRepository'),
+        userRepository: requireApiAdapter(customUserRepository, 'userRepository'),
+        catalogRepository: requireApiAdapter(customCatalogRepository, 'catalogRepository'),
+        auditRepository: requireApiAdapter(customAuditRepository, 'auditRepository'),
+        hospitalizationRepository: requireApiAdapter(customHospitalizationRepository, 'hospitalizationRepository'),
+        examRepository: requireApiAdapter(customExamRepository, 'examRepository'),
+        laboratoryRepository: requireApiAdapter(customLaboratoryRepository, 'laboratoryRepository'),
+        vaccineRepository: requireApiAdapter(customVaccineRepository, 'vaccineRepository'),
+      };
+    }
+
     return {
+      mode: 'mock',
       authRepository: customAuthRepository || new MockAuthRepository(),
       dashboardRepository: customDashboardRepository || new MockDashboardRepository(),
       patientRepository: customPatientRepository || new MockPatientRepository(),
@@ -90,6 +167,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
       vaccineRepository: customVaccineRepository || new MockVaccineRepository(),
     };
   }, [
+    resolvedMode,
     customAuthRepository,
     customDashboardRepository,
     customPatientRepository,

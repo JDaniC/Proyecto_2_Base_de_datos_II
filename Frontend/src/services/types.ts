@@ -4,6 +4,19 @@ export type InstitucionId =
   | 'LABORATORIO_CLINICO'
   | 'CENTRO_PEDIATRICO';
 
+/**
+ * Identificador canónico de institución en servidor, claims y persistencia (DEC06).
+ * El cliente mapea 'CENTRO_PEDIATRICO' <-> 'CENTRO_MEDICO_PEDIATRICO' en la frontera HTTP.
+ */
+export type InstitucionIdCanonica =
+  | 'HOSPITAL_GENERAL'
+  | 'CLINICA_ODONTOLOGICA'
+  | 'LABORATORIO_CLINICO'
+  | 'CENTRO_MEDICO_PEDIATRICO';
+
+/** Modo explícito de resolución de servicios en ServiceContext (E00-P2-02 / E01-P2-03). */
+export type ModoServiciosFrontend = 'mock' | 'api';
+
 export type MotorBaseDatos = 'PostgreSQL' | 'MySQL' | 'MongoDB' | 'Cloud Firestore';
 
 export type EstadoCuenta = 'ACTIVO' | 'INACTIVO' | 'PENDIENTE';
@@ -164,6 +177,7 @@ export interface RegistrarAplicacionVacunaDTO {
   sitioAnatomico: string;
   reaccionesInmediatas?: string;
   observaciones?: string;
+  idempotencyKey?: string;
 }
 
 export interface CorregirAplicacionVacunaDTO {
@@ -172,6 +186,8 @@ export interface CorregirAplicacionVacunaDTO {
   reaccionesInmediatas?: string;
   observaciones?: string;
   motivo: string;
+  versionEsperada?: number;
+  idempotencyKey?: string;
 }
 
 export interface ItemEsquemaPaciente {
@@ -228,6 +244,7 @@ export interface UsuarioInstitucional {
   profesionalVinculado?: string;
   fechaCreacion: string;
   ultimoAcceso?: string;
+  version?: number;
 }
 
 export interface CrearUsuarioDTO {
@@ -236,6 +253,7 @@ export interface CrearUsuarioDTO {
   rolId: RolId;
   estado: EstadoCuenta;
   profesionalVinculado?: string;
+  idempotencyKey?: string;
 }
 
 export type SimulacionEscenario =
@@ -308,6 +326,7 @@ export interface CitaAgenda {
   secretariaGestora?: string;
   historialReprogramaciones?: ReprogramacionRegistro[];
   fechaCreacion: string;
+  version?: number;
 }
 
 export interface FiltrosAgendaQuery {
@@ -399,6 +418,7 @@ export interface Paciente {
   historialConsultasCount: number;
   causaArchivo?: CausaArchivo;
   motivoArchivo?: string;
+  version?: number;
 }
 
 export type CausaArchivo = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
@@ -518,6 +538,7 @@ export interface DetalleConsultaCompleta {
   receta?: RecetaHistorial;
   procedimientos?: ProcedimientoHospitalarioItem[];
   revision: number;
+  version?: number;
   historialRevisiones?: RevisionConsultaItem[];
 }
 
@@ -611,6 +632,7 @@ export interface PolizaSeguroPaciente {
   limiteMaximoAnualGTQ?: number;
   titular: TitularSeguro;
   observaciones?: string;
+  version?: number;
 }
 
 export interface AfiliarPolizaDTO {
@@ -623,6 +645,7 @@ export interface AfiliarPolizaDTO {
   titular: TitularSeguro;
   copagoConsultaGTQ?: number;
   observaciones?: string;
+  idempotencyKey?: string;
 }
 
 export interface ExpedienteCompleto {
@@ -774,6 +797,7 @@ export interface ActualizarPacienteDTO {
   grupoSanguineo?: string;
   contactoEmergencia?: ContactoEmergencia;
   responsables?: ResponsablePediatrico[];
+  versionEsperada?: number;
   idempotencyKey: string;
 }
 
@@ -932,6 +956,7 @@ export interface HospitalizacionItem {
   consultasEnlazadasIds: string[];
   notasEvolucion?: NotaEvolucionItem[];
   procedimientos?: ProcedimientoHospitalarioItem[];
+  version?: number;
 }
 
 export interface CrearIngresoHospitalarioDTO {
@@ -947,6 +972,8 @@ export interface CrearIngresoHospitalarioDTO {
   diagnosticoIngresoNombre: string;
   motivoIngreso: string;
   consultasEnlazadasIds?: string[];
+  versionEsperadaCama?: number;
+  idempotencyKey?: string;
 }
 
 export interface RegistrarEgresoHospitalarioDTO {
@@ -955,6 +982,8 @@ export interface RegistrarEgresoHospitalarioDTO {
   diagnosticoEgresoCIE: string;
   diagnosticoEgresoNombre: string;
   resumenClinico: string;
+  versionEsperada?: number;
+  idempotencyKey?: string;
 }
 
 // -------------------------------------------------------------
@@ -1006,6 +1035,7 @@ export interface MuestraLaboratorio {
   esRetoma?: boolean;
   muestraOrigenId?: string;
   eventosTrazabilidad: EventoTrazabilidadMuestra[];
+  version?: number;
 }
 
 export interface ItemOrdenLab {
@@ -1040,6 +1070,7 @@ export interface OrdenLaboratorio {
   items: ItemOrdenLab[];
   muestras: MuestraLaboratorio[];
   totalArancelGTQ: number;
+  version?: number;
 }
 
 export interface FiltrosBandejaLab {
@@ -1060,6 +1091,7 @@ export interface CrearOrdenLabDTO {
   motivoClinico: string;
   pruebasSeleccionadasIds: string[];
   preciosAcordados?: Record<string, number>;
+  idempotencyKey?: string;
 }
 
 export type EstadoResultadoLab = 'BORRADOR' | 'VALIDADO' | 'CORREGIDO' | 'ANULADO';
@@ -1136,6 +1168,8 @@ export interface GuardarResultadoBorradorDTO {
   observaciones?: string;
   analistaId: string;
   analistaNombre: string;
+  versionEsperada?: number;
+  idempotencyKey?: string;
 }
 
 export type EstadoInformeLaboratorio = 'BORRADOR' | 'EMITIDO' | 'ANULADO';
@@ -1176,6 +1210,7 @@ export interface InformeLaboratorio {
   emisorColegiado: string;
   resultadosIncluidos: ItemResultadoInforme[];
   conclusionesGenerales?: string;
+  version?: number;
 }
 
 // -------------------------------------------------------------
@@ -1197,6 +1232,7 @@ export interface EquipoLaboratorio {
   ultimaCalibracion: string;
   proximaCalibracion: string;
   notas?: string;
+  version?: number;
 }
 
 export type NivelControlCalidad = 'NIVEL_1_NORMAL' | 'NIVEL_2_PATOLOGICO';
@@ -1240,6 +1276,7 @@ export interface RegistrarControlCalidadDTO {
   nivelControl: NivelControlCalidad;
   valorMedido: number;
   observaciones?: string;
+  idempotencyKey?: string;
 }
 
 // -------------------------------------------------------------
@@ -1299,6 +1336,8 @@ export interface RegistrarMovimientoDTO {
   cantidad: number;
   motivo: string;
   ordenId?: string;
+  versionEsperadaStock?: number;
+  idempotencyKey?: string;
 }
 
 export interface RegistrarNuevoLoteDTO {
@@ -1311,6 +1350,7 @@ export interface RegistrarNuevoLoteDTO {
   temperaturaAlmacenamiento: string;
   cantidadInicial: number;
   motivoRecepcion?: string;
+  idempotencyKey?: string;
 }
 
 // -------------------------------------------------------------
@@ -1360,12 +1400,14 @@ export interface FacturaLaboratorio {
   items: ItemFacturaLab[];
   pagos: PagoLaboratorio[];
   motivoAnulacion?: string;
+  version?: number;
 }
 
 export interface RegistrarPagoDTO {
   facturaId: string;
   montoCentavos: number;
   metodoPago: MetodoPagoLab;
+  versionEsperada?: number;
   idempotencyKey: string;
 }
 
@@ -1373,11 +1415,15 @@ export interface RevertirPagoDTO {
   facturaId: string;
   pagoId: string;
   motivo: string;
+  versionEsperada?: number;
+  idempotencyKey?: string;
 }
 
 export interface AnularFacturaDTO {
   facturaId: string;
   motivo: string;
+  versionEsperada?: number;
+  idempotencyKey?: string;
 }
 
 
@@ -1391,4 +1437,5 @@ export interface ReferenciaLaboratorio {
   nombre: string;
   contacto?: string;
   estado: 'ACTIVO' | 'INACTIVO';
+  version?: number;
 }
