@@ -63,13 +63,46 @@ export interface ServiceProviderProps {
   customVaccineRepository?: VaccineRepository;
 }
 
-function requireApiAdapter<T>(adapter: T | undefined, name: string): T {
-  if (!adapter) {
-    throw new Error(
-      `503 PERSISTENCIA_NO_DISPONIBLE: Modo API activo sin adaptador HTTP configurado para ${name}. Prohibido el fallback automático a simuladores.`
-    );
+export interface ApiAdapterUnavailableError extends Error {
+  readonly code: 'PERSISTENCIA_NO_DISPONIBLE' | 'NOT_IMPLEMENTED';
+  readonly status: 503 | 501;
+  readonly repository: string;
+  readonly method?: string;
+}
+
+export function createApiAdapterUnavailableError(
+  repository: string,
+  method?: string,
+  status: 503 | 501 = 503,
+  code: 'PERSISTENCIA_NO_DISPONIBLE' | 'NOT_IMPLEMENTED' = 'PERSISTENCIA_NO_DISPONIBLE'
+): ApiAdapterUnavailableError {
+  const target = method ? `${repository}.${method}` : repository;
+  const err = new Error(
+    `${status} ${code}: Modo API activo sin adaptador HTTP configurado para ${target}. Prohibido el fallback automático a simuladores.`
+  ) as ApiAdapterUnavailableError;
+  Object.defineProperties(err, {
+    code: { value: code, enumerable: true },
+    status: { value: status, enumerable: true },
+    repository: { value: repository, enumerable: true },
+    method: { value: method, enumerable: true },
+  });
+  return err;
+}
+
+export function requireApiAdapter<T extends object>(adapter: T | undefined, name: string): T {
+  if (adapter) {
+    return adapter;
   }
-  return adapter;
+  return new Proxy({} as T, {
+    get(_target, prop) {
+      if (typeof prop === 'symbol' || prop === 'then') {
+        return undefined;
+      }
+      return async () => {
+        throw createApiAdapterUnavailableError(name, String(prop), 503, 'PERSISTENCIA_NO_DISPONIBLE');
+      };
+    },
+  });
 }
 
 export const ServiceProvider: React.FC<ServiceProviderProps> = ({
@@ -97,7 +130,12 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
         authRepository: requireApiAdapter(customAuthRepository, 'authRepository'),
         dashboardRepository: customDashboardRepository || {
           obtenerDashboard: async () => {
-            throw new Error('501 NOT_IMPLEMENTED: DashboardRepository está excluido del alcance HTTP.');
+            throw createApiAdapterUnavailableError(
+              'dashboardRepository',
+              'obtenerDashboard',
+              501,
+              'NOT_IMPLEMENTED'
+            );
           }
         },
         patientRepository: requireApiAdapter(customPatientRepository, 'patientRepository'),
