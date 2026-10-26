@@ -12,6 +12,9 @@ describe('contrato OpenAPI de arranque', () => {
     assert.equal(contrato.openapi, '3.1.0');
     assert.equal(Object.keys(contrato.paths).length, 22);
     assert.equal(contrato.servers?.[0]?.url, '/api/v1');
+    assert.equal(extensionImplementacion(contrato.paths['/sesion']?.post), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/sesion']?.get), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/sesion/cierre']?.post), 'IMPLEMENTED');
   });
 
   it('falla cerrado para YAML malformado o documento con otra versión', () => {
@@ -29,3 +32,7 @@ describe('contrato OpenAPI de arranque', () => {
     }
   });
 });
+
+function extensionImplementacion(operacion: unknown): unknown {
+  return (operacion as Record<string, unknown> | undefined)?.['x-implementacion'];
+}

@@ -1,7 +1,9 @@
 export type CodigoErrorDominio =
   | 'SOLICITUD_INVALIDA'
-  | 'RECURSO_NO_ENCONTRADO'
+  | 'NO_AUTENTICADO'
+  | 'CUENTA_NO_HABILITADA'
   | 'SIN_PERMISO'
+  | 'RECURSO_NO_ENCONTRADO'
   | 'PACIENTE_DUPLICADO'
   | 'CLAVE_REUTILIZADA'
   | 'VERSION_DESACTUALIZADA'
@@ -14,7 +16,8 @@ export type CodigoErrorDominio =
   | 'SALDO_INSUFICIENTE'
   | 'DOSIS_DUPLICADA'
   | 'LIMITE_AGREGADO'
-  | 'PERSISTENCIA_NO_DISPONIBLE';
+  | 'PERSISTENCIA_NO_DISPONIBLE'
+  | 'IDENTIDAD_NO_DISPONIBLE';
 
 /** Error público de reglas del dominio; nunca incluye valores enviados ni detalles físicos. */
 export class ErrorDominio extends Error {

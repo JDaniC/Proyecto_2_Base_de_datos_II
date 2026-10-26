@@ -44,3 +44,15 @@ test('conexiones Firestore: rechaza institución distinta a CENTRO_MEDICO_PEDIAT
     ErrorConfiguracionFirestore,
   );
 });
+
+test('conexiones Firestore: limita el puerto del emulador al rango TCP válido', () => {
+  for (const host of ['localhost:0', '127.0.0.1:65536', '127.0.0.1:99999', '127.0.0.1:00000']) {
+    assert.throws(
+      () => parsearConfiguracionFirestore({
+        FIRESTORE_PROJECT_ID: 'demo-bdii-pediatria',
+        FIRESTORE_EMULATOR_HOST: host,
+      }),
+      ErrorConfiguracionFirestore,
+    );
+  }
+});

@@ -30,6 +30,7 @@ export function mapearCuentaFirestore(
 ): CuentaAutorizada | null {
   if (
     typeof usuario.auth_uid !== 'string' ||
+    usuario.proveedor_identidad !== 'FIREBASE' ||
     usuario.institucion_id !== 'CENTRO_MEDICO_PEDIATRICO' ||
     (usuario.estado !== 'ACTIVO' && usuario.estado !== 'INACTIVO' && usuario.estado !== 'PENDIENTE')
   ) {

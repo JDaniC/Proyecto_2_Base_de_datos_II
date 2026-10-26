@@ -9,12 +9,18 @@ import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import { crearClienteMongodb } from '../../src/adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import { crearRepositorioCuentaMongodb } from '../../src/adaptadores/salida/mongodb/repositorio-cuenta-mongodb.js';
+import { crearRepositorioCuentaInstitucionalMongodb } from '../../src/adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.js';
+import { crearRepositorioCuentaInstitucionalFirestore } from '../../src/adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
 import { crearUnidadDeTrabajoMongodb } from '../../src/adaptadores/salida/mongodb/unidad-de-trabajo-mongodb.js';
 import { COLECCIONES_MONGODB, type DocumentoOperacionMongo } from '../../src/adaptadores/salida/mongodb/tipos-mongodb.js';
 import { crearClienteFirestore } from '../../src/adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaFirestore } from '../../src/adaptadores/salida/firestore/repositorio-cuenta-firestore.js';
 import { crearUnidadDeTrabajoFirestore } from '../../src/adaptadores/salida/firestore/unidad-de-trabajo-firestore.js';
 import { validarDocumento, MAX_DOCUMENTO, claveOperacion } from '../../src/adaptadores/salida/firestore/validador-firestore.js';
+import { AdministradorCuentasFirebase } from '../../src/adaptadores/salida/identidad/administrador-cuentas-firebase.js';
+import { VerificadorIdentidadFirebase } from '../../src/adaptadores/salida/identidad/verificador-identidad-firebase.js';
+import { getAuth } from 'firebase-admin/auth';
+import { deleteApp, initializeApp } from 'firebase-admin/app';
 
 const puertoMongo = process.env.MONGO_TEST_PORT;
 const secretoMongo = process.env.MONGO_TEST_SECRET_FILE;
@@ -82,6 +88,47 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   assert.equal(cuenta.estado, 'ACTIVA');
   assert.equal(cuenta.profesional?.id, solicitanteId);
   assert.equal(cuenta.profesional?.activo, true);
+
+  const uidPendiente = `test-lab-pendiente-${randomUUID()}`;
+  const actorPendiente = uuidPublico(randomUUID());
+  const solicitantePendiente = uuidPublico(randomUUID());
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.SOLICITANTES).insertOne({
+    _id: solicitantePendiente,
+    revision: 1,
+    nombre_completo: 'Dr. Mateo Prueba',
+    tipo: 'MEDICO',
+    entidad_colegiacion: 'COLMED',
+    numero_colegiado: `COL-${randomUUID()}`,
+    institucion: 'Laboratorio Clínico',
+    telefono: '+502 1234 5678',
+    correo: 'mateo.prueba@laboratorio.example.com',
+    activo: true,
+  });
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.USUARIOS).insertOne({
+    _id: actorPendiente,
+    revision: 1,
+    nombre_usuario: `usuario_${randomUUID().slice(0, 8)}`,
+    auth_uid: uidPendiente,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'LABORATORIO_CLINICO',
+    rol_ids: [rolId],
+    solicitante_medico_id: solicitantePendiente,
+    estado: 'PENDIENTE',
+    activo: false,
+  });
+  const repoInstitucional = crearRepositorioCuentaInstitucionalMongodb(cliente);
+  const pendiente = await repoInstitucional.porUid(uidPendiente);
+  assert.ok(pendiente);
+  assert.equal(pendiente.estado, 'PENDIENTE');
+  const activaciones = await Promise.all([
+    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version),
+    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version),
+  ]);
+  assert.deepEqual(activaciones, [true, true]);
+  const activa = await repoInstitucional.porUid(uidPendiente);
+  assert.ok(activa);
+  assert.equal(activa.estado, 'ACTIVA');
+  assert.equal(activa.version, versionPositiva(2));
 
   const contexto = crearContextoAutenticado(
     {
@@ -363,6 +410,32 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   assert.equal(cuenta.id, actorId);
   assert.equal(cuenta.estado, 'ACTIVA');
   assert.equal(cuenta.profesional?.activo, true);
+
+  const uidPendiente = `test-ped-pendiente-${randomUUID()}`;
+  const actorPendienteId = uuidPublico(randomUUID());
+  await cliente.firestore.doc(`usuarios/${actorPendienteId}`).set({
+    revision: 1,
+    auth_uid: uidPendiente,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    estado: 'PENDIENTE',
+    rol_ids: [rolId],
+    pediatra_id: pediatraId,
+    nombre_usuario: `pediatra_${randomUUID().slice(0, 8)}`,
+  });
+  const repoInstitucional = crearRepositorioCuentaInstitucionalFirestore(cliente);
+  const cuentaPendiente = await repoInstitucional.porUid(uidPendiente);
+  assert.ok(cuentaPendiente);
+  assert.equal(cuentaPendiente.estado, 'PENDIENTE');
+  const activaciones = await Promise.all([
+    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version),
+    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version),
+  ]);
+  assert.deepEqual(activaciones, [true, true]);
+  const cuentaActivada = await repoInstitucional.porUid(uidPendiente);
+  assert.ok(cuentaActivada);
+  assert.equal(cuentaActivada.estado, 'ACTIVA');
+  assert.equal(cuentaActivada.version, versionPositiva(2));
 
   const contexto = crearContextoAutenticado(
     {
@@ -654,4 +727,47 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   const docExistenteCheck = await cliente.firestore.doc(`pacientes/${pacienteExistenteId}`).get();
   assert.ok(docExistenteCheck.exists);
   assert.equal(docExistenteCheck.data()?.nombres, 'Existente');
+});
+
+test('Firebase Auth emulator: claim canónico, verificación de revocación y logout', {
+  skip: !process.env.FIREBASE_AUTH_EMULATOR_HOST,
+}, async (t) => {
+  const host = process.env.FIREBASE_AUTH_EMULATOR_HOST as string;
+  const app = initializeApp({ projectId: 'demo-bdii-pediatria' }, `auth-test-${randomUUID()}`);
+  const auth = getAuth(app);
+  const email = `test-${randomUUID()}@example.invalid`;
+  const password = `Test-${randomUUID()}-Aa9!`;
+  const user = await auth.createUser({ email, password }).catch(async (error: unknown) => {
+    await deleteApp(app);
+    throw error;
+  });
+  t.after(async () => {
+    try { await auth.deleteUser(user.uid); } finally { await deleteApp(app); }
+  });
+  const uid = user.uid;
+  const administrador = new AdministradorCuentasFirebase(auth);
+  await administrador.asegurarClaimInstitucion(uid, 'HOSPITAL_GENERAL');
+
+  const inicioSesion = await fetch(`http://${host}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const respuesta = await inicioSesion.json() as { idToken?: unknown; error?: { message?: unknown } };
+  assert.equal(inicioSesion.ok, true,
+    `el emulador debe autenticar el usuario sintético (${inicioSesion.status}, ${String(respuesta.error?.message ?? 'sin código')})`);
+  assert.equal(typeof respuesta.idToken, 'string');
+  const token = respuesta.idToken as string;
+
+  const verificador = new VerificadorIdentidadFirebase(auth);
+  const identidad = await verificador.verificar(token);
+  assert.equal(identidad.uid, uid);
+  assert.equal(identidad.institucion, 'HOSPITAL_GENERAL');
+
+  await new Promise((resolve) => setTimeout(resolve, 1100));
+  await verificador.revocarSesiones(uid);
+  await assert.rejects(
+    () => verificador.verificar(token),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'NO_AUTENTICADO',
+  );
 });

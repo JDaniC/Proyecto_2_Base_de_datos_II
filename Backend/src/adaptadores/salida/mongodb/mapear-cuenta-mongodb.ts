@@ -5,11 +5,12 @@ import { versionPositiva } from '../../../dominio/compartido/version.js';
 export interface DocumentoUsuarioMongo {
   readonly _id: string;
   readonly auth_uid: unknown;
+  readonly proveedor_identidad?: unknown;
   readonly institucion_id: unknown;
   readonly estado: unknown;
   readonly activo: unknown;
   readonly rol_ids: readonly unknown[];
-  readonly revision: unknown;
+  readonly revision: number;
   readonly personal_id?: string;
   readonly solicitante_medico_id?: unknown;
   readonly nombre_usuario?: unknown;
@@ -36,8 +37,10 @@ export function mapearCuentaMongodb(
   if (
     typeof usuario._id !== 'string' ||
     typeof usuario.auth_uid !== 'string' ||
+    usuario.proveedor_identidad !== 'FIREBASE' ||
     usuario.institucion_id !== 'LABORATORIO_CLINICO' ||
-    (usuario.estado !== 'ACTIVO' && usuario.estado !== 'INACTIVO' && usuario.estado !== 'PENDIENTE')
+    (usuario.estado !== 'ACTIVO' && usuario.estado !== 'INACTIVO' && usuario.estado !== 'PENDIENTE') ||
+    typeof usuario.activo !== 'boolean' || usuario.activo !== (usuario.estado === 'ACTIVO')
   ) {
     return null;
   }
@@ -64,10 +67,9 @@ export function mapearCuentaMongodb(
       }
     : undefined;
 
-  const revCruda = typeof usuario.revision === 'number'
+  const revNumero = typeof usuario.revision === 'number'
     ? usuario.revision
     : Number(usuario.revision);
-  const revNumero = Number.isSafeInteger(revCruda) && revCruda >= 1 ? revCruda : 1;
 
   return Object.freeze({
     id: uuidPublico(usuario._id),

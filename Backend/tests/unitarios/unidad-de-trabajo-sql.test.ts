@@ -120,7 +120,7 @@ const contexto = crearContextoAutenticado(
   { uid: 'uid-sintetico', institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-25T18:00:00Z') },
   {
     id: uuidPublico('10000000-0000-4000-8000-000000000001'), uid: 'uid-sintetico',
-    institucion: 'HOSPITAL_GENERAL', estado: 'ACTIVA', roles: [], permisos: [], version: versionPositiva(1),
+    institucion: 'HOSPITAL_GENERAL', estado: 'ACTIVA', roles: ['SECRETARIA'], permisos: [], version: versionPositiva(1),
   },
   uuidPublico('10000000-0000-4000-8000-000000000002'),
 );

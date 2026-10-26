@@ -1,0 +1,99 @@
+ID,Unidad,Tipo,Riesgo,Requisito(s),Archivo:Línea
+U001,Publico,función exportada/variable,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/decoradores-auth.ts:26
+U002,SoloAutenticado,función exportada/variable,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/decoradores-auth.ts:28
+U003,PermisosRequeridos,función exportada/variable,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/decoradores-auth.ts:34
+U004,RequiereAcceso,función,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/decoradores-auth.ts:38
+U005,responderErrorHttp,función,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/filtro-errores.ts:41
+U006,FiltroErroresHttp,clase,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/filtro-errores.ts:64
+U007,FiltroErroresHttp.catch,método,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/filtro-errores.ts:65
+U008,estadoHttpDominio,función,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/filtro-errores.ts:109
+U009,GuardiaAutenticacion,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autenticacion.ts:11
+U010,GuardiaAutenticacion.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autenticacion.ts:12
+U011,GuardiaAutenticacion.canActivate,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autenticacion.ts:17
+U012,extraerBearer,función,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autenticacion.ts:46
+U013,GuardiaAutorizacion,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autorizacion.ts:8
+U014,GuardiaAutorizacion.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autorizacion.ts:9
+U015,GuardiaAutorizacion.canActivate,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/guardia-autorizacion.ts:11
+U016,HealthController,clase,LOW,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/health.controller.ts:8
+U017,HealthController.liveness,método,LOW,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/health.controller.ts:11
+U018,HealthController.readiness,método,LOW,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/entrada/http/health.controller.ts:17
+U019,SesionController,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:10
+U020,SesionController.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:11
+U021,SesionController.establecer,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:19
+U022,SesionController.obtener,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:29
+U023,SesionController.cerrar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:38
+U024,exigirSinCuerpo,función,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/entrada/http/sesion.controller.ts:47
+U025,crearClienteFirestore,función,LOW,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/firestore/crear-cliente-firestore.ts:7
+U026,restaurarHostEmulador,función,LOW,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/firestore/crear-cliente-firestore.ts:43
+U027,mapearCuentaFirestore,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/firestore/mapear-cuenta-firestore.ts:25
+U028,crearRepositorioCuentaFirestore,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/firestore/repositorio-cuenta-firestore.ts:12
+U029,obtenerDoc,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/firestore/repositorio-cuenta-firestore.ts:19
+U030,AdministradorCuentasFirebase,clase,HIGH,RF-002/014; CA02,Backend/src/adaptadores/salida/identidad/administrador-cuentas-firebase.ts:7
+U031,AdministradorCuentasFirebase.constructor,método,HIGH,RF-002/014; CA02,Backend/src/adaptadores/salida/identidad/administrador-cuentas-firebase.ts:8
+U032,AdministradorCuentasFirebase.asegurarClaimInstitucion,método,HIGH,RF-002/014; CA02,Backend/src/adaptadores/salida/identidad/administrador-cuentas-firebase.ts:10
+U033,RepositorioCuentaEnMemoria,clase,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:13
+U034,RepositorioCuentaEnMemoria.constructor,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:17
+U035,RepositorioCuentaEnMemoria.registrarCuenta,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:30
+U036,RepositorioCuentaEnMemoria.registrarProfesional,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:50
+U037,RepositorioCuentaEnMemoria.porUid,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:60
+U038,RepositorioCuentaEnMemoria.activarPendiente,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:65
+U039,RepositorioCuentaEnMemoria.guardar,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:75
+U040,RepositorioCuentaEnMemoria.porId,método,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-en-memoria.ts:79
+U041,crearRepositorioCuentaInstitucionalFirestore,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.ts:9
+U042,numeroRevision,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.ts:40
+U043,crearRepositorioCuentaInstitucionalMongodb,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.ts:9
+U044,crearRepositorioCuentaInstitucionalPostgresql,función,HIGH,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/identidad/repositorios-cuenta-sql.ts:13
+U045,crearRepositorioCuentaInstitucionalMysql,función,HIGH,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/identidad/repositorios-cuenta-sql.ts:33
+U046,crearRepositorioSql,función,HIGH,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/identidad/repositorios-cuenta-sql.ts:56
+U047,enTransaccion,función,HIGH,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/identidad/repositorios-cuenta-sql.ts:72
+U048,numeroRevision,función,HIGH,RF-001–004; RNF-008/014/019,Backend/src/adaptadores/salida/identidad/repositorios-cuenta-sql.ts:93
+U049,VerificadorIdentidadFirebase,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-firebase.ts:13
+U050,VerificadorIdentidadFirebase.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-firebase.ts:16
+U051,VerificadorIdentidadFirebase.verificar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-firebase.ts:20
+U052,VerificadorIdentidadFirebase.revocarSesiones,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-firebase.ts:67
+U053,VerificadorIdentidadMemoria,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:17
+U054,VerificadorIdentidadMemoria.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:22
+U055,VerificadorIdentidadMemoria.registrarToken,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:28
+U056,VerificadorIdentidadMemoria.establecerDisponibilidad,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:35
+U057,VerificadorIdentidadMemoria.verificar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:39
+U058,VerificadorIdentidadMemoria.revocarSesiones,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/adaptadores/salida/identidad/verificador-identidad-memoria.ts:68
+U059,mapearCuentaMongodb,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/adaptadores/salida/mongodb/mapear-cuenta-mongodb.ts:32
+U060,CerrarSesion,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/cerrar-sesion.ts:9
+U061,CerrarSesion.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/cerrar-sesion.ts:10
+U062,CerrarSesion.ejecutar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/cerrar-sesion.ts:12
+U063,crearSesionDto,función,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/dtos-sesion.ts:19
+U064,EstablecerSesion,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/establecer-sesion.ts:25
+U065,EstablecerSesion.constructor,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/establecer-sesion.ts:26
+U066,EstablecerSesion.ejecutar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/establecer-sesion.ts:31
+U067,ObtenerSesionActual,clase,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/obtener-sesion-actual.ts:9
+U068,ObtenerSesionActual.ejecutar,método,HIGH,RF-001/002/003; RNF-008; CA01/02,Backend/src/aplicacion/casos-uso/cuentas/obtener-sesion-actual.ts:10
+U069,ProvisionarCuentaPendiente,clase,HIGH,RF-002/014; RNF-023; CA02,Backend/src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.ts:27
+U070,ProvisionarCuentaPendiente.constructor,método,HIGH,RF-002/014; RNF-023; CA02,Backend/src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.ts:28
+U071,ProvisionarCuentaPendiente.ejecutar,método,HIGH,RF-002/014; RNF-023; CA02,Backend/src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.ts:34
+U072,consultarCuenta,función,HIGH,RF-002/014; CA02,Backend/src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.ts:93
+U073,validarVinculoProfesional,función,HIGH,RF-002/014; CA02,Backend/src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.ts:102
+U074,crearContextoAutenticado,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/aplicacion/puertos/contexto-autenticado.ts:37
+U075,LimpiadorRecursos,clase,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/app.module.ts:30
+U076,LimpiadorRecursos.constructor,método,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/app.module.ts:31
+U077,LimpiadorRecursos.onModuleDestroy,método,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/app.module.ts:32
+U078,AppModule,clase,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/app.module.ts:45
+U079,AppModule.registrar,método,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/app.module.ts:46
+U080,crearBundlesInstitucionales,función,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-bundles-institucionales.ts:20
+U081,crearDependenciasBackend,función,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-dependencias-backend.ts:43
+U082,hostEmuladorLocalValido,función,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-dependencias-backend.ts:140
+U083,ErrorConfiguracionBackend,clase,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-dependencias-backend.ts:147
+U084,ErrorConfiguracionBackend.constructor,método,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-dependencias-backend.ts:148
+U085,crearAppIdentidad,función,HIGH,RF-003; RNF-019; CA01,Backend/src/composicion/crear-dependencias-backend.ts:155
+U086,ErrorConfiguracionFirestore,clase,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/configuracion/conexiones-firestore.ts:8
+U087,ErrorConfiguracionFirestore.constructor,método,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/configuracion/conexiones-firestore.ts:9
+U088,parsearConfiguracionFirestore,función,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/configuracion/conexiones-firestore.ts:16
+U089,hostEmuladorLocalValido,función,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/configuracion/conexiones-firestore.ts:59
+U090,institucionAdmiteCapacidad,función,HIGH,RF-002/003/004; RNF-008/014/019; CA01/02/18,Backend/src/dominio/compartido/autorizacion.ts:28
+U091,ErrorDominio,clase,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/dominio/compartido/error-dominio.ts:23
+U092,ErrorDominio.constructor,método,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/dominio/compartido/error-dominio.ts:27
+U093,solicitudInvalida,función,MEDIUM,RF-001–004; RNF-008/014/019,Backend/src/dominio/compartido/error-dominio.ts:35
+U094,iniciarServidor,función,LOW,RF-001–004; RNF-008/014/019,Backend/src/main.ts:10
+U095,BloqueoProvisionPostgresql,clase,HIGH,RF-002/003; RNF-019/023; CA02,Backend/src/adaptadores/salida/identidad/bloqueo-provision-postgresql.ts:6
+U096,BloqueoProvisionPostgresql.constructor,método,HIGH,RF-002/003; RNF-019/023; CA02,Backend/src/adaptadores/salida/identidad/bloqueo-provision-postgresql.ts:7
+U097,BloqueoProvisionPostgresql.ejecutar,método,HIGH,RF-002/003; RNF-019/023; CA02,Backend/src/adaptadores/salida/identidad/bloqueo-provision-postgresql.ts:9
+U098,claveAdvisory,función,MEDIUM,RF-002/003; RNF-019/023; CA02,Backend/src/adaptadores/salida/identidad/bloqueo-provision-postgresql.ts:46

@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   title: Entrega II — contrato común
   version: 1.0.0
-  description: E00-P1-03. Especificación, no implementación. Extensiones institucionales se congelan en E04/E05
-    antes de conectarlas. Solo datos sintéticos en ejemplos.
+  description: Contrato API v1. El campo x-implementacion distingue rutas conectadas de las pendientes por fase.
+    Extensiones institucionales se congelan en E04/E05 antes de conectarlas. Solo datos sintéticos en ejemplos.
 servers:
 - url: /api/v1
 security:
@@ -27,7 +27,7 @@ paths:
       - CLINICA_ODONTOLOGICA
       - LABORATORIO_CLINICO
       - CENTRO_MEDICO_PEDIATRICO
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters: []
       responses:
         '200':
@@ -60,7 +60,7 @@ paths:
       - sesion
       x-permisos: []
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters: []
       responses:
         '200':
@@ -96,7 +96,7 @@ paths:
       - sesion
       x-permisos: []
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters: []
       responses:
         '200':

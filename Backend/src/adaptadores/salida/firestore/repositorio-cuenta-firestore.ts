@@ -1,5 +1,6 @@
 import type { RepositorioCuenta } from '../../../aplicacion/puertos/nucleo.js';
 import type { CuentaAutorizada } from '../../../aplicacion/puertos/contexto-autenticado.js';
+import { ErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 import type { Firestore, Transaction, DocumentReference, DocumentSnapshot } from 'firebase-admin/firestore';
 import {
   mapearCuentaFirestore,
@@ -25,12 +26,15 @@ export function crearRepositorioCuentaFirestore(
   return {
     async porUid(uidVerificado: string): Promise<CuentaAutorizada | null> {
       // En Firestore las queries en transacción usan transaction.get(query)
-      const query = firestore.collection('usuarios').where('auth_uid', '==', uidVerificado).limit(1);
+      const query = firestore.collection('usuarios').where('auth_uid', '==', uidVerificado);
       const snapshot = esTransaccion
         ? await (ejecutor as Transaction).get(query)
         : await query.get();
 
-      if (snapshot.empty || snapshot.docs[0] === undefined) return null;
+      if (snapshot.empty) return null;
+      if (snapshot.docs.length !== 1 || snapshot.docs[0] === undefined) {
+        throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'La cuenta Firebase tiene un vínculo local ambiguo.');
+      }
 
       const docUsuario = snapshot.docs[0];
       const datosUsuario = docUsuario.data() as DocumentoUsuarioFirestore;
