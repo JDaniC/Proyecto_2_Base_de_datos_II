@@ -59,7 +59,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 
 | Fase | Estado | Evidencia prevista |
 |---|---|---|
-| E00 | PENDIENTE | `plan/evidencias/E00/CIERRE.md` por crear al ejecutar |
+| E00 | EN_REVISION | [Cierre y demostración](evidencias/E00/CIERRE.md); auditoría funcional PASS; PR #20 borrador |
 | E01 | PENDIENTE | `plan/evidencias/E01/CIERRE.md` por crear al ejecutar |
 | E02 | PENDIENTE | `plan/evidencias/E02/CIERRE.md` por crear al ejecutar |
 | E03 | PENDIENTE | `plan/evidencias/E03/CIERRE.md` por crear al ejecutar |

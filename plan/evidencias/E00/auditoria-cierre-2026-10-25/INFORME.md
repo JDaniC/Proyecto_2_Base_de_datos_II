@@ -20,6 +20,8 @@ Las seis tareas están integradas en `develop`. PostgreSQL, MySQL, MongoDB y Fir
 
 El inventario generado por `function_inventory.py` cubre los cuatro scripts Python de verificación/contrato y la suite Python de regresión contractual. La lista manual JavaScript enumera las funciones del guard de destino, los validadores de resultado y la matriz de aceptación. Se inspeccionaron también las diez pruebas PostgreSQL, los 19 grupos locales por motor, las 12 comprobaciones Docker y los 32 casos Node.
 
+El campo `TODO` del inventario marca `main`, `pg` y `mysql` en `Database/docker/verificar.py` por una coincidencia textual de `pass` dentro de nombres de variables `*_password`; la búsqueda manual de `TODO|FIXME|NotImplementedError|pass$` en las unidades auditadas no encontró marcadores pendientes. Se conserva como falso positivo del inventariador, sin cambiar el código.
+
 | Componente / unidad | Riesgo | Requisitos | Pruebas existentes y ejecutadas | Estado |
 |---|---|---|---|---|
 | Verificador local PostgreSQL/MySQL/MongoDB/Firestore | CRITICAL / HIGH | F-E00-02, F-E00-03 | 19 grupos PASS: PG 8, MySQL 6, MongoDB 3, Firestore 2 | PASS |
@@ -71,11 +73,11 @@ No se añadieron pruebas al producto. Se ejecutó cobertura existente del cierre
 | `node Backend/tests/contratos/suite-aceptacion.mjs --resumen` | Registrar honestamente el estado del backend | 76 filas: 45 NOT_IMPLEMENTED, 31 NOT_APPLICABLE, 0 PASS |
 | `/tmp/e00-p1-03-venv/bin/python -m unittest discover -s Backend/scripts -p 'test_*.py'` | Regresiones de contrato | 8 PASS |
 
-La primera invocación de la última suite con el Python global no tenía PyYAML y no pudo importar la prueba; se repitió con el entorno virtual documentado y pasó. No fue un fallo funcional ni se modificó código para ocultarlo.
+La primera invocación de las pruebas Python de contrato con el Python global no tenía PyYAML y no pudo importar la suite; se repitió con el entorno virtual documentado y pasaron 8 pruebas. Una invocación puntual del test de PR desde la raíz tampoco resolvió el módulo local; se repitió con discovery desde `scripts/github`, con 14/14 PASS, dentro de los 34 tests de workflow que también pasaron. Fueron ajustes de contexto de ejecución, no fallos funcionales.
 
 ## 7. Bloqueos
 
-No hay bloqueo de motor, regresión PostgreSQL ni requisito contractual E00 pendiente. La evidencia está lista para el PR documental de cierre; la fase no se considera integrada mientras ese flujo de revisión siga abierto. Los escenarios de producto sin backend no son un bloqueo E00: quedan visibles como `NOT_IMPLEMENTED` y deben implementarse en las fases posteriores correspondientes.
+No hay bloqueo de motor, regresión PostgreSQL ni requisito contractual E00 pendiente. El tablero y `plan/evidencias/E00/CIERRE.md` están en `EN_REVISION` dentro del PR #20 borrador; el cierre no se considera integrado hasta completar revisión e integración. Los escenarios de producto sin backend no son un bloqueo E00: quedan visibles como `NOT_IMPLEMENTED` y deben implementarse en las fases posteriores correspondientes.
 
 ## 8. Matriz final de resultados
 
