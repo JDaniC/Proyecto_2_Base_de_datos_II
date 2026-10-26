@@ -13,14 +13,14 @@ export function crearRepositorioCuentaPostgresql(executor: EjecutorSql): Reposit
                 p.id_publico AS profesional_id, COALESCE(p.estado = 'ACTIVO', false) AS profesional_activo,
                 u.id_usuario AS actor_id
            FROM usuario u LEFT JOIN personal_medico p ON p.id_personal = u.id_personal
-          WHERE u.auth_uid = $1`,
+          WHERE u.auth_uid = $1 FOR SHARE OF u`,
         [uidVerificado],
       );
       const fila = cuenta.filas[0];
       if (fila === undefined) return null;
       const actorId = fila.actor_id;
       const roles = await executor.consultar<FilaRolSql>(
-        `SELECT r.nombre, r.permisos FROM usuario_rol ur JOIN rol r ON r.id_rol = ur.id_rol WHERE ur.id_usuario = $1 ORDER BY r.nombre`,
+        `SELECT r.nombre, r.permisos FROM usuario_rol ur JOIN rol r ON r.id_rol = ur.id_rol WHERE ur.id_usuario = $1 ORDER BY r.nombre FOR SHARE OF ur, r`,
         [actorId],
       );
       return mapearCuentaSql(fila, roles.filas);

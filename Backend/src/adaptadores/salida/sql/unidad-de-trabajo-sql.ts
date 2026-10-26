@@ -112,16 +112,19 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
   const conexion = await deps.pool.adquirir();
   let iniciada = false;
   let confirmando = false;
+  let inicioEnCurso = false;
   let liberada = false;
-  const liberarConexion = () => {
+  const liberarConexion = (descartar = false) => {
     if (!liberada) {
-      conexion.liberar();
+      conexion.liberar(descartar);
       liberada = true;
     }
   };
   try {
+    inicioEnCurso = true;
     await conexion.iniciar();
     iniciada = true;
+    inicioEnCurso = false;
     await establecerUtc(conexion, deps.dialecto);
     const idUsuario = await resolverUsuario(conexion, deps.dialecto, contexto);
     const lector = crearLectorConOperaciones(deps, conexion, idUsuario, contexto.cuenta.id);
@@ -129,6 +132,7 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
       contexto.cuenta.id, comando.caso, comando.claveIdempotencia,
     );
     if (previa !== null) {
+      await verificarCuentaVigente(contexto, lector);
       const respuesta = resolverRepeticion(previa, comando);
       await conexion.confirmar();
       iniciada = false;
@@ -137,6 +141,7 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
 
     const plan = await planificar(lector);
     if (plan.tipo === 'REPETIR') {
+      await verificarCuentaVigente(contexto, lector);
       const respuesta = resolverRepeticion(plan.operacion, comando);
       await conexion.confirmar();
       iniciada = false;
@@ -152,16 +157,17 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
     iniciada = false;
     return plan.resultado;
   } catch (error) {
-    if (iniciada) {
-      try { await conexion.revertir(); } catch { /* la conexión no vuelve a usarse; el pool la libera */ }
-      iniciada = false;
-    }
     if (confirmando && !esRechazoSqlDefinitivo(error)) {
-      liberarConexion();
+      liberarConexion(true);
       const duradera = await leerOperacionPool<T>(deps, contexto, comando);
       if (duradera !== null) return resolverRepeticion(duradera, comando);
       throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se pudo confirmar el resultado; reintente con la misma clave.');
     }
+    if (iniciada) {
+      try { await conexion.revertir(); } catch { liberarConexion(true); }
+      iniciada = false;
+    }
+    if (inicioEnCurso || esErrorTransporteSql(error)) liberarConexion(true);
     throw error;
   } finally {
     liberarConexion();
@@ -209,6 +215,22 @@ async function resolverUsuario(
     throw new ErrorDominio('SIN_PERMISO', 'La cuenta local ya no está disponible para este comando.');
   }
   return id;
+}
+
+async function verificarCuentaVigente<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>(
+  contexto: ContextoAutenticado,
+  lector: LectorTransaccional<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>,
+): Promise<void> {
+  const cuenta = await lector.cuentas.porUid(contexto.identidad.uid) as ContextoAutenticado['cuenta'] | null;
+  const actual = (valores: readonly string[]) => [...valores].sort().join('\u0000');
+  if (cuenta === null || cuenta.estado !== 'ACTIVA' || cuenta.id !== contexto.cuenta.id ||
+      cuenta.uid !== contexto.identidad.uid || cuenta.institucion !== contexto.identidad.institucion ||
+      cuenta.version !== contexto.cuenta.version || actual(cuenta.roles) !== actual(contexto.cuenta.roles) ||
+      actual(cuenta.permisos) !== actual(contexto.cuenta.permisos) ||
+      cuenta.profesional?.id !== contexto.cuenta.profesional?.id ||
+      cuenta.profesional?.activo !== contexto.cuenta.profesional?.activo) {
+    throw new ErrorDominio('SIN_PERMISO', 'La autorización actual no permite recuperar este resultado.');
+  }
 }
 
 async function guardarRevisiones(
@@ -273,23 +295,37 @@ async function leerOperacionPool<T>(
   contexto: ContextoAutenticado,
   comando: ComandoEstable,
 ): Promise<OperacionIdempotente<T> | null> {
+  const conexion = await deps.pool.adquirir();
+  let iniciada = false;
+  let liberada = false;
+  const liberar = (descartar = false) => {
+    if (!liberada) {
+      conexion.liberar(descartar);
+      liberada = true;
+    }
+  };
   try {
-    const p = (n: number) => placeholder(deps.dialecto, n);
-    const actor = await deps.pool.consultar<FilaActor>(
-      `SELECT id_usuario AS actor_id FROM usuario WHERE id_publico = ${p(1)} AND auth_uid = ${p(2)} AND institucion_id = ${p(3)} AND estado = 'ACTIVO'`,
-      [contexto.cuenta.id, contexto.identidad.uid, contexto.identidad.institucion],
+    await conexion.iniciar();
+    iniciada = true;
+    await establecerUtc(conexion, deps.dialecto);
+    const id = await resolverUsuario(conexion, deps.dialecto, contexto);
+    const lector = crearLectorConOperaciones(deps, conexion, id, contexto.cuenta.id);
+    await verificarCuentaVigente(contexto, lector);
+    const result = await lector.operaciones.porClave<T>(
+      contexto.cuenta.id, comando.caso, comando.claveIdempotencia,
     );
-    const id = Number(actor.filas[0]?.actor_id);
-    if (!Number.isSafeInteger(id) || id < 1) return null;
-    const result = await deps.pool.consultar<FilaOperacion>(
-      `SELECT hash_entrada, codigo_respuesta, respuesta FROM operaciones WHERE id_usuario = ${p(1)} AND caso_uso = ${p(2)} AND clave = ${p(3)}`,
-      [id, comando.caso, comando.claveIdempotencia],
-    );
-    const row = result.filas[0];
-    return row === undefined ? null : deserializarOperacion<T>(row);
+    await conexion.confirmar();
+    iniciada = false;
+    return result;
   } catch (error) {
+    if (iniciada) {
+      try { await conexion.revertir(); } catch { liberar(true); }
+      iniciada = false;
+    }
     if (esErrorDominio(error)) throw error;
     throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se pudo reconciliar la clave de operación. Reintente con la misma clave.');
+  } finally {
+    liberar();
   }
 }
 
@@ -325,10 +361,10 @@ async function establecerUtc(executor: EjecutorSql, dialecto: DialectoSql): Prom
   else await executor.consultar("SET time_zone = '+00:00'");
 }
 
-function fechaDb(isoUtc: string): Date {
+function fechaDb(isoUtc: string): string {
   const fecha = new Date(isoUtc);
   if (!Number.isFinite(fecha.getTime())) throw new Error('INSTANTE_UTC_INVALIDO');
-  return fecha;
+  return fecha.toISOString().replace('T', ' ').replace('Z', '');
 }
 
 function jsonSeguro(valor: unknown): string {
@@ -387,7 +423,8 @@ function estadoSql(error: unknown): string | undefined {
 /** Los rechazos SQL recibidos del servidor son definitivos; errores de conexión pueden tener commit incierto. */
 function esRechazoSqlDefinitivo(error: unknown): boolean {
   const codigo = codigoSql(error);
-  if (codigo !== undefined && /^[0-9A-Z]{5}$/.test(codigo)) {
+  if (esErrorTransporteSql(error)) return false;
+  if (codigo !== undefined && /^[0-9A-Z]{5}$/.test(codigo) && esErrorServidorSql(error)) {
     return !codigo.startsWith('08') && !['57P01', '57P02', '57P03'].includes(codigo);
   }
   if (codigo === 'ER_SIGNAL_EXCEPTION' || codigo?.startsWith('ER_')) return true;
@@ -396,6 +433,18 @@ function esRechazoSqlDefinitivo(error: unknown): boolean {
     return typeof errno === 'number' && errno > 0 && !['PROTOCOL_SEQUENCE_TIMEOUT', 'PROTOCOL_CONNECTION_LOST'].includes(codigo ?? '');
   }
   return false;
+}
+
+function esErrorServidorSql(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  return 'severity' in error || 'sqlState' in error || 'errno' in error;
+}
+
+function esErrorTransporteSql(error: unknown): boolean {
+  const codigo = codigoSql(error);
+  return codigo === 'EPIPE' || codigo === 'ECONNRESET' || codigo === 'ECONNREFUSED' ||
+    codigo === 'ETIMEDOUT' || codigo === 'PROTOCOL_SEQUENCE_TIMEOUT' ||
+    codigo === 'PROTOCOL_CONNECTION_LOST';
 }
 
 async function esperar(ms: number): Promise<void> {

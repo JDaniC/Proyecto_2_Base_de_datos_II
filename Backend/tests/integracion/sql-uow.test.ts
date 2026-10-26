@@ -128,7 +128,7 @@ async function verificarFlujos(
 
   const unidad = crearUnidadDeTrabajoSql({
     dialecto, pool,
-    crearLector: () => ({}) as LectorTransaccional,
+    crearLector: (executor) => ({ cuentas: crearRepositorioCuenta(executor) }) as LectorTransaccional,
     aplicarCambios: async (executor, _ctx, _cmd, cambios) => {
       const [primerCambio] = cambios;
       assert.ok(primerCambio);
@@ -175,6 +175,14 @@ async function verificarFlujos(
   assert.equal(await contar(pool, dialecto, 'revisiones', 'recurso_id', recurso), 1);
   assert.equal(await contar(pool, dialecto, 'auditoria', 'id_publico', eventoId), 1);
   assert.equal(await contar(pool, dialecto, 'operaciones', 'clave', clave), 1);
+  const timestampGuardado = await pool.consultar<{ fecha_utc: string }>(
+    dialecto === 'postgresql'
+      ? "SELECT to_char(fecha_hora, 'YYYY-MM-DD HH24:MI:SS.MS') AS fecha_utc FROM operaciones WHERE clave = $1"
+      : "SELECT DATE_FORMAT(fecha_hora, '%Y-%m-%d %H:%i:%s.%f') AS fecha_utc FROM operaciones WHERE clave = ?",
+    [clave],
+  );
+  assert.equal(timestampGuardado.filas[0]?.fecha_utc,
+    dialecto === 'postgresql' ? '2026-10-25 18:00:00.000' : '2026-10-25 18:00:00.000000');
   const detalleAuditoria = await pool.consultar<{ detalle: unknown }>(
     dialecto === 'postgresql' ? 'SELECT detalle FROM auditoria WHERE id_publico = $1' : 'SELECT detalle FROM auditoria WHERE id_publico = ?',
     [eventoId],

@@ -13,7 +13,8 @@ export interface ConexionSql extends EjecutorSql {
   iniciar(): Promise<void>;
   confirmar(): Promise<void>;
   revertir(): Promise<void>;
-  liberar(): void;
+  /** `descartar` evita devolver al pool una conexión cuyo protocolo quedó incierto. */
+  liberar(descartar?: boolean): void;
 }
 
 export interface PoolSql extends EjecutorSql {

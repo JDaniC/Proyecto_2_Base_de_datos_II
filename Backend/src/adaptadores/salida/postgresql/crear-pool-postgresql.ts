@@ -78,6 +78,9 @@ function crearConexionSqlPostgresql(cliente: PoolClient): ConexionSql {
     iniciar: async () => { await cliente.query('BEGIN'); },
     confirmar: async () => { await cliente.query('COMMIT'); },
     revertir: async () => { await cliente.query('ROLLBACK'); },
-    liberar: () => { cliente.release(); },
+    liberar: (descartar = false) => {
+      if (descartar) cliente.release(new Error('CONEXION_SQL_DESCARTADA'));
+      else cliente.release();
+    },
   };
 }

@@ -69,24 +69,48 @@ export function crearPoolSqlMysql(
 }
 
 function crearConexionSqlMysql(conexion: PoolConnection, timeoutConsultaMs: number): ConexionSql {
+  let descartar = false;
   const executor: EjecutorSql = {
     async consultar<TRow extends Record<string, unknown> = Record<string, unknown>>(
       sentencia: string,
       parametros: readonly unknown[] = [],
     ): Promise<ResultadoConsultaSql<TRow>> {
-      const [resultado] = await conexion.execute(
-        { sql: sentencia, timeout: timeoutConsultaMs }, validarParametros(parametros),
-      );
-      return { filas: filasMysql<TRow>(resultado) };
+      try {
+        const [resultado] = await conexion.execute(
+          { sql: sentencia, timeout: timeoutConsultaMs }, validarParametros(parametros),
+        );
+        return { filas: filasMysql<TRow>(resultado) };
+      } catch (error) {
+        if (esTimeoutProtocolo(error)) descartar = true;
+        throw error;
+      }
     },
+  };
+  const ejecutarControl = async (sentencia: string): Promise<void> => {
+    try {
+      await conexion.query({ sql: sentencia, timeout: timeoutConsultaMs });
+    } catch (error) {
+      if (esTimeoutProtocolo(error)) descartar = true;
+      throw error;
+    }
   };
   return {
     ...executor,
-    iniciar: () => conexion.beginTransaction(),
-    confirmar: () => conexion.commit(),
-    revertir: () => conexion.rollback(),
-    liberar: () => conexion.release(),
+    iniciar: () => ejecutarControl('START TRANSACTION'),
+    confirmar: () => ejecutarControl('COMMIT'),
+    revertir: () => ejecutarControl('ROLLBACK'),
+    liberar: (forzarDescarte = false) => {
+      if (descartar || forzarDescarte) conexion.destroy();
+      else conexion.release();
+    },
   };
+}
+
+function esTimeoutProtocolo(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return false;
+  const code = (error as { code?: unknown }).code;
+  return code === 'PROTOCOL_SEQUENCE_TIMEOUT' || code === 'PROTOCOL_CONNECTION_LOST' ||
+    code === 'ETIMEDOUT' || code === 'ECONNRESET' || code === 'EPIPE';
 }
 
 function filasMysql<TRow extends Record<string, unknown>>(resultado: unknown): readonly TRow[] {

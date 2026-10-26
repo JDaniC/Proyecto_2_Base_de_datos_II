@@ -37,10 +37,9 @@ test('pool PostgreSQL: consultas directas también respetan el timeout de adquis
 test('pool MySQL: consultas directas también respetan el timeout de adquisición', async () => {
   let completar!: (value: {
     execute(): Promise<readonly [never[], unknown]>;
-    beginTransaction(): Promise<void>;
-    commit(): Promise<void>;
-    rollback(): Promise<void>;
+    query(opciones: { sql: string; timeout: number }): Promise<unknown>;
     release(): void;
+    destroy(): void;
   }) => void;
   let liberaciones = 0;
   const falso = {
@@ -52,11 +51,41 @@ test('pool MySQL: consultas directas también respetan el timeout de adquisició
   await assert.rejects(pool.consultar('SELECT 1'), /POOL_AGOTADO/);
   completar({
     execute: async () => [[], undefined] as const,
-    beginTransaction: async () => undefined,
-    commit: async () => undefined,
-    rollback: async () => undefined,
+    query: async () => undefined,
     release: () => { liberaciones += 1; },
+    destroy: () => undefined,
   });
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(liberaciones, 1);
+});
+
+test('pool MySQL: limita BEGIN/COMMIT/ROLLBACK y descarta conexión con COMMIT ambiguo', async () => {
+  const comandos: { sql: string; timeout: number }[] = [];
+  let liberaciones = 0;
+  let descartes = 0;
+  const falso = {
+    getConnection: async () => ({
+      execute: async () => [[], undefined] as const,
+      query: async (opciones: { sql: string; timeout: number }) => {
+        comandos.push(opciones);
+        if (opciones.sql === 'COMMIT' || opciones.sql === 'ROLLBACK') {
+          throw Object.assign(new Error('acuse perdido'), { code: 'PROTOCOL_SEQUENCE_TIMEOUT' });
+        }
+      },
+      release: () => { liberaciones += 1; },
+      destroy: () => { descartes += 1; },
+    }),
+    execute: async () => [[], undefined] as const,
+    end: async () => undefined,
+  } as unknown as Parameters<typeof crearPoolSqlMysql>[0];
+  const pool = crearPoolSqlMysql(falso, { timeoutMs: 10, maxEspera: 1, timeoutConsultaMs: 17 });
+  const conexion = await pool.adquirir();
+  await conexion.iniciar();
+  await assert.rejects(conexion.confirmar(), { code: 'PROTOCOL_SEQUENCE_TIMEOUT' });
+  await assert.rejects(conexion.revertir(), { code: 'PROTOCOL_SEQUENCE_TIMEOUT' });
+  conexion.liberar();
+  assert.deepEqual(comandos.map(({ sql }) => sql), ['START TRANSACTION', 'COMMIT', 'ROLLBACK']);
+  assert.ok(comandos.every(({ timeout }) => timeout === 17));
+  assert.equal(descartes, 1);
+  assert.equal(liberaciones, 0);
 });
