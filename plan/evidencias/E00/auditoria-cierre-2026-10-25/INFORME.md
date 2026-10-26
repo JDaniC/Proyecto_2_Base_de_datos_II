@@ -77,7 +77,7 @@ La primera invocación de las pruebas Python de contrato con el Python global no
 
 ## 7. Bloqueos
 
-No hay bloqueo de motor, regresión PostgreSQL ni requisito contractual E00 pendiente. El tablero y `plan/evidencias/E00/CIERRE.md` están en `EN_REVISION` dentro del PR #20 borrador; el cierre no se considera integrado hasta completar revisión e integración. Los escenarios de producto sin backend no son un bloqueo E00: quedan visibles como `NOT_IMPLEMENTED` y deben implementarse en las fases posteriores correspondientes.
+No hay bloqueo de motor, regresión PostgreSQL ni requisito contractual E00 pendiente. La revisión automática del PR #20 terminó sin hallazgos sobre `b80410f`, y el cierre se integró en `develop` como `566e75c`; esta actualización registra el estado de fase `HECHA`. Los escenarios de producto sin backend no son un bloqueo E00: quedan visibles como `NOT_IMPLEMENTED` y deben implementarse en las fases posteriores correspondientes.
 
 ## 8. Matriz final de resultados
 
