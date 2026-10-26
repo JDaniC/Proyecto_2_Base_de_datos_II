@@ -9,16 +9,23 @@ import type { AdministradorIdentidad } from '../../src/aplicacion/puertos/admini
 import type { CuentaAutorizada } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { RepositorioCuenta } from '../../src/aplicacion/puertos/repositorio-cuenta.js';
 import type { BloqueoProvision } from '../../src/aplicacion/puertos/bloqueo-provision.js';
+import type { VerificadorIdentidad } from '../../src/aplicacion/puertos/verificador-identidad.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import { INSTITUCIONES_CANONICAS, type Institucion } from '../../src/dominio/compartido/institucion.js';
 import type { Rol } from '../../src/dominio/compartido/autorizacion.js';
+import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import type { PoolSql } from '../../src/adaptadores/salida/sql/tipos-sql.js';
 import { crearRepositorioCuentaInstitucionalPostgresql } from '../../src/adaptadores/salida/identidad/repositorios-cuenta-sql.js';
 import { BloqueoProvisionPostgresql } from '../../src/adaptadores/salida/identidad/bloqueo-provision-postgresql.js';
 
 const UID = 'firebase-test-user-001';
+const UID_ADMIN = 'firebase-admin-user-001';
 const ID_CUENTA = '10000000-0000-4000-8000-000000000001';
+const ID_ADMIN = '10000000-0000-4000-8000-000000000002';
+const TOKEN_ADMIN = 'token-admin-sintetico';
+const ID_AUDITORIA = '10000000-0000-4000-8000-000000000003';
+const ID_CORRELACION = '10000000-0000-4000-8000-000000000004';
 
 function firebaseAuth(funciones: Record<string, unknown>): Auth {
   return funciones as unknown as Auth;
@@ -194,9 +201,13 @@ test('la provisión activa cuenta pendiente después del claim y devuelve result
   const estadosOrden: string[] = [];
   const repo = crearRepositorio({
     porUid: async () => cuenta,
-    activarPendiente: async (_uid, version) => {
+    activarPendiente: async (_uid, version, auditoria) => {
       estadosOrden.push('activar');
       assert.equal(version, versionPositiva(1));
+      assert.equal(auditoria.actorUid, UID_ADMIN);
+      assert.equal(auditoria.evento.actorId, ID_ADMIN);
+      assert.equal(auditoria.evento.caso, 'CUENTA_PROVISIONADA');
+      assert.equal(auditoria.evento.recursoId, ID_CUENTA);
       cuenta = crearCuenta('ACTIVA', 2);
       return true;
     },
@@ -209,7 +220,7 @@ test('la provisión activa cuenta pendiente después del claim y devuelve result
     },
   };
 
-  const resultado = await crearProvision(repo, admin).ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: UID });
+  const resultado = await crearProvision(repo, admin).ejecutar(entradaProvision('HOSPITAL_GENERAL'));
 
   assert.deepEqual(estadosOrden, ['claim', 'activar']);
   assert.equal(resultado.estado, 'ACTIVA');
@@ -225,7 +236,7 @@ test('si Firebase falla, la cuenta permanece pendiente y no se intenta escribir'
   };
 
   await assert.rejects(
-    () => crearProvision(repo, admin).ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: UID }),
+    () => crearProvision(repo, admin).ejecutar(entradaProvision('HOSPITAL_GENERAL')),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'IDENTIDAD_NO_DISPONIBLE',
   );
   assert.equal(activaciones, 0);
@@ -248,7 +259,7 @@ test('si se interrumpe la activación, reanudar con la misma institución y UID 
     async asegurarClaimInstitucion() { claimsVerificados += 1; },
   };
   const provisión = crearProvision(repo, admin);
-  const entrada = { institucion: 'HOSPITAL_GENERAL' as const, uid: UID };
+  const entrada = entradaProvision('HOSPITAL_GENERAL');
 
   await assert.rejects(
     () => provisión.ejecutar(entrada),
@@ -273,7 +284,7 @@ test('dos provisiones concurrentes de la misma cuenta convergen a una única ver
   });
   const admin: AdministradorIdentidad = { async asegurarClaimInstitucion() {} };
   const provisionar = crearProvision(repo, admin);
-  const entrada = { institucion: 'HOSPITAL_GENERAL' as const, uid: UID };
+  const entrada = entradaProvision('HOSPITAL_GENERAL');
 
   const resultados = await Promise.all([
     provisionar.ejecutar(entrada),
@@ -293,7 +304,7 @@ test('una cuenta activa permite reanudación idempotente y una inactiva no obtie
   });
   const admin: AdministradorIdentidad = { async asegurarClaimInstitucion() { llamadasClaim += 1; } };
   const provisión = crearProvision(repo, admin);
-  const entrada = { institucion: 'HOSPITAL_GENERAL' as const, uid: UID };
+  const entrada = entradaProvision('HOSPITAL_GENERAL');
   const primera = await provisión.ejecutar(entrada);
   const segunda = await provisión.ejecutar(entrada);
   assert.equal(primera.version, segunda.version);
@@ -316,21 +327,46 @@ test('la provisión rechaza UID vacío, vínculo profesional inactivo y bundle d
   const provisionar = crearProvision(repo, admin);
 
   await assert.rejects(
-    () => provisionar.ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: ' ' }),
+    () => provisionar.ejecutar(entradaProvision('HOSPITAL_GENERAL', ' ')),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SOLICITUD_INVALIDA',
   );
   await assert.rejects(
-    () => provisionar.ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: UID }),
+    () => provisionar.ejecutar(entradaProvision('HOSPITAL_GENERAL')),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'CUENTA_NO_HABILITADA',
   );
   assert.equal(claims, 0);
 
   const otroBundle = crearProvision(repo, admin, 'CLINICA_ODONTOLOGICA');
   await assert.rejects(
-    () => otroBundle.ejecutar({ institucion: 'CLINICA_ODONTOLOGICA', uid: UID }),
+    () => otroBundle.ejecutar(entradaProvision('CLINICA_ODONTOLOGICA')),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SIN_PERMISO',
   );
   assert.equal(claims, 0);
+});
+
+test('la provisión exige ID token y cuenta local ADMIN_INSTITUCIONAL con usuarios.administrar', async () => {
+  let claims = 0;
+  let activaciones = 0;
+  const repo = crearRepositorio({ activarPendiente: async () => { activaciones += 1; return true; } });
+  const administrador: AdministradorIdentidad = { async asegurarClaimInstitucion() { claims += 1; } };
+  const actorSinPermiso: CuentaAutorizada = Object.freeze({
+    ...crearCuentaAdmin('HOSPITAL_GENERAL'),
+    roles: Object.freeze(['SECRETARIA'] as const),
+    permisos: Object.freeze([] as const),
+  });
+  const provisionar = crearProvision(repo, administrador, 'HOSPITAL_GENERAL', {}, actorSinPermiso);
+  const entrada = entradaProvision('HOSPITAL_GENERAL');
+
+  await assert.rejects(
+    () => provisionar.ejecutar(entrada),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SIN_PERMISO',
+  );
+  await assert.rejects(
+    () => crearProvision(repo, administrador).ejecutar({ ...entrada, tokenAdministrador: ' ' }),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'NO_AUTENTICADO',
+  );
+  assert.equal(claims, 0);
+  assert.equal(activaciones, 0);
 });
 
 test('la provisión rechaza un UID ligado a dos instituciones sin alterar Firebase ni las cuentas', async () => {
@@ -348,7 +384,7 @@ test('la provisión rechaza un UID ligado a dos instituciones sin alterar Fireba
   });
 
   await assert.rejects(
-    () => provisionar.ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: UID }),
+    () => provisionar.ejecutar(entradaProvision('HOSPITAL_GENERAL')),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SIN_PERMISO',
   );
   assert.equal(claims, 0);
@@ -360,11 +396,36 @@ function crearProvision(
   admin: AdministradorIdentidad,
   institucion: Institucion = 'HOSPITAL_GENERAL',
   repositorios: Partial<Record<Institucion, RepositorioCuenta>> = {},
+  actorInicial?: CuentaAutorizada,
 ): ProvisionarCuentaPendiente {
+  const actor = actorInicial ?? crearCuentaAdmin(institucion);
+  const verificador: VerificadorIdentidad = {
+    async verificar(token) {
+      assert.equal(token, TOKEN_ADMIN);
+      return {
+        uid: actor.uid,
+        institucion: actor.institucion,
+        emitidoEn: instanteUtc('2026-10-26T18:00:00Z'),
+      };
+    },
+    async revocarSesiones() {},
+  };
+  const cuentaDelBundle = (inst: Institucion): RepositorioCuenta => {
+    const base = repositorios[inst] ?? (inst === institucion ? repo : crearRepositorio({ porUid: async () => null }));
+    return {
+      async porUid(uid) {
+        if (uid === actor.uid && actor.institucion === inst) return actor;
+        return base.porUid(uid);
+      },
+      async activarPendiente(uid, version, auditoria) {
+        return base.activarPendiente?.(uid, version, auditoria) ?? false;
+      },
+    };
+  };
   const bundles = Object.freeze(INSTITUCIONES_CANONICAS.map((inst) => Object.freeze({
     institucion: inst,
     estadoPersistencia: 'DISPONIBLE' as const,
-    cuenta: repositorios[inst] ?? (inst === institucion ? repo : crearRepositorio({ porUid: async () => null })),
+    cuenta: cuentaDelBundle(inst),
   })));
   const colas = new Map<string, Promise<void>>();
   const bloqueo: BloqueoProvision = {
@@ -383,7 +444,20 @@ function crearProvision(
       }
     },
   };
-  return new ProvisionarCuentaPendiente(admin, () => bundles, bloqueo);
+  return new ProvisionarCuentaPendiente(verificador, admin, () => bundles, bloqueo);
+}
+
+function entradaProvision(institucion: Institucion, uid = UID) {
+  return {
+    institucion,
+    uid,
+    tokenAdministrador: TOKEN_ADMIN,
+    auditoria: Object.freeze({
+      id: ID_AUDITORIA,
+      correlacion: ID_CORRELACION,
+      fechaHora: '2026-10-26T18:00:00Z',
+    }),
+  } as const;
 }
 
 function crearRepositorio(sobrescritura: Partial<RepositorioCuenta> = {}): RepositorioCuenta {
@@ -414,5 +488,17 @@ function crearCuenta(
         activo: profesionalActivo,
       }),
     }),
+  });
+}
+
+function crearCuentaAdmin(institucion: Institucion): CuentaAutorizada {
+  return Object.freeze({
+    id: ID_ADMIN as CuentaAutorizada['id'],
+    uid: UID_ADMIN,
+    institucion,
+    estado: 'ACTIVA',
+    roles: Object.freeze(['ADMIN_INSTITUCIONAL'] as const),
+    permisos: Object.freeze(['usuarios.administrar'] as const),
+    version: versionPositiva(1),
   });
 }

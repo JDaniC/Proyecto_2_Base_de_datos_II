@@ -3,6 +3,7 @@ import type {
   RepositorioCuenta,
   RepositorioProfesional,
   ProfesionalLeido,
+  AuditoriaActivacionCuenta,
 } from '../../../aplicacion/puertos/repositorio-cuenta.js';
 import type { Institucion } from '../../../dominio/compartido/institucion.js';
 import type { UUID } from '../../../dominio/compartido/uuid.js';
@@ -13,6 +14,7 @@ import { ErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 export class RepositorioCuentaEnMemoria implements RepositorioCuenta, RepositorioProfesional {
   private readonly cuentasPorUid = new Map<string, CuentaAutorizada>();
   private readonly profesionalesPorId = new Map<string, ProfesionalLeido>();
+  private readonly eventosProvision = new Map<string, AuditoriaActivacionCuenta['evento']>();
 
   constructor(
     readonly institucion: Institucion,
@@ -62,14 +64,32 @@ export class RepositorioCuentaEnMemoria implements RepositorioCuenta, Repositori
     return cuenta ?? null;
   }
 
-  async activarPendiente(uid: string, versionEsperada: CuentaAutorizada['version']): Promise<boolean> {
+  async activarPendiente(
+    uid: string,
+    versionEsperada: CuentaAutorizada['version'],
+    auditoria: AuditoriaActivacionCuenta,
+  ): Promise<boolean> {
     const cuenta = this.cuentasPorUid.get(uid);
-    if (!cuenta || cuenta.estado !== 'PENDIENTE' || cuenta.version !== versionEsperada) return false;
+    if (!cuenta) return false;
+    if (cuenta.estado === 'ACTIVA') return true;
+    if (cuenta.estado !== 'PENDIENTE' || cuenta.version !== versionEsperada) return false;
+    const actor = this.cuentasPorUid.get(auditoria.actorUid);
+    if (!actor || actor.id !== auditoria.evento.actorId || actor.estado !== 'ACTIVA' ||
+        actor.institucion !== this.institucion || !actor.roles.includes('ADMIN_INSTITUCIONAL') ||
+        !actor.permisos.includes('usuarios.administrar') || auditoria.evento.caso !== 'CUENTA_PROVISIONADA' ||
+        auditoria.evento.recursoId !== cuenta.id) {
+      throw new ErrorDominio('SIN_PERMISO', 'La cuenta administrativa no está vigente para esta operación.');
+    }
     if (!Number.isSafeInteger(cuenta.version + 1)) {
       throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La revisión de cuenta alcanzó el límite admitido.');
     }
     this.registrarCuenta({ ...cuenta, estado: 'ACTIVA', version: versionPositiva(cuenta.version + 1) });
+    this.eventosProvision.set(auditoria.evento.id, auditoria.evento);
     return true;
+  }
+
+  listarEventosProvision(): readonly AuditoriaActivacionCuenta['evento'][] {
+    return Object.freeze([...this.eventosProvision.values()]);
   }
 
   async guardar(cuenta: CuentaAutorizada): Promise<void> {

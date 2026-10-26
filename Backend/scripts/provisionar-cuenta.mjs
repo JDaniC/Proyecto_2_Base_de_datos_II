@@ -1,4 +1,5 @@
 import { pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { crearDependenciasBackend, ErrorConfiguracionBackend } from '../dist/composicion/crear-dependencias-backend.js';
 import { ProvisionarCuentaPendiente } from '../dist/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.js';
 import { esInstitucion } from '../dist/dominio/compartido/institucion.js';
@@ -19,16 +20,27 @@ export async function ejecutarProvision(args, entorno = process.env) {
   const entrada = parsearArgumentosProvision(args);
   if (!entrada) throw new Error('USO: npm run provision:cuenta -- --confirmar <INSTITUCION_CANONICA> <UID_FIREBASE_EXISTENTE>');
   if (entorno.APP_ENV !== 'delivery') throw new Error('PROVISION_REQUIERE_APP_ENV_DELIVERY');
+  const tokenAdministrador = entorno.FIREBASE_ADMIN_ID_TOKEN?.trim();
+  if (!tokenAdministrador) throw new Error('PROVISION_REQUIERE_FIREBASE_ADMIN_ID_TOKEN');
 
   const dependencias = await crearDependenciasBackend(entorno);
   if (!dependencias) throw new Error('PROVISION_REQUIERE_PERSISTENCIA_CONFIGURADA');
   try {
     const provisionar = new ProvisionarCuentaPendiente(
+      dependencias.verificadorIdentidad,
       dependencias.administradorIdentidad,
       () => dependencias.bundles,
       dependencias.bloqueoProvision,
     );
-    const resultado = await provisionar.ejecutar(entrada);
+    const resultado = await provisionar.ejecutar({
+      ...entrada,
+      tokenAdministrador,
+      auditoria: Object.freeze({
+        id: randomUUID(),
+        correlacion: randomUUID(),
+        fechaHora: new Date().toISOString(),
+      }),
+    });
     return Object.freeze({
       cuenta_id: resultado.cuenta_id,
       institucion: resultado.institucion,

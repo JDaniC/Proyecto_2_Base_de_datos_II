@@ -29,6 +29,12 @@ Validación global de DTO rechaza propiedades desconocidas y errores inesperados
 
 El runtime y las dependencias se fijaron con versiones exactas verificadas el 25/10/2026: Node.js 24 LTS (mínimo 24.22.0), NestJS 12.2.0, `@nestjs/swagger` 12.0.4 y TypeScript 6.0.3; el resto también está fijado en `package.json` y `package-lock.json`. Fuentes primarias: [descargas y releases de Node.js](https://nodejs.org/en/download), [NestJS ValidationPipe](https://docs.nestjs.com/techniques/validation), [NestJS OpenAPI](https://docs.nestjs.com/openapi/introduction), [`@nestjs/core` en npm](https://www.npmjs.com/package/%40nestjs/core), [`@nestjs/swagger` en npm](https://www.npmjs.com/package/%40nestjs/swagger), [TypeScript en npm](https://www.npmjs.com/package/typescript).
 
+## Provisión administrativa de cuentas E01-P1-03
+
+Desde `Backend/`, la herramienta `npm run provision:cuenta -- --confirmar <INSTITUCION_CANONICA> <UID_FIREBASE_EXISTENTE>` requiere `APP_ENV=delivery`, los cuatro motores y `FIREBASE_ADMIN_ID_TOKEN` inyectado como secreto temporal del proceso. El token debe ser un ID token vigente de Firebase Auth; el servidor verifica firma y revocación y exige que su cuenta local activa tenga el rol `ADMIN_INSTITUCIONAL` y el permiso actual `usuarios.administrar` en la misma institución que la cuenta destino. La institución del argumento se compara con la institución verificada del operador.
+
+No pases el token como argumento ni lo imprimas. La herramienta no lo devuelve ni lo registra. Al activar una cuenta pendiente, su cambio de estado y el evento `CUENTA_PROVISIONADA` con actor y recurso quedan en una sola transacción local del motor institucional. Una repetición después de una activación confirmada no duplica el evento; si la escritura de auditoría falla, se revierte la activación y puede reanudarse con un administrador vigente.
+
 ## Adaptadores SQL E01-P2-01
 
 PostgreSQL (Hospital) y MySQL (Odontología) usan sus cuentas `hospital_app` y `clinica_app`. Las fábricas reciben una ruta `*_PASSWORD_FILE`; nunca registran ni incorporan el secreto a errores. Configuración SQL valida host/puerto y fija base y usuario de aplicación; rechaza cuentas administrativas. Pools: máximo 10 conexiones por defecto, timeout de conexión/consulta y espera acotada de 3 segundos con una cola máxima de 20 peticiones. `crearUnidadDeTrabajoSql` conserva una conexión hasta confirmar o revertir; lector, mapper institucional y aplicación de cambios reciben el mismo executor.
