@@ -245,6 +245,14 @@ describe('frontera HTTP y composición', () => {
     assert.doesNotMatch(texto, /secreto-interno-de-prueba|stack|Error:/i);
   });
 
+  it('mapea ErrorDominio de persistencia a 503 sin exponer detalles', async () => {
+    const respuesta = await fetch(`${baseUrl}/api/v1/pruebas-http/error-dominio`);
+    const texto = await respuesta.text();
+    assert.equal(respuesta.status, 503);
+    assert.match(texto, /PERSISTENCIA_NO_DISPONIBLE/);
+    assert.doesNotMatch(texto, /detalle-interno-de-prueba|stack/i);
+  });
+
   it('expone salud técnica sin secretos y readiness advierte que no hay persistencia', async () => {
     const liveness = await fetch(`${baseUrl}/api/v1/health/live`);
     const cuerpoLiveness = await liveness.json() as { data: { estado: string } };

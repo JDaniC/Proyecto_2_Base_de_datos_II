@@ -13,7 +13,8 @@
     "build:test": "tsc -p tsconfig.test.json && node scripts/copiar-contrato.mjs dist-test/src",
     "lint": "npm run architecture:check && eslint src tests scripts eslint.config.mjs",
     "start": "npm run build && node --env-file-if-exists=.env dist/main.js",
-    "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js dist-test/tests/unitarios/*.test.js && node --test tests/contratos/*.test.mjs"
+    "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js dist-test/tests/unitarios/*.test.js && node --test tests/contratos/*.test.mjs",
+    "test:integration:sql": "node scripts/run-sql-uow-integration.mjs"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",
@@ -23,6 +24,8 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "express": "5.3.0",
+    "mysql2": "3.24.6",
+    "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "yaml": "2.9.1"
@@ -30,6 +33,7 @@
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "eslint": "10.13.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0"
