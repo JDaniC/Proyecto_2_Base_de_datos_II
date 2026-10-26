@@ -112,6 +112,13 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
   const conexion = await deps.pool.adquirir();
   let iniciada = false;
   let confirmando = false;
+  let liberada = false;
+  const liberarConexion = () => {
+    if (!liberada) {
+      conexion.liberar();
+      liberada = true;
+    }
+  };
   try {
     await conexion.iniciar();
     iniciada = true;
@@ -136,8 +143,8 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
       return respuesta;
     }
 
-    await deps.aplicarCambios(conexion, contexto, comando, plan.cambios);
     await guardarRevisiones(conexion, deps.dialecto, idUsuario, comando, plan.revisiones);
+    await deps.aplicarCambios(conexion, contexto, comando, plan.cambios);
     await guardarAuditoria(conexion, deps.dialecto, idUsuario, plan.auditoria, plan.cambios);
     await guardarOperacion(conexion, deps.dialecto, idUsuario, comando, plan.resultado);
     confirmando = true;
@@ -149,14 +156,15 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
       try { await conexion.revertir(); } catch { /* la conexión no vuelve a usarse; el pool la libera */ }
       iniciada = false;
     }
-    if (confirmando) {
+    if (confirmando && !esRechazoSqlDefinitivo(error)) {
+      liberarConexion();
       const duradera = await leerOperacionPool<T>(deps, contexto, comando);
       if (duradera !== null) return resolverRepeticion(duradera, comando);
       throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se pudo confirmar el resultado; reintente con la misma clave.');
     }
     throw error;
   } finally {
-    conexion.liberar();
+    liberarConexion();
   }
 }
 
@@ -352,6 +360,9 @@ function codigoSql(error: unknown): string | undefined {
 
 function traducirErrorSql(error: unknown): ErrorDominio | null {
   const codigo = codigoSql(error);
+  if (codigo === 'ER_SIGNAL_EXCEPTION' || estadoSql(error) === '45000' || codigo === '1644') {
+    return new ErrorDominio('ESTADO_INVALIDO', 'El cambio no cumple las reglas de persistencia vigentes.');
+  }
   if (codigo === '42501' || codigo === '1142' || codigo === '1227' || codigo === 'ER_TABLEACCESS_DENIED_ERROR') {
     return new ErrorDominio('SIN_PERMISO', 'La cuenta de aplicación no tiene permiso para completar este cambio.');
   }
@@ -365,6 +376,26 @@ function traducirErrorSql(error: unknown): ErrorDominio | null {
     return new ErrorDominio('SOLICITUD_INVALIDA', 'Un valor excede los límites de persistencia.');
   }
   return null;
+}
+
+function estadoSql(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('sqlState' in error)) return undefined;
+  const state = (error as { sqlState?: unknown }).sqlState;
+  return typeof state === 'string' ? state : undefined;
+}
+
+/** Los rechazos SQL recibidos del servidor son definitivos; errores de conexión pueden tener commit incierto. */
+function esRechazoSqlDefinitivo(error: unknown): boolean {
+  const codigo = codigoSql(error);
+  if (codigo !== undefined && /^[0-9A-Z]{5}$/.test(codigo)) {
+    return !codigo.startsWith('08') && !['57P01', '57P02', '57P03'].includes(codigo);
+  }
+  if (codigo === 'ER_SIGNAL_EXCEPTION' || codigo?.startsWith('ER_')) return true;
+  if (typeof error === 'object' && error !== null && 'errno' in error) {
+    const errno = (error as { errno?: unknown }).errno;
+    return typeof errno === 'number' && errno > 0 && !['PROTOCOL_SEQUENCE_TIMEOUT', 'PROTOCOL_CONNECTION_LOST'].includes(codigo ?? '');
+  }
+  return false;
 }
 
 async function esperar(ms: number): Promise<void> {

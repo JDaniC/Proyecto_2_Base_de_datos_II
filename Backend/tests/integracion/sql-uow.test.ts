@@ -132,6 +132,12 @@ async function verificarFlujos(
     aplicarCambios: async (executor, _ctx, _cmd, cambios) => {
       const [primerCambio] = cambios;
       assert.ok(primerCambio);
+      const marcador = dialecto === 'postgresql' ? '$1' : '?';
+      const revisionPrevias = await executor.consultar<{ total: number | string }>(
+        `SELECT COUNT(*) AS total FROM revisiones WHERE recurso_id = ${marcador}`,
+        [primerCambio.recursoId],
+      );
+      assert.equal(Number(revisionPrevias.filas[0]?.total ?? 0), 1, 'la revisión anterior debe existir antes de aplicar el cambio');
       const nombreRol = primerCambio.recursoId;
       if (dialecto === 'postgresql') {
         await executor.consultar("INSERT INTO rol (nombre, descripcion, permisos) VALUES ($1, 'TEST', '[]'::jsonb)", [nombreRol]);
@@ -229,6 +235,8 @@ async function verificarFlujos(
   assert.equal(await contar(pool, dialecto, 'auditoria', 'id_publico', eventoId), 1);
   assert.equal(await contar(pool, dialecto, 'operaciones', 'clave', clavePermiso), 0);
 
+  if (dialecto === 'mysql') await verificarSignalTriggerMysql(pool, contexto, idActor);
+
   const reutilizada = { ...comando, hashEntrada: 'f'.repeat(64) };
   await assert.rejects(
     unidad.ejecutar(contexto, reutilizada, async () => plan(comando.caso)),
@@ -236,6 +244,71 @@ async function verificarFlujos(
   );
 
   await verificarReintentoDeadlock(pool, dialecto, contexto);
+}
+
+async function verificarSignalTriggerMysql(
+  pool: PoolSql,
+  contexto: ReturnType<typeof crearContextoAutenticado>,
+  idActor: number | string,
+): Promise<void> {
+  const marca = randomUUID();
+  await pool.consultar('INSERT INTO paciente (nombres, apellidos, correo) VALUES (?, ?, ?)', ['TEST', 'TRIGGER', `trigger-${marca}@example.invalid`]);
+  const pacientes = await pool.consultar<{ id_paciente: number | string }>('SELECT id_paciente FROM paciente WHERE correo = ?', [`trigger-${marca}@example.invalid`]);
+  const idPaciente = pacientes.filas[0]?.id_paciente;
+  assert.ok(idPaciente !== undefined);
+  const apellidosSecretaria = `TRIGGER-${marca}`;
+  await pool.consultar("INSERT INTO secretaria (nombres, apellidos) VALUES ('TEST', ?)", [apellidosSecretaria]);
+  const secretarias = await pool.consultar<{ id_secretaria: number | string }>(
+    'SELECT id_secretaria FROM secretaria WHERE apellidos = ?', [apellidosSecretaria],
+  );
+  const idSecretaria = secretarias.filas[0]?.id_secretaria;
+  assert.ok(idSecretaria !== undefined);
+  const odontologos = await pool.consultar<{ id_odontologo: number | string }>(
+    'SELECT id_odontologo FROM usuario WHERE id_usuario = ?', [idActor],
+  );
+  const idOdontologoCita = odontologos.filas[0]?.id_odontologo;
+  assert.ok(idOdontologoCita !== undefined && idOdontologoCita !== null);
+  await pool.consultar("INSERT INTO odontologo (nombres, apellidos, colegiado) VALUES ('TEST', 'OTRO', ?)", [`OTRO-${marca}`]);
+  const odontologoNuevo = await pool.consultar<{ id_odontologo: number | string }>(
+    'SELECT id_odontologo FROM odontologo WHERE colegiado = ?', [`OTRO-${marca}`],
+  );
+  const idOdontologoIncompatible = odontologoNuevo.filas[0]?.id_odontologo;
+  assert.ok(idOdontologoIncompatible !== undefined);
+  await pool.consultar('INSERT INTO cita (id_paciente, id_odontologo, id_secretaria, fecha_hora, motivo) VALUES (?, ?, ?, ?, ?)',
+    [idPaciente, idOdontologoCita, idSecretaria, '2026-10-25 18:00:00', 'TEST']);
+  const citas = await pool.consultar<{ id_cita: number | string }>(
+    'SELECT id_cita FROM cita WHERE id_paciente = ? ORDER BY id_cita DESC LIMIT 1', [idPaciente],
+  );
+  const idCita = citas.filas[0]?.id_cita;
+  assert.ok(idCita !== undefined);
+  await pool.consultar("INSERT INTO historial_clinico (id_paciente, estado) VALUES (?, 'ACTIVO')", [idPaciente]);
+  const historiales = await pool.consultar<{ id_historial: number | string }>(
+    'SELECT id_historial FROM historial_clinico WHERE id_paciente = ?', [idPaciente],
+  );
+  const idHistorial = historiales.filas[0]?.id_historial;
+  assert.ok(idHistorial !== undefined);
+
+  const clave = uuidPublico(randomUUID());
+  const cmd = crearComando(clave, 'TEST_TRIGGER_MYSQL');
+  const unidad = crearUnidadDeTrabajoSql({
+    dialecto: 'mysql', pool,
+    crearLector: () => ({}) as LectorTransaccional,
+    aplicarCambios: async (executor) => {
+      await executor.consultar(
+        "INSERT INTO consulta_odontologica (id_historial, id_cita, id_odontologo, motivo, estado) VALUES (?, ?, ?, 'TEST', 'ABIERTA')",
+        [idHistorial, idCita, idOdontologoIncompatible],
+      );
+    },
+  });
+  await assert.rejects(
+    unidad.ejecutar(contexto, cmd, async () => ({
+      tipo: 'CONFIRMAR', cambios: [], revisiones: [], auditoria: [],
+      resultado: { httpStatus: 201, respuesta: { ok: true }, correlacionOriginal: contexto.correlacion },
+    })),
+    (error: unknown) => typeof error === 'object' && error !== null && 'codigo' in error && error.codigo === 'ESTADO_INVALIDO',
+  );
+  assert.equal(await contar(pool, 'mysql', 'consulta_odontologica', 'id_cita', idCita), 0);
+  assert.equal(await contar(pool, 'mysql', 'operaciones', 'clave', clave), 0);
 }
 
 async function verificarReintentoDeadlock(
