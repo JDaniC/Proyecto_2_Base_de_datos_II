@@ -58,9 +58,23 @@ Las 22 rutas del contrato describen operaciones de producto y continúan marcada
 
 | Estado | Conteo |
 |---|---:|
-| PASS | 8 requisitos de alcance |
+| PASS | 8 grupos de requisitos, cubiertos por 11 verificaciones detalladas en `trazabilidad.csv` |
 | FAIL abierto | 0 |
 | BLOCKED | 0 |
 | NOT_IMPLEMENTED fuera del alcance de esta tarea | Operaciones de producto, Auth y persistencia; conservar para sus IDs correspondientes |
 
-El commit de implementación es `6545dbe`. `contrato-pr` pasó y Codex revisó ese SHA sin hallazgos. La integración sigue pendiente.
+El commit de implementación es `6545dbe`. `contrato-pr` pasó y Codex revisó ese SHA sin hallazgos. PR #22 se integró a `develop` mediante merge `8d77e1a`.
+
+## Verificación después de integrar
+
+En `develop` (`8d77e1a`) se repitieron instalación limpia, compilación, lint, pruebas, auditoría de dependencias y validación offline del contrato:
+
+- `npm ci` — PASS; 0 vulnerabilidades.
+- `npm run build` — PASS.
+- `npm run lint` — PASS, incluida la regla de arquitectura.
+- `npm test` — PASS: 26 pruebas runtime y 32 pruebas contractuales, 58/58.
+- `npm audit --audit-level=low` — PASS; 0 vulnerabilidades.
+- `Backend/scripts/validar_contrato.py` — PASS; 22 rutas, 26 operaciones, 99 esquemas, 230 fixtures y 117 métodos UI.
+- `Backend/docs/openapi.yaml` sin cambios; salida `Backend/dist-test/` ignorada.
+
+No hubo cambios de código entre el commit revisado `6545dbe` y la integración; la verificación se repitió sobre el árbol integrado.
