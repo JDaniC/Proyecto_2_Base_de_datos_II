@@ -354,3 +354,58 @@ test('UoW Firestore: asocia cada evento de auditoría a su tipo_recurso respecti
   assert.equal(docAudit2.tipo_recurso, 'consultas');
   assert.equal(docAudit2.recurso_id, idConsulta);
 });
+
+test('UoW Firestore: persiste revisiones históricas para pacientes y citas sin RUTA_NO_ADMITIDA', async () => {
+  const { cliente, store } = crearMockFirestore();
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+  const idPaciente = uuidPublico('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  const idCita = uuidPublico('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+  const revPaciente = uuidPublico('11111111-2222-4333-8444-555555555555');
+  const revCita = uuidPublico('66666666-7777-4888-8999-000000000000');
+
+  await uow.ejecutar(contexto, comando, async () => {
+    const plan: PlanDeEscrituras<unknown, unknown, Record<string, unknown>> = {
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [
+        {
+          id: revPaciente,
+          agregado: 'pacientes',
+          recursoId: idPaciente,
+          versionAnterior: versionPositiva(1),
+          snapshotAnterior: { nombres: 'Sofía Anterior' },
+        },
+        {
+          id: revCita,
+          agregado: 'citas',
+          recursoId: idCita,
+          versionAnterior: versionPositiva(2),
+          snapshotAnterior: { estado: 'PROGRAMADA' },
+        },
+      ],
+      auditoria: [],
+      resultado: {
+        httpStatus: 200,
+        respuesta: { data: {}, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    };
+    return plan;
+  });
+
+  const docRevPaciente = store.get(`pacientes/${idPaciente}/versiones/${revPaciente}`) as { version: number };
+  const docRevCita = store.get(`citas/${idCita}/versiones/${revCita}`) as { version: number };
+  assert.ok(docRevPaciente);
+  assert.ok(docRevCita);
+  assert.equal(docRevPaciente.version, 1);
+  assert.equal(docRevCita.version, 2);
+});

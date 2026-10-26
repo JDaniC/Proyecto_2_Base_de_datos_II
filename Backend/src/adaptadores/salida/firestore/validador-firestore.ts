@@ -144,6 +144,7 @@ export const modelos = [
       }
     }),
   },
+  { ruta: 'pacientes/{pacienteId}/versiones/{versionId}', esquema: versionHistorica },
   {
     ruta: 'responsables/{responsableId}',
     esquema: raiz({
@@ -213,6 +214,7 @@ export const modelos = [
       { path: ['motivo_cancelacion'], message: 'Motivo requerido.' },
     ),
   },
+  { ruta: 'citas/{citaId}/versiones/{versionId}', esquema: versionHistorica },
   {
     ruta: 'consultas/{consultaId}',
     esquema: raiz({

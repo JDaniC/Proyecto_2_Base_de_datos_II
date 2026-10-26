@@ -166,3 +166,31 @@ test('validador Firestore: rechaza fechas de nacimiento inexistentes en el calen
   const validado = validarDocumento(ruta, pacienteBisiestoValido);
   assert.equal((validado as typeof pacienteBisiestoValido).fecha_nacimiento, '2020-02-29');
 });
+
+test('validador Firestore: admite rutas de versiones históricas para pacientes y citas', () => {
+  const versionDoc = {
+    revision: 1,
+    version: 1,
+    actor_id: UUID_1,
+    fecha_hora: new Date('2026-10-26T12:00:00Z'),
+    motivo: 'CAMBIO_DEMOGRAFICO',
+    contenido_anterior: { nombres: 'Nombre Anterior', apellidos: 'Apellido Anterior' },
+  };
+
+  const rutaPacienteVersion = `pacientes/${UUID_1}/versiones/${UUID_2}`;
+  const validadoPaciente = validarDocumento(rutaPacienteVersion, versionDoc);
+  assert.equal((validadoPaciente as typeof versionDoc).version, 1);
+
+  const versionCitaDoc = {
+    revision: 1,
+    version: 1,
+    actor_id: UUID_1,
+    fecha_hora: new Date('2026-10-26T12:00:00Z'),
+    motivo: 'REPROGRAMACION',
+    contenido_anterior: { estado: 'PROGRAMADA', fecha_hora: new Date('2026-10-25T10:00:00Z') },
+  };
+
+  const rutaCitaVersion = `citas/${UUID_1}/versiones/${UUID_2}`;
+  const validadoCita = validarDocumento(rutaCitaVersion, versionCitaDoc);
+  assert.equal((validadoCita as typeof versionCitaDoc).version, 1);
+});

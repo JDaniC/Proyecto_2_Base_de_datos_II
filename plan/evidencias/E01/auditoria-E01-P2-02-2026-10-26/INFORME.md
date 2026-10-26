@@ -4,7 +4,7 @@
 - **Alcance:** Adaptadores NoSQL (`Backend/src/adaptadores/salida/mongodb` y `salida/firestore`), configuración de entorno (`conexiones-mongodb.ts`, `conexiones-firestore.ts`), validadores Zod de modelo pediátrico, unidades de trabajo transaccionales, repositorios de cuenta e integración con Docker replica set y emulador Firestore.
 - **Tipo:** Funcional, con trazabilidad requisito → código → test, verificación de atomicidad, idempotencia, permisos mínimos y aislamiento transaccional.
 - **Autorización:** Conforme a solicitud del usuario en flujo autónomo y política de integración del proyecto.
-- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (95 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
+- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (97 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
 
 ## 1. Resumen ejecutivo
 
@@ -55,6 +55,7 @@
 | F-07 | `nosql-uow.test.ts` (rollback) | RNF-018 / AGENTS.md | `SUB_IMPLEMENTADO` | La prueba de rollback multi-documento lanzaba excepción dentro de `planificar`, antes de ejecutar escrituras en la sesión. | Se inyectó el fallo durante la ejecución de escrituras en sesión (segundo documento con violación de esquema JSON Schema), comprobando que el primer documento y la revisión persistidos fueron efectivamente revertidos. |
 | F-08 | `validador-firestore.ts` | RNF-022 / CA05 | `DIVERGENTE` | Se validaba `fecha_nacimiento` con expresión regular sin validar calendario gregoriano (admitía `2020-02-31`). | Se restituyó `z.iso.date()` conforme a `Database/firebase/modelo_pediatrico.mjs` y se añadió prueba de regresión para fechas inválidas y bisiestas. |
 | F-09 | Auditoría MongoDB y Firestore | RNF-016 / RNF-022 | `DIVERGENTE` | Se asignaba la colección del primer cambio (`cambios[0]`) a todos los eventos de auditoría en comandos multi-agregado. | Se asocia cada evento por `recursoId` (`cambios.find(c => c.recursoId === ev.recursoId)?.agregado ?? ev.caso`), con tests unitarios multi-agregado en ambos motores. |
+| F-10 | `validador-firestore.ts` (revisiones) | RNF-018 / AGENTS.md | `SUB_IMPLEMENTADO` | Las rutas de versiones históricas para `pacientes` y `citas` (`pacientes/{pacienteId}/versiones/{versionId}` y `citas/{citaId}/versiones/{versionId}`) no estaban registradas, causando `RUTA_NO_ADMITIDA` al persistir revisiones en cambios demográficos y reprogramaciones. | Se registraron ambos esquemas con `versionHistorica` y se agregaron pruebas unitarias en el validador y en la UoW de Firestore. |
 
 ## 5. Matriz final de auditoría
 
@@ -63,7 +64,7 @@
 | Compilación TypeScript (`tsc`) | **PASS** | `dist-test` y `dist` compilan sin errores con configuración estricta. |
 | Reglas arquitectónicas (`architecture:check`) | **PASS** | Dominio y aplicación puros; sin SDKs ni adaptadores en el núcleo. |
 | ESLint (`eslint`) | **PASS** | Cero advertencias y cero errores en código fuente, tests y scripts. |
-| Pruebas unitarias y runtime | **PASS** | 95 pruebas unitarias/runtime pasando (100%). |
+| Pruebas unitarias y runtime | **PASS** | 97 pruebas unitarias/runtime pasando (100%). |
 | Pruebas de contratos congelados | **PASS** | 32 pruebas de contrato OpenAPI y fixtures pasando (100%). |
 | Pruebas de integración NoSQL (`nosql-uow.test.ts`) | **PASS** | Rollback con escrituras en sesión, atomicidad, replay, réplica set MongoDB y Firestore emulator verificados en entornos reales. |
 | **Dictamen global** | **PASS** | Todos los requerimientos funcionales y observaciones de revisión de E01-P2-02 han sido verificados satisfactoriamente. |
