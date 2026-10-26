@@ -16,54 +16,12 @@ import type { ClientSession, Db, MongoError } from 'mongodb';
 import {
   COLECCIONES_MONGODB,
   type DependenciasUnidadDeTrabajoMongodb,
+  type DocumentoAuditoriaMongo,
+  type DocumentoOperacionMongo,
+  type DocumentoRevisionMongo,
   INSTITUCION_LABORATORIO,
 } from './tipos-mongodb.js';
 import { crearRepositorioCuentaMongodb } from './repositorio-cuenta-mongodb.js';
-
-interface DocumentoOperacionMongo {
-  readonly _id: string;
-  readonly revision: number;
-  readonly institucion_id: string;
-  readonly usuario_id: string;
-  readonly caso_uso: string;
-  readonly clave: string;
-  readonly hash_entrada: string;
-  readonly recurso_tipo: string;
-  readonly recurso_id: string;
-  readonly fecha_hora: Date;
-  readonly codigo_respuesta: number;
-  readonly estado: string;
-  readonly respuesta: {
-    readonly data: Record<string, unknown>;
-    readonly meta: { readonly correlacion: string };
-  };
-}
-
-interface DocumentoRevisionMongo {
-  readonly _id: string;
-  readonly revision: number;
-  readonly tipo_recurso: string;
-  readonly recurso_id: string;
-  readonly version: number;
-  readonly actor_id: string;
-  readonly fecha_hora: Date;
-  readonly motivo: string;
-  readonly contenido_anterior: unknown;
-}
-
-interface DocumentoAuditoriaMongo {
-  readonly _id: string;
-  readonly revision: number;
-  readonly usuario_id: string;
-  readonly auth_uid: string;
-  readonly institucion_id: string;
-  readonly fecha_hora: Date;
-  readonly accion: string;
-  readonly coleccion: string;
-  readonly documento_id: string;
-  readonly correlacion: string;
-  readonly motivo?: string;
-}
 
 export function crearUnidadDeTrabajoMongodb<
   TCuenta = unknown,

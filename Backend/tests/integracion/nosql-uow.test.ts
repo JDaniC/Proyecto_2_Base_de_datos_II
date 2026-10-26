@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { crearContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { LectorTransaccional, PlanConfirmacion, ComandoEstable } from '../../src/aplicacion/puertos/nucleo.js';
@@ -10,11 +10,11 @@ import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import { crearClienteMongodb } from '../../src/adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import { crearRepositorioCuentaMongodb } from '../../src/adaptadores/salida/mongodb/repositorio-cuenta-mongodb.js';
 import { crearUnidadDeTrabajoMongodb } from '../../src/adaptadores/salida/mongodb/unidad-de-trabajo-mongodb.js';
-import { COLECCIONES_MONGODB } from '../../src/adaptadores/salida/mongodb/tipos-mongodb.js';
+import { COLECCIONES_MONGODB, type DocumentoOperacionMongo } from '../../src/adaptadores/salida/mongodb/tipos-mongodb.js';
 import { crearClienteFirestore } from '../../src/adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaFirestore } from '../../src/adaptadores/salida/firestore/repositorio-cuenta-firestore.js';
 import { crearUnidadDeTrabajoFirestore } from '../../src/adaptadores/salida/firestore/unidad-de-trabajo-firestore.js';
-import { validarDocumento, MAX_DOCUMENTO } from '../../src/adaptadores/salida/firestore/validador-firestore.js';
+import { validarDocumento, MAX_DOCUMENTO, claveOperacion } from '../../src/adaptadores/salida/firestore/validador-firestore.js';
 
 const puertoMongo = process.env.MONGO_TEST_PORT;
 const secretoMongo = process.env.MONGO_TEST_SECRET_FILE;
@@ -260,7 +260,9 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   assert.equal(await cliente.db.collection('muestras').findOne({ _id: recursoInvalido }), null);
   assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.REVISIONES).findOne({ _id: revFallo }), null);
   assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.AUDITORIA).findOne({ _id: auditFallo }), null);
-  assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.OPERACIONES).findOne({ _id: comandoFallo.claveIdempotencia }), null);
+  const idOpMongoFallo = `${contexto.cuenta.id}__${comandoFallo.caso}__${comandoFallo.claveIdempotencia}`;
+  assert.equal(await cliente.db.collection<DocumentoOperacionMongo>(COLECCIONES_MONGODB.OPERACIONES).findOne({ _id: idOpMongoFallo }), null);
+  assert.equal(await cliente.db.collection<DocumentoOperacionMongo>(COLECCIONES_MONGODB.OPERACIONES).findOne({ clave: comandoFallo.claveIdempotencia }), null);
 
   // Repetición idempotente
   const resReplay = await uow.ejecutar(contexto, comando1, async () => {
@@ -639,9 +641,12 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   const docAuditCheck = await cliente.firestore.doc(`auditoria/${auditoriaRollbackId}`).get();
   assert.equal(docAuditCheck.exists, false, 'El evento de auditoría no debe persistir tras rollback');
 
-  const claveOpRollback = createHash('sha256')
-    .update(`CENTRO_MEDICO_PEDIATRICO:${contexto.cuenta.id}:${comandoRollback.caso}:${claveRollback}`)
-    .digest('hex');
+  const claveOpRollback = claveOperacion(
+    'CENTRO_MEDICO_PEDIATRICO',
+    contexto.cuenta.id,
+    comandoRollback.caso,
+    claveRollback,
+  );
   const docOpCheck = await cliente.firestore.doc(`operaciones/${claveOpRollback}`).get();
   assert.equal(docOpCheck.exists, false, 'El registro de operación no debe persistir tras rollback');
 

@@ -68,3 +68,48 @@ export type UnidadDeTrabajoMongodb<
   TProfesional = unknown,
   TEvento = unknown,
 > = UnidadDeTrabajo<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>;
+
+export interface DocumentoOperacionMongo {
+  readonly _id: string;
+  readonly revision: number;
+  readonly institucion_id: string;
+  readonly usuario_id: string;
+  readonly caso_uso: string;
+  readonly clave: string;
+  readonly hash_entrada: string;
+  readonly recurso_tipo: string;
+  readonly recurso_id: string;
+  readonly fecha_hora: Date;
+  readonly codigo_respuesta: number;
+  readonly estado: string;
+  readonly respuesta: {
+    readonly data: Record<string, unknown>;
+    readonly meta: { readonly correlacion: string };
+  };
+}
+
+export interface DocumentoRevisionMongo {
+  readonly _id: string;
+  readonly revision: number;
+  readonly tipo_recurso: string;
+  readonly recurso_id: string;
+  readonly version: number;
+  readonly actor_id: string;
+  readonly fecha_hora: Date;
+  readonly motivo: string;
+  readonly contenido_anterior: unknown;
+}
+
+export interface DocumentoAuditoriaMongo {
+  readonly _id: string;
+  readonly revision: number;
+  readonly usuario_id: string;
+  readonly auth_uid: string;
+  readonly institucion_id: string;
+  readonly fecha_hora: Date;
+  readonly accion: string;
+  readonly coleccion: string;
+  readonly documento_id: string;
+  readonly correlacion: string;
+  readonly motivo?: string;
+}
