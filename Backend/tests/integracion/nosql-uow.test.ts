@@ -269,6 +269,37 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   assert.equal(resReplay.httpStatus, 201);
   assert.equal(resReplay.correlacionOriginal, correlacion1);
 
+  // Respuesta plana no envuelta: asegurar igualdad exacta entre primera ejecución y replay
+  const clavePlana = uuidPublico(randomUUID());
+  const comandoPlano: ComandoEstable = Object.freeze({
+    id: uuidPublico(randomUUID()),
+    claveIdempotencia: clavePlana,
+    caso: 'muestras',
+    hashEntrada: '7'.repeat(64),
+    instante: instanteUtc('2026-10-26T12:00:00Z'),
+    ids: Object.freeze({ muestraId: uuidPublico(randomUUID()) }),
+  });
+  const respuestaPlana = Object.freeze({ id: comandoPlano.ids.muestraId, estado: 'TOMADA' });
+
+  const resPlano1 = await uow.ejecutar(contexto, comandoPlano, async () => ({
+    tipo: 'CONFIRMAR',
+    cambios: [],
+    revisiones: [],
+    auditoria: [],
+    resultado: {
+      httpStatus: 201,
+      respuesta: respuestaPlana,
+      correlacionOriginal: uuidPublico(randomUUID()),
+    },
+  }));
+  assert.deepEqual(resPlano1.respuesta, respuestaPlana);
+
+  const resPlanoReplay = await uow.ejecutar(contexto, comandoPlano, async () => {
+    throw new Error('No debe llamar planificar en replay');
+  });
+  assert.deepEqual(resPlanoReplay.respuesta, resPlano1.respuesta);
+  assert.deepEqual(resPlanoReplay.respuesta, respuestaPlana);
+
   // Reutilización con hash incompatible
   const comandoClaveDuplicada = Object.freeze({
     ...comando1,
@@ -425,6 +456,37 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   });
   assert.equal(resReplay.httpStatus, 201);
   assert.equal(resReplay.correlacionOriginal, correlacion);
+
+  // Respuesta plana no envuelta en Firestore: asegurar igualdad exacta entre primera ejecución y replay
+  const clavePlanaFs = uuidPublico(randomUUID());
+  const comandoPlanoFs: ComandoEstable = Object.freeze({
+    id: uuidPublico(randomUUID()),
+    claveIdempotencia: clavePlanaFs,
+    caso: 'pacientes',
+    hashEntrada: '8'.repeat(64),
+    instante: instanteUtc('2026-10-26T12:00:00Z'),
+    ids: Object.freeze({ pacienteId: uuidPublico(randomUUID()) }),
+  });
+  const respuestaPlanaFs = Object.freeze({ id: comandoPlanoFs.ids.pacienteId, registrado: true });
+
+  const resPlanoFs1 = await uow.ejecutar(contexto, comandoPlanoFs, async () => ({
+    tipo: 'CONFIRMAR',
+    cambios: [],
+    revisiones: [],
+    auditoria: [],
+    resultado: {
+      httpStatus: 201,
+      respuesta: respuestaPlanaFs,
+      correlacionOriginal: uuidPublico(randomUUID()),
+    },
+  }));
+  assert.deepEqual(resPlanoFs1.respuesta, respuestaPlanaFs);
+
+  const resPlanoFsReplay = await uow.ejecutar(contexto, comandoPlanoFs, async () => {
+    throw new Error('No debe llamar planificar en replay');
+  });
+  assert.deepEqual(resPlanoFsReplay.respuesta, resPlanoFs1.respuesta);
+  assert.deepEqual(resPlanoFsReplay.respuesta, respuestaPlanaFs);
 
   // Rechazo de documento con tamaño excesivo
   const comandoExceso: ComandoEstable = Object.freeze({

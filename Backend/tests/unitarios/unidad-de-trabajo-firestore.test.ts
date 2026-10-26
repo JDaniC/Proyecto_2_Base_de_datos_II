@@ -66,6 +66,9 @@ function crearMockFirestore(opciones: {
 
   const mockTransaction = {
     get: async (ref: { path: string }) => {
+      if (store.has(ref.path)) {
+        return { exists: true, data: () => store.get(ref.path) };
+      }
       if (ref.path.startsWith('operaciones/')) {
         const existe = opciones.operacionExistente;
         if (existe) {
@@ -408,4 +411,46 @@ test('UoW Firestore: persiste revisiones históricas para pacientes y citas sin 
   assert.ok(docRevCita);
   assert.equal(docRevPaciente.version, 1);
   assert.equal(docRevCita.version, 2);
+});
+
+test('UoW Firestore: preserva y reconstruye la forma original de la respuesta en replay (respuesta plana no envuelta)', async () => {
+  const { cliente } = crearMockFirestore();
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba('e'.repeat(64));
+  const respuestaPlana = Object.freeze({ id: 'paciente-pediatrico-123', estado: 'ACTIVO' });
+
+  // 1. Primera ejecución: devuelve la respuesta plana devuelta por el plan
+  const res1 = await uow.ejecutar(contexto, comando, async () => ({
+    tipo: 'CONFIRMAR',
+    cambios: [],
+    revisiones: [],
+    auditoria: [],
+    resultado: {
+      httpStatus: 201,
+      respuesta: respuestaPlana,
+      correlacionOriginal: UUID_CORRELACION,
+    },
+  }));
+
+  assert.equal(res1.httpStatus, 201);
+  assert.deepEqual(res1.respuesta, respuestaPlana);
+
+  // 2. Replay idempotente: la UoW debe recuperar la operación y reconstruir la respuesta plana original
+  const resReplay = await uow.ejecutar(contexto, comando, async () => {
+    throw new Error('No debe llamar planificar en replay');
+  });
+
+  assert.equal(resReplay.httpStatus, 201);
+  assert.equal(resReplay.correlacionOriginal, UUID_CORRELACION);
+  // Asertar igualdad estricta entre primera ejecución y repetición
+  assert.deepEqual(resReplay.respuesta, res1.respuesta);
+  assert.deepEqual(resReplay.respuesta, respuestaPlana);
 });

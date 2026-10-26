@@ -130,7 +130,7 @@ export function crearUnidadDeTrabajoMongodb<
                 hashEntrada: opExistente.hash_entrada,
                 resultado: {
                   httpStatus: opExistente.codigo_respuesta,
-                  respuesta: opExistente.respuesta as T,
+                  respuesta: desempaquetarRespuestaOperacion<T>(opExistente.respuesta),
                   correlacionOriginal: uuidPublico(opExistente.respuesta.meta.correlacion),
                 },
               },
@@ -309,6 +309,65 @@ async function guardarAuditoria(
   }
 }
 
+function esSobreRespuesta(valor: unknown): valor is { data: Record<string, unknown>; meta: { correlacion?: string } } {
+  if (typeof valor !== 'object' || valor === null) return false;
+  const obj = valor as Record<string, unknown>;
+  return (
+    'data' in obj &&
+    typeof obj.data === 'object' &&
+    obj.data !== null &&
+    'meta' in obj &&
+    typeof obj.meta === 'object' &&
+    obj.meta !== null
+  );
+}
+
+function empaquetarRespuestaOperacion<T>(
+  resultado: ResultadoDurable<T>,
+): { data: Record<string, unknown>; meta: { correlacion: string } } {
+  if (esSobreRespuesta(resultado.respuesta)) {
+    const meta = resultado.respuesta.meta as { correlacion?: string };
+    return {
+      data: resultado.respuesta.data,
+      meta: { correlacion: meta.correlacion ?? resultado.correlacionOriginal },
+    };
+  }
+  if (
+    typeof resultado.respuesta === 'object' &&
+    resultado.respuesta !== null &&
+    !Array.isArray(resultado.respuesta)
+  ) {
+    return {
+      data: {
+        ...(resultado.respuesta as Record<string, unknown>),
+        __respuestaPlana: true,
+      },
+      meta: { correlacion: resultado.correlacionOriginal },
+    };
+  }
+  return {
+    data: {
+      __valorPrimitivo: resultado.respuesta,
+      __respuestaPlana: true,
+    },
+    meta: { correlacion: resultado.correlacionOriginal },
+  };
+}
+
+function desempaquetarRespuestaOperacion<T>(
+  respuesta: { data: Record<string, unknown>; meta: { correlacion: string } },
+): T {
+  if (respuesta.data && typeof respuesta.data === 'object' && respuesta.data.__respuestaPlana === true) {
+    if ('__valorPrimitivo' in respuesta.data) {
+      return (respuesta.data as { __valorPrimitivo: T }).__valorPrimitivo;
+    }
+    const copia = { ...respuesta.data };
+    delete copia.__respuestaPlana;
+    return copia as T;
+  }
+  return respuesta as T;
+}
+
 async function guardarOperacion<T>(
   db: Db,
   session: ClientSession,
@@ -316,12 +375,7 @@ async function guardarOperacion<T>(
   comando: ComandoEstable,
   resultado: ResultadoDurable<T>,
 ): Promise<void> {
-  const respuestaSegura = resultado.respuesta as {
-    readonly data?: Record<string, unknown>;
-    readonly meta?: { readonly correlacion?: string };
-  };
-  const meta = respuestaSegura.meta ?? { correlacion: resultado.correlacionOriginal };
-  const data = respuestaSegura.data ?? (resultado.respuesta as Record<string, unknown>);
+  const { data, meta } = empaquetarRespuestaOperacion(resultado);
 
   await db.collection<DocumentoOperacionMongo>(COLECCIONES_MONGODB.OPERACIONES).insertOne(
     {
@@ -339,7 +393,7 @@ async function guardarOperacion<T>(
       estado: 'CONFIRMADA',
       respuesta: {
         data,
-        meta: { correlacion: meta.correlacion ?? resultado.correlacionOriginal },
+        meta,
       },
     },
     { session },
@@ -367,7 +421,7 @@ async function leerOperacionDirecta<T>(
       hashEntrada: doc.hash_entrada,
       resultado: {
         httpStatus: doc.codigo_respuesta,
-        respuesta: doc.respuesta as T,
+        respuesta: desempaquetarRespuestaOperacion<T>(doc.respuesta),
         correlacionOriginal: uuidPublico(doc.respuesta.meta.correlacion),
       },
     };
