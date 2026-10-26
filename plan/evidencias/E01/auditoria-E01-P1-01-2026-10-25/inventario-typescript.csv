@@ -1,0 +1,27 @@
+id,unidad,tipo,riesgo,requisito,cobertura/observación
+U-01,esInstitucion,función pura,LOW,Configuración canónica,Ejercitada por parsearConfiguracion y sus casos válidos/inválidos
+U-02,ErrorConfiguracion.constructor,constructor,LOW,Error seguro de configuración,Variables reportadas sin valores
+U-03,parsearConfiguracion,función de configuración,HIGH,E01-P1-01,Pruebas de faltantes ambiente host puerto y conjunto institucional
+U-04,ConsultarBundlesConfigurados.constructor,constructor,LOW,Composición,Dependencia readonly
+U-05,ConsultarBundlesConfigurados.ejecutar,método de caso de uso,LOW,E01-P1-01,Resolución DI y cuatro bundles sin motor
+U-06,crearBundlesInstitucionales,función de composición,MEDIUM,E01-P1-01,Arreglo y valores congelados persistencia NO_CONFIGURADA
+U-07,AppModule.registrar,factory Nest,MEDIUM,E01-P1-01,Factories/tokens y providers dinámicos probados desde app HTTP
+U-08,middlewareCorrelacion,middleware HTTP,MEDIUM,RNF-029,UUID entrante válido inválido/ausente regenerado header y meta coinciden
+U-09,ErrorValidacionSolicitud.constructor,excepción HTTP,MEDIUM,Errores comunes,Probada mediante ValidationPipe
+U-10,extraerCamposInvalidos + recorrer,función/recursión de DTO,MEDIUM,DTO cerrado,Requerido formato rango no permitido y máximo 100
+U-11,crearPipeValidacion,factory de ValidationPipe,HIGH,E01-P1-01,whitelist forbidNonWhitelisted transform y validación antes del controlador
+U-12,responderErrorHttp,serializador de error,HIGH,Contrato de errores,Códigos mensaje correlación sin exposición; ejecutada por filtro y parser
+U-13,FiltroErroresHttp.catch,filtro HTTP,HIGH,E01-P1-01,400/401/403/404/409/500/503 uniformes
+U-14,middlewareErroresParser,middleware HTTP,HIGH,Límite y errores JSON,malformado→400 y entity.too.large→413 común
+U-15,RespuestaInterceptor.intercept,interceptor HTTP,MEDIUM,Contrato data/meta,Éxito y readiness envueltos con correlación
+U-16,HealthController.liveness,endpoint técnico,LOW,Salud HTTP,GET /api/v1/health/live→200
+U-17,HealthController.readiness,endpoint técnico,LOW,Readiness honesta,503 hasta existir persistencia; sin secretos
+U-18,crearAplicacionHttp,composición HTTP,HIGH,E01-P1-01,Prefijo middleware parser pipe interceptor filtro y Swagger
+U-19,leerContratoOpenApi,carga contractual,MEDIUM,OpenAPI 3.1,Contrato canónico válido; rechaza YAML/versión inválidos
+U-20,iniciarServidor,arranque,HIGH,Inicio/fallo seguro,Proceso real con config válida faltante e institución falsa
+U-21,main startup catch,gestor de fallo de arranque,MEDIUM,No filtrar configuración,Mensajes solo con nombres de variables o mensaje genérico
+U-22,copiar-contrato.mjs,script de build,LOW,Artefacto OpenAPI,Se ejecuta en build y build:test
+U-23,listarTypescript,script de arquitectura,MEDIUM,RNF-035,Recorre recursivamente fuentes puras
+U-24,leerSpecifier,script de arquitectura,MEDIUM,RNF-035,Import/export/require literal
+U-25,inspeccionar,script de arquitectura,MEDIUM,RNF-035,Bloquea imports externos capas indebidas process y carga dinámica opaca
+U-26,ControladorPruebaHttp y EcoDto,fixture/test,LOW,Prueba de HTTP,Excluido del build de producción; no se expone como ruta de producto
