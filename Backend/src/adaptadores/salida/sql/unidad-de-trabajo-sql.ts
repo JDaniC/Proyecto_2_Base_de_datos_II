@@ -12,7 +12,7 @@ import type {
 import type { ContextoAutenticado } from '../../../aplicacion/puertos/contexto-autenticado.js';
 import { ErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico } from '../../../dominio/compartido/uuid.js';
-import type { DialectoSql, EjecutorSql, PoolSql } from './tipos-sql.js';
+import type { ConexionSql, DialectoSql, EjecutorSql, PoolSql } from './tipos-sql.js';
 import { marcadorJson, placeholder } from './tipos-sql.js';
 
 interface FilaOperacion extends Record<string, unknown> {
@@ -295,16 +295,17 @@ async function leerOperacionPool<T>(
   contexto: ContextoAutenticado,
   comando: ComandoEstable,
 ): Promise<OperacionIdempotente<T> | null> {
-  const conexion = await deps.pool.adquirir();
+  let conexion: ConexionSql | undefined;
   let iniciada = false;
   let liberada = false;
   const liberar = (descartar = false) => {
-    if (!liberada) {
+    if (!liberada && conexion !== undefined) {
       conexion.liberar(descartar);
       liberada = true;
     }
   };
   try {
+    conexion = await deps.pool.adquirir();
     await conexion.iniciar();
     iniciada = true;
     await establecerUtc(conexion, deps.dialecto);
@@ -318,7 +319,7 @@ async function leerOperacionPool<T>(
     iniciada = false;
     return result;
   } catch (error) {
-    if (iniciada) {
+    if (iniciada && conexion !== undefined) {
       try { await conexion.revertir(); } catch { liberar(true); }
       iniciada = false;
     }

@@ -83,6 +83,39 @@ test('UoW SQL: bloquea el replay cuando la cuenta perdió permisos desde el cont
   );
 });
 
+test('UoW SQL: normaliza fallos de adquisición durante reconciliación a PERSISTENCIA_NO_DISPONIBLE', async () => {
+  let intentos = 0;
+  const poolFalso: PoolSql = {
+    async consultar<TRow extends Record<string, unknown>>(): Promise<ResultadoConsultaSql<TRow>> { return { filas: [] }; },
+    async adquirir(): Promise<ConexionSql> {
+      intentos += 1;
+      if (intentos === 1) {
+        return {
+          async consultar<TRow extends Record<string, unknown>>(): Promise<ResultadoConsultaSql<TRow>> {
+            return { filas: [{ actor_id: 1 }] as unknown as TRow[] };
+          },
+          iniciar: async () => undefined,
+          confirmar: async () => undefined,
+          revertir: async () => undefined,
+          liberar: () => undefined,
+        };
+      }
+      throw new Error('POOL_AGOTADO');
+    },
+    cerrar: async () => undefined,
+  };
+  await assert.rejects(
+    crearUnidadDeTrabajoSql({
+      dialecto: 'postgresql', pool: poolFalso,
+      crearLector: () => ({ cuentas: { porUid: async () => contexto.cuenta } }) as unknown as LectorTransaccional,
+      aplicarCambios: async () => {
+        throw Object.assign(new Error('duplicate key'), { code: '23505' });
+      },
+    }).ejecutar(contexto, comando, async () => plan),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'PERSISTENCIA_NO_DISPONIBLE',
+  );
+});
+
 const contexto = crearContextoAutenticado(
   { uid: 'uid-sintetico', institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-25T18:00:00Z') },
   {
