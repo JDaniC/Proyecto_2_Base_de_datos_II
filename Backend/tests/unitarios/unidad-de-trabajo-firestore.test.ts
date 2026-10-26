@@ -60,47 +60,68 @@ function crearComandoPrueba(hashEntrada = 'a'.repeat(64)): ComandoEstable {
 function crearMockFirestore(opciones: {
   operacionExistente?: Record<string, unknown> | null;
   fallarConcurrenciaVeces?: number;
+  fallarCommit?: Error;
 } = {}) {
   const store = new Map<string, unknown>();
   let intentos = 0;
 
-  const mockTransaction = {
-    get: async (ref: { path: string }) => {
-      if (store.has(ref.path)) {
-        return { exists: true, data: () => store.get(ref.path) };
-      }
-      if (ref.path.startsWith('operaciones/')) {
-        const existe = opciones.operacionExistente;
-        if (existe) {
-          return { exists: true, data: () => existe };
-        }
-        return { exists: false, data: () => undefined };
-      }
-      return { exists: false, data: () => undefined };
-    },
-    set: (ref: { path: string }, data: unknown) => {
-      store.set(ref.path, data);
-      return mockTransaction;
-    },
-    create: (ref: { path: string }, data: unknown) => {
-      if (store.has(ref.path)) {
-        const err = Object.assign(new Error('Document already exists'), { code: 6 });
-        throw err;
-      }
-      store.set(ref.path, data);
-      return mockTransaction;
-    },
-  };
-
   const firestore = {
     doc: (path: string) => ({ path }),
-    runTransaction: async <T>(fn: (t: typeof mockTransaction) => Promise<T>): Promise<T> => {
+    runTransaction: async <T>(fn: (t: {
+      get: (ref: { path: string }) => Promise<{ exists: boolean; data: () => unknown }>;
+      set: (ref: { path: string }, data: unknown) => unknown;
+      create: (ref: { path: string }, data: unknown) => unknown;
+    }) => Promise<T>): Promise<T> => {
       intentos += 1;
       if (opciones.fallarConcurrenciaVeces && intentos <= opciones.fallarConcurrenciaVeces) {
         const error = Object.assign(new Error('Concurrency conflict'), { code: 10 });
         throw error;
       }
-      return fn(mockTransaction);
+
+      // Buffer transaccional (staging de escrituras aisladas hasta commit)
+      const buffer = new Map<string, { tipo: 'set' | 'create'; data: unknown }>();
+
+      const mockTransaction = {
+        get: async (ref: { path: string }) => {
+          if (store.has(ref.path)) {
+            return { exists: true, data: () => store.get(ref.path) };
+          }
+          if (ref.path.startsWith('operaciones/')) {
+            const existe = opciones.operacionExistente;
+            if (existe) {
+              return { exists: true, data: () => existe };
+            }
+            return { exists: false, data: () => undefined };
+          }
+          return { exists: false, data: () => undefined };
+        },
+        set: (ref: { path: string }, data: unknown) => {
+          buffer.set(ref.path, { tipo: 'set', data });
+          return mockTransaction;
+        },
+        create: (ref: { path: string }, data: unknown) => {
+          buffer.set(ref.path, { tipo: 'create', data });
+          return mockTransaction;
+        },
+      };
+
+      const resultado = await fn(mockTransaction);
+
+      // Fase de commit atómico: precondiciones y aplicación indivisible al store
+      if (opciones.fallarCommit) {
+        throw opciones.fallarCommit;
+      }
+      for (const [path, op] of buffer) {
+        if (op.tipo === 'create' && store.has(path)) {
+          const err = Object.assign(new Error('Document already exists'), { code: 6 });
+          throw err;
+        }
+      }
+      for (const [path, op] of buffer) {
+        store.set(path, op.data);
+      }
+
+      return resultado;
     },
   };
 
@@ -453,4 +474,69 @@ test('UoW Firestore: preserva y reconstruye la forma original de la respuesta en
   // Asertar igualdad estricta entre primera ejecución y repetición
   assert.deepEqual(resReplay.respuesta, res1.respuesta);
   assert.deepEqual(resReplay.respuesta, respuestaPlana);
+});
+
+test('UoW Firestore: atomicidad y rollback — si falla el commit, ninguna mutación encolada (datos, revisiones, auditoría, operación) persiste', async () => {
+  const { cliente, store } = crearMockFirestore({
+    fallarCommit: Object.assign(new Error('Commit rejected'), { code: 6 }),
+  });
+
+  const idPaciente = uuidPublico('aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa');
+  const idRevision = uuidPublico('bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb');
+  const idAuditoria = uuidPublico('cccccccc-cccc-4ccc-cccc-cccccccccccc');
+
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async (transaction) => {
+      // Encolar escritura válida en datos durante la transacción
+      (transaction as { create: (ref: unknown, d: unknown) => void }).create(
+        cliente.firestore.doc(`pacientes/${idPaciente}`),
+        { revision: 1, nombres: 'Test', apellidos: 'Rollback' },
+      );
+    },
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba('f'.repeat(64));
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => ({
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [
+        {
+          id: idRevision,
+          agregado: 'pacientes',
+          recursoId: idPaciente,
+          versionAnterior: versionPositiva(1),
+          snapshotAnterior: { revision: 1 },
+        },
+      ],
+      auditoria: [
+        {
+          id: idAuditoria,
+          actorId: UUID_ACTOR,
+          caso: 'PACIENTE_REGISTRADO',
+          recursoId: idPaciente,
+          fechaHora: comando.instante,
+          correlacion: UUID_CORRELACION,
+        },
+      ],
+      resultado: {
+        httpStatus: 201,
+        respuesta: { data: { id: idPaciente }, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    })),
+    (err: unknown) => err instanceof ErrorDominio,
+  );
+
+  // Verificar que NINGUNA mutación encolada persistió en el almacén (rollback indivisible)
+  assert.equal(store.has(`pacientes/${idPaciente}`), false);
+  assert.equal(store.has(`pacientes/${idPaciente}/versiones/${idRevision}`), false);
+  assert.equal(store.has(`auditoria/${idAuditoria}`), false);
+  assert.equal(store.size, 0);
 });

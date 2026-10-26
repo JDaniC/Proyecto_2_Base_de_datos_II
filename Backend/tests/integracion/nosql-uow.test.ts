@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { crearContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { LectorTransaccional, PlanConfirmacion, ComandoEstable } from '../../src/aplicacion/puertos/nucleo.js';
@@ -530,4 +530,123 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
     }),
     (err: unknown) => err instanceof ErrorDominio && (err.codigo === 'LIMITE_AGREGADO' || err.codigo === 'ESTADO_INVALIDO'),
   );
+
+  // Rollback real multi-documento en Firestore emulator
+  const pacienteRollbackId = uuidPublico(randomUUID());
+  const pacienteExistenteId = uuidPublico(randomUUID());
+  const revisionRollbackId = uuidPublico(randomUUID());
+  const auditoriaRollbackId = uuidPublico(randomUUID());
+  const claveRollback = uuidPublico(randomUUID());
+  const correlacionRollback = uuidPublico(randomUUID());
+
+  // 1. Pre-crear documento en el emulador para forzar fallo ALREADY_EXISTS en transaction.create durante el commit
+  await cliente.firestore.doc(`pacientes/${pacienteExistenteId}`).set({
+    revision: 1,
+    nombres: 'Existente',
+    apellidos: 'Original',
+    nombre_busqueda: 'existente original',
+    fecha_nacimiento: '2020-01-01',
+    sexo: 'MASCULINO',
+    estado: 'ACTIVO',
+    fecha_apertura: new Date('2026-10-26T12:00:00Z'),
+  });
+
+  const comandoRollback: ComandoEstable = Object.freeze({
+    id: uuidPublico(randomUUID()),
+    claveIdempotencia: claveRollback,
+    caso: 'pacientes',
+    hashEntrada: '7'.repeat(64),
+    instante: instanteUtc('2026-10-26T12:00:00Z'),
+    ids: Object.freeze({ pacienteId: pacienteRollbackId }),
+  });
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comandoRollback, async () => ({
+      tipo: 'CONFIRMAR',
+      cambios: [
+        {
+          agregado: 'pacientes',
+          tipo: 'ALTA',
+          recursoId: pacienteRollbackId,
+          versionAnterior: null,
+          nuevoEstado: {
+            revision: 1,
+            nombres: 'Carlos',
+            apellidos: 'Rollback',
+            nombre_busqueda: 'carlos rollback',
+            fecha_nacimiento: '2021-05-15',
+            sexo: 'MASCULINO',
+            tipo_documento: 'CUI',
+            numero_documento: '1234567890101',
+            estado: 'ACTIVO',
+            fecha_apertura: new Date('2026-10-26T12:00:00Z'),
+          },
+        },
+        {
+          agregado: 'pacientes',
+          tipo: 'ALTA',
+          recursoId: pacienteExistenteId, // Forzará ALREADY_EXISTS en transaction.create durante el commit
+          versionAnterior: null,
+          nuevoEstado: {
+            revision: 1,
+            nombres: 'Duplicado',
+            apellidos: 'Fallido',
+            nombre_busqueda: 'duplicado fallido',
+            fecha_nacimiento: '2021-05-15',
+            sexo: 'MASCULINO',
+            tipo_documento: 'CUI',
+            numero_documento: '9999999990101',
+            estado: 'ACTIVO',
+            fecha_apertura: new Date('2026-10-26T12:00:00Z'),
+          },
+        },
+      ],
+      revisiones: [
+        {
+          id: revisionRollbackId,
+          agregado: 'pacientes',
+          recursoId: pacienteRollbackId,
+          versionAnterior: versionPositiva(1),
+          snapshotAnterior: { revision: 1, nombres: 'Carlos' },
+        },
+      ],
+      auditoria: [
+        {
+          id: auditoriaRollbackId,
+          actorId,
+          caso: 'pacientes',
+          recursoId: pacienteRollbackId,
+          fechaHora: comandoRollback.instante,
+          correlacion: correlacionRollback,
+        },
+      ],
+      resultado: {
+        httpStatus: 201,
+        respuesta: { data: { id: pacienteRollbackId }, meta: { correlacion: correlacionRollback } },
+        correlacionOriginal: correlacionRollback,
+      },
+    })),
+    (err: unknown) => err instanceof ErrorDominio,
+  );
+
+  // 2. Verificar en el emulador real que NINGÚN documento encolado persistió tras el rechazo de commit
+  const docNuevoCheck = await cliente.firestore.doc(`pacientes/${pacienteRollbackId}`).get();
+  assert.equal(docNuevoCheck.exists, false, 'El paciente nuevo no debe persistir tras rollback');
+
+  const docRevCheck = await cliente.firestore.doc(`pacientes/${pacienteRollbackId}/versiones/${revisionRollbackId}`).get();
+  assert.equal(docRevCheck.exists, false, 'La versión histórica no debe persistir tras rollback');
+
+  const docAuditCheck = await cliente.firestore.doc(`auditoria/${auditoriaRollbackId}`).get();
+  assert.equal(docAuditCheck.exists, false, 'El evento de auditoría no debe persistir tras rollback');
+
+  const claveOpRollback = createHash('sha256')
+    .update(`CENTRO_MEDICO_PEDIATRICO:${contexto.cuenta.id}:${comandoRollback.caso}:${claveRollback}`)
+    .digest('hex');
+  const docOpCheck = await cliente.firestore.doc(`operaciones/${claveOpRollback}`).get();
+  assert.equal(docOpCheck.exists, false, 'El registro de operación no debe persistir tras rollback');
+
+  // El documento preexistente debe conservar su estado original
+  const docExistenteCheck = await cliente.firestore.doc(`pacientes/${pacienteExistenteId}`).get();
+  assert.ok(docExistenteCheck.exists);
+  assert.equal(docExistenteCheck.data()?.nombres, 'Existente');
 });
