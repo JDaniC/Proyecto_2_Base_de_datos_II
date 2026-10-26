@@ -3,7 +3,7 @@ import type { CuentaAutorizada } from '../../../aplicacion/puertos/contexto-aute
 import type { ClientSession, Db } from 'mongodb';
 import {
   mapearCuentaMongodb,
-  type DocumentoPersonalMongo,
+  type DocumentoSolicitanteMongo,
   type DocumentoRolMongo,
   type DocumentoUsuarioMongo,
 } from './mapear-cuenta-mongodb.js';
@@ -34,14 +34,14 @@ export function crearRepositorioCuentaMongodb(
             .toArray()
         : [];
 
-      let personal: DocumentoPersonalMongo | null = null;
-      if (typeof usuario.personal_id === 'string') {
-        personal = await db
-          .collection<DocumentoPersonalMongo>(COLECCIONES_MONGODB.PERSONAL)
-          .findOne({ _id: usuario.personal_id }, options);
+      let solicitante: DocumentoSolicitanteMongo | null = null;
+      if (typeof usuario.solicitante_medico_id === 'string') {
+        solicitante = await db
+          .collection<DocumentoSolicitanteMongo>(COLECCIONES_MONGODB.SOLICITANTES)
+          .findOne({ _id: usuario.solicitante_medico_id }, options);
       }
 
-      return mapearCuentaMongodb(usuario, roles, personal);
+      return mapearCuentaMongodb(usuario, roles, solicitante);
     },
   };
 }

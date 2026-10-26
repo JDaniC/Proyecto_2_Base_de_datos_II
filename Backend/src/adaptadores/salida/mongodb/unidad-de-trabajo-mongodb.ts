@@ -18,6 +18,7 @@ import {
   type DependenciasUnidadDeTrabajoMongodb,
   INSTITUCION_LABORATORIO,
 } from './tipos-mongodb.js';
+import { crearRepositorioCuentaMongodb } from './repositorio-cuenta-mongodb.js';
 
 interface DocumentoOperacionMongo {
   readonly _id: string;
@@ -170,13 +171,19 @@ export function crearUnidadDeTrabajoMongodb<
 
           if (esConflictoOperacion(error)) {
             const reconciliada = await leerOperacionDirecta<T>(db, contexto, comando);
-            if (reconciliada !== null) return resolverRepeticion(reconciliada, comando);
+            if (reconciliada !== null) {
+              await revalidarCuentaDirecta(db, contexto);
+              return resolverRepeticion(reconciliada, comando);
+            }
             throw new ErrorDominio('ESTADO_INVALIDO', 'El cambio entra en conflicto con datos ya existentes.');
           }
 
           if (confirmando && tieneEtiqueta(error, 'UnknownTransactionCommitResult')) {
             const reconciliada = await leerOperacionDirecta<T>(db, contexto, comando);
-            if (reconciliada !== null) return resolverRepeticion(reconciliada, comando);
+            if (reconciliada !== null) {
+              await revalidarCuentaDirecta(db, contexto);
+              return resolverRepeticion(reconciliada, comando);
+            }
             throw new ErrorDominio(
               'PERSISTENCIA_NO_DISPONIBLE',
               'No se pudo confirmar el resultado; reintente con la misma clave.',
@@ -202,11 +209,10 @@ export function crearUnidadDeTrabajoMongodb<
   });
 }
 
-async function verificarCuentaVigente<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>(
+function validarCuentaVigente(
+  cuenta: ContextoAutenticado['cuenta'] | null,
   contexto: ContextoAutenticado,
-  lector: LectorTransaccional<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>,
-): Promise<void> {
-  const cuenta = (await lector.cuentas.porUid(contexto.identidad.uid)) as ContextoAutenticado['cuenta'] | null;
+): void {
   const actual = (valores: readonly string[]) => [...valores].sort().join('\u0000');
   if (
     cuenta === null ||
@@ -222,6 +228,23 @@ async function verificarCuentaVigente<TCuenta, TPaciente, TCita, TConsulta, TRes
   ) {
     throw new ErrorDominio('SIN_PERMISO', 'La autorización actual no permite recuperar este resultado.');
   }
+}
+
+async function revalidarCuentaDirecta(
+  db: Db,
+  contexto: ContextoAutenticado,
+): Promise<void> {
+  const repo = crearRepositorioCuentaMongodb(db);
+  const cuenta = await repo.porUid(contexto.identidad.uid);
+  validarCuentaVigente(cuenta, contexto);
+}
+
+async function verificarCuentaVigente<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>(
+  contexto: ContextoAutenticado,
+  lector: LectorTransaccional<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>,
+): Promise<void> {
+  const cuenta = (await lector.cuentas.porUid(contexto.identidad.uid)) as ContextoAutenticado['cuenta'] | null;
+  validarCuentaVigente(cuenta, contexto);
 }
 
 function resolverRepeticion<T>(operacion: OperacionIdempotente<T>, comando: ComandoEstable): ResultadoDurable<T> {
@@ -260,12 +283,13 @@ async function guardarAuditoria(
   db: Db,
   session: ClientSession,
   contexto: ContextoAutenticado,
-  comando: ComandoEstable,
+  _comando: ComandoEstable,
   eventos: readonly EventoAuditoria[],
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
-  const coleccionAfectada = cambios[0]?.agregado ?? comando.caso;
   for (const ev of eventos) {
+    const cambio = cambios.find((item) => item.recursoId === ev.recursoId);
+    const coleccionAfectada = cambio?.agregado ?? ev.caso;
     await db.collection<DocumentoAuditoriaMongo>(COLECCIONES_MONGODB.AUDITORIA).insertOne(
       {
         _id: ev.id,

@@ -135,3 +135,34 @@ test('validador Firestore: claveUnica normaliza NFKC y espacios', () => {
   const c2 = claveUnica('cui', '1234 5678  ');
   assert.equal(c1, c2);
 });
+
+test('validador Firestore: rechaza fechas de nacimiento inexistentes en el calendario (2020-02-31)', () => {
+  const ruta = `pacientes/${UUID_1}`;
+  const pacienteInvalido = {
+    revision: 1,
+    nombres: 'Prueba',
+    apellidos: 'Fecha',
+    nombre_busqueda: 'prueba fecha',
+    fecha_nacimiento: '2020-02-31',
+    estado: 'ACTIVO',
+    fecha_apertura: new Date('2026-01-01T10:00:00Z'),
+  };
+  assert.throws(() => validarDocumento(ruta, pacienteInvalido), (err: unknown) => {
+    assert.ok(err instanceof ErrorModelo);
+    assert.equal(err.codigo, 'DOCUMENTO_INVALIDO');
+    return true;
+  });
+
+  const pacienteMesInvalido = {
+    ...pacienteInvalido,
+    fecha_nacimiento: '2026-13-01',
+  };
+  assert.throws(() => validarDocumento(ruta, pacienteMesInvalido), ErrorModelo);
+
+  const pacienteBisiestoValido = {
+    ...pacienteInvalido,
+    fecha_nacimiento: '2020-02-29',
+  };
+  const validado = validarDocumento(ruta, pacienteBisiestoValido);
+  assert.equal((validado as typeof pacienteBisiestoValido).fecha_nacimiento, '2020-02-29');
+});

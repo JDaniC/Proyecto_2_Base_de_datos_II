@@ -126,7 +126,7 @@ export const modelos = [
       nombres: texto(),
       apellidos: texto(),
       nombre_busqueda: texto(400),
-      fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      fecha_nacimiento: z.iso.date(),
       sexo: texto(40).optional(),
       grupo_sanguineo: texto(20).optional(),
       direccion: nota.optional(),

@@ -16,6 +16,7 @@ export const COLECCIONES_MONGODB = {
   USUARIOS: 'usuarios',
   ROLES: 'roles',
   PERSONAL: 'personal',
+  SOLICITANTES: 'solicitantes',
   PACIENTES: 'pacientes',
   IDENTIDADES: 'identidades_paciente',
   CITAS: 'citas',

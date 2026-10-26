@@ -21,16 +21,17 @@ export interface DocumentoRolMongo {
   readonly permisos: readonly unknown[];
 }
 
-export interface DocumentoPersonalMongo {
+export interface DocumentoSolicitanteMongo {
   readonly _id: string;
-  readonly activo: unknown;
-  readonly cargo?: unknown;
+  readonly nombre_completo?: unknown;
+  readonly tipo?: unknown;
+  readonly activo?: unknown;
 }
 
 export function mapearCuentaMongodb(
   usuario: DocumentoUsuarioMongo,
   roles: readonly DocumentoRolMongo[],
-  personal?: DocumentoPersonalMongo | null,
+  solicitante?: DocumentoSolicitanteMongo | null,
 ): CuentaAutorizada | null {
   if (
     typeof usuario._id !== 'string' ||
@@ -56,16 +57,17 @@ export function mapearCuentaMongodb(
     }
   }
 
-  const profesional = typeof usuario.personal_id === 'string'
+  const profesional = typeof usuario.solicitante_medico_id === 'string'
     ? {
-        id: uuidPublico(usuario.personal_id),
-        activo: personal?.activo === true,
+        id: uuidPublico(usuario.solicitante_medico_id),
+        activo: solicitante?.activo === true && solicitante?.tipo === 'MEDICO',
       }
     : undefined;
 
-  const revNumero = typeof usuario.revision === 'number'
+  const revCruda = typeof usuario.revision === 'number'
     ? usuario.revision
     : Number(usuario.revision);
+  const revNumero = Number.isSafeInteger(revCruda) && revCruda >= 1 ? revCruda : 1;
 
   return Object.freeze({
     id: uuidPublico(usuario._id),

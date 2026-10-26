@@ -5,6 +5,7 @@ import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import { crearUnidadDeTrabajoMongodb } from '../../src/adaptadores/salida/mongodb/unidad-de-trabajo-mongodb.js';
+import { mapearCuentaMongodb } from '../../src/adaptadores/salida/mongodb/mapear-cuenta-mongodb.js';
 import type { ClienteMongodb } from '../../src/adaptadores/salida/mongodb/tipos-mongodb.js';
 import {
   crearContextoAutenticado,
@@ -324,4 +325,155 @@ test('UoW MongoDB: reintenta ante WriteConflict transitorio', async () => {
   assert.equal(resultado.httpStatus, 200);
   assert.equal(getIntentos(), 2);
   assert.equal(getCommits(), 1);
+});
+
+test('UoW MongoDB: asocia cada evento de auditoría a su colección respectiva por recursoId en multi-agregado', async () => {
+  const { cliente, collections } = crearMockMongodb();
+  const uow = crearUnidadDeTrabajoMongodb({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+  const idPaciente = uuidPublico('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  const idConsulta = uuidPublico('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+  const audit1 = uuidPublico('11111111-2222-4333-8444-555555555555');
+  const audit2 = uuidPublico('66666666-7777-4888-8999-000000000000');
+
+  await uow.ejecutar(contexto, comando, async () => {
+    return {
+      tipo: 'CONFIRMAR',
+      cambios: [
+        { agregado: 'pacientes', tipo: 'ALTA', recursoId: idPaciente, versionAnterior: null, nuevoEstado: {} },
+        { agregado: 'consultas_clinicas', tipo: 'ALTA', recursoId: idConsulta, versionAnterior: null, nuevoEstado: {} },
+      ],
+      revisiones: [],
+      auditoria: [
+        { id: audit1, actorId: UUID_ACTOR, caso: 'PACIENTE_REGISTRADO', recursoId: idPaciente, fechaHora: comando.instante, correlacion: UUID_CORRELACION },
+        { id: audit2, actorId: UUID_ACTOR, caso: 'CONSULTA_CREADA', recursoId: idConsulta, fechaHora: comando.instante, correlacion: UUID_CORRELACION },
+      ],
+      resultado: {
+        httpStatus: 201,
+        respuesta: { data: {}, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    };
+  });
+
+  const auditorias = collections.get('auditoria') as Array<{ coleccion: string; documento_id: string }>;
+  assert.equal(auditorias.length, 2);
+  assert.equal(auditorias[0]?.coleccion, 'pacientes');
+  assert.equal(auditorias[0]?.documento_id, idPaciente);
+  assert.equal(auditorias[1]?.coleccion, 'consultas_clinicas');
+  assert.equal(auditorias[1]?.documento_id, idConsulta);
+});
+
+test('UoW MongoDB: reconciliación ante conflicto revalida autorización y rechaza si la cuenta se desactivó', async () => {
+  const hashEntrada = 'e'.repeat(64);
+  const operacionPrevia = {
+    _id: `${UUID_ACTOR}__muestras__${UUID_CLAVE}`,
+    institucion_id: 'LABORATORIO_CLINICO',
+    usuario_id: UUID_ACTOR,
+    caso_uso: 'muestras',
+    clave: UUID_CLAVE,
+    hash_entrada: hashEntrada,
+    codigo_respuesta: 200,
+    respuesta: { data: { secreto: 'clinico' }, meta: { correlacion: UUID_CORRELACION } },
+  };
+
+  const { cliente, collections } = crearMockMongodb({ operacionExistente: operacionPrevia });
+  // Simular cuenta desactivada en la colección de usuarios
+  collections.set('usuarios', [{
+    _id: UUID_ACTOR,
+    auth_uid: 'firebase_uid_lab',
+    institucion_id: 'LABORATORIO_CLINICO',
+    estado: 'INACTIVO',
+    activo: false,
+    rol_ids: [],
+    revision: 1,
+  }]);
+
+  const uow = crearUnidadDeTrabajoMongodb({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => null },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {
+      // Simular error de clave duplicada E11000 durante la inserción
+      const err = Object.assign(new Error('E11000 duplicate key error'), { code: 11000 });
+      throw err;
+    },
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba(hashEntrada);
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => ({
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [],
+      auditoria: [],
+      resultado: { httpStatus: 200, respuesta: {}, correlacionOriginal: UUID_CORRELACION },
+    })),
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SIN_PERMISO');
+      return true;
+    },
+  );
+});
+
+test('mapearCuentaMongodb: resuelve médico clínico desde solicitante_medico_id y verifica tipo y estado', () => {
+  const usuarioDoc = {
+    _id: UUID_ACTOR,
+    auth_uid: 'uid_doc',
+    institucion_id: 'LABORATORIO_CLINICO',
+    estado: 'ACTIVO',
+    activo: true,
+    rol_ids: ['ROL_MEDICO'],
+    revision: 1,
+    solicitante_medico_id: '77777777-7777-4777-8777-777777777777',
+  };
+  const rolesDocs = [{ _id: 'ROL_MEDICO', nombre: 'MEDICO_LABORATORIO', permisos: ['muestras.validar'] }];
+
+  // Solicitante médico activo
+  const cuentaValida = mapearCuentaMongodb(usuarioDoc, rolesDocs, {
+    _id: '77777777-7777-4777-8777-777777777777',
+    tipo: 'MEDICO',
+    activo: true,
+  });
+  assert.ok(cuentaValida !== null);
+  assert.equal(cuentaValida.profesional?.id, '77777777-7777-4777-8777-777777777777');
+  assert.equal(cuentaValida.profesional?.activo, true);
+
+  // Solicitante institucional (no médico individual)
+  const cuentaInstitucional = mapearCuentaMongodb(usuarioDoc, rolesDocs, {
+    _id: '77777777-7777-4777-8777-777777777777',
+    tipo: 'INSTITUCION',
+    activo: true,
+  });
+  assert.ok(cuentaInstitucional !== null);
+  assert.equal(cuentaInstitucional.profesional?.activo, false);
+
+  // Solicitante médico inactivo
+  const cuentaInactiva = mapearCuentaMongodb(usuarioDoc, rolesDocs, {
+    _id: '77777777-7777-4777-8777-777777777777',
+    tipo: 'MEDICO',
+    activo: false,
+  });
+  assert.ok(cuentaInactiva !== null);
+  assert.equal(cuentaInactiva.profesional?.activo, false);
+
+  // Sin solicitante_medico_id (usuario analista sin rol prescriptor)
+  const cuentaSinSolicitante = mapearCuentaMongodb({
+    ...usuarioDoc,
+    solicitante_medico_id: undefined,
+  }, rolesDocs, null);
+  assert.ok(cuentaSinSolicitante !== null);
+  assert.equal(cuentaSinSolicitante.profesional, undefined);
 });

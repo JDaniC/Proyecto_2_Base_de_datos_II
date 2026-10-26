@@ -41,14 +41,17 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   const uid = `test-lab-${randomUUID()}`;
   const actorId = uuidPublico(randomUUID());
   const rolId = uuidPublico(randomUUID());
-  const personalId = uuidPublico(randomUUID());
-
-  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.PERSONAL).insertOne({
-    _id: personalId,
+  const solicitanteId = uuidPublico(randomUUID());
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.SOLICITANTES).insertOne({
+    _id: solicitanteId,
     revision: 1,
-    primer_nombre: 'Analista',
-    primer_apellido: 'Laboratorio',
-    cargo: 'ANALISTA',
+    nombre_completo: 'Dra. Ana López',
+    tipo: 'MEDICO',
+    entidad_colegiacion: 'COLMED',
+    numero_colegiado: 'COL-9988',
+    institucion: 'Laboratorio Clínico',
+    telefono: '+502 1234 5678',
+    correo: 'ana.lopez@laboratorio.example.com',
     activo: true,
   });
 
@@ -67,7 +70,7 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
     proveedor_identidad: 'FIREBASE',
     institucion_id: 'LABORATORIO_CLINICO',
     rol_ids: [rolId],
-    personal_id: personalId,
+    solicitante_medico_id: solicitanteId,
     estado: 'ACTIVO',
     activo: true,
   });
@@ -77,6 +80,7 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   assert.ok(cuenta !== null);
   assert.equal(cuenta.id, actorId);
   assert.equal(cuenta.estado, 'ACTIVA');
+  assert.equal(cuenta.profesional?.id, solicitanteId);
   assert.equal(cuenta.profesional?.activo, true);
 
   const contexto = crearContextoAutenticado(
@@ -193,27 +197,47 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
     ids: Object.freeze({ muestraId: recursoFallo }),
   });
 
+  const recursoInvalido = uuidPublico(randomUUID());
   await assert.rejects(
     () => uow.ejecutar(contexto, comandoFallo, async () => {
       const plan: PlanConfirmacion<unknown> = {
         tipo: 'CONFIRMAR',
-        cambios: [{
-          agregado: 'muestras',
-          tipo: 'REGISTRO',
-          recursoId: recursoFallo,
-          versionAnterior: null,
-          nuevoEstado: {
-            _id: recursoFallo,
-            revision: 1,
-            codigo_barras: `BAR-${randomUUID().slice(0, 8)}`,
-            orden_id: uuidPublico(randomUUID()),
-            item_ids: [uuidPublico(randomUUID())],
-            tipo_muestra_id: uuidPublico(randomUUID()),
-            fecha_toma: new Date('2026-10-26T12:00:00Z'),
-            tomada_por_id: actorId,
-            estado: 'TOMADA',
+        cambios: [
+          {
+            agregado: 'muestras',
+            tipo: 'REGISTRO',
+            recursoId: recursoFallo,
+            versionAnterior: null,
+            nuevoEstado: {
+              _id: recursoFallo,
+              revision: 1,
+              codigo_barras: `BAR-${randomUUID().slice(0, 8)}`,
+              orden_id: uuidPublico(randomUUID()),
+              item_ids: [uuidPublico(randomUUID())],
+              tipo_muestra_id: uuidPublico(randomUUID()),
+              fecha_toma: new Date('2026-10-26T12:00:00Z'),
+              tomada_por_id: actorId,
+              estado: 'TOMADA',
+            },
           },
-        }],
+          {
+            agregado: 'muestras',
+            tipo: 'REGISTRO',
+            recursoId: recursoInvalido,
+            versionAnterior: null,
+            nuevoEstado: {
+              _id: recursoInvalido,
+              revision: 1,
+              codigo_barras: `BAR-${randomUUID().slice(0, 8)}`,
+              orden_id: uuidPublico(randomUUID()),
+              item_ids: [uuidPublico(randomUUID())],
+              tipo_muestra_id: uuidPublico(randomUUID()),
+              fecha_toma: new Date('2026-10-26T12:00:00Z'),
+              tomada_por_id: actorId,
+              estado: 'ESTADO_INEXISTENTE_ESQUEMA_INVALIDO',
+            },
+          },
+        ],
         revisiones: [{
           id: revFallo, agregado: 'muestras', recursoId: recursoFallo,
           versionAnterior: versionPositiva(1), snapshotAnterior: {},
@@ -227,14 +251,16 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
           correlacionOriginal: uuidPublico(randomUUID()),
         },
       };
-      if (plan.tipo === 'CONFIRMAR') throw new Error('Fallo forzado antes de confirmar');
       return plan;
     }),
+    (err: unknown) => err instanceof ErrorDominio && err.codigo === 'ESTADO_INVALIDO',
   );
 
   assert.equal(await cliente.db.collection('muestras').findOne({ _id: recursoFallo }), null);
+  assert.equal(await cliente.db.collection('muestras').findOne({ _id: recursoInvalido }), null);
   assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.REVISIONES).findOne({ _id: revFallo }), null);
   assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.AUDITORIA).findOne({ _id: auditFallo }), null);
+  assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.OPERACIONES).findOne({ _id: comandoFallo.claveIdempotencia }), null);
 
   // Repetición idempotente
   const resReplay = await uow.ejecutar(contexto, comando1, async () => {

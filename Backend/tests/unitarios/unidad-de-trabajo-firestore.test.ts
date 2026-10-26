@@ -307,3 +307,50 @@ test('UoW Firestore: reintenta ante conflicto concurrente (código 10 ABORTED)',
   assert.equal(resultado.httpStatus, 200);
   assert.equal(getIntentos(), 2); // 1 fallo + 1 éxito
 });
+
+test('UoW Firestore: asocia cada evento de auditoría a su tipo_recurso respectivo por recursoId en multi-agregado', async () => {
+  const { cliente, store } = crearMockFirestore();
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+  const idPaciente = uuidPublico('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  const idConsulta = uuidPublico('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+  const audit1 = uuidPublico('11111111-2222-4333-8444-555555555555');
+  const audit2 = uuidPublico('66666666-7777-4888-8999-000000000000');
+
+  await uow.ejecutar(contexto, comando, async () => {
+    return {
+      tipo: 'CONFIRMAR',
+      cambios: [
+        { agregado: 'pacientes', tipo: 'ALTA', recursoId: idPaciente, versionAnterior: null, nuevoEstado: {} },
+        { agregado: 'consultas', tipo: 'ALTA', recursoId: idConsulta, versionAnterior: null, nuevoEstado: {} },
+      ],
+      revisiones: [],
+      auditoria: [
+        { id: audit1, actorId: UUID_ACTOR, caso: 'PACIENTE_REGISTRADO', recursoId: idPaciente, fechaHora: comando.instante, correlacion: UUID_CORRELACION },
+        { id: audit2, actorId: UUID_ACTOR, caso: 'CONSULTA_CREADA', recursoId: idConsulta, fechaHora: comando.instante, correlacion: UUID_CORRELACION },
+      ],
+      resultado: {
+        httpStatus: 201,
+        respuesta: { data: {}, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    };
+  });
+
+  const docAudit1 = store.get(`auditoria/${audit1}`) as { tipo_recurso: string; recurso_id: string };
+  const docAudit2 = store.get(`auditoria/${audit2}`) as { tipo_recurso: string; recurso_id: string };
+  assert.ok(docAudit1);
+  assert.ok(docAudit2);
+  assert.equal(docAudit1.tipo_recurso, 'pacientes');
+  assert.equal(docAudit1.recurso_id, idPaciente);
+  assert.equal(docAudit2.tipo_recurso, 'consultas');
+  assert.equal(docAudit2.recurso_id, idConsulta);
+});

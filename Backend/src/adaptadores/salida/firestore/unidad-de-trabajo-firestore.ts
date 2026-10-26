@@ -184,12 +184,13 @@ async function guardarAuditoria(
   transaction: Transaction,
   firestore: import('firebase-admin/firestore').Firestore,
   contexto: ContextoAutenticado,
-  comando: ComandoEstable,
+  _comando: ComandoEstable,
   eventos: readonly EventoAuditoria[],
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
-  const tipoRecurso = cambios[0]?.agregado ?? comando.caso;
   for (const ev of eventos) {
+    const cambio = cambios.find((item) => item.recursoId === ev.recursoId);
+    const tipoRecurso = cambio?.agregado ?? ev.caso;
     const ruta = `auditoria/${ev.id}`;
     const datos = {
       revision: 1,

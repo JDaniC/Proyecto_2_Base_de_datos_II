@@ -4,15 +4,15 @@
 - **Alcance:** Adaptadores NoSQL (`Backend/src/adaptadores/salida/mongodb` y `salida/firestore`), configuración de entorno (`conexiones-mongodb.ts`, `conexiones-firestore.ts`), validadores Zod de modelo pediátrico, unidades de trabajo transaccionales, repositorios de cuenta e integración con Docker replica set y emulador Firestore.
 - **Tipo:** Funcional, con trazabilidad requisito → código → test, verificación de atomicidad, idempotencia, permisos mínimos y aislamiento transaccional.
 - **Autorización:** Conforme a solicitud del usuario en flujo autónomo y política de integración del proyecto.
-- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (90 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
+- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (95 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
 
 ## 1. Resumen ejecutivo
 
 - **Unidades inventariadas:** 16 unidades TypeScript auditables (configuradores, clientes, validadores, mappers, repositorios de cuenta y UoWs).
 - **Requisitos extraídos:** 6 requisitos y criterios (RNF-016, RNF-018, RNF-020, RNF-022, RNF-023, CA05/CA19 parciales).
 - **Trazados requisito → código → test:** 6/6 grupos trazados exhaustivamente.
-- **Desviaciones detectadas:** 0 CRITICAL · 0 HIGH · 0 MEDIUM · 0 LOW abiertas. Desviaciones preliminares corregidas antes del commit (manejadas como F-01 a F-04).
-- **Estado global de la auditoría:** **PASS** en el alcance de la tarea (con frontera atómica e idempotencia demostrada; el flujo clínico end-to-end CA05 queda formalmente reservado para E03/E04).
+- **Desviaciones detectadas:** 0 CRITICAL · 0 HIGH · 0 MEDIUM · 0 LOW abiertas. Todas las observaciones de revisión automatizada de Codex fueron subsanadas y verificadas con pruebas de regresión (F-01 a F-09).
+- **Estado global de la auditoría:** **PASS** en el alcance de la tarea (con frontera atómica, aislamiento, reversión de transacciones reales e idempotencia demostrada; el flujo clínico end-to-end CA05 queda formalmente reservado para E03/E04).
 
 ## 2. Inventario y cobertura
 
@@ -50,6 +50,11 @@
 | F-02 | `nosql-uow.test.ts` (muestras) | RNF-018 / CA19 | `DIVERGENTE` | El fixture de muestra sintética utilizaba campos no conformes (`codigo_muestra` en lugar de `codigo_barras`, faltaba `tomada_por_id` y usaba estado `RECOLECTADA` no admitido por el JSON Schema de Mongo). | Se corrigió el documento para cumplir estrictamente el validador físico de `Database/laboratorio_clinico_mongodb.js`, pasando la validación con éxito. |
 | F-03 | `exactOptionalPropertyTypes` en cliente Firestore | TypeScript estricto | `SUB_IMPLEMENTADO` | `crearClienteFirestore` no aceptaba `emulatorHost: undefined` bajo `exactOptionalPropertyTypes: true`. | Se usó destructuración condicional `{ ...(host ? { emulatorHost: host } : {}) }`, resolviendo la advertencia de tipos. |
 | F-04 | Typing de `_id` en MongoDB | TypeScript / Mongo Driver 7 | `DIVERGENTE` | El driver de MongoDB 7 infiere por defecto `_id: ObjectId`, causando error de compilación al asignar identificadores UUID de tipo `string`. | Se tiparon explícitamente las colecciones (`DocumentoRevisionMongo`, `DocumentoAuditoriaMongo`, `DocumentoOperacionMongo`) con `_id: string`, garantizando fidelidad con los esquemas de bases de datos. |
+| F-05 | `mapearCuentaMongodb` / `repositorio-cuenta-mongodb` | RNF-013 / AGENTS.md | `DIVERGENTE` | En MongoDB, el médico clínico se identificaba indebidamente con `personal_id` o se omitía. `usuarios.solicitante_medico_id` debe enlazar con `solicitantes` de `tipo: 'MEDICO'` y `activo: true`. | Se resolvió el documento en `solicitantes`, verificando tipo y estado activo; se agregaron tests unitarios y se adaptó la prueba de integración NoSQL. |
+| F-06 | `unidad-de-trabajo-mongodb` | RNF-023 / AGENTS.md | `SUB_IMPLEMENTADO` | Al reconciliar operaciones previas tras error transitorio o conflicto de duplicados, se devolvía el resultado almacenado sin revalidar la cuenta actual mediante `verificarCuentaVigente`. | Se introdujo `revalidarCuentaDirecta` antes de entregar la respuesta reconciliada, asegurando rechazo `SIN_PERMISO` si la cuenta fue desactivada o perdió permisos. |
+| F-07 | `nosql-uow.test.ts` (rollback) | RNF-018 / AGENTS.md | `SUB_IMPLEMENTADO` | La prueba de rollback multi-documento lanzaba excepción dentro de `planificar`, antes de ejecutar escrituras en la sesión. | Se inyectó el fallo durante la ejecución de escrituras en sesión (segundo documento con violación de esquema JSON Schema), comprobando que el primer documento y la revisión persistidos fueron efectivamente revertidos. |
+| F-08 | `validador-firestore.ts` | RNF-022 / CA05 | `DIVERGENTE` | Se validaba `fecha_nacimiento` con expresión regular sin validar calendario gregoriano (admitía `2020-02-31`). | Se restituyó `z.iso.date()` conforme a `Database/firebase/modelo_pediatrico.mjs` y se añadió prueba de regresión para fechas inválidas y bisiestas. |
+| F-09 | Auditoría MongoDB y Firestore | RNF-016 / RNF-022 | `DIVERGENTE` | Se asignaba la colección del primer cambio (`cambios[0]`) a todos los eventos de auditoría en comandos multi-agregado. | Se asocia cada evento por `recursoId` (`cambios.find(c => c.recursoId === ev.recursoId)?.agregado ?? ev.caso`), con tests unitarios multi-agregado en ambos motores. |
 
 ## 5. Matriz final de auditoría
 
@@ -58,7 +63,7 @@
 | Compilación TypeScript (`tsc`) | **PASS** | `dist-test` y `dist` compilan sin errores con configuración estricta. |
 | Reglas arquitectónicas (`architecture:check`) | **PASS** | Dominio y aplicación puros; sin SDKs ni adaptadores en el núcleo. |
 | ESLint (`eslint`) | **PASS** | Cero advertencias y cero errores en código fuente, tests y scripts. |
-| Pruebas unitarias y runtime | **PASS** | 90 pruebas unitarias/runtime pasando (100%). |
+| Pruebas unitarias y runtime | **PASS** | 95 pruebas unitarias/runtime pasando (100%). |
 | Pruebas de contratos congelados | **PASS** | 32 pruebas de contrato OpenAPI y fixtures pasando (100%). |
-| Pruebas de integración NoSQL (`nosql-uow.test.ts`) | **PASS** | Rollback, atomicidad, replay, réplica set MongoDB y Firestore emulator verificados en entornos reales. |
-| **Dictamen global** | **PASS** | Todos los requerimientos funcionales de E01-P2-02 han sido verificados satisfactoriamente. |
+| Pruebas de integración NoSQL (`nosql-uow.test.ts`) | **PASS** | Rollback con escrituras en sesión, atomicidad, replay, réplica set MongoDB y Firestore emulator verificados en entornos reales. |
+| **Dictamen global** | **PASS** | Todos los requerimientos funcionales y observaciones de revisión de E01-P2-02 han sido verificados satisfactoriamente. |
