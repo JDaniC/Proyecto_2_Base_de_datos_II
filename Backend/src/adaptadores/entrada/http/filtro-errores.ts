@@ -109,10 +109,13 @@ export class FiltroErroresHttp implements ExceptionFilter {
 function estadoHttpDominio(codigo: CodigoErrorDominio): number {
   switch (codigo) {
     case 'SOLICITUD_INVALIDA': return 400;
-    case 'SIN_PERMISO': return 403;
+    case 'NO_AUTENTICADO': return 401;
+    case 'SIN_PERMISO':
+    case 'CUENTA_NO_HABILITADA': return 403;
     case 'RECURSO_NO_ENCONTRADO': return 404;
     case 'LIMITE_AGREGADO': return 413;
-    case 'PERSISTENCIA_NO_DISPONIBLE': return 503;
+    case 'PERSISTENCIA_NO_DISPONIBLE':
+    case 'IDENTIDAD_NO_DISPONIBLE': return 503;
     default: return 409;
   }
 }

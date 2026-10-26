@@ -11,6 +11,10 @@ import { crearPoolMysql } from '../../src/adaptadores/salida/mysql/crear-pool-my
 import { crearRepositorioCuentaMysql } from '../../src/adaptadores/salida/mysql/repositorio-cuenta-mysql.js';
 import { crearPoolPostgresql } from '../../src/adaptadores/salida/postgresql/crear-pool-postgresql.js';
 import { crearRepositorioCuentaPostgresql } from '../../src/adaptadores/salida/postgresql/repositorio-cuenta-postgresql.js';
+import {
+  crearRepositorioCuentaInstitucionalPostgresql,
+  crearRepositorioCuentaInstitucionalMysql,
+} from '../../src/adaptadores/salida/identidad/repositorios-cuenta-sql.js';
 import type { PoolSql } from '../../src/adaptadores/salida/sql/tipos-sql.js';
 import { crearUnidadDeTrabajoSql } from '../../src/adaptadores/salida/sql/unidad-de-trabajo-sql.js';
 
@@ -27,7 +31,7 @@ test('PostgreSQL: mapper, atomicidad, repetición idempotente y pool recuperado'
     usuario: 'hospital_app', archivoContrasena: secretoPg as string,
   });
   t.after(async () => pool.cerrar());
-  await verificarFlujos(pool, 'postgresql', 'HOSPITAL_GENERAL', crearRepositorioCuentaPostgresql);
+  await verificarFlujos(pool, 'postgresql', 'HOSPITAL_GENERAL', crearRepositorioCuentaPostgresql, crearRepositorioCuentaInstitucionalPostgresql);
 });
 
 test('MySQL: mapper, atomicidad, repetición idempotente y pool recuperado', {
@@ -38,7 +42,7 @@ test('MySQL: mapper, atomicidad, repetición idempotente y pool recuperado', {
     usuario: 'clinica_app', archivoContrasena: secretoMysql as string,
   });
   t.after(async () => pool.cerrar());
-  await verificarFlujos(pool, 'mysql', 'CLINICA_ODONTOLOGICA', crearRepositorioCuentaMysql);
+  await verificarFlujos(pool, 'mysql', 'CLINICA_ODONTOLOGICA', crearRepositorioCuentaMysql, crearRepositorioCuentaInstitucionalMysql);
 });
 
 async function verificarFlujos(
@@ -46,6 +50,7 @@ async function verificarFlujos(
   dialecto: 'postgresql' | 'mysql',
   institucion: 'HOSPITAL_GENERAL' | 'CLINICA_ODONTOLOGICA',
   crearRepositorioCuenta: typeof crearRepositorioCuentaPostgresql,
+  crearRepositorioInstitucional: typeof crearRepositorioCuentaInstitucionalPostgresql,
 ): Promise<void> {
   const uid = `test-${randomUUID()}`;
   const cuentaId = randomUUID();
@@ -54,7 +59,7 @@ async function verificarFlujos(
   if (dialecto === 'postgresql') {
     await pool.consultar(
       'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES ($1, $2, $3, $4, $5)',
-      [cuentaId, nombre, uid, institucion, 'ACTIVO'],
+      [cuentaId, nombre, uid, institucion, 'PENDIENTE'],
     );
     const profesional = await pool.consultar<{ id_personal: number | string }>(
       "INSERT INTO personal_medico (primer_nombre, primer_apellido, estado) VALUES ('TEST', 'UOW', 'ACTIVO') RETURNING id_personal",
@@ -63,7 +68,7 @@ async function verificarFlujos(
   } else {
     await pool.consultar(
       'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES (?, ?, ?, ?, ?)',
-      [cuentaId, nombre, uid, institucion, 'ACTIVO'],
+      [cuentaId, nombre, uid, institucion, 'PENDIENTE'],
     );
     const colegiado = `TEST-${randomUUID()}`;
     await pool.consultar(
@@ -96,10 +101,21 @@ async function verificarFlujos(
     );
   }
 
-  const cuentas = crearRepositorioCuenta(pool);
-  const cuenta = await cuentas.porUid(uid);
+  const cuentasAdmin = crearRepositorioInstitucional(pool);
+  const cuentaPendiente = await cuentasAdmin.porUid(uid);
+  assert.ok(cuentaPendiente);
+  assert.equal(cuentaPendiente.estado, 'PENDIENTE');
+  assert.equal(await cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version), true);
+  const activacionesConcurrentes = await Promise.all([
+    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version),
+    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version),
+  ]);
+  assert.deepEqual(activacionesConcurrentes, [true, true]);
+  const cuenta = await cuentasAdmin.porUid(uid);
   assert.ok(cuenta);
   assert.equal(cuenta.id, cuentaId);
+  assert.equal(cuenta.estado, 'ACTIVA');
+  assert.equal(cuenta.version, versionPositiva(2));
   assert.equal('actor_id' in cuenta, false);
   assert.deepEqual(cuenta.roles, ['MEDICO']);
   assert.deepEqual(cuenta.permisos, ['pacientes.administrar']);

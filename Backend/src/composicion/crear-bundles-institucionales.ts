@@ -3,15 +3,34 @@ import type {
   BundleInstitucional,
   BundlesInstitucionales,
 } from '../aplicacion/puertos/bundle-institucional.js';
+import type {
+  RepositorioCuenta,
+  RepositorioProfesional,
+} from '../aplicacion/puertos/repositorio-cuenta.js';
+
+export interface RepositoriosInstitucion {
+  readonly cuenta: RepositorioCuenta;
+  readonly profesionales?: RepositorioProfesional;
+}
+
+export type MapaRepositoriosInstitucion = Readonly<
+  Partial<Record<Institucion, RepositoriosInstitucion>>
+>;
 
 export function crearBundlesInstitucionales(
   instituciones: readonly Institucion[],
+  repositorios?: MapaRepositoriosInstitucion,
 ): BundlesInstitucionales {
-  const bundles: BundleInstitucional[] = instituciones.map((institucion) =>
-    Object.freeze({
+  const bundles: BundleInstitucional[] = instituciones.map((institucion) => {
+    const repos = repositorios?.[institucion];
+
+    return Object.freeze({
       institucion,
-      estadoPersistencia: 'NO_CONFIGURADA' as const,
-    }),
-  );
+      estadoPersistencia: repos ? 'DISPONIBLE' as const : 'NO_CONFIGURADA' as const,
+      ...(repos ? { cuenta: repos.cuenta } : {}),
+      ...(repos?.profesionales ? { profesionales: repos.profesionales } : {}),
+    });
+  });
+
   return Object.freeze(bundles);
 }

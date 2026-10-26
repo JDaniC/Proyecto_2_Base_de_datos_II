@@ -13,6 +13,7 @@ import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import { AppModule } from '../../src/composicion/app.module.js';
 import type { ConfiguracionAplicacion } from '../../src/configuracion/entorno.js';
+import { Publico } from '../../src/adaptadores/entrada/http/decoradores-auth.js';
 
 class EcoDto {
   @IsString()
@@ -23,6 +24,7 @@ class EcoDto {
 
 @ApiExcludeController()
 @Controller('pruebas-http')
+@Publico()
 class ControladorPruebaHttp {
   @Post('eco')
   eco(@Body() entrada: EcoDto) {

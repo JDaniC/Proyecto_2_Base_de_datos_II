@@ -15,7 +15,8 @@
     "start": "npm run build && node --env-file-if-exists=.env dist/main.js",
     "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js dist-test/tests/unitarios/*.test.js && node --test tests/contratos/*.test.mjs",
     "test:integration:sql": "node scripts/run-sql-uow-integration.mjs",
-    "test:integration:nosql": "node scripts/run-nosql-uow-integration.mjs"
+    "test:integration:nosql": "node scripts/run-nosql-uow-integration.mjs",
+    "provision:cuenta": "npm run build && node --env-file-if-exists=.env scripts/provisionar-cuenta.mjs"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

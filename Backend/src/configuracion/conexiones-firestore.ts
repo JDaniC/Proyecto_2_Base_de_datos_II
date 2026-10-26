@@ -30,7 +30,7 @@ export function parsearConfiguracionFirestore(
     errores.push('FIRESTORE_DATABASE_ID');
   }
 
-  if (emulatorHost && !/^(127\.0\.0\.1|localhost):[1-9][0-9]{0,4}$/.test(emulatorHost)) {
+  if (emulatorHost && !hostEmuladorLocalValido(emulatorHost)) {
     errores.push('FIRESTORE_EMULATOR_HOST');
   }
 
@@ -54,4 +54,11 @@ export function parsearConfiguracionFirestore(
     ...(emulatorHost ? { emulatorHost } : {}),
     institucionalId: 'CENTRO_MEDICO_PEDIATRICO',
   });
+}
+
+function hostEmuladorLocalValido(host: string): boolean {
+  const coincidencia = /^(127\.0\.0\.1|localhost):([0-9]{1,5})$/.exec(host);
+  if (!coincidencia) return false;
+  const puerto = Number(coincidencia[2]);
+  return Number.isInteger(puerto) && puerto >= 1 && puerto <= 65_535;
 }

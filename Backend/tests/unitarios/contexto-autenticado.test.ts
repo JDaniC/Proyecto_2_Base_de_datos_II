@@ -12,7 +12,7 @@ describe('contexto autenticado inmutable', () => {
     const permisos = ['consultas.registrar'] as const;
     const contexto = crearContextoAutenticado(
       { uid: 'firebase-uid', institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-25T12:00:00Z') },
-      { id: uuidPublico('550e8400-e29b-41d4-a716-446655440000'), uid: 'firebase-uid', institucion: 'HOSPITAL_GENERAL', estado: 'ACTIVA', roles, permisos, version: versionPositiva(1) },
+      { id: uuidPublico('550e8400-e29b-41d4-a716-446655440000'), uid: 'firebase-uid', institucion: 'HOSPITAL_GENERAL', estado: 'ACTIVA', roles, permisos, version: versionPositiva(1), profesional: { id: uuidPublico('550e8400-e29b-41d4-a716-446655440002'), activo: true } },
       uuidPublico('550e8400-e29b-41d4-a716-446655440001'),
     );
     assert.equal(Object.isFrozen(contexto), true);

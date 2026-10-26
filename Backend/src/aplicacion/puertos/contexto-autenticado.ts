@@ -44,12 +44,22 @@ export function crearContextoAutenticado(
       identidad.institucion !== cuenta.institucion) {
     throw new ErrorDominio('SIN_PERMISO', 'La identidad verificada no corresponde a la cuenta institucional.');
   }
-  if (cuenta.estado !== 'ACTIVA') throw new ErrorDominio('SIN_PERMISO', 'La cuenta no está activa.');
+  if (cuenta.estado !== 'ACTIVA') throw new ErrorDominio('CUENTA_NO_HABILITADA', 'La cuenta no está activa.');
   const rolesValidos: readonly Rol[] = ['ADMIN_INSTITUCIONAL', 'SECRETARIA', 'MEDICO', 'ODONTOLOGO', 'PEDIATRA', 'MEDICO_LABORATORIO', 'ANALISTA_LABORATORIO', 'VALIDADOR_LABORATORIO'];
   const permisosValidos: readonly Permiso[] = ['pacientes.administrar', 'historial.leer', 'historial.archivar', 'citas.administrar', 'consultas.registrar', 'diagnosticos.registrar', 'tratamientos.registrar', 'recetas.emitir', 'usuarios.administrar', 'auditoria.leer', 'resultados.analizar', 'resultados.validar', 'informes.emitir', 'cobros.administrar', 'inventario.administrar', 'ordenes.administrar', 'muestras.administrar'];
   if (!Array.isArray(cuenta.roles) || !cuenta.roles.every((rol) => rolesValidos.includes(rol)) ||
       !Array.isArray(cuenta.permisos) || !cuenta.permisos.every((permiso) => permisosValidos.includes(permiso))) {
     throw new ErrorDominio('SIN_PERMISO', 'La cuenta contiene roles o permisos no reconocidos.');
+  }
+  if (cuenta.roles.length === 0) {
+    throw new ErrorDominio('SIN_PERMISO', 'La cuenta institucional no tiene un rol vigente.');
+  }
+  const rolesProfesionales: readonly Rol[] = [
+    'MEDICO', 'ODONTOLOGO', 'PEDIATRA', 'MEDICO_LABORATORIO',
+  ];
+  if (cuenta.roles.some((rol) => rolesProfesionales.includes(rol)) &&
+      (!cuenta.profesional || !cuenta.profesional.activo)) {
+    throw new ErrorDominio('CUENTA_NO_HABILITADA', 'El profesional vinculado no está activo.');
   }
   const identidadSegura = Object.freeze({
     uid: identidad.uid,

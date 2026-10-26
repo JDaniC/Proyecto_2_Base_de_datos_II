@@ -510,6 +510,7 @@ test('mapearCuentaMongodb: resuelve médico clínico desde solicitante_medico_id
   const usuarioDoc = {
     _id: UUID_ACTOR,
     auth_uid: 'uid_doc',
+    proveedor_identidad: 'FIREBASE',
     institucion_id: 'LABORATORIO_CLINICO',
     estado: 'ACTIVO',
     activo: true,
@@ -554,6 +555,23 @@ test('mapearCuentaMongodb: resuelve médico clínico desde solicitante_medico_id
   }, rolesDocs, null);
   assert.ok(cuentaSinSolicitante !== null);
   assert.equal(cuentaSinSolicitante.profesional, undefined);
+});
+
+test('mapearCuentaMongodb: rechaza estado activo que contradice el indicador activo y revisión inválida', () => {
+  const usuario = {
+    _id: UUID_ACTOR,
+    auth_uid: 'uid_doc',
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'LABORATORIO_CLINICO',
+    estado: 'ACTIVO',
+    activo: true,
+    rol_ids: ['ROL_ANALISTA'],
+    revision: 1,
+  };
+  const roles = [{ _id: 'ROL_ANALISTA', nombre: 'ANALISTA_LABORATORIO', permisos: ['muestras.administrar'] }];
+
+  assert.equal(mapearCuentaMongodb({ ...usuario, activo: false }, roles), null);
+  assert.throws(() => mapearCuentaMongodb({ ...usuario, revision: Number.NaN }, roles));
 });
 
 test('UoW MongoDB: preserva y reconstruye la forma original de la respuesta en replay (respuesta plana no envuelta)', async () => {
