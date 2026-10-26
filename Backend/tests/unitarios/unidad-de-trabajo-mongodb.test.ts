@@ -61,6 +61,7 @@ function crearComandoPrueba(hashEntrada = 'a'.repeat(64)): ComandoEstable {
 function crearMockMongodb(opciones: {
   operacionExistente?: Record<string, unknown> | null;
   fallarTransitorioVeces?: number;
+  fallarLecturaOperacion?: Error;
 } = {}) {
   const collections = new Map<string, unknown[]>();
   let intentos = 0;
@@ -76,8 +77,13 @@ function crearMockMongodb(opciones: {
   const mockDb = {
     collection: (name: string) => ({
       findOne: async (query: Record<string, unknown>) => {
-        if (name === 'operaciones' && opciones.operacionExistente) {
-          return opciones.operacionExistente;
+        if (name === 'operaciones') {
+          if (opciones.fallarLecturaOperacion) {
+            throw opciones.fallarLecturaOperacion;
+          }
+          if (opciones.operacionExistente) {
+            return opciones.operacionExistente;
+          }
         }
         const items = getCollection(name);
         return items.find((item) => {
@@ -423,6 +429,78 @@ test('UoW MongoDB: reconciliación ante conflicto revalida autorización y recha
     (err: unknown) => {
       assert.ok(err instanceof ErrorDominio);
       assert.equal(err.codigo, 'SIN_PERMISO');
+      return true;
+    },
+  );
+});
+
+test('UoW MongoDB: fallo de lectura durante reconciliación por conflicto 11000 se propaga como PERSISTENCIA_NO_DISPONIBLE (503)', async () => {
+  const { cliente } = crearMockMongodb({
+    fallarLecturaOperacion: Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }),
+  });
+
+  const uow = crearUnidadDeTrabajoMongodb({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {
+      // Simular colisión de clave concurrente E11000
+      const err = Object.assign(new Error('E11000 duplicate key error'), { code: 11000 });
+      throw err;
+    },
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => ({
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [],
+      auditoria: [],
+      resultado: { httpStatus: 200, respuesta: {}, correlacionOriginal: UUID_CORRELACION },
+    })),
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'PERSISTENCIA_NO_DISPONIBLE');
+      return true;
+    },
+  );
+});
+
+test('UoW MongoDB: conflicto 11000 con búsqueda exitosa que devuelve null se propaga como ESTADO_INVALIDO (409)', async () => {
+  const { cliente } = crearMockMongodb({
+    operacionExistente: null, // Búsqueda exitosa que no encuentra operación previa
+  });
+
+  const uow = crearUnidadDeTrabajoMongodb({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {
+      // Conflicto de unicidad en otra colección
+      const err = Object.assign(new Error('E11000 duplicate key error on muestras'), { code: 11000 });
+      throw err;
+    },
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => ({
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [],
+      auditoria: [],
+      resultado: { httpStatus: 200, respuesta: {}, correlacionOriginal: UUID_CORRELACION },
+    })),
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'ESTADO_INVALIDO');
       return true;
     },
   );

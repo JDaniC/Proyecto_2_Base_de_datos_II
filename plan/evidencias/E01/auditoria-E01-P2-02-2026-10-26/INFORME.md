@@ -4,14 +4,14 @@
 - **Alcance:** Adaptadores NoSQL (`Backend/src/adaptadores/salida/mongodb` y `salida/firestore`), configuración de entorno (`conexiones-mongodb.ts`, `conexiones-firestore.ts`), validadores Zod de modelo pediátrico, unidades de trabajo transaccionales, repositorios de cuenta e integración con Docker replica set y emulador Firestore.
 - **Tipo:** Funcional, con trazabilidad requisito → código → test, verificación de atomicidad, idempotencia, permisos mínimos y aislamiento transaccional.
 - **Autorización:** Conforme a solicitud del usuario en flujo autónomo y política de integración del proyecto.
-- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (99 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
+- **Entorno:** Node.js 24.22.0 local, suite unitaria/runtime (101 PASS + 32 contractuales PASS), MongoDB 8.0 en réplica set `rs0` efímero bajo Docker Compose, y emulador Firestore aislado bajo Firebase Tools 15.33.0 con proyecto `demo-bdii-pediatria`.
 
 ## 1. Resumen ejecutivo
 
 - **Unidades inventariadas:** 16 unidades TypeScript auditables (configuradores, clientes, validadores, mappers, repositorios de cuenta y UoWs).
 - **Requisitos extraídos:** 6 requisitos y criterios (RNF-016, RNF-018, RNF-020, RNF-022, RNF-023, CA05/CA19 parciales).
 - **Trazados requisito → código → test:** 6/6 grupos trazados exhaustivamente.
-- **Desviaciones detectadas:** 0 CRITICAL · 0 HIGH · 0 MEDIUM · 0 LOW abiertas. Todas las observaciones de revisión automatizada de Codex fueron subsanadas y verificadas con pruebas de regresión (F-01 a F-11).
+- **Desviaciones detectadas:** 0 CRITICAL · 0 HIGH · 0 MEDIUM · 0 LOW abiertas. Todas las observaciones de revisión automatizada de Codex fueron subsanadas y verificadas con pruebas de regresión (F-01 a F-12).
 - **Estado global de la auditoría:** **PASS** en el alcance de la tarea (con frontera atómica, aislamiento, reversión de transacciones reales e idempotencia demostrada; el flujo clínico end-to-end CA05 queda formalmente reservado para E03/E04).
 
 ## 2. Inventario y cobertura
@@ -57,6 +57,7 @@
 | F-09 | Auditoría MongoDB y Firestore | RNF-016 / RNF-022 | `DIVERGENTE` | Se asignaba la colección del primer cambio (`cambios[0]`) a todos los eventos de auditoría en comandos multi-agregado. | Se asocia cada evento por `recursoId` (`cambios.find(c => c.recursoId === ev.recursoId)?.agregado ?? ev.caso`), con tests unitarios multi-agregado en ambos motores. |
 | F-10 | `validador-firestore.ts` (revisiones) | RNF-018 / AGENTS.md | `SUB_IMPLEMENTADO` | Las rutas de versiones históricas para `pacientes` y `citas` (`pacientes/{pacienteId}/versiones/{versionId}` y `citas/{citaId}/versiones/{versionId}`) no estaban registradas, causando `RUTA_NO_ADMITIDA` al persistir revisiones en cambios demográficos y reprogramaciones. | Se registraron ambos esquemas con `versionHistorica` y se agregaron pruebas unitarias en el validador y en la UoW de Firestore. |
 | F-11 | `unidad-de-trabajo-mongodb.ts` y `unidad-de-trabajo-firestore.ts` | RNF-023 / Contrato de idempotencia | `DIVERGENTE` | En replay de comandos donde el planificador devolvió una respuesta plana (no envuelta en sobre `{ data, meta }`), la UoW devolvía un sobre `{ data, meta }` en repeticiones posteriores, rompiendo la simetría de forma observada por el consumidor entre la primera ejecución y el replay. | Se implementó empaquetado y desempaquetado simétrico (`empaquetarRespuestaOperacion` y `desempaquetarRespuestaOperacion`) en MongoDB y Firestore UoW. Se añadieron pruebas unitarias de preservación de forma plana y aserciones de integración en réplica set y emulador NoSQL. |
+| F-12 | `unidad-de-trabajo-mongodb.ts` | RNF-023 / `03_CONTRATOS_Y_FLUJOS.md:92–93` | `DIVERGENTE` | Al producirse un error de colisión 11000 por concurrencia y fallar la búsqueda directa de reconciliación (`leerOperacionDirecta`), un bloque `catch (_error)` silenciaba el error de red/base de datos y devolvía `null`. El manejador de duplicados lanzaba entonces `ESTADO_INVALIDO` (409) asumiendo que la operación no existía, impidiendo al llamador saber que persistencia no estaba disponible para reintentar con la misma clave (503). | Se diferenció el resultado exitoso sin registros (`null` legítimo que propaga 409 por conflicto de datos) del fallo en la lectura de persistencia (que lanza `PERSISTENCIA_NO_DISPONIBLE` / 503). Se agregaron pruebas unitarias de regresión para ambos caminos. |
 
 ## 5. Matriz final de auditoría
 
@@ -65,7 +66,7 @@
 | Compilación TypeScript (`tsc`) | **PASS** | `dist-test` y `dist` compilan sin errores con configuración estricta. |
 | Reglas arquitectónicas (`architecture:check`) | **PASS** | Dominio y aplicación puros; sin SDKs ni adaptadores en el núcleo. |
 | ESLint (`eslint`) | **PASS** | Cero advertencias y cero errores en código fuente, tests y scripts. |
-| Pruebas unitarias y runtime | **PASS** | 99 pruebas unitarias/runtime pasando (100%). |
+| Pruebas unitarias y runtime | **PASS** | 101 pruebas unitarias/runtime pasando (100%). |
 | Pruebas de contratos congelados | **PASS** | 32 pruebas de contrato OpenAPI y fixtures pasando (100%). |
-| Pruebas de integración NoSQL (`nosql-uow.test.ts`) | **PASS** | Rollback con escrituras en sesión, atomicidad, replay simétrico plano/sobre, réplica set MongoDB y Firestore emulator verificados en entornos reales. |
+| Pruebas de integración NoSQL (`nosql-uow.test.ts`) | **PASS** | Rollback con escrituras en sesión, atomicidad, replay simétrico plano/sobre, propagación 503 en fallo de reconciliación, réplica set MongoDB y Firestore emulator verificados en entornos reales. |
 | **Dictamen global** | **PASS** | Todos los requerimientos funcionales y observaciones de revisión de E01-P2-02 han sido verificados satisfactoriamente. |

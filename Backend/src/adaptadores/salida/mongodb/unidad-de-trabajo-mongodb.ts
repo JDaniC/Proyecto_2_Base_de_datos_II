@@ -234,9 +234,17 @@ async function revalidarCuentaDirecta(
   db: Db,
   contexto: ContextoAutenticado,
 ): Promise<void> {
-  const repo = crearRepositorioCuentaMongodb(db);
-  const cuenta = await repo.porUid(contexto.identidad.uid);
-  validarCuentaVigente(cuenta, contexto);
+  try {
+    const repo = crearRepositorioCuentaMongodb(db);
+    const cuenta = await repo.porUid(contexto.identidad.uid);
+    validarCuentaVigente(cuenta, contexto);
+  } catch (error) {
+    if (error instanceof ErrorDominio) throw error;
+    throw new ErrorDominio(
+      'PERSISTENCIA_NO_DISPONIBLE',
+      'No fue posible revalidar la cuenta del actor durante la reconciliación; reintente con la misma clave.',
+    );
+  }
 }
 
 async function verificarCuentaVigente<TCuenta, TPaciente, TCita, TConsulta, TResponsable, TProfesional, TEvento>(
@@ -425,8 +433,12 @@ async function leerOperacionDirecta<T>(
         correlacionOriginal: uuidPublico(doc.respuesta.meta.correlacion),
       },
     };
-  } catch (_error) {
-    return null;
+  } catch (error) {
+    if (error instanceof ErrorDominio) throw error;
+    throw new ErrorDominio(
+      'PERSISTENCIA_NO_DISPONIBLE',
+      'No fue posible verificar el resultado previo de la operación; reintente con la misma clave.',
+    );
   }
 }
 
