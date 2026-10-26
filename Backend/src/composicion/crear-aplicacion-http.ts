@@ -11,6 +11,7 @@ import { middlewareErroresParser } from '../adaptadores/entrada/http/errores-par
 import { middlewareCorrelacion } from '../adaptadores/entrada/http/correlacion.middleware.js';
 import { RespuestaInterceptor } from '../adaptadores/entrada/http/respuesta.interceptor.js';
 import { crearPipeValidacion } from '../adaptadores/entrada/http/validacion.pipe.js';
+import { parsearJSONSinClavesDuplicadas } from '../dominio/compartido/json-canonico.js';
 
 const PREFIJO_API = 'api/v1';
 
@@ -24,7 +25,13 @@ export async function crearAplicacionHttp(
   });
   app.setGlobalPrefix(PREFIJO_API);
   app.use(middlewareCorrelacion);
-  app.use(json({ limit: 262_144, strict: true }));
+  app.use(json({
+    limit: 262_144,
+    strict: true,
+    verify: (_solicitud, _respuesta, cuerpo) => {
+      parsearJSONSinClavesDuplicadas(cuerpo.toString('utf8'));
+    },
+  }));
   app.use(middlewareErroresParser);
   app.useGlobalPipes(crearPipeValidacion());
   app.useGlobalInterceptors(new RespuestaInterceptor());
