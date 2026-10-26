@@ -25,7 +25,8 @@ export async function ejecutarProvision(args, entorno = process.env) {
   try {
     const provisionar = new ProvisionarCuentaPendiente(
       dependencias.administradorIdentidad,
-      (institucion) => dependencias.bundles.find((bundle) => bundle.institucion === institucion),
+      () => dependencias.bundles,
+      dependencias.bloqueoProvision,
     );
     const resultado = await provisionar.ejecutar(entrada);
     return Object.freeze({

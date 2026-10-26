@@ -6,12 +6,16 @@ import { VerificadorIdentidadFirebase } from '../../src/adaptadores/salida/ident
 import { crearDependenciasBackend, ErrorConfiguracionBackend } from '../../src/composicion/crear-dependencias-backend.js';
 import { ProvisionarCuentaPendiente } from '../../src/aplicacion/casos-uso/cuentas/provisionar-cuenta-pendiente.js';
 import type { AdministradorIdentidad } from '../../src/aplicacion/puertos/administrador-identidad.js';
-import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
 import type { CuentaAutorizada } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { RepositorioCuenta } from '../../src/aplicacion/puertos/repositorio-cuenta.js';
+import type { BloqueoProvision } from '../../src/aplicacion/puertos/bloqueo-provision.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
+import { INSTITUCIONES_CANONICAS, type Institucion } from '../../src/dominio/compartido/institucion.js';
 import type { Rol } from '../../src/dominio/compartido/autorizacion.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
+import type { PoolSql } from '../../src/adaptadores/salida/sql/tipos-sql.js';
+import { crearRepositorioCuentaInstitucionalPostgresql } from '../../src/adaptadores/salida/identidad/repositorios-cuenta-sql.js';
+import { BloqueoProvisionPostgresql } from '../../src/adaptadores/salida/identidad/bloqueo-provision-postgresql.js';
 
 const UID = 'firebase-test-user-001';
 const ID_CUENTA = '10000000-0000-4000-8000-000000000001';
@@ -112,6 +116,77 @@ test('la composición rechaza un puerto de Auth Emulator fuera del rango antes d
     (error: unknown) => error instanceof ErrorConfiguracionBackend &&
       error.variables.includes('FIREBASE_AUTH_EMULATOR_HOST'),
   );
+});
+
+test('la composición rechaza Auth Emulator contra un proyecto Firestore real antes de conectar motores', async () => {
+  await assert.rejects(
+    () => crearDependenciasBackend({
+      APP_ENV: 'delivery',
+      POSTGRES_HOST: '127.0.0.1', POSTGRES_PORT: '1', POSTGRES_PASSWORD_FILE: '/tmp/pg-inexistente',
+      MYSQL_HOST: '127.0.0.1', MYSQL_PORT: '1', MYSQL_PASSWORD_FILE: '/tmp/mysql-inexistente',
+      MONGO_HOST: '127.0.0.1', MONGO_PORT: '1', MONGO_APP_PASSWORD_FILE: '/tmp/mongo-inexistente',
+      FIRESTORE_PROJECT_ID: 'bdii-pediatria-real',
+      FIREBASE_AUTH_PROJECT_ID: 'bdii-pediatria-real', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099',
+    }),
+    (error: unknown) => error instanceof ErrorConfiguracionBackend &&
+      error.variables.includes('FIREBASE_AUTH_EMULATOR_HOST') &&
+      error.variables.includes('FIRESTORE_PROJECT_ID'),
+  );
+});
+
+test('un rollback SQL fallido descarta la conexión incierta', async () => {
+  let descartada: boolean | undefined;
+  const conexion = {
+    async consultar() { throw new Error('lectura fallida'); },
+    async iniciar() {},
+    async confirmar() {},
+    async revertir() { throw new Error('rollback fallido'); },
+    liberar(descartar = false) { descartada = descartar; },
+  };
+  const pool = { adquirir: async () => conexion } as unknown as PoolSql;
+
+  await assert.rejects(() => crearRepositorioCuentaInstitucionalPostgresql(pool).porUid(UID));
+  assert.equal(descartada, true);
+});
+
+test('un acuse incierto del advisory lock descarta la sesión PostgreSQL', async () => {
+  let descartada: boolean | undefined;
+  const conexion = {
+    async consultar() { throw new Error('acuse perdido'); },
+    async iniciar() {},
+    async confirmar() {},
+    async revertir() {},
+    liberar(descartar = false) { descartada = descartar; },
+  };
+  const pool = { adquirir: async () => conexion } as unknown as PoolSql;
+  let ejecutoTrabajo = false;
+
+  await assert.rejects(
+    () => new BloqueoProvisionPostgresql(pool).ejecutar(UID, async () => { ejecutoTrabajo = true; }),
+  );
+  assert.equal(ejecutoTrabajo, false);
+  assert.equal(descartada, true);
+});
+
+test('si falla la confirmación de desbloqueo, descarta la sesión y conserva el resultado', async () => {
+  let consultas = 0;
+  let descartada: boolean | undefined;
+  const conexion = {
+    async consultar() {
+      consultas += 1;
+      if (consultas === 2) throw new Error('acuse de desbloqueo perdido');
+      return { filas: [] };
+    },
+    async iniciar() {},
+    async confirmar() {},
+    async revertir() {},
+    liberar(descartar = false) { descartada = descartar; },
+  };
+  const pool = { adquirir: async () => conexion } as unknown as PoolSql;
+  const resultado = await new BloqueoProvisionPostgresql(pool).ejecutar(UID, async () => 'completada');
+
+  assert.equal(resultado, 'completada');
+  assert.equal(descartada, true);
 });
 
 test('la provisión activa cuenta pendiente después del claim y devuelve resultado sin UID', async () => {
@@ -258,13 +333,57 @@ test('la provisión rechaza UID vacío, vínculo profesional inactivo y bundle d
   assert.equal(claims, 0);
 });
 
+test('la provisión rechaza un UID ligado a dos instituciones sin alterar Firebase ni las cuentas', async () => {
+  let claims = 0;
+  let activaciones = 0;
+  const hospital = crearRepositorio({ porUid: async () => crearCuenta('PENDIENTE', 1, undefined, 'HOSPITAL_GENERAL') });
+  const odontologia = crearRepositorio({
+    porUid: async () => crearCuenta('PENDIENTE', 1, undefined, 'CLINICA_ODONTOLOGICA'),
+    activarPendiente: async () => { activaciones += 1; return true; },
+  });
+  const admin: AdministradorIdentidad = { async asegurarClaimInstitucion() { claims += 1; } };
+  const provisionar = crearProvision(hospital, admin, 'HOSPITAL_GENERAL', {
+    HOSPITAL_GENERAL: hospital,
+    CLINICA_ODONTOLOGICA: odontologia,
+  });
+
+  await assert.rejects(
+    () => provisionar.ejecutar({ institucion: 'HOSPITAL_GENERAL', uid: UID }),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SIN_PERMISO',
+  );
+  assert.equal(claims, 0);
+  assert.equal(activaciones, 0);
+});
+
 function crearProvision(
   repo: RepositorioCuenta,
   admin: AdministradorIdentidad,
-  institucion: BundleInstitucional['institucion'] = 'HOSPITAL_GENERAL',
+  institucion: Institucion = 'HOSPITAL_GENERAL',
+  repositorios: Partial<Record<Institucion, RepositorioCuenta>> = {},
 ): ProvisionarCuentaPendiente {
-  const bundle: BundleInstitucional = Object.freeze({ institucion, estadoPersistencia: 'DISPONIBLE', cuenta: repo });
-  return new ProvisionarCuentaPendiente(admin, (buscada) => buscada === institucion ? bundle : undefined);
+  const bundles = Object.freeze(INSTITUCIONES_CANONICAS.map((inst) => Object.freeze({
+    institucion: inst,
+    estadoPersistencia: 'DISPONIBLE' as const,
+    cuenta: repositorios[inst] ?? (inst === institucion ? repo : crearRepositorio({ porUid: async () => null })),
+  })));
+  const colas = new Map<string, Promise<void>>();
+  const bloqueo: BloqueoProvision = {
+    async ejecutar<T>(uid: string, trabajo: () => Promise<T>): Promise<T> {
+      const anterior = colas.get(uid) ?? Promise.resolve();
+      let liberar!: () => void;
+      const turno = new Promise<void>((resolve) => { liberar = resolve; });
+      const cola = anterior.then(() => turno);
+      colas.set(uid, cola);
+      await anterior;
+      try {
+        return await trabajo();
+      } finally {
+        liberar();
+        if (colas.get(uid) === cola) colas.delete(uid);
+      }
+    },
+  };
+  return new ProvisionarCuentaPendiente(admin, () => bundles, bloqueo);
 }
 
 function crearRepositorio(sobrescritura: Partial<RepositorioCuenta> = {}): RepositorioCuenta {
@@ -275,11 +394,16 @@ function crearRepositorio(sobrescritura: Partial<RepositorioCuenta> = {}): Repos
   };
 }
 
-function crearCuenta(estado: CuentaAutorizada['estado'], revision = 1, profesionalActivo?: boolean): CuentaAutorizada {
+function crearCuenta(
+  estado: CuentaAutorizada['estado'],
+  revision = 1,
+  profesionalActivo?: boolean,
+  institucion: Institucion = 'HOSPITAL_GENERAL',
+): CuentaAutorizada {
   return Object.freeze({
     id: ID_CUENTA as CuentaAutorizada['id'],
     uid: UID,
-    institucion: 'HOSPITAL_GENERAL',
+    institucion,
     estado,
     roles: Object.freeze(profesionalActivo === undefined ? ['SECRETARIA'] : ['MEDICO']) as readonly Rol[],
     permisos: Object.freeze([]),

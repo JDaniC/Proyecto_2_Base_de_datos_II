@@ -72,6 +72,7 @@ function crearRepositorioSql(
 async function enTransaccion<T>(pool: PoolSql, accion: (conexion: ConexionSql) => Promise<T>): Promise<T> {
   const conexion = await pool.adquirir();
   let iniciada = false;
+  let descartar = false;
   try {
     await conexion.iniciar();
     iniciada = true;
@@ -81,11 +82,11 @@ async function enTransaccion<T>(pool: PoolSql, accion: (conexion: ConexionSql) =
     return resultado;
   } catch (error: unknown) {
     if (iniciada) {
-      try { await conexion.revertir(); } catch { /* La conexión se libera igualmente. */ }
+      try { await conexion.revertir(); } catch { descartar = true; }
     }
     throw error;
   } finally {
-    conexion.liberar();
+    conexion.liberar(descartar);
   }
 }
 

@@ -3,8 +3,10 @@ import { applicationDefault, deleteApp, initializeApp, type App } from 'firebase
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import type { BundlesInstitucionales } from '../aplicacion/puertos/bundle-institucional.js';
 import type { AdministradorIdentidad } from '../aplicacion/puertos/administrador-identidad.js';
+import type { BloqueoProvision } from '../aplicacion/puertos/bloqueo-provision.js';
 import type { VerificadorIdentidad } from '../aplicacion/puertos/verificador-identidad.js';
 import { AdministradorCuentasFirebase } from '../adaptadores/salida/identidad/administrador-cuentas-firebase.js';
+import { BloqueoProvisionPostgresql } from '../adaptadores/salida/identidad/bloqueo-provision-postgresql.js';
 import { VerificadorIdentidadFirebase } from '../adaptadores/salida/identidad/verificador-identidad-firebase.js';
 import { crearPoolPostgresql } from '../adaptadores/salida/postgresql/crear-pool-postgresql.js';
 import { crearPoolMysql } from '../adaptadores/salida/mysql/crear-pool-mysql.js';
@@ -21,6 +23,7 @@ import { crearBundlesInstitucionales, type MapaRepositoriosInstitucion } from '.
 
 export interface DependenciasBackend {
   readonly bundles: BundlesInstitucionales;
+  readonly bloqueoProvision: BloqueoProvision;
   readonly verificadorIdentidad: VerificadorIdentidad;
   readonly administradorIdentidad: AdministradorIdentidad;
   readonly cerrar: () => Promise<void>;
@@ -66,6 +69,16 @@ export async function crearDependenciasBackend(
   if (hostEmuladorAuth && !hostEmuladorLocalValido(hostEmuladorAuth)) {
     throw new ErrorConfiguracionBackend(['FIREBASE_AUTH_EMULATOR_HOST']);
   }
+  const hostEmuladorFirestore = firestoreConfig.emulatorHost;
+  const usaEmuladorAuth = Boolean(hostEmuladorAuth);
+  const usaEmuladorFirestore = Boolean(hostEmuladorFirestore);
+  const usaProyectoDemo = projectIdAuth.startsWith('demo-');
+  if (usaEmuladorAuth !== usaEmuladorFirestore || usaEmuladorAuth !== usaProyectoDemo) {
+    throw new ErrorConfiguracionBackend([
+      'FIREBASE_AUTH_PROJECT_ID', 'FIREBASE_AUTH_EMULATOR_HOST',
+      'FIRESTORE_PROJECT_ID', 'FIRESTORE_EMULATOR_HOST',
+    ]);
+  }
 
   const cierres: Array<() => Promise<void>> = [];
   let hostAuthOriginal: string | undefined;
@@ -107,6 +120,7 @@ export async function crearDependenciasBackend(
 
     return Object.freeze({
       bundles: crearBundlesInstitucionales(INSTITUCIONES_CANONICAS, repositorios),
+      bloqueoProvision: new BloqueoProvisionPostgresql(postgresql),
       verificadorIdentidad: new VerificadorIdentidadFirebase(auth),
       administradorIdentidad: new AdministradorCuentasFirebase(auth),
       cerrar,

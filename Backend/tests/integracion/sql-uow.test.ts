@@ -10,6 +10,7 @@ import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import { crearPoolMysql } from '../../src/adaptadores/salida/mysql/crear-pool-mysql.js';
 import { crearRepositorioCuentaMysql } from '../../src/adaptadores/salida/mysql/repositorio-cuenta-mysql.js';
 import { crearPoolPostgresql } from '../../src/adaptadores/salida/postgresql/crear-pool-postgresql.js';
+import { BloqueoProvisionPostgresql } from '../../src/adaptadores/salida/identidad/bloqueo-provision-postgresql.js';
 import { crearRepositorioCuentaPostgresql } from '../../src/adaptadores/salida/postgresql/repositorio-cuenta-postgresql.js';
 import {
   crearRepositorioCuentaInstitucionalPostgresql,
@@ -32,6 +33,7 @@ test('PostgreSQL: mapper, atomicidad, repetición idempotente y pool recuperado'
   });
   t.after(async () => pool.cerrar());
   await verificarFlujos(pool, 'postgresql', 'HOSPITAL_GENERAL', crearRepositorioCuentaPostgresql, crearRepositorioCuentaInstitucionalPostgresql);
+  await verificarSerializacionProvisionPostgresql(pool);
 });
 
 test('MySQL: mapper, atomicidad, repetición idempotente y pool recuperado', {
@@ -268,6 +270,30 @@ async function verificarFlujos(
   );
 
   await verificarReintentoDeadlock(pool, dialecto, contexto);
+}
+
+async function verificarSerializacionProvisionPostgresql(pool: PoolSql): Promise<void> {
+  const bloqueo = new BloqueoProvisionPostgresql(pool);
+  let activas = 0;
+  let maximoConcurrente = 0;
+  const uidCompartido = `provision-${randomUUID()}`;
+  const trabajo = async () => {
+    activas += 1;
+    maximoConcurrente = Math.max(maximoConcurrente, activas);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    activas -= 1;
+  };
+
+  await Promise.all([
+    bloqueo.ejecutar(uidCompartido, trabajo),
+    bloqueo.ejecutar(uidCompartido, trabajo),
+  ]);
+  assert.equal(maximoConcurrente, 1, 'el mismo UID se serializa entre sesiones PostgreSQL independientes');
+
+  await assert.rejects(bloqueo.ejecutar(uidCompartido, async () => {
+    throw new Error('fallo sintético dentro de la provisión');
+  }));
+  await bloqueo.ejecutar(uidCompartido, async () => undefined);
 }
 
 async function verificarSignalTriggerMysql(
