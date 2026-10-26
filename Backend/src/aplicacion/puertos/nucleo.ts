@@ -107,6 +107,7 @@ export interface EventoAuditoria {
   readonly recursoId: UUID;
   readonly fechaHora: InstanteUTC;
   readonly correlacion: UUID;
+  readonly motivo?: string;
   // No incluye payload clínico; institución y actor se sellan desde el contexto verificado.
 }
 

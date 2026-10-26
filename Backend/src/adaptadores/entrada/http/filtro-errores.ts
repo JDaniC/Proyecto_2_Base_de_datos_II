@@ -10,16 +10,9 @@ import {
   ErrorValidacionSolicitud,
   type CampoInvalido,
 } from './errores-validacion.js';
+import { ErrorDominio, type CodigoErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 
-export type CodigoError =
-  | 'SOLICITUD_INVALIDA'
-  | 'NO_AUTENTICADO'
-  | 'SIN_PERMISO'
-  | 'RECURSO_NO_ENCONTRADO'
-  | 'ESTADO_INVALIDO'
-  | 'LIMITE_AGREGADO'
-  | 'PERSISTENCIA_NO_DISPONIBLE'
-  | 'ERROR_INTERNO';
+export type CodigoError = CodigoErrorDominio | 'NO_AUTENTICADO' | 'ERROR_INTERNO';
 
 interface RespuestaError {
   readonly error: {
@@ -84,6 +77,13 @@ export class FiltroErroresHttp implements ExceptionFilter {
       return;
     }
 
+    if (error instanceof ErrorDominio) {
+      const status = estadoHttpDominio(error.codigo);
+      const definido = ERRORES_HTTP[status] ?? ERRORES_HTTP[409]!;
+      responderErrorHttp(respuesta, status, error.codigo, definido.mensaje);
+      return;
+    }
+
     if (error instanceof HttpException) {
       const definido = ERRORES_HTTP[error.getStatus()];
       if (definido) {
@@ -103,5 +103,16 @@ export class FiltroErroresHttp implements ExceptionFilter {
       'ERROR_INTERNO',
       'Ocurrió un error interno.',
     );
+  }
+}
+
+function estadoHttpDominio(codigo: CodigoErrorDominio): number {
+  switch (codigo) {
+    case 'SOLICITUD_INVALIDA': return 400;
+    case 'SIN_PERMISO': return 403;
+    case 'RECURSO_NO_ENCONTRADO': return 404;
+    case 'LIMITE_AGREGADO': return 413;
+    case 'PERSISTENCIA_NO_DISPONIBLE': return 503;
+    default: return 409;
   }
 }
