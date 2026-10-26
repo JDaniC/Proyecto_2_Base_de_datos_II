@@ -13,7 +13,7 @@
     "build:test": "tsc -p tsconfig.test.json && node scripts/copiar-contrato.mjs dist-test/src",
     "lint": "npm run architecture:check && eslint src tests scripts eslint.config.mjs",
     "start": "npm run build && node --env-file-if-exists=.env dist/main.js",
-    "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js && node --test tests/contratos/*.test.mjs"
+    "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js dist-test/tests/unitarios/*.test.js && node --test tests/contratos/*.test.mjs"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

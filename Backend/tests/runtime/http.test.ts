@@ -195,6 +195,19 @@ describe('frontera HTTP y composición', () => {
     assert.equal(cuerpoMalformado.error.codigo, 'SOLICITUD_INVALIDA');
   });
 
+  it('rechaza claves JSON repetidas antes de validar o ejecutar el controlador', async () => {
+    const respuesta = await fetch(`${baseUrl}/api/v1/pruebas-http/eco`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"texto":"primero","\\u0074exto":"segundo"}',
+    });
+    const cuerpo = await respuesta.json() as { error: { codigo: string }; meta: { correlacion: string } };
+
+    assert.equal(respuesta.status, 400);
+    assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
+    assert.match(cuerpo.meta.correlacion, /^[\da-f-]{36}$/);
+  });
+
   it('traduce 404 al contrato y oculta el texto técnico del framework', async () => {
     const respuesta = await fetch(`${baseUrl}/api/v1/pruebas-http/no-encontrado`);
     const texto = await respuesta.text();

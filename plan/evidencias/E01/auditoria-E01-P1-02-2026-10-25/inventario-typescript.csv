@@ -1,0 +1,31 @@
+ID,Unidad,Tipo,Riesgo,Requisitos,Entradas,Efectos,Dependencias,Tests,Estado
+U01,ErrorDominio.constructor,método,MEDIUM,RF-020,código/mensaje/campos,crea error sin payload sensible,ninguna,casos de rechazo,PASS
+U02,solicitudInvalida,función,MEDIUM,RF-015/020,mensaje/campo,crea 400 de dominio,ErrorDominio,casos de rechazo,PASS
+U03,esUUID,función,MEDIUM,RNF-031,valor desconocido,ninguno,regex,UUID inválido/PASS
+U04,uuidPublico,función,MEDIUM,RNF-031,valor/campo,canoniza a minúscula,ErrorDominio,UUID válido e inválido,PASS
+U05,versionPositiva,función,MEDIUM,RNF-023,valor/campo,ninguno,Number seguro,fronteras,PASS
+U06,fechaCivil,función,MEDIUM,RNF-030,fecha/campo,ninguno,calendario gregoriano,fechas válidas e imposibles,PASS
+U07,instanteUtc,función,MEDIUM,RNF-030,fecha ISO,ninguno,fechaCivil/Date.parse,Z/hora/calendario,PASS
+U08,dinero,función,MEDIUM,RNF-026,centavos/moneda,devuelve valor inmutable,ErrorDominio,fracción/negativo/GTQ,PASS
+U09,sumarDinero,función,MEDIUM,RNF-026,dos montos,suma entera/valida overflow,dinero,suma normal/overflow,PASS
+U10,normalizarNombreBusqueda,función,MEDIUM,RF-015/nombre canónico,texto,clave solo para búsqueda,Unicode,acentos/espacios/límite,PASS
+U11,normalizarIdentificacion,función,HIGH,RF-015/RF-019,tipo/número,clave normalizada,Unicode,formatos/límites,PASS
+U12,serializarJCS,función,HIGH,RF-019,valor JSON,serialización canónica,JSON.stringify/recursión,vectores RFC/unicode/ciclo,PASS
+U13,parsearJSONSinClavesDuplicadas,función,HIGH,RF-019,texto JSON,devuelve valor o error,lector JSON/JSON.parse,repetición directa/escapada/nested,PASS
+U14-LectorJSON,constructor/terminado/espacios,clase y métodos,HIGH,RF-019,entrada/cursor,mantiene cursor de parser,ninguna,parser JCS,PASS
+U15-LectorJSON,valor/objeto/arreglo/cadena/literal,métodos,HIGH,RF-019,tokens JSON,detecta duplicados y delega validación final,parser local,parser JCS,PASS
+U16,serializar,función privada,HIGH,RF-019,primitivo/array/objeto,emite JCS y rechaza tipos no válidos,validarUnicode,6 casos JCS,PASS
+U17,detectarCiclo,función privada,MEDIUM,RF-019,referencia objeto,ninguno,Set de ancestros,objeto cíclico,PASS
+U18,validarUnicode,función privada,HIGH,RF-019,cadena/clave,ninguno,UTF-16,Unicode válido/sustituto aislado,PASS
+U19,validarPrescriptorClinico,función,HIGH,RNF-015; política clínica,institución/rol/vínculo,ninguno,catálogo de roles,4 instituciones/activo/inactivo,PASS
+U20,exigirCitaOdontologica,función,HIGH,DEC03; E01-P1-02,institución/cita,ninguno,UUID requerido,cita ausente/presente,PASS
+U21,validarPermiso,función,HIGH,RF-004/020,permiso vigente,ninguno,catálogo Permiso,con/sin permiso,PASS
+U22,validarAutorizacionPediatrica,función,HIGH,política pediátrica,institución/vínculo,ninguno,version y flags,activo/no activo/autoriza,PASS
+U23,validarResponsablePrincipalPediatrico,función,HIGH,política pediátrica,institución/vínculos,ninguno,esPrincipal,con/sin principal,PASS
+U24,validarOperacionHistorial,función,HIGH,RF-008; archivo,estado/operación,ninguno,estados/tipo de operación,nuevas/previas,PASS
+U25,validarArchivoHistorial,función,HIGH,RF-008; RNF-015,estado/permiso/causa/motivo,ninguno,límite 2000,activo/archivado/motivo,PASS
+U26,validarReactivacionHistorial,función,HIGH,DEC05; RF-008,institución/permiso/motivo/causa,ninguno,límite pediátrico/fallecimiento,bordes y rechazos,PASS
+U27,crearContextoAutenticado,función,HIGH,RF-002/003/004,identidad/cuenta/correlación,copia/congela arrays y datos,roles/permisos/UUID/Version,activo/mismatch/enum,PASS
+U28,prepararComandoEstable,función,HIGH,RF-019/RNF-023,key/caso/DTO/nombres IDs,calcula hash y congela comando/IDs,ports JCS/hash/reloj/IDs,stable/invalid/fixed IDs,PASS
+U29,crearAplicacionHttp,json.verify,frontera middleware,HIGH,RF-019,cuerpo JSON,rechaza duplicados antes de controlador,parser puro/http,HTTP local duplicado escaped,PASS
+P01-P30,Puertos de núcleo,tipo/contrato,HIGH,RNF-018/023/026/030/031,tipos de aplicación,ninguno en memoria; adaptador implementa,TypeScript puro,build/lint/PASS
