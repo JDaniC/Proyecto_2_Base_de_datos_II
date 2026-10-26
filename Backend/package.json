@@ -1,0 +1,40 @@
+{
+  "name": "proyecto-2-bases-datos-ii-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fundación HTTP hexagonal para Entrega II de Bases de Datos II.",
+  "engines": {
+    "node": ">=24.22.0 <25"
+  },
+  "scripts": {
+    "architecture:check": "node scripts/verificar-arquitectura.mjs",
+    "build": "tsc -p tsconfig.build.json && node scripts/copiar-contrato.mjs",
+    "build:test": "tsc -p tsconfig.test.json && node scripts/copiar-contrato.mjs dist-test/src",
+    "lint": "npm run architecture:check && eslint src tests scripts eslint.config.mjs",
+    "start": "npm run build && node --env-file-if-exists=.env dist/main.js",
+    "test": "npm run build:test && node --test dist-test/tests/runtime/*.test.js && node --test tests/contratos/*.test.mjs"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.2.0",
+    "@nestjs/core": "12.2.0",
+    "@nestjs/platform-express": "12.2.0",
+    "@nestjs/swagger": "12.0.4",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "express": "5.3.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0"
+  },
+  "overrides": {
+    "multer": "2.5.0"
+  }
+}

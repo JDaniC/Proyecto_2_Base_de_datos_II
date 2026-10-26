@@ -1,6 +1,6 @@
 # Contrato común v1 — E00-P1-03
 
-Este directorio define el contrato, **no un servidor operativo**. Las 26 operaciones están `NOT_IMPLEMENTED` hasta sus tareas E01–E03/E04. No hay persistencia UI→API acreditada por estas pruebas.
+Este directorio define el contrato canónico. El esqueleto ejecutable de E01-P1-01 añade el arranque HTTP, salud operativa y documentación, pero las operaciones clínicas siguen `NOT_IMPLEMENTED` hasta sus tareas E01–E03/E04. No hay persistencia UI→API acreditada por estas pruebas.
 
 - [`openapi.yaml`](openapi.yaml): fuente canónica OpenAPI 3.1.0; 22 rutas bajo `/api/v1`, DTO cerrados, políticas, respuestas y errores.
 - [`puertos-v1.ts`](puertos-v1.ts): firmas de diseño compilables, puras, sin framework/SDK/motor. E01-P1-02 las materializa con tipos de dominio; no importar este documento desde producción.
@@ -8,7 +8,34 @@ Este directorio define el contrato, **no un servidor operativo**. Las 26 operaci
 - [`fixtures/contrato-v1.json`](fixtures/contrato-v1.json): solicitudes/respuestas sintéticas y rechazos de esquema reutilizables por ambos integrantes.
 - [Contrato de flujos](../../plan/03_CONTRATOS_Y_FLUJOS.md): semántica que complementa los esquemas (concurrencia, idempotencia, permisos, paginación y extensiones).
 
-## Validación reproducible
+## Servidor base E01-P1-01
+
+Desde el directorio `Backend/`, con Node.js 24 LTS y npm:
+
+```sh
+npm ci
+cp .env.example .env
+npm run build
+npm run lint
+npm test
+npm start
+```
+
+La configuración requerida es `APP_ENV`, `HOST`, `PORT` y `INSTITUTIONS`. El ejemplo incluye las cuatro instituciones canónicas. Si falta una variable o la lista no contiene exactamente las cuatro instituciones reconocidas, el proceso termina antes de abrir el puerto e informa solo los nombres de las variables que se deben revisar. `.env` está excluido de Git; el ejemplo no incluye credenciales.
+
+El prefijo HTTP es `/api/v1`. `GET /api/v1/health/live` confirma que el proceso responde. `GET /api/v1/health/ready` devuelve 503 mientras no existan adaptadores de persistencia; el cuerpo declara ese estado sin valores de entorno. Swagger UI y el documento JSON/YAML se sirven en `/api/v1/docs`, `/api/v1/openapi.json` y `/api/v1/openapi.yaml`. Swagger usa el contrato canónico sin incorporar los controladores técnicos; las 22 rutas clínicas aún dicen `NOT_IMPLEMENTED`.
+
+Validación global de DTO rechaza propiedades desconocidas y errores inesperados usan el sobre común con una correlación UUID. El parser JSON limita el cuerpo a 262144 bytes UTF-8; supera ese límite responde 413 sin el mensaje del parser. Los casos de uso son clases TypeScript ordinarias construidas con providers `useFactory`; los cuatro bundles actuales son descriptores inmutables con persistencia `NO_CONFIGURADA`. El listado sirve para probar composición sin base; no se expone como endpoint clínico.
+
+El runtime y las dependencias se fijaron con versiones exactas verificadas el 25/10/2026: Node.js 24 LTS (mínimo 24.22.0), NestJS 12.2.0, `@nestjs/swagger` 12.0.4 y TypeScript 6.0.3; el resto también está fijado en `package.json` y `package-lock.json`. Fuentes primarias: [descargas y releases de Node.js](https://nodejs.org/en/download), [NestJS ValidationPipe](https://docs.nestjs.com/techniques/validation), [NestJS OpenAPI](https://docs.nestjs.com/openapi/introduction), [`@nestjs/core` en npm](https://www.npmjs.com/package/%40nestjs/core), [`@nestjs/swagger` en npm](https://www.npmjs.com/package/%40nestjs/swagger), [TypeScript en npm](https://www.npmjs.com/package/typescript).
+
+`Backend/.npmrc` desactiva scripts de instalación de dependencias; los paquetes de producción requeridos para este esqueleto son JavaScript/TypeScript y no necesitan compilación nativa. Esto evita ejecutar el postinstall de telemetría transitivo de `swagger-ui-dist` durante la instalación limpia.
+
+La regla `npm run architecture:check` analiza el AST de TypeScript de `src/dominio` y `src/aplicacion`; bloquea imports de HTTP, Nest, UI, SDK, drivers, configuración y acceso al proceso.
+
+La verificación de estas capacidades se ejecuta con `npm test`, sobre módulos HTTP de prueba y puertos locales efímeros. No conecta motores, Firebase ni datos reales. El arranque de esta tarea no implementa login, autorización clínica, persistencia ni operaciones de `openapi.yaml`.
+
+## Validación reproducible del contrato
 
 Desde la raíz, con Python 3.11 o posterior (verificado aquí con 3.14.7):
 
