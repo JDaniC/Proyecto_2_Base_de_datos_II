@@ -1,0 +1,309 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
+import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
+import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
+import { versionPositiva } from '../../src/dominio/compartido/version.js';
+import { crearUnidadDeTrabajoFirestore } from '../../src/adaptadores/salida/firestore/unidad-de-trabajo-firestore.js';
+import type { ClienteFirestore } from '../../src/adaptadores/salida/firestore/tipos-firestore.js';
+import {
+  crearContextoAutenticado,
+  type ContextoAutenticado,
+  type CuentaAutorizada,
+} from '../../src/aplicacion/puertos/contexto-autenticado.js';
+import type { ComandoEstable, LectorTransaccional, PlanDeEscrituras } from '../../src/aplicacion/puertos/nucleo.js';
+
+const UUID_ACTOR = uuidPublico('11111111-1111-4111-8111-111111111111');
+const UUID_COMANDO = uuidPublico('22222222-2222-4222-8222-222222222222');
+const UUID_CLAVE = uuidPublico('33333333-3333-4333-8333-333333333333');
+const UUID_RECURSO = uuidPublico('44444444-4444-4444-8444-444444444444');
+const UUID_CORRELACION = uuidPublico('55555555-5555-4555-8555-555555555555');
+
+function crearCuentaBase(sobreescritura: Partial<CuentaAutorizada> = {}): CuentaAutorizada {
+  return Object.freeze({
+    id: UUID_ACTOR,
+    uid: 'firebase_uid_pediatra',
+    institucion: 'CENTRO_MEDICO_PEDIATRICO' as const,
+    estado: 'ACTIVA' as const,
+    roles: Object.freeze(['PEDIATRA' as const]),
+    permisos: Object.freeze(['consultas.registrar' as const]),
+    version: versionPositiva(1),
+    profesional: Object.freeze({ id: UUID_ACTOR, activo: true }),
+    ...sobreescritura,
+  });
+}
+
+function crearContextoPrueba(sobreescritura: Partial<CuentaAutorizada> = {}): ContextoAutenticado {
+  const cuenta = crearCuentaBase(sobreescritura);
+  return crearContextoAutenticado(
+    {
+      uid: 'firebase_uid_pediatra',
+      institucion: 'CENTRO_MEDICO_PEDIATRICO',
+      emitidoEn: instanteUtc('2026-10-26T12:00:00Z'),
+    },
+    cuenta,
+    UUID_CORRELACION,
+  );
+}
+
+function crearComandoPrueba(hashEntrada = 'a'.repeat(64)): ComandoEstable {
+  return Object.freeze({
+    id: UUID_COMANDO,
+    claveIdempotencia: UUID_CLAVE,
+    caso: 'citas',
+    hashEntrada,
+    instante: instanteUtc('2026-10-26T12:00:00Z'),
+    ids: Object.freeze({ citaId: UUID_RECURSO }),
+  });
+}
+
+function crearMockFirestore(opciones: {
+  operacionExistente?: Record<string, unknown> | null;
+  fallarConcurrenciaVeces?: number;
+} = {}) {
+  const store = new Map<string, unknown>();
+  let intentos = 0;
+
+  const mockTransaction = {
+    get: async (ref: { path: string }) => {
+      if (ref.path.startsWith('operaciones/')) {
+        const existe = opciones.operacionExistente;
+        if (existe) {
+          return { exists: true, data: () => existe };
+        }
+        return { exists: false, data: () => undefined };
+      }
+      return { exists: false, data: () => undefined };
+    },
+    set: (ref: { path: string }, data: unknown) => {
+      store.set(ref.path, data);
+      return mockTransaction;
+    },
+    create: (ref: { path: string }, data: unknown) => {
+      if (store.has(ref.path)) {
+        const err = Object.assign(new Error('Document already exists'), { code: 6 });
+        throw err;
+      }
+      store.set(ref.path, data);
+      return mockTransaction;
+    },
+  };
+
+  const firestore = {
+    doc: (path: string) => ({ path }),
+    runTransaction: async <T>(fn: (t: typeof mockTransaction) => Promise<T>): Promise<T> => {
+      intentos += 1;
+      if (opciones.fallarConcurrenciaVeces && intentos <= opciones.fallarConcurrenciaVeces) {
+        const error = Object.assign(new Error('Concurrency conflict'), { code: 10 });
+        throw error;
+      }
+      return fn(mockTransaction);
+    },
+  };
+
+  const cliente: ClienteFirestore = Object.freeze({
+    firestore: firestore as unknown as import('firebase-admin/firestore').Firestore,
+    projectId: 'demo-test',
+    databaseId: '(default)',
+    cerrar: async () => {},
+  });
+
+  return { cliente, store, getIntentos: () => intentos };
+}
+
+test('UoW Firestore: ejecuta confirmación atómica y guarda revisiones, auditoría y operación', async () => {
+  const { cliente, store } = crearMockFirestore();
+  let cambiosAplicados = false;
+
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {
+      cambiosAplicados = true;
+    },
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+
+  const resultado = await uow.ejecutar(contexto, comando, async () => {
+    const plan: PlanDeEscrituras<unknown> = {
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [],
+      auditoria: [
+        {
+          id: uuidPublico('88888888-8888-4888-8888-888888888888'),
+          actorId: contexto.cuenta.id,
+          caso: 'citas',
+          recursoId: UUID_RECURSO,
+          fechaHora: comando.instante,
+          correlacion: UUID_CORRELACION,
+        },
+      ],
+      resultado: {
+        httpStatus: 201,
+        respuesta: { data: { id: UUID_RECURSO }, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    };
+    return plan;
+  });
+
+  assert.equal(resultado.httpStatus, 201);
+  assert.equal(cambiosAplicados, true);
+  assert.equal(store.size, 2); // 1 auditoria + 1 operacion
+});
+
+test('UoW Firestore: repite operación previa si hash y permisos coinciden', async () => {
+  const hashEntrada = 'b'.repeat(64);
+  const operacionPrevia = {
+    revision: 1,
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    usuario_id: UUID_ACTOR,
+    caso_uso: 'citas',
+    clave: UUID_CLAVE,
+    hash_entrada: hashEntrada,
+    recurso_tipo: 'citas',
+    recurso_id: UUID_RECURSO,
+    fecha_hora: new Date('2026-10-26T12:00:00Z'),
+    codigo_respuesta: 200,
+    estado: 'CONFIRMADA',
+    respuesta: {
+      data: { id: UUID_RECURSO },
+      meta: { correlacion: UUID_CORRELACION },
+    },
+  };
+
+  const { cliente } = crearMockFirestore({ operacionExistente: operacionPrevia });
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba(hashEntrada);
+
+  const respuesta = await uow.ejecutar(contexto, comando, async () => {
+    throw new Error('No debe planificar en repetición');
+  });
+
+  assert.equal(respuesta.httpStatus, 200);
+  assert.equal(respuesta.correlacionOriginal, UUID_CORRELACION);
+});
+
+test('UoW Firestore: rechaza repetición si hash de entrada no coincide (CLAVE_REUTILIZADA)', async () => {
+  const operacionPrevia = {
+    revision: 1,
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    usuario_id: UUID_ACTOR,
+    caso_uso: 'citas',
+    clave: UUID_CLAVE,
+    hash_entrada: 'b'.repeat(64),
+    codigo_respuesta: 200,
+    estado: 'CONFIRMADA',
+    respuesta: {
+      data: {},
+      meta: { correlacion: UUID_CORRELACION },
+    },
+  };
+
+  const { cliente } = crearMockFirestore({ operacionExistente: operacionPrevia });
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba('c'.repeat(64)); // Diferente hash!
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => { throw new Error('no'); }),
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'CLAVE_REUTILIZADA');
+      return true;
+    },
+  );
+});
+
+test('UoW Firestore: bloquea replay si cuenta perdió permisos o fue desactivada', async () => {
+  const hashEntrada = 'd'.repeat(64);
+  const operacionPrevia = {
+    revision: 1,
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    usuario_id: UUID_ACTOR,
+    caso_uso: 'citas',
+    clave: UUID_CLAVE,
+    hash_entrada: hashEntrada,
+    codigo_respuesta: 200,
+    estado: 'CONFIRMADA',
+    respuesta: {
+      data: {},
+      meta: { correlacion: UUID_CORRELACION },
+    },
+  };
+
+  const { cliente } = crearMockFirestore({ operacionExistente: operacionPrevia });
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    crearLector: () => ({
+      // Cuenta ahora está INACTIVA en la base de datos
+      cuentas: { porUid: async () => crearCuentaBase({ estado: 'INACTIVA' }) },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba(hashEntrada);
+
+  await assert.rejects(
+    () => uow.ejecutar(contexto, comando, async () => { throw new Error('no'); }),
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SIN_PERMISO');
+      return true;
+    },
+  );
+});
+
+test('UoW Firestore: reintenta ante conflicto concurrente (código 10 ABORTED)', async () => {
+  const { cliente, getIntentos } = crearMockFirestore({ fallarConcurrenciaVeces: 1 });
+  const uow = crearUnidadDeTrabajoFirestore({
+    cliente,
+    reintentosMaximos: 3,
+    esperarReintento: async () => {},
+    crearLector: () => ({
+      cuentas: { porUid: async () => crearCuentaBase() },
+    } as unknown as LectorTransaccional),
+    aplicarCambios: async () => {},
+  });
+
+  const contexto = crearContextoPrueba();
+  const comando = crearComandoPrueba();
+
+  const resultado = await uow.ejecutar(contexto, comando, async () => {
+    return {
+      tipo: 'CONFIRMAR',
+      cambios: [],
+      revisiones: [],
+      auditoria: [],
+      resultado: {
+        httpStatus: 200,
+        respuesta: { data: {}, meta: { correlacion: UUID_CORRELACION } },
+        correlacionOriginal: UUID_CORRELACION,
+      },
+    };
+  });
+
+  assert.equal(resultado.httpStatus, 200);
+  assert.equal(getIntentos(), 2); // 1 fallo + 1 éxito
+});
