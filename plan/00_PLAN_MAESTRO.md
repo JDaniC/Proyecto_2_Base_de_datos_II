@@ -29,6 +29,8 @@ Priorizar la siguiente tarea libre cuyas dependencias estén integradas. No espe
 | E06 | Candidato integrado verificado | [Seguridad, equivalencia/concurrencia, restauración](entregas/E06_integracion_auditoria/01_P1.md) | [Integración total UI, regresiones UI, auditoría final](entregas/E06_integracion_auditoria/02_P2.md) | Cero defectos críticos/altos abiertos; pruebas requeridas sin BLOCKED; sin simuladores en modo entrega |
 | E07 | Paquete académico reproducible y defendible | [Comparativo, instalación, ensayo](entregas/E07_entrega_final/01_P1.md) | [Retroalimentación/trazabilidad, manuales, checklist](entregas/E07_entrega_final/02_P2.md) | Ambos reproducen instalación y demo; todos los criterios académicos con evidencia |
 
+**Alcance del cierre E00:** sus seis tareas y la puerta de fase verifican la corrección PostgreSQL, cuatro entornos de ensayo y contrato v1. Los escenarios CA01–CA20 que necesitan servidor y adaptadores pueden seguir `NOT_IMPLEMENTED` hasta E01–E06; eso no bloquea E00 ni significa que la aplicación final esté lista o persistida.
+
 Cada fase contiene `01_P1.md` y `02_P2.md` en `entregas/`. Los dos índices de la cola compartida están en [lote P1](COLA_P1.md) y [lote P2](COLA_P2.md); ambos son ejecutables por cualquiera. El [tablero](06_TABLERO.md) es la fuente única de estados de tareas.
 
 ## 4. Orden y trabajo en paralelo
