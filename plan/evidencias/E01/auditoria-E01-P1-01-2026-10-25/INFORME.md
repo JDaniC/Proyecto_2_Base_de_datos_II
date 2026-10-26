@@ -63,4 +63,4 @@ Las 22 rutas del contrato describen operaciones de producto y continúan marcada
 | BLOCKED | 0 |
 | NOT_IMPLEMENTED fuera del alcance de esta tarea | Operaciones de producto, Auth y persistencia; conservar para sus IDs correspondientes |
 
-La revisión `revision-codex` del PR y el SHA de implementación están pendientes porque el PR #22 sigue en borrador y el commit de implementación todavía no se creó.
+El commit de implementación es `6545dbe`. `contrato-pr` pasó y Codex revisó ese SHA sin hallazgos. La integración sigue pendiente.
