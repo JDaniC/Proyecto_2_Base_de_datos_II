@@ -77,4 +77,4 @@ En `develop` (`8d77e1a`) se repitieron instalación limpia, compilación, lint, 
 - `Backend/scripts/validar_contrato.py` — PASS; 22 rutas, 26 operaciones, 99 esquemas, 230 fixtures y 117 métodos UI.
 - `Backend/docs/openapi.yaml` sin cambios; salida `Backend/dist-test/` ignorada.
 
-No hubo cambios de código entre el commit revisado `6545dbe` y la integración; la verificación se repitió sobre el árbol integrado.
+No hubo cambios de código entre el commit revisado `6545dbe` y la integración; la verificación se repitió sobre el árbol integrado. El cierre documental PR #23 también recibió `contrato-pr` y revisión de Codex sin hallazgos para `8f571b1`, y se integró en `develop` como `755a2b3`.
