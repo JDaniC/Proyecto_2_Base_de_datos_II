@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { crearContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { LectorTransaccional } from '../../src/aplicacion/puertos/nucleo.js';
 import type { PlanConfirmacion, ComandoEstable } from '../../src/aplicacion/puertos/nucleo.js';
+import type { AuditoriaActivacionCuenta } from '../../src/aplicacion/puertos/repositorio-cuenta.js';
 import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
@@ -82,24 +83,59 @@ async function verificarFlujos(
     );
     await pool.consultar('UPDATE usuario SET id_odontologo = ? WHERE auth_uid = ?', [profesional.filas[0]?.id_odontologo, uid]);
   }
-  const actor = await pool.consultar<{ id_usuario: number | string }>(
+  const objetivo = await pool.consultar<{ id_usuario: number | string }>(
     dialecto === 'postgresql' ? 'SELECT id_usuario FROM usuario WHERE auth_uid = $1' : 'SELECT id_usuario FROM usuario WHERE auth_uid = ?',
     [uid],
   );
-  const idActor = actor.filas[0]?.id_usuario;
-  assert.ok(idActor !== undefined);
+  const idObjetivo = objetivo.filas[0]?.id_usuario;
+  assert.ok(idObjetivo !== undefined);
   const rolPermisos = JSON.stringify(['pacientes.administrar']);
   if (dialecto === 'postgresql') {
     await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', $1::jsonb)", [rolPermisos]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
-      [idActor, rolNombre],
+      [idObjetivo, rolNombre],
     );
   } else {
     await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', ?)", [rolPermisos]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT ?, id_rol FROM rol WHERE nombre = ?',
-      [idActor, rolNombre],
+      [idObjetivo, rolNombre],
+    );
+  }
+
+  const uidAdministrador = `test-admin-${randomUUID()}`;
+  const idPublicoAdministrador = randomUUID();
+  const nombreAdministrador = `ADMIN_${randomUUID().slice(0, 8)}`;
+  if (dialecto === 'postgresql') {
+    await pool.consultar(
+      'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES ($1, $2, $3, $4, $5)',
+      [idPublicoAdministrador, nombreAdministrador, uidAdministrador, institucion, 'ACTIVO'],
+    );
+  } else {
+    await pool.consultar(
+      'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES (?, ?, ?, ?, ?)',
+      [idPublicoAdministrador, nombreAdministrador, uidAdministrador, institucion, 'ACTIVO'],
+    );
+  }
+  const administrador = await pool.consultar<{ id_usuario: number | string }>(
+    dialecto === 'postgresql' ? 'SELECT id_usuario FROM usuario WHERE auth_uid = $1' : 'SELECT id_usuario FROM usuario WHERE auth_uid = ?',
+    [uidAdministrador],
+  );
+  const idAdministrador = administrador.filas[0]?.id_usuario;
+  assert.ok(idAdministrador !== undefined);
+  const permisosAdministrador = JSON.stringify(['usuarios.administrar']);
+  if (dialecto === 'postgresql') {
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', $1::jsonb)", [permisosAdministrador]);
+    await pool.consultar(
+      'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
+      [idAdministrador, 'ADMIN_INSTITUCIONAL'],
+    );
+  } else {
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', ?)", [permisosAdministrador]);
+    await pool.consultar(
+      'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT ?, id_rol FROM rol WHERE nombre = ?',
+      [idAdministrador, 'ADMIN_INSTITUCIONAL'],
     );
   }
 
@@ -107,10 +143,21 @@ async function verificarFlujos(
   const cuentaPendiente = await cuentasAdmin.porUid(uid);
   assert.ok(cuentaPendiente);
   assert.equal(cuentaPendiente.estado, 'PENDIENTE');
-  assert.equal(await cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version), true);
+  const eventoProvision = {
+    actorUid: uidAdministrador,
+    evento: {
+      id: uuidPublico(randomUUID()),
+      actorId: uuidPublico(idPublicoAdministrador),
+      caso: 'CUENTA_PROVISIONADA',
+      recursoId: cuentaPendiente.id,
+      fechaHora: instanteUtc('2026-10-26T18:00:00Z'),
+      correlacion: uuidPublico(randomUUID()),
+    },
+  } satisfies AuditoriaActivacionCuenta;
+  assert.equal(await cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version, eventoProvision), true);
   const activacionesConcurrentes = await Promise.all([
-    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version),
-    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version),
+    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version, eventoProvision),
+    cuentasAdmin.activarPendiente?.(uid, cuentaPendiente.version, eventoProvision),
   ]);
   assert.deepEqual(activacionesConcurrentes, [true, true]);
   const cuenta = await cuentasAdmin.porUid(uid);
@@ -122,6 +169,42 @@ async function verificarFlujos(
   assert.deepEqual(cuenta.roles, ['MEDICO']);
   assert.deepEqual(cuenta.permisos, ['pacientes.administrar']);
   assert.deepEqual(cuenta.profesional, { id: cuenta.profesional?.id, activo: true });
+  const auditoriaPersistida = await pool.consultar<{ accion: unknown; registro_afectado: unknown; id_usuario: unknown }>(
+    dialecto === 'postgresql'
+      ? 'SELECT accion, registro_afectado, id_usuario FROM auditoria WHERE id_publico = $1'
+      : 'SELECT accion, registro_afectado, id_usuario FROM auditoria WHERE id_publico = ?',
+    [eventoProvision.evento.id],
+  );
+  assert.equal(auditoriaPersistida.filas.length, 1, 'la activación y su evento deben confirmarse una sola vez');
+  assert.equal(auditoriaPersistida.filas[0]?.accion, 'CUENTA_PROVISIONADA');
+  assert.equal(auditoriaPersistida.filas[0]?.registro_afectado, cuenta.id);
+  assert.equal(Number(auditoriaPersistida.filas[0]?.id_usuario), Number(idAdministrador));
+
+  const uidRollback = `test-audit-rollback-${randomUUID()}`;
+  const idRollback = randomUUID();
+  const nombreRollback = `ROLLBACK_${randomUUID().slice(0, 8)}`;
+  if (dialecto === 'postgresql') {
+    await pool.consultar(
+      'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES ($1, $2, $3, $4, $5)',
+      [idRollback, nombreRollback, uidRollback, institucion, 'PENDIENTE'],
+    );
+  } else {
+    await pool.consultar(
+      'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES (?, ?, ?, ?, ?)',
+      [idRollback, nombreRollback, uidRollback, institucion, 'PENDIENTE'],
+    );
+  }
+  const pendienteRollback = await cuentasAdmin.porUid(uidRollback);
+  assert.ok(pendienteRollback);
+  const eventoDuplicado: AuditoriaActivacionCuenta = {
+    actorUid: uidAdministrador,
+    evento: { ...eventoProvision.evento, recursoId: pendienteRollback.id },
+  };
+  await assert.rejects(() => cuentasAdmin.activarPendiente!(uidRollback, pendienteRollback.version, eventoDuplicado));
+  const siguePendiente = await cuentasAdmin.porUid(uidRollback);
+  assert.ok(siguePendiente);
+  assert.equal(siguePendiente.estado, 'PENDIENTE', 'si falla auditoría, el cambio de estado debe revertirse');
+  assert.equal(await contar(pool, dialecto, 'auditoria', 'id_publico', eventoProvision.evento.id), 1);
 
   const contexto = crearContextoAutenticado(
     { uid, institucion, emitidoEn: instanteUtc('2026-10-25T18:00:00Z') }, cuenta, uuidPublico(randomUUID()),
@@ -238,7 +321,7 @@ async function verificarFlujos(
         dialecto === 'postgresql'
           ? 'INSERT INTO usuario_rol (id_usuario, id_rol) VALUES ($1, $2)'
           : 'INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)',
-        [idActor, 987654321],
+        [idObjetivo, 987654321],
       );
     }).ejecutar(contexto, comandoFk, async () => planSinCambios),
     (error: unknown) => typeof error === 'object' && error !== null && 'codigo' in error && error.codigo === 'REFERENCIA_INCOMPATIBLE',
@@ -261,7 +344,7 @@ async function verificarFlujos(
   assert.equal(await contar(pool, dialecto, 'auditoria', 'id_publico', eventoId), 1);
   assert.equal(await contar(pool, dialecto, 'operaciones', 'clave', clavePermiso), 0);
 
-  if (dialecto === 'mysql') await verificarSignalTriggerMysql(pool, contexto, idActor);
+  if (dialecto === 'mysql') await verificarSignalTriggerMysql(pool, contexto, idObjetivo);
 
   const reutilizada = { ...comando, hashEntrada: 'f'.repeat(64) };
   await assert.rejects(

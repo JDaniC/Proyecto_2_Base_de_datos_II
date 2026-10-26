@@ -67,6 +67,26 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
     nombre: 'ANALISTA_LABORATORIO',
     permisos: ['muestras.administrar'],
   });
+  const rolAdminId = uuidPublico(randomUUID());
+  const uidAdmin = `test-admin-${randomUUID()}`;
+  const idAdmin = uuidPublico(randomUUID());
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.ROLES).insertOne({
+    _id: rolAdminId,
+    revision: 1,
+    nombre: 'ADMIN_INSTITUCIONAL',
+    permisos: ['usuarios.administrar'],
+  });
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.USUARIOS).insertOne({
+    _id: idAdmin,
+    revision: 1,
+    nombre_usuario: `admin_${randomUUID().slice(0, 8)}`,
+    auth_uid: uidAdmin,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'LABORATORIO_CLINICO',
+    rol_ids: [rolAdminId],
+    estado: 'ACTIVO',
+    activo: true,
+  });
 
   await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.USUARIOS).insertOne({
     _id: actorId,
@@ -120,15 +140,55 @@ test('MongoDB: replica set, atomicidad, rollback multi-documento y repetición i
   const pendiente = await repoInstitucional.porUid(uidPendiente);
   assert.ok(pendiente);
   assert.equal(pendiente.estado, 'PENDIENTE');
+  const auditoriaProvision = {
+    actorUid: uidAdmin,
+    evento: {
+      id: uuidPublico(randomUUID()),
+      actorId: idAdmin,
+      caso: 'CUENTA_PROVISIONADA',
+      recursoId: pendiente.id,
+      fechaHora: instanteUtc('2026-10-26T18:00:00Z'),
+      correlacion: uuidPublico(randomUUID()),
+    },
+  };
   const activaciones = await Promise.all([
-    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version),
-    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version),
+    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version, auditoriaProvision),
+    repoInstitucional.activarPendiente?.(uidPendiente, pendiente.version, auditoriaProvision),
   ]);
   assert.deepEqual(activaciones, [true, true]);
   const activa = await repoInstitucional.porUid(uidPendiente);
   assert.ok(activa);
   assert.equal(activa.estado, 'ACTIVA');
   assert.equal(activa.version, versionPositiva(2));
+  const auditMongo = await cliente.db.collection<{ _id: string; accion: string; documento_id: string; usuario_id: string }>(COLECCIONES_MONGODB.AUDITORIA)
+    .find({ _id: auditoriaProvision.evento.id }).toArray();
+  assert.equal(auditMongo.length, 1);
+  assert.equal(auditMongo[0]?.accion, 'CUENTA_PROVISIONADA');
+  assert.equal(auditMongo[0]?.documento_id, pendiente.id);
+  assert.equal(auditMongo[0]?.usuario_id, idAdmin);
+  const uidRollback = `test-lab-audit-rollback-${randomUUID()}`;
+  const idRollback = uuidPublico(randomUUID());
+  await cliente.db.collection<{ _id: string; [key: string]: unknown }>(COLECCIONES_MONGODB.USUARIOS).insertOne({
+    _id: idRollback,
+    revision: 1,
+    nombre_usuario: `rollback_${randomUUID().slice(0, 8)}`,
+    auth_uid: uidRollback,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'LABORATORIO_CLINICO',
+    rol_ids: [rolId],
+    estado: 'PENDIENTE',
+    activo: false,
+  });
+  const pendienteRollback = await repoInstitucional.porUid(uidRollback);
+  assert.ok(pendienteRollback);
+  await assert.rejects(() => repoInstitucional.activarPendiente!(uidRollback, pendienteRollback.version, {
+    ...auditoriaProvision,
+    evento: { ...auditoriaProvision.evento, recursoId: pendienteRollback.id },
+  }));
+  const rollbackConservado = await repoInstitucional.porUid(uidRollback);
+  assert.ok(rollbackConservado);
+  assert.equal(rollbackConservado.estado, 'PENDIENTE', 'el fallo al insertar auditoría revierte la activación');
+  assert.equal(await cliente.db.collection(COLECCIONES_MONGODB.AUDITORIA).countDocuments({ _id: auditoriaProvision.evento.id }), 1);
 
   const contexto = crearContextoAutenticado(
     {
@@ -371,9 +431,28 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   });
   t.after(async () => cliente.cerrar());
 
+  const inicializador = await import(new URL('../../../../Database/centro_pediatrico_firestore.mjs', import.meta.url).href) as {
+    readonly rolesIniciales: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly descripcion: string;
+      readonly permisos: readonly string[];
+    }[];
+    inicializarFirestore(firestore: typeof cliente.firestore): Promise<unknown>;
+  };
+  await inicializador.inicializarFirestore(cliente.firestore);
+  const rolAdmin = inicializador.rolesIniciales.find((rol) => rol.nombre === 'ADMINISTRADOR_INSTITUCIONAL');
+  assert.ok(rolAdmin);
+  const rolAdminSeed = await cliente.firestore.doc(`roles/${rolAdmin.id}`).get();
+  assert.equal(rolAdminSeed.get('nombre'), rolAdmin.nombre);
+  assert.deepEqual(rolAdminSeed.get('permisos'), rolAdmin.permisos);
+
   const uid = `test-ped-${randomUUID()}`;
   const actorId = uuidPublico(randomUUID());
   const rolId = uuidPublico(randomUUID());
+  const rolAdminId = rolAdmin.id;
+  const uidAdmin = `test-admin-${randomUUID()}`;
+  const idAdmin = uuidPublico(randomUUID());
   const pediatraId = uuidPublico(randomUUID());
 
   await cliente.firestore.doc(`pediatras/${pediatraId}`).set({
@@ -392,7 +471,6 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
     descripcion: 'Atención pediátrica autorizada',
     permisos: ['consultas.registrar', 'citas.administrar'],
   });
-
   await cliente.firestore.doc(`usuarios/${actorId}`).set({
     revision: 1,
     auth_uid: uid,
@@ -402,6 +480,15 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
     rol_ids: [rolId],
     pediatra_id: pediatraId,
     nombre_usuario: 'maria_lopez',
+  });
+  await cliente.firestore.doc(`usuarios/${idAdmin}`).set({
+    revision: 1,
+    auth_uid: uidAdmin,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    estado: 'ACTIVO',
+    rol_ids: [rolAdminId],
+    nombre_usuario: `admin_${randomUUID().slice(0, 8)}`,
   });
 
   const repoCuenta = crearRepositorioCuentaFirestore(cliente.firestore, cliente.firestore);
@@ -427,15 +514,53 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   const cuentaPendiente = await repoInstitucional.porUid(uidPendiente);
   assert.ok(cuentaPendiente);
   assert.equal(cuentaPendiente.estado, 'PENDIENTE');
+  const auditoriaProvision = {
+    actorUid: uidAdmin,
+    evento: {
+      id: uuidPublico(randomUUID()),
+      actorId: idAdmin,
+      caso: 'CUENTA_PROVISIONADA',
+      recursoId: cuentaPendiente.id,
+      fechaHora: instanteUtc('2026-10-26T18:00:00Z'),
+      correlacion: uuidPublico(randomUUID()),
+    },
+  };
   const activaciones = await Promise.all([
-    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version),
-    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version),
+    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version, auditoriaProvision),
+    repoInstitucional.activarPendiente?.(uidPendiente, cuentaPendiente.version, auditoriaProvision),
   ]);
   assert.deepEqual(activaciones, [true, true]);
   const cuentaActivada = await repoInstitucional.porUid(uidPendiente);
   assert.ok(cuentaActivada);
   assert.equal(cuentaActivada.estado, 'ACTIVA');
   assert.equal(cuentaActivada.version, versionPositiva(2));
+  const auditFirestore = await cliente.firestore.doc(`auditoria/${auditoriaProvision.evento.id}`).get();
+  assert.equal(auditFirestore.exists, true);
+  assert.equal(auditFirestore.get('accion'), 'CUENTA_PROVISIONADA');
+  assert.equal(auditFirestore.get('recurso_id'), cuentaPendiente.id);
+  assert.equal(auditFirestore.get('usuario_id'), idAdmin);
+  const uidRollback = `test-ped-audit-rollback-${randomUUID()}`;
+  const idRollback = uuidPublico(randomUUID());
+  await cliente.firestore.doc(`usuarios/${idRollback}`).set({
+    revision: 1,
+    auth_uid: uidRollback,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    estado: 'PENDIENTE',
+    rol_ids: [rolId],
+    pediatra_id: pediatraId,
+    nombre_usuario: `rollback_${randomUUID().slice(0, 8)}`,
+  });
+  const pendienteRollback = await repoInstitucional.porUid(uidRollback);
+  assert.ok(pendienteRollback);
+  await assert.rejects(() => repoInstitucional.activarPendiente!(uidRollback, pendienteRollback.version, {
+    ...auditoriaProvision,
+    evento: { ...auditoriaProvision.evento, recursoId: pendienteRollback.id },
+  }));
+  const rollbackConservado = await repoInstitucional.porUid(uidRollback);
+  assert.ok(rollbackConservado);
+  assert.equal(rollbackConservado.estado, 'PENDIENTE', 'el fallo al crear auditoría revierte la activación');
+  assert.equal((await cliente.firestore.collection('auditoria').get()).size, 1);
 
   const contexto = crearContextoAutenticado(
     {

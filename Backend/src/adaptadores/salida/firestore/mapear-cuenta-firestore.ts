@@ -22,6 +22,14 @@ export interface DocumentoPediatraFirestore {
   readonly estado: unknown;
 }
 
+const PERMISOS_APLICACION: readonly Permiso[] = [
+  'pacientes.administrar', 'historial.leer', 'historial.archivar', 'citas.administrar',
+  'consultas.registrar', 'diagnosticos.registrar', 'tratamientos.registrar', 'recetas.emitir',
+  'usuarios.administrar', 'auditoria.leer', 'resultados.analizar', 'resultados.validar',
+  'informes.emitir', 'cobros.administrar', 'inventario.administrar', 'ordenes.administrar',
+  'muestras.administrar',
+];
+
 export function mapearCuentaFirestore(
   usuarioId: string,
   usuario: DocumentoUsuarioFirestore,
@@ -43,11 +51,17 @@ export function mapearCuentaFirestore(
 
   for (const rol of roles) {
     if (typeof rol.nombre === 'string') {
-      rolesMapeados.push(rol.nombre as Rol);
+      // Compatibilidad con el nombre que ya siembra el inicializador pediátrico.
+      rolesMapeados.push(rol.nombre === 'ADMINISTRADOR_INSTITUCIONAL'
+        ? 'ADMIN_INSTITUCIONAL'
+        : rol.nombre as Rol);
     }
     if (Array.isArray(rol.permisos)) {
       for (const p of rol.permisos) {
-        if (typeof p === 'string') permisos.add(p as Permiso);
+        // Permisos aún no reconocidos por el contrato de aplicación no conceden autoridad.
+        if (typeof p === 'string' && PERMISOS_APLICACION.includes(p as Permiso)) {
+          permisos.add(p as Permiso);
+        }
       }
     }
   }
