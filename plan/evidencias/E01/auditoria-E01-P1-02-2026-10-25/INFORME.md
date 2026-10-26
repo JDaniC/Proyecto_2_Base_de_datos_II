@@ -6,7 +6,7 @@ Auditoría realizada sobre el árbol antes del commit de implementación.
 
 ## Resumen ejecutivo
 
-Se revisaron manualmente 35 unidades ejecutables de producción y 30 contratos de puerto/tipo, siguiendo el inventario TypeScript de la skill. Se trazaron los requisitos RF-015/019/020 y RNF-018/023/026/030/031, además del trabajo concreto de E01-P1-02. Resultado en esta tarea: **0 fallos abiertos, 0 divergencias de contrato y 0 unidades nuevas de producción sin requisito**. Los criterios propios de esta tarea pasan; la matriz amplia queda en 3 PASS y 10 PARCIAL, porque varios requisitos necesitan persistencia, integración o casos de uso HTTP aún no asignados a este ID.
+Se revisaron manualmente 35 unidades ejecutables de producción y 30 contratos de puerto/tipo, siguiendo el inventario TypeScript de la skill. Se trazaron RF-015/016/019/020 y RNF-018/023/026/030/031, además del trabajo concreto de E01-P1-02. Resultado en esta tarea: **0 fallos abiertos, 0 divergencias de contrato y 0 unidades nuevas de producción sin requisito**. Los criterios concretos de E01-P1-02 pasan. La matriz de trazabilidad contiene 3 PASS y 11 PARCIAL; la parcialidad restante requiere persistencia, integración, casos de uso HTTP o modelos clínicos de tareas posteriores.
 
 Se añadieron pruebas unitarias para clases válidas/inválidas, límites, transiciones institucionales y vectores de RFC 8785; también una prueba HTTP local confirma que claves JSON duplicadas (incluidos nombres con escape) se rechazan antes del controlador. `npm test` pasó 51 pruebas nuevas/runtime y 32 de contrato (83 en total). `npm run lint`, `npm run build` y la regla AST de dependencias pasaron.
 
@@ -20,6 +20,8 @@ Se añadieron pruebas unitarias para clases válidas/inválidas, límites, trans
 - `Backend/package.json`, configuración TypeScript, tests de runtime/contrato y `scripts/verificar-arquitectura.mjs` — comportamiento y límites actuales del backend.
 
 Se inventariaron manualmente las funciones TypeScript porque el helper de inventario de la skill es para Python. No se conectó ninguna base, servicio remoto ni credencial real. La prueba HTTP usó `127.0.0.1` con puerto efímero y datos sintéticos.
+
+Revalidación de cierre (25/10/2026): al contrastar otra vez la ficha de tarea con `plan/05_TRAZABILIDAD.md`, se detectó que el primer borrador de la matriz no mostraba RF-016. Se añadió con estado PARCIAL/NOT_IMPLEMENTED en esta capa, coherente con sus tareas de dominio clínico E03-P1-01 y de integración E06-P1-02. El inventario y el código no cambiaron; la matriz CSV se validó con 14 filas de 8 columnas: 3 PASS y 11 PARCIAL.
 
 ## Inventario y cobertura
 
@@ -38,7 +40,9 @@ El inventario completo está en [`inventario-typescript.csv`](inventario-typescr
 
 | Requisito | Fuente | Código | Prueba | Estado |
 |---|---|---|---|---|
-| RF-015: valida tipos, formato, rangos, unicidad, pertenencia y estado | `plan/05_TRAZABILIDAD.md`; E01-P1-02 | UUID, Version, FechaCivil, InstanteUTC, Dinero, normalizadores y políticas de dominio | `valores-compartidos.test.ts`; `politicas-institucionales.test.ts` | PARCIAL: unicidad/propiedad dependen de repositorios y UoW aún no implementados |
+| RF-015: tipos, formatos, rangos y valores | `plan/05_TRAZABILIDAD.md`; E01-P1-02 | UUID, Version, FechaCivil, InstanteUTC, Dinero y normalizadores | `valores-compartidos.test.ts` | PARCIAL: unicidad durable y validaciones de campos de cada recurso dependen de repositorios/casos de uso |
+| RF-015: estado y pertenencia institucional | `plan/05_TRAZABILIDAD.md`; E01-P1-02; contratos §7 | políticas institucionales y contexto autenticado | `politicas-institucionales.test.ts`; `contexto-autenticado.test.ts` | PARCIAL: políticas puras pasan; propiedad persistida y Auth real corresponden a tareas posteriores |
+| RF-016: relaciones entre recursos mantienen paciente, institución y flujo | `plan/05_TRAZABILIDAD.md`; ficha E01-P1-02; asignación de dominio en E03-P1-01/E06-P1-02 | Puertos tipan institución y UUID de recursos; no existe modelo clínico de relaciones en este ID | inspección de contratos y `npm run build`; prueba de relaciones NOT_IMPLEMENTED hasta E03-P1-01 | PARCIAL: no se acredita validación relacional sin entidades/casos de uso; resolver en E03-P1-01 y E06-P1-02 |
 | RF-019: la misma clave no duplica registros/movimientos | `plan/03_CONTRATOS_Y_FLUJOS.md` §7; E01-P1-02 | `serializarJCS`, `parsearJSONSinClavesDuplicadas`, `HashIntencion`, `ComandoEstable`, `prepararComandoEstable`, `RepositorioOperaciones` | `json-canonico.test.ts`; `preparar-comando-estable.test.ts`; `http.test.ts` | PARCIAL: intención preparada; replay durable requiere adaptador/UoW |
 | RF-020: errores identificables en operaciones de negocio | `plan/05_TRAZABILIDAD.md`; OpenAPI v1 | `ErrorDominio`, catálogo de códigos, límites sin valores sensibles | pruebas unitarias de rechazo; respuesta HTTP común para JSON malformado/duplicado | PARCIAL: falta mapear errores de casos de uso que todavía no están implementados |
 | RNF-018: plan define escrituras/datos/revisiones/auditoría juntos por comando | `plan/05_TRAZABILIDAD.md`; arquitectura §4 | `PlanConfirmacion`, `PlanDeEscrituras`, `UnidadDeTrabajo`, `LectorTransaccional` | build/lint de contratos de tipos | PARCIAL de extremo a extremo: no existe adaptador ni commit/rollback ejecutable en E01-P1-02 |
@@ -46,7 +50,9 @@ El inventario completo está en [`inventario-typescript.csv`](inventario-typescr
 | RNF-026: cálculos monetarios enteros sin coma flotante | `plan/05_TRAZABILIDAD.md`; OpenAPI `Dinero` | `Dinero`, `dinero`, `sumarDinero` | `valores-compartidos.test.ts` | PARCIAL: valor/operación cubiertos; redondeo de líneas sucede en futuros mappers |
 | RNF-030: fecha civil intacta, evento UTC y presentación local | `plan/05_TRAZABILIDAD.md`; contratos §7 | `FechaCivil`, `InstanteUTC`, `fechaCivil`, `instanteUtc` | `valores-compartidos.test.ts` | PARCIAL: tipos/formatos cubiertos; almacenamiento/presentación no existen aquí |
 | RNF-031: UUID público estable sin exponer claves nativas | `plan/05_TRAZABILIDAD.md`; OpenAPI `UUID` | tipo/validador UUID y firmas de repositorios por UUID | `valores-compartidos.test.ts`; compilación | PARCIAL: formato/firma cubiertos; estabilidad física se prueba en adaptadores |
-| Políticas por institución: cita dental, responsable principal/autorización pediátrica, médico laboratorio, archivo/reactivación | ficha E01-P1-02; contratos §7 | `politicas-institucionales.ts` | `politicas-institucionales.test.ts` | PASS |
+| Rol/profesional institucional y permiso vigente | ficha E01-P1-02; contratos §7 | `politicas-institucionales.ts`; `contexto-autenticado.ts` | `contexto-autenticado.test.ts`; `politicas-institucionales.test.ts` | PARCIAL: las reglas puras pasan; identidad y cuenta real pertenecen a E01-P1-03 |
+| Política: cita dental y principal/autorización pediátrica | ficha E01-P1-02; contratos §7 | `politicas-institucionales.ts` | `politicas-institucionales.test.ts` | PASS |
+| Política: archivo/reactivación y continuidad histórica | ficha E01-P1-02; contratos §7 | `politicas-institucionales.ts` | `politicas-institucionales.test.ts` | PASS |
 | Dependencias dominio/aplicación sin framework, SDK, motor ni entorno | arquitectura §1; RNF-035 | tipos/funciones puros y regla AST | `npm run lint` → `architecture:check` | PASS |
 
 ## Desviaciones detectadas
@@ -57,7 +63,7 @@ El inventario completo está en [`inventario-typescript.csv`](inventario-typescr
 | F-03 | `validarReactivacionHistorial` | Solo un historial archivado puede reactivarse | SUB_IMPLEMENTADO al revisar transiciones | La política validaba permiso/institución/causa, pero no recibía el estado actual | Se añadió el estado como precondición y un caso ARCHIVADO→aceptado / ACTIVO→rechazado. Cerrado. |
 | F-02 | `UnidadDeTrabajo` y `RepositorioOperaciones` | RNF-018/RF-019 requieren atomicidad/replay observables | NOT_IMPLEMENTED fuera del alcance ejecutable de este ID | Hay contratos tipados, pero ningún adaptador ni implementación de UoW en el repo | Se clasifica PARCIAL y queda asignado a E01-P2-01/P2-02; no se cuenta como PASS de persistencia. |
 
-No quedan desviaciones abiertas para los criterios de E01-P1-02. F-02 es un límite de fase declarado, no una implementación acreditada.
+No quedan desviaciones abiertas para los criterios concretos de E01-P1-02. RF-016 aparece como parcialidad explícita del requisito transversal y se reserva para los modelos clínicos/casos de uso asignados a E03-P1-01 y E06-P1-02. F-02 es un límite de fase declarado, no una implementación acreditada.
 
 ## Pruebas ejecutadas y resultado
 
@@ -82,7 +88,8 @@ Firebase token verification/revocation, lectura real de cuenta, guards HTTP y co
 
 | Categoría | Resultado | Evidencia |
 |---|---|---|
-| Criterios propios de E01-P1-02 | PASS | pruebas de límites, políticas, JCS, puertos compilables, HTTP y regla de arquitectura |
+| Criterios concretos de E01-P1-02 | PASS | pruebas de límites, políticas, JCS, puertos compilables, HTTP y regla de arquitectura |
+| RF-016: consistencia relacional clínica | PARCIAL / NOT_IMPLEMENTED en este ID | no hay entidades clínicas ni casos de uso; resolución asignada a E03-P1-01 y E06-P1-02 |
 | Parser JSON duplicado | PASS | prueba HTTP real local + cinco casos de parser puro |
 | Atomicidad/replay en motor | NOT_IMPLEMENTED | puertos definidos; implementación pertenece a P2-01/P2-02 |
 | Autenticación Firebase y cuenta real | NOT_IMPLEMENTED | tarea E01-P1-03; fuera del alcance de P1-02 |
