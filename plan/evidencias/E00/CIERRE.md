@@ -3,8 +3,9 @@
 - **Fase y objetivo:** E00 — contrato revisado, corrección PostgreSQL y cuatro entornos de ensayo comprobables.
 - **Base integrada verificada:** `origin/develop` `3196160`.
 - **Fecha y participantes:** 25/10/2026, America/Guatemala · JDaniC.
-- **Estado:** EN_REVISION.
-- **PR de cierre:** [#20 — Cerrar fase E00](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/20), borrador.
+- **Estado:** CERRADA.
+- **PR de cierre:** [#20 — Cerrar fase E00](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/20), integrado en `develop` como `566e75c`.
+- **Revisión automática:** `contrato-pr` success; `revision-codex` success sin hallazgos sobre `b80410f`.
 - **Auditoría funcional:** [informe, trazabilidad e inventarios](auditoria-cierre-2026-10-25/INFORME.md).
 
 ## Tareas y revisión
@@ -40,7 +41,7 @@ La demostración de E00 se realizó sobre la base integrada indicada, con entrad
 | Cuatro entornos de ensayo comprobables | 19 grupos locales; verificación Docker 12/12 | PASS | Firestore/Auth corrió en emulador local `demo-*`; ningún entorno compartido |
 | Contrato v1 revisado y mapa UI trazable | 99 esquemas, 230 fixtures, 117 métodos mapeados y ejemplo común | PASS | Validador offline; no significa API desplegada |
 | Arnés registra ausencia de implementación sin falsos PASS | 32 tests; resumen 45 `NOT_IMPLEMENTED`, 31 `NOT_APPLICABLE`, 0 PASS | PASS | El comportamiento esperado del arnés no convierte el backend faltante en bloqueo E00 |
-| Revisión automática del PR documental | PR #20 | EN_CURSO | Se mantiene en borrador hasta terminar la revisión local final |
+| Revisión automática e integración del PR documental | PR #20, merge `566e75c` | PASS | Codex terminó sin hallazgos sobre el SHA actual del PR |
 
 ## Entrega al siguiente responsable
 
@@ -51,4 +52,4 @@ La demostración de E00 se realizó sobre la base integrada indicada, con entrad
 
 ## Decisión
 
-Los criterios propios de E00 pasan. El PR #20 permanece EN_REVISION hasta la revisión automática de Codex y su integración. Después se sincronizarán en un PR documental separado el estado `HECHA` de E00, el commit de integración y la siguiente entrada disponible. La auditoría funcional y su corrección documental están en [INFORME.md](auditoria-cierre-2026-10-25/INFORME.md).
+Los criterios propios de E00 pasan. PR #20 recibió revisión automática limpia y quedó integrado en `develop` como `566e75c`. Esta actualización documental registra `HECHA` en el tablero y deja E01-P1-01 como siguiente tarea disponible. La auditoría funcional y su corrección documental están en [INFORME.md](auditoria-cierre-2026-10-25/INFORME.md).
