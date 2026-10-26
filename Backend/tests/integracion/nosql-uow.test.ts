@@ -434,7 +434,7 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   const uid = `test-ped-${randomUUID()}`;
   const actorId = uuidPublico(randomUUID());
   const rolId = uuidPublico(randomUUID());
-  const rolAdminId = uuidPublico(randomUUID());
+  const rolAdminId = '00000000-0000-4000-8000-000000000001';
   const uidAdmin = `test-admin-${randomUUID()}`;
   const idAdmin = uuidPublico(randomUUID());
   const pediatraId = uuidPublico(randomUUID());
@@ -457,9 +457,9 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   });
   await cliente.firestore.doc(`roles/${rolAdminId}`).set({
     revision: 1,
-    nombre: 'ADMIN_INSTITUCIONAL',
-    descripcion: 'Provisión local de cuentas',
-    permisos: ['usuarios.administrar'],
+    nombre: 'ADMINISTRADOR_INSTITUCIONAL',
+    descripcion: 'Administracion institucional, sin acceso clinico implicito.',
+    permisos: ['usuarios.administrar', 'catalogos.administrar', 'historial.archivar', 'auditoria.leer'],
   });
 
   await cliente.firestore.doc(`usuarios/${actorId}`).set({

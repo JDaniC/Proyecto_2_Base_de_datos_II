@@ -35,6 +35,8 @@ Desde `Backend/`, la herramienta `npm run provision:cuenta -- --confirmar <INSTI
 
 No pases el token como argumento ni lo imprimas. La herramienta no lo devuelve ni lo registra. Al activar una cuenta pendiente, su cambio de estado y el evento `CUENTA_PROVISIONADA` con actor y recurso quedan en una sola transacción local del motor institucional. Una repetición después de una activación confirmada no duplica el evento; si la escritura de auditoría falla, se revierte la activación y puede reanudarse con un administrador vigente.
 
+El mapper de Firestore interpreta el rol `ADMINISTRADOR_INSTITUCIONAL` que ya crea el inicializador como `ADMIN_INSTITUCIONAL`. Conserva solo permisos reconocidos por el contrato de aplicación; los documentos existentes no se reescriben y un permiso aún no soportado, como `catalogos.administrar`, no concede acceso.
+
 ## Adaptadores SQL E01-P2-01
 
 PostgreSQL (Hospital) y MySQL (Odontología) usan sus cuentas `hospital_app` y `clinica_app`. Las fábricas reciben una ruta `*_PASSWORD_FILE`; nunca registran ni incorporan el secreto a errores. Configuración SQL valida host/puerto y fija base y usuario de aplicación; rechaza cuentas administrativas. Pools: máximo 10 conexiones por defecto, timeout de conexión/consulta y espera acotada de 3 segundos con una cola máxima de 20 peticiones. `crearUnidadDeTrabajoSql` conserva una conexión hasta confirmar o revertir; lector, mapper institucional y aplicación de cambios reciben el mismo executor.

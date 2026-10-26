@@ -49,6 +49,8 @@ export class ProvisionarCuentaPendiente {
     if (typeof entrada.tokenAdministrador !== 'string' || entrada.tokenAdministrador.trim().length === 0) {
       throw new ErrorDominio('NO_AUTENTICADO', 'Se requiere una sesión administrativa vigente.');
     }
+    const idAuditoria = uuidPublico(entrada.auditoria.id, 'id_auditoria');
+    const fechaHoraAuditoria = instanteUtc(entrada.auditoria.fechaHora);
     const correlacion = uuidPublico(entrada.auditoria.correlacion, 'correlacion');
     const identidadActor = await this.verificadorIdentidad.verificar(entrada.tokenAdministrador.trim());
     if (identidadActor.institucion !== entrada.institucion) {
@@ -94,21 +96,22 @@ export class ProvisionarCuentaPendiente {
       }
       validarVinculoProfesional(cuenta);
 
+      const auditoria: AuditoriaActivacionCuenta = Object.freeze({
+        actorUid: identidadActor.uid,
+        evento: Object.freeze({
+          id: idAuditoria,
+          actorId: contextoActor.cuenta.id,
+          caso: 'CUENTA_PROVISIONADA',
+          recursoId: cuenta.id,
+          fechaHora: fechaHoraAuditoria,
+          correlacion,
+        }),
+      });
+
       // Auth y persistencia son sistemas separados: claim primero; si falla, el estado sigue PENDIENTE.
       await this.administradorIdentidad.asegurarClaimInstitucion(entrada.uid, entrada.institucion);
       if (cuenta.estado === 'PENDIENTE') {
         try {
-          const auditoria: AuditoriaActivacionCuenta = Object.freeze({
-            actorUid: identidadActor.uid,
-            evento: Object.freeze({
-              id: uuidPublico(entrada.auditoria.id, 'id_auditoria'),
-              actorId: contextoActor.cuenta.id,
-              caso: 'CUENTA_PROVISIONADA',
-              recursoId: cuenta.id,
-              fechaHora: instanteUtc(entrada.auditoria.fechaHora),
-              correlacion,
-            }),
-          });
           const activada = await bundle.cuenta.activarPendiente(entrada.uid, cuenta.version, auditoria);
           if (!activada) {
             throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La cuenta cambió durante la provisión; reanuda con el mismo UID.');

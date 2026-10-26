@@ -18,6 +18,7 @@ import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import type { PoolSql } from '../../src/adaptadores/salida/sql/tipos-sql.js';
 import { crearRepositorioCuentaInstitucionalPostgresql } from '../../src/adaptadores/salida/identidad/repositorios-cuenta-sql.js';
 import { BloqueoProvisionPostgresql } from '../../src/adaptadores/salida/identidad/bloqueo-provision-postgresql.js';
+import { mapearCuentaFirestore } from '../../src/adaptadores/salida/firestore/mapear-cuenta-firestore.js';
 
 const UID = 'firebase-test-user-001';
 const UID_ADMIN = 'firebase-admin-user-001';
@@ -364,6 +365,70 @@ test('la provisión exige ID token y cuenta local ADMIN_INSTITUCIONAL con usuari
   await assert.rejects(
     () => crearProvision(repo, administrador).ejecutar({ ...entrada, tokenAdministrador: ' ' }),
     (error: unknown) => error instanceof ErrorDominio && error.codigo === 'NO_AUTENTICADO',
+  );
+  assert.equal(claims, 0);
+  assert.equal(activaciones, 0);
+});
+
+test('la cuenta ADMINISTRADOR_INSTITUCIONAL sembrada para Pediatría puede provisionar con permisos reconocidos', async () => {
+  const actor = mapearCuentaFirestore(ID_ADMIN, {
+    auth_uid: UID_ADMIN,
+    proveedor_identidad: 'FIREBASE',
+    institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
+    estado: 'ACTIVO',
+    rol_ids: ['00000000-0000-4000-8000-000000000001'],
+    revision: 1,
+  }, [{
+    // Forma persistida por Database/centro_pediatrico_firestore.mjs: rolesIniciales[0].
+    nombre: 'ADMINISTRADOR_INSTITUCIONAL',
+    permisos: ['usuarios.administrar', 'catalogos.administrar', 'historial.archivar', 'auditoria.leer'],
+  }]);
+  assert.ok(actor);
+  assert.deepEqual(actor.roles, ['ADMIN_INSTITUCIONAL']);
+  assert.deepEqual(actor.permisos, ['usuarios.administrar', 'historial.archivar', 'auditoria.leer']);
+
+  let cuentaObjetivo = crearCuenta('PENDIENTE', 1, undefined, 'CENTRO_MEDICO_PEDIATRICO');
+  const repo = crearRepositorio({
+    async porUid(uid) { return uid === UID ? cuentaObjetivo : null; },
+    async activarPendiente(_uid, version, auditoria) {
+      assert.equal(version, versionPositiva(1));
+      assert.equal(auditoria.actorUid, UID_ADMIN);
+      assert.equal(auditoria.evento.actorId, ID_ADMIN);
+      cuentaObjetivo = Object.freeze({ ...cuentaObjetivo, estado: 'ACTIVA', version: versionPositiva(2) });
+      return true;
+    },
+  });
+  const administrador: AdministradorIdentidad = {
+    async asegurarClaimInstitucion(uid, institucion) {
+      assert.equal(uid, UID);
+      assert.equal(institucion, 'CENTRO_MEDICO_PEDIATRICO');
+    },
+  };
+
+  const resultado = await crearProvision(repo, administrador, 'CENTRO_MEDICO_PEDIATRICO', {}, actor)
+    .ejecutar(entradaProvision('CENTRO_MEDICO_PEDIATRICO'));
+
+  assert.equal(resultado.estado, 'ACTIVA');
+  assert.equal(resultado.institucion, 'CENTRO_MEDICO_PEDIATRICO');
+});
+
+test('la provisión valida el identificador y la fecha de auditoría antes de modificar Firebase', async () => {
+  let claims = 0;
+  let activaciones = 0;
+  const repo = crearRepositorio({ activarPendiente: async () => { activaciones += 1; return true; } });
+  const administrador: AdministradorIdentidad = {
+    async asegurarClaimInstitucion() { claims += 1; },
+  };
+  const provisionar = crearProvision(repo, administrador);
+  const entrada = entradaProvision('HOSPITAL_GENERAL');
+
+  await assert.rejects(
+    () => provisionar.ejecutar({ ...entrada, auditoria: { ...entrada.auditoria, id: 'id-invalido' } }),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SOLICITUD_INVALIDA',
+  );
+  await assert.rejects(
+    () => provisionar.ejecutar({ ...entrada, auditoria: { ...entrada.auditoria, fechaHora: 'fecha-invalida' } }),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'SOLICITUD_INVALIDA',
   );
   assert.equal(claims, 0);
   assert.equal(activaciones, 0);
