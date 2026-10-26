@@ -371,18 +371,23 @@ test('la provisión exige ID token y cuenta local ADMIN_INSTITUCIONAL con usuari
 });
 
 test('la cuenta ADMINISTRADOR_INSTITUCIONAL sembrada para Pediatría puede provisionar con permisos reconocidos', async () => {
+  const inicializador = await import(new URL('../../../../Database/centro_pediatrico_firestore.mjs', import.meta.url).href) as {
+    readonly rolesIniciales: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly permisos: readonly string[];
+    }[];
+  };
+  const rolAdmin = inicializador.rolesIniciales.find((rol) => rol.nombre === 'ADMINISTRADOR_INSTITUCIONAL');
+  assert.ok(rolAdmin);
   const actor = mapearCuentaFirestore(ID_ADMIN, {
     auth_uid: UID_ADMIN,
     proveedor_identidad: 'FIREBASE',
     institucion_id: 'CENTRO_MEDICO_PEDIATRICO',
     estado: 'ACTIVO',
-    rol_ids: ['00000000-0000-4000-8000-000000000001'],
+    rol_ids: [rolAdmin.id],
     revision: 1,
-  }, [{
-    // Forma persistida por Database/centro_pediatrico_firestore.mjs: rolesIniciales[0].
-    nombre: 'ADMINISTRADOR_INSTITUCIONAL',
-    permisos: ['usuarios.administrar', 'catalogos.administrar', 'historial.archivar', 'auditoria.leer'],
-  }]);
+  }, [rolAdmin]);
   assert.ok(actor);
   assert.deepEqual(actor.roles, ['ADMIN_INSTITUCIONAL']);
   assert.deepEqual(actor.permisos, ['usuarios.administrar', 'historial.archivar', 'auditoria.leer']);

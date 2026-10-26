@@ -431,10 +431,26 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
   });
   t.after(async () => cliente.cerrar());
 
+  const inicializador = await import(new URL('../../../../Database/centro_pediatrico_firestore.mjs', import.meta.url).href) as {
+    readonly rolesIniciales: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly descripcion: string;
+      readonly permisos: readonly string[];
+    }[];
+    inicializarFirestore(firestore: typeof cliente.firestore): Promise<unknown>;
+  };
+  await inicializador.inicializarFirestore(cliente.firestore);
+  const rolAdmin = inicializador.rolesIniciales.find((rol) => rol.nombre === 'ADMINISTRADOR_INSTITUCIONAL');
+  assert.ok(rolAdmin);
+  const rolAdminSeed = await cliente.firestore.doc(`roles/${rolAdmin.id}`).get();
+  assert.equal(rolAdminSeed.get('nombre'), rolAdmin.nombre);
+  assert.deepEqual(rolAdminSeed.get('permisos'), rolAdmin.permisos);
+
   const uid = `test-ped-${randomUUID()}`;
   const actorId = uuidPublico(randomUUID());
   const rolId = uuidPublico(randomUUID());
-  const rolAdminId = '00000000-0000-4000-8000-000000000001';
+  const rolAdminId = rolAdmin.id;
   const uidAdmin = `test-admin-${randomUUID()}`;
   const idAdmin = uuidPublico(randomUUID());
   const pediatraId = uuidPublico(randomUUID());
@@ -455,13 +471,6 @@ test('Firestore: emulador, validación Zod, atomicidad, rollback y límites', {
     descripcion: 'Atención pediátrica autorizada',
     permisos: ['consultas.registrar', 'citas.administrar'],
   });
-  await cliente.firestore.doc(`roles/${rolAdminId}`).set({
-    revision: 1,
-    nombre: 'ADMINISTRADOR_INSTITUCIONAL',
-    descripcion: 'Administracion institucional, sin acceso clinico implicito.',
-    permisos: ['usuarios.administrar', 'catalogos.administrar', 'historial.archivar', 'auditoria.leer'],
-  });
-
   await cliente.firestore.doc(`usuarios/${actorId}`).set({
     revision: 1,
     auth_uid: uid,
