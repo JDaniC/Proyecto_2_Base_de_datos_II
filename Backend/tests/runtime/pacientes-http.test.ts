@@ -28,10 +28,12 @@ describe('API HTTP de pacientes', () => {
   let app: INestApplication | undefined;
   let baseUrl = '';
   let repoPacientesHospital: RepositorioPacientesMemoria;
+  let repoPacientesPediatria: RepositorioPacientesMemoria;
 
   const tokenAdminHosp = 'token-admin-hospital';
   const tokenSecretariaHosp = 'token-secretaria-hospital';
   const tokenMedicoHosp = 'token-medico-hospital';
+  const tokenAdminPed = 'token-admin-pediatria';
 
   before(async () => {
     const adminHosp = CUENTAS_SINTETICAS.find(
@@ -43,15 +45,20 @@ describe('API HTTP de pacientes', () => {
     const medicoHosp = CUENTAS_SINTETICAS.find(
       (c) => c.institucion === 'HOSPITAL_GENERAL' && c.roles.includes('MEDICO'),
     )!;
+    const adminPed = CUENTAS_SINTETICAS.find(
+      (c) => c.institucion === 'CENTRO_MEDICO_PEDIATRICO' && c.roles.includes('ADMIN_INSTITUCIONAL'),
+    )!;
 
     const tokens: TokenSinteticoConfig[] = [
       { token: tokenAdminHosp, uid: adminHosp.uid, institucion: adminHosp.institucion },
       { token: tokenSecretariaHosp, uid: secreHosp.uid, institucion: secreHosp.institucion },
       { token: tokenMedicoHosp, uid: medicoHosp.uid, institucion: medicoHosp.institucion },
+      { token: tokenAdminPed, uid: adminPed.uid, institucion: adminPed.institucion },
     ];
     const verificador = new VerificadorIdentidadMemoria(tokens);
 
     repoPacientesHospital = new RepositorioPacientesMemoria();
+    repoPacientesPediatria = new RepositorioPacientesMemoria();
 
     const mapaRepos: MapaRepositoriosInstitucion = {
       HOSPITAL_GENERAL: {
@@ -61,6 +68,8 @@ describe('API HTTP de pacientes', () => {
       },
       CENTRO_MEDICO_PEDIATRICO: {
         cuenta: new RepositorioCuentaEnMemoria('CENTRO_MEDICO_PEDIATRICO', CUENTAS_SINTETICAS.filter((c) => c.institucion === 'CENTRO_MEDICO_PEDIATRICO')),
+        pacientes: repoPacientesPediatria,
+        uow: repoPacientesPediatria.crearUnidadDeTrabajo(),
       },
       CLINICA_ODONTOLOGICA: {
         cuenta: new RepositorioCuentaEnMemoria('CLINICA_ODONTOLOGICA', CUENTAS_SINTETICAS.filter((c) => c.institucion === 'CLINICA_ODONTOLOGICA')),
@@ -122,7 +131,7 @@ describe('API HTTP de pacientes', () => {
       assert.ok(cuerpo.meta.correlacion);
     });
 
-    it('devuelve el resultado previo reproducible ante repetición idempotente', async () => {
+    it('devuelve el resultado previo reproducible ante repetición idempotente conservando correlacionOriginal', async () => {
       const idempotencyKey = randomUUID();
       const payload = {
         nombres: 'Idem',
@@ -142,7 +151,7 @@ describe('API HTTP de pacientes', () => {
         body: JSON.stringify(payload),
       });
       assert.equal(res1.status, 201);
-      const cuerpo1 = await res1.json() as { data: PacienteDto };
+      const cuerpo1 = await res1.json() as { data: PacienteDto; meta: { correlacion: string } };
 
       const res2 = await fetch(`${baseUrl}/api/v1/pacientes`, {
         method: 'POST',
@@ -154,10 +163,98 @@ describe('API HTTP de pacientes', () => {
         body: JSON.stringify(payload),
       });
       assert.equal(res2.status, 201);
-      const cuerpo2 = await res2.json() as { data: PacienteDto };
+      const cuerpo2 = await res2.json() as { data: PacienteDto; meta: { correlacion: string } };
 
       assert.equal(cuerpo2.data.id, cuerpo1.data.id);
       assert.equal(cuerpo2.data.codigo_legible, cuerpo1.data.codigo_legible);
+      assert.equal(cuerpo2.meta.correlacion, cuerpo1.meta.correlacion);
+      assert.equal(res2.headers.get('x-correlation-id'), res1.headers.get('x-correlation-id'));
+      assert.equal(res2.headers.get('x-correlation-id'), cuerpo1.meta.correlacion);
+    });
+
+    it('registra paciente pediátrico con responsables y valida campos en snake_case', async () => {
+      const idempotencyKey = randomUUID();
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          nombres: 'Danielito',
+          apellidos: 'Morales',
+          fecha_nacimiento: '2020-04-10',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              nombres: 'Sofia',
+              apellidos: 'Morales',
+              telefono: '55512345',
+              parentesco: 'Madre',
+              es_principal: true,
+              autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '1099123450101' },
+            },
+          ],
+        }),
+      });
+
+      assert.equal(respuesta.status, 201);
+      const cuerpo = await respuesta.json() as {
+        data: {
+          id: string;
+          responsables: Array<{
+            responsable: { id: string; nombres: string; apellidos: string; nombre: string; telefono: string; version: number };
+            vinculo: { responsable_id: string; version_responsable: number; parentesco: string; es_principal: boolean; autoriza_atencion: boolean };
+            version_vinculo: number;
+          }>;
+        };
+        meta: { correlacion: string };
+      };
+      assert.ok(cuerpo.data.responsables);
+      assert.equal(cuerpo.data.responsables.length, 1);
+      const r = cuerpo.data.responsables[0]!;
+      assert.equal(r.responsable.nombres, 'Sofia');
+      assert.equal(r.responsable.nombre, 'Sofia Morales');
+      assert.equal(r.vinculo.parentesco, 'Madre');
+      assert.equal(r.vinculo.es_principal, true);
+      assert.equal(r.vinculo.autoriza_atencion, true);
+      assert.ok(r.vinculo.responsable_id);
+      assert.equal(r.version_vinculo, 1);
+    });
+
+    it('responde 400 si se envía grupo_sanguineo en institución pediátrica', async () => {
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Ped',
+          apellidos: 'Invalido',
+          fecha_nacimiento: '2021-01-01',
+          sexo: 'MASCULINO',
+          grupo_sanguineo: 'O+',
+          responsables: [
+            {
+              nombres: 'Tutor',
+              apellidos: 'Test',
+              telefono: '55511111',
+              parentesco: 'Padre',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        }),
+      });
+
+      assert.equal(respuesta.status, 400);
+      const cuerpo = await respuesta.json() as { error: { codigo: string; mensaje: string } };
+      assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
+      assert.equal(cuerpo.error.mensaje, 'La solicitud no es válida.');
     });
 
     it('responde 400 si falta la cabecera Idempotency-Key', async () => {

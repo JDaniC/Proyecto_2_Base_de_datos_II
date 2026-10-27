@@ -73,7 +73,7 @@ describe('casos de uso de pacientes en memoria', () => {
   describe('RegistrarPaciente', () => {
     it('registra un paciente hospitalario con código legible y campos obligatorios', async () => {
       const claveIdempotencia = uuidPublico(randomUUID());
-      const paciente = await registrarPaciente.ejecutar({
+      const resultado = await registrarPaciente.ejecutar({
         contexto: contextoHospital,
         bundle: bundleHospital,
         claveIdempotencia,
@@ -92,6 +92,7 @@ describe('casos de uso de pacientes en memoria', () => {
         },
       });
 
+      const paciente = resultado.respuesta;
       assert.ok(paciente.id);
       assert.match(paciente.codigo_legible, /^HOSP-[A-F0-9]{6}$/);
       assert.equal(paciente.nombres, 'Carlos Alberto');
@@ -105,7 +106,7 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(paciente.version, 1);
     });
 
-    it('reproduce durablemente el resultado ante clave de idempotencia repetida', async () => {
+    it('reproduce durablemente el resultado ante clave de idempotencia repetida conservando correlacionOriginal', async () => {
       const claveIdempotencia = uuidPublico(randomUUID());
       const entrada = {
         nombres: 'Luisa Fernanda',
@@ -122,16 +123,23 @@ describe('casos de uso de pacientes en memoria', () => {
         entrada,
       });
 
+      const contextoReintento = crearContextoAutenticado(
+        { uid: contextoHospital.cuenta.uid, institucion: contextoHospital.cuenta.institucion, emitidoEn: instanteUtc(new Date().toISOString()) },
+        contextoHospital.cuenta,
+        uuidPublico(randomUUID()),
+      );
+
       const segundo = await registrarPaciente.ejecutar({
-        contexto: contextoHospital,
+        contexto: contextoReintento,
         bundle: bundleHospital,
         claveIdempotencia,
         entrada,
       });
 
-      assert.equal(segundo.id, primero.id);
-      assert.equal(segundo.codigo_legible, primero.codigo_legible);
-      assert.equal(segundo.version, primero.version);
+      assert.equal(segundo.respuesta.id, primero.respuesta.id);
+      assert.equal(segundo.respuesta.codigo_legible, primero.respuesta.codigo_legible);
+      assert.equal(segundo.respuesta.version, primero.respuesta.version);
+      assert.equal(segundo.correlacionOriginal, primero.correlacionOriginal);
     });
 
     it('rechaza identificación duplicada', async () => {
@@ -257,6 +265,110 @@ describe('casos de uso de pacientes en memoria', () => {
         },
       );
     });
+
+    it('registra paciente pediátrico y persiste responsable en memoria con esquema canónico', async () => {
+      const resp = await registrarPaciente.ejecutar({
+        contexto: contextoPediatria,
+        bundle: bundlePediatria,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Mateo',
+          apellidos: 'Lopez',
+          fecha_nacimiento: '2021-08-14',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              nombres: 'Elena',
+              apellidos: 'Lopez',
+              telefono: '55522222',
+              parentesco: 'Madre',
+              es_principal: true,
+              autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '1234567890101' },
+            },
+          ],
+        },
+      });
+
+      const paciente = resp.respuesta;
+      assert.ok(paciente.id);
+      assert.equal(paciente.institucion, 'CENTRO_MEDICO_PEDIATRICO');
+      assert.ok(paciente.responsables);
+      assert.equal(paciente.responsables.length, 1);
+      const primero = paciente.responsables[0]!;
+      assert.equal(primero.responsable.nombres, 'Elena');
+      assert.equal(primero.responsable.apellidos, 'Lopez');
+      assert.equal(primero.responsable.nombre, 'Elena Lopez');
+      assert.equal(primero.responsable.telefono, '55522222');
+      assert.equal(primero.responsable.version, 1);
+      assert.equal(primero.vinculo.parentesco, 'Madre');
+      assert.equal(primero.vinculo.es_principal, true);
+      assert.equal(primero.vinculo.autoriza_atencion, true);
+      assert.equal(primero.version_vinculo, 1);
+
+      // Ahora registrar un segundo hijo referenciando al responsable existente por ID
+      const resp2 = await registrarPaciente.ejecutar({
+        contexto: contextoPediatria,
+        bundle: bundlePediatria,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Sofia',
+          apellidos: 'Lopez',
+          fecha_nacimiento: '2023-01-20',
+          sexo: 'FEMENINO',
+          responsables: [
+            {
+              responsable_id: primero.responsable.id,
+              version_responsable: primero.responsable.version,
+              parentesco: 'Madre',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        },
+      });
+
+      const paciente2 = resp2.respuesta;
+      assert.ok(paciente2.id);
+      assert.ok(paciente2.responsables);
+      assert.equal(paciente2.responsables.length, 1);
+      assert.equal(paciente2.responsables[0]!.responsable.id, primero.responsable.id);
+      assert.equal(paciente2.responsables[0]!.vinculo.responsable_id, primero.responsable.id);
+    });
+
+    it('rechaza grupo_sanguineo y contacto_emergencia en alta no hospitalaria', async () => {
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Test',
+              apellidos: 'Pediatrico',
+              fecha_nacimiento: '2022-01-01',
+              sexo: 'MASCULINO',
+              grupo_sanguineo: 'O+',
+              responsables: [
+                {
+                  nombres: 'Madre',
+                  apellidos: 'Test',
+                  telefono: '55511111',
+                  parentesco: 'Madre',
+                  es_principal: true,
+                  autoriza_atencion: true,
+                },
+              ],
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /HOSPITAL_GENERAL/);
+          return true;
+        },
+      );
+    });
   });
 
   describe('ActualizarPaciente', () => {
@@ -276,11 +388,11 @@ describe('casos de uso de pacientes en memoria', () => {
           identificacion: { tipo: 'CUI', numero: '5555123450101' },
         },
       });
-      pacienteId = creado.id as UUID;
+      pacienteId = creado.respuesta.id as UUID;
     });
 
     it('actualiza campos demográficos e incrementa versión con bloqueo optimista', async () => {
-      const actualizado = await actualizarPaciente.ejecutar({
+      const resActualizado = await actualizarPaciente.ejecutar({
         contexto: contextoHospital,
         bundle: bundleHospital,
         id: pacienteId,
@@ -292,6 +404,7 @@ describe('casos de uso de pacientes en memoria', () => {
         },
       });
 
+      const actualizado = resActualizado.respuesta;
       assert.equal(actualizado.id, pacienteId);
       assert.equal(actualizado.version, 2);
       assert.equal(actualizado.telefono, '55511111');
@@ -322,7 +435,7 @@ describe('casos de uso de pacientes en memoria', () => {
 
     it('libera reserva de identidad previa al retirar o cambiar documento', async () => {
       // Retirar identificación (null elimina campo opcional)
-      const actualizado = await actualizarPaciente.ejecutar({
+      const resActualizado = await actualizarPaciente.ejecutar({
         contexto: contextoHospital,
         bundle: bundleHospital,
         id: pacienteId,
@@ -332,6 +445,7 @@ describe('casos de uso de pacientes en memoria', () => {
           identificacion: null,
         },
       });
+      const actualizado = resActualizado.respuesta;
       assert.equal(actualizado.identificacion, undefined);
 
       // Ahora otro paciente puede registrarse con la identificación liberada
@@ -347,7 +461,51 @@ describe('casos de uso de pacientes en memoria', () => {
           identificacion: { tipo: 'CUI', numero: '5555123450101' },
         },
       });
-      assert.ok(nuevo.id);
+      assert.ok(nuevo.respuesta.id);
+    });
+
+    it('rechaza grupo_sanguineo en actualización de paciente no hospitalario', async () => {
+      const respPed = await registrarPaciente.ejecutar({
+        contexto: contextoPediatria,
+        bundle: bundlePediatria,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Nino',
+          apellidos: 'Pediatrico',
+          fecha_nacimiento: '2022-01-01',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              nombres: 'Tutor',
+              apellidos: 'Legal',
+              telefono: '55533333',
+              parentesco: 'Tutor',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        },
+      });
+
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            id: respPed.respuesta.id as UUID,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            cambios: {
+              version_esperada: 1,
+              grupo_sanguineo: 'A+',
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /HOSPITAL_GENERAL/);
+          return true;
+        },
+      );
     });
   });
 
@@ -367,7 +525,7 @@ describe('casos de uso de pacientes en memoria', () => {
           identificacion: { tipo: 'CUI', numero: '7777123450101' },
         },
       });
-      pacienteId = creado.id as UUID;
+      pacienteId = creado.respuesta.id as UUID;
     });
 
     it('obtiene paciente existente por UUID', async () => {

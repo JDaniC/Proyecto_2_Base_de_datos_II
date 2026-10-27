@@ -32,7 +32,7 @@ export interface VinculoResponsable {
 }
 
 export interface NuevoResponsable {
-  readonly documento: Identificacion;
+  readonly documento?: Identificacion;
   readonly nombres: string;
   readonly apellidos: string;
   readonly telefono: string;
@@ -49,7 +49,7 @@ export interface ResponsableDetalle {
   readonly apellidos: string;
   readonly nombre: string;
   readonly telefono: string;
-  readonly documento: Identificacion;
+  readonly documento?: Identificacion;
   readonly version: Version;
 }
 
@@ -141,6 +141,9 @@ export function validarFechaNacimiento(fecha: unknown, fechaLimiteCivil: string,
 
 export function validarGrupoSanguineo(institucion: Institucion, valor: unknown, campo = 'grupo_sanguineo'): string | undefined {
   if (valor === undefined || valor === null) return undefined;
+  if (institucion !== 'HOSPITAL_GENERAL') {
+    throw solicitudInvalida('El grupo sanguíneo solo aplica a HOSPITAL_GENERAL.', campo);
+  }
   if (typeof valor !== 'string') {
     throw solicitudInvalida('El grupo sanguíneo debe ser texto.', campo);
   }
@@ -151,8 +154,11 @@ export function validarGrupoSanguineo(institucion: Institucion, valor: unknown, 
   return recortado;
 }
 
-export function validarContactoEmergencia(valor: unknown, campo = 'contacto_emergencia'): ContactoEmergencia | undefined {
+export function validarContactoEmergencia(institucion: Institucion, valor: unknown, campo = 'contacto_emergencia'): ContactoEmergencia | undefined {
   if (valor === undefined || valor === null) return undefined;
+  if (institucion !== 'HOSPITAL_GENERAL') {
+    throw solicitudInvalida('El contacto de emergencia solo aplica a HOSPITAL_GENERAL.', campo);
+  }
   if (typeof valor !== 'object') {
     throw solicitudInvalida('El contacto de emergencia debe ser un objeto.', campo);
   }

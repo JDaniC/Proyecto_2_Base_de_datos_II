@@ -2,12 +2,35 @@ import type {
   Paciente,
   Identificacion,
   ContactoEmergencia,
-  ResponsablePaciente,
   ArchivoRegistrado,
   Sexo,
   EstadoPaciente,
 } from '../../../dominio/clinica/paciente.js';
 import type { Institucion } from '../../../dominio/compartido/institucion.js';
+
+export interface ResponsableDto {
+  readonly id: string;
+  readonly nombres: string;
+  readonly apellidos: string;
+  readonly nombre: string;
+  readonly telefono: string;
+  readonly documento?: Identificacion;
+  readonly version: number;
+}
+
+export interface VinculoResponsableDto {
+  readonly responsable_id: string;
+  readonly version_responsable: number;
+  readonly parentesco: string;
+  readonly es_principal: boolean;
+  readonly autoriza_atencion: boolean;
+}
+
+export interface ResponsablePacienteDto {
+  readonly responsable: ResponsableDto;
+  readonly vinculo: VinculoResponsableDto;
+  readonly version_vinculo: number;
+}
 
 export interface ResponsableAltaEntrada {
   readonly responsable_id?: string;
@@ -74,7 +97,7 @@ export interface PacienteDto {
   readonly estado: EstadoPaciente;
   readonly version: number;
   readonly fecha_registro: string;
-  readonly responsables?: readonly ResponsablePaciente[];
+  readonly responsables?: readonly ResponsablePacienteDto[];
   readonly baja?: ArchivoRegistrado;
 }
 
@@ -109,7 +132,33 @@ export function mapearPacienteDto(paciente: Paciente): PacienteDto {
     estado: paciente.estado,
     version: paciente.version,
     fecha_registro: paciente.fechaRegistro,
-    ...(paciente.responsables && paciente.responsables.length > 0 ? { responsables: paciente.responsables } : {}),
+    ...(paciente.responsables && paciente.responsables.length > 0
+      ? {
+          responsables: Object.freeze(
+            paciente.responsables.map((r) =>
+              Object.freeze({
+                responsable: Object.freeze({
+                  id: r.responsable.id,
+                  nombres: r.responsable.nombres,
+                  apellidos: r.responsable.apellidos,
+                  nombre: r.responsable.nombre ?? `${r.responsable.nombres} ${r.responsable.apellidos}`.trim(),
+                  telefono: r.responsable.telefono,
+                  ...(r.responsable.documento ? { documento: r.responsable.documento } : {}),
+                  version: r.responsable.version,
+                }),
+                vinculo: Object.freeze({
+                  responsable_id: r.vinculo.responsableId,
+                  version_responsable: r.vinculo.versionResponsable,
+                  parentesco: r.vinculo.parentesco,
+                  es_principal: r.vinculo.esPrincipal,
+                  autoriza_atencion: r.vinculo.autorizaAtencion,
+                }),
+                version_vinculo: r.versionVinculo,
+              }),
+            ),
+          ),
+        }
+      : {}),
     ...(paciente.baja ? { baja: paciente.baja } : {}),
   });
 }

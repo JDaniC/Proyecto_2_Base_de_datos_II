@@ -8,7 +8,9 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { RegistrarPaciente } from '../../../../aplicacion/casos-uso/pacientes/registrar-paciente.js';
 import { ActualizarPaciente } from '../../../../aplicacion/casos-uso/pacientes/actualizar-paciente.js';
 import { ConsultarPaciente } from '../../../../aplicacion/casos-uso/pacientes/consultar-paciente.js';
@@ -50,17 +52,23 @@ export class PacientesController {
     @Bundle() bundle: BundleInstitucional,
     @Headers('idempotency-key') idempotencyKey: string | undefined,
     @Body() body: AltaPacienteDto,
-  ): Promise<PacienteDto> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ data: PacienteDto; meta: { correlacion: string } }> {
     if (!idempotencyKey) {
       throw solicitudInvalida('La cabecera Idempotency-Key es requerida.', 'Idempotency-Key');
     }
     const clave = uuidPublico(idempotencyKey, 'Idempotency-Key');
-    return this.registrarPaciente.ejecutar({
+    const resultado = await this.registrarPaciente.ejecutar({
       contexto,
       bundle,
       claveIdempotencia: clave,
       entrada: body,
     });
+    res.setHeader('X-Correlation-ID', resultado.correlacionOriginal);
+    return {
+      data: resultado.respuesta,
+      meta: { correlacion: resultado.correlacionOriginal },
+    };
   }
 
   @Get()
@@ -111,7 +119,8 @@ export class PacientesController {
     @Param('id') id: string,
     @Headers('idempotency-key') idempotencyKey: string | undefined,
     @Body() body: CambioPacienteDto,
-  ): Promise<PacienteDto> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ data: PacienteDto; meta: { correlacion: string } }> {
     if (!idempotencyKey) {
       throw solicitudInvalida('La cabecera Idempotency-Key es requerida.', 'Idempotency-Key');
     }
@@ -125,12 +134,17 @@ export class PacientesController {
       throw solicitudInvalida('El cambio de paciente requiere al menos un campo para actualizar además de version_esperada.');
     }
 
-    return this.actualizarPaciente.ejecutar({
+    const resultado = await this.actualizarPaciente.ejecutar({
       contexto,
       bundle,
       id: pacienteId,
       claveIdempotencia: clave,
       cambios: body,
     });
+    res.setHeader('X-Correlation-ID', resultado.correlacionOriginal);
+    return {
+      data: resultado.respuesta,
+      meta: { correlacion: resultado.correlacionOriginal },
+    };
   }
 }

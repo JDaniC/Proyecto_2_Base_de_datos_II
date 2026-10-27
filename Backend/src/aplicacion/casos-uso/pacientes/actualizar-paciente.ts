@@ -17,7 +17,7 @@ import {
 import { validarPermiso } from '../../../dominio/clinica/politicas-institucionales.js';
 import type { ContextoAutenticado } from '../../puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../puertos/bundle-institucional.js';
-import type { CambioPlanificado, GeneradorIds, HashIntencion, Reloj } from '../../puertos/nucleo.js';
+import type { CambioPlanificado, GeneradorIds, HashIntencion, Reloj, ResultadoDurable } from '../../puertos/nucleo.js';
 import { prepararComandoEstable } from '../../servicios/preparar-comando-estable.js';
 import {
   type CambioPacienteEntrada,
@@ -40,7 +40,7 @@ export class ActualizarPaciente {
     readonly id: UUID;
     readonly claveIdempotencia: UUID;
     readonly cambios: CambioPacienteEntrada;
-  }): Promise<PacienteDto> {
+  }): Promise<ResultadoDurable<PacienteDto>> {
     const { contexto, bundle, cambios } = parametros;
     const pacienteId = uuidPublico(parametros.id, 'id');
     const claveIdempotencia = uuidPublico(parametros.claveIdempotencia, 'Idempotency-Key');
@@ -78,6 +78,15 @@ export class ActualizarPaciente {
       nuevaIdentificacion = validarIdentificacion(cambios.identificacion, 'identificacion');
     }
 
+    if (contexto.cuenta.institucion !== 'HOSPITAL_GENERAL') {
+      if (cambios.grupo_sanguineo !== undefined) {
+        throw solicitudInvalida('El campo grupo_sanguineo solo aplica a HOSPITAL_GENERAL.', 'grupo_sanguineo');
+      }
+      if (cambios.contacto_emergencia !== undefined) {
+        throw solicitudInvalida('El campo contacto_emergencia solo aplica a HOSPITAL_GENERAL.', 'contacto_emergencia');
+      }
+    }
+
     let grupoSanguineo: string | null | undefined = undefined;
     if (cambios.grupo_sanguineo === null) {
       grupoSanguineo = null;
@@ -89,7 +98,7 @@ export class ActualizarPaciente {
     if (cambios.contacto_emergencia === null) {
       contactoEmergencia = null;
     } else if (cambios.contacto_emergencia !== undefined) {
-      contactoEmergencia = validarContactoEmergencia(cambios.contacto_emergencia, 'contacto_emergencia');
+      contactoEmergencia = validarContactoEmergencia(contexto.cuenta.institucion, cambios.contacto_emergencia, 'contacto_emergencia');
     }
 
     const comando = await prepararComandoEstable(
@@ -277,6 +286,6 @@ export class ActualizarPaciente {
       },
     );
 
-    return resultadoDurable.respuesta;
+    return resultadoDurable;
   }
 }

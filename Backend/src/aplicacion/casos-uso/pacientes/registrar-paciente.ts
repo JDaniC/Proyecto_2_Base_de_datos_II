@@ -14,6 +14,9 @@ import {
   type Paciente,
   type Identificacion,
   type ContactoEmergencia,
+  type ResponsablePaciente,
+  type ResponsableDetalle,
+  type VinculoResponsable,
 } from '../../../dominio/clinica/paciente.js';
 import {
   validarPermiso,
@@ -21,7 +24,7 @@ import {
 } from '../../../dominio/clinica/politicas-institucionales.js';
 import type { ContextoAutenticado } from '../../puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../puertos/bundle-institucional.js';
-import type { GeneradorIds, HashIntencion, Reloj } from '../../puertos/nucleo.js';
+import type { CambioPlanificado, GeneradorIds, HashIntencion, Reloj, ResultadoDurable } from '../../puertos/nucleo.js';
 import { prepararComandoEstable } from '../../servicios/preparar-comando-estable.js';
 import {
   type AltaPacienteEntrada,
@@ -43,7 +46,7 @@ export class RegistrarPaciente {
     readonly bundle: BundleInstitucional;
     readonly claveIdempotencia: UUID;
     readonly entrada: AltaPacienteEntrada;
-  }): Promise<PacienteDto> {
+  }): Promise<ResultadoDurable<PacienteDto>> {
     const { contexto, bundle, entrada } = parametros;
     const claveIdempotencia = uuidPublico(parametros.claveIdempotencia, 'Idempotency-Key');
 
@@ -77,13 +80,24 @@ export class RegistrarPaciente {
         contexto.cuenta.institucion,
         entrada.responsables.map((r) => ({ esPrincipal: r.es_principal })),
       );
+    } else {
+      if (entrada.responsables !== undefined) {
+        throw solicitudInvalida('El campo responsables solo aplica a CENTRO_MEDICO_PEDIATRICO.', 'responsables');
+      }
     }
 
     let grupoSanguineo: string | undefined;
     let contactoEmergencia: ContactoEmergencia | undefined;
     if (contexto.cuenta.institucion === 'HOSPITAL_GENERAL') {
       grupoSanguineo = validarGrupoSanguineo(contexto.cuenta.institucion, entrada.grupo_sanguineo, 'grupo_sanguineo');
-      contactoEmergencia = validarContactoEmergencia(entrada.contacto_emergencia, 'contacto_emergencia');
+      contactoEmergencia = validarContactoEmergencia(contexto.cuenta.institucion, entrada.contacto_emergencia, 'contacto_emergencia');
+    } else {
+      if (entrada.grupo_sanguineo !== undefined) {
+        throw solicitudInvalida('El campo grupo_sanguineo solo aplica a HOSPITAL_GENERAL.', 'grupo_sanguineo');
+      }
+      if (entrada.contacto_emergencia !== undefined) {
+        throw solicitudInvalida('El campo contacto_emergencia solo aplica a HOSPITAL_GENERAL.', 'contacto_emergencia');
+      }
     }
 
     const comando = await prepararComandoEstable(
@@ -125,6 +139,86 @@ export class RegistrarPaciente {
         const pacienteId = comando.ids.paciente_id!;
         const codigoLegible = generarCodigoLegible(contexto.cuenta.institucion, pacienteId);
 
+        const listaResponsables: ResponsablePaciente[] = [];
+        const cambiosResponsables: CambioPlanificado[] = [];
+
+        if (contexto.cuenta.institucion === 'CENTRO_MEDICO_PEDIATRICO' && entrada.responsables) {
+          for (const resp of entrada.responsables) {
+            if (resp.responsable_id) {
+              const respId = uuidPublico(resp.responsable_id, 'responsable_id');
+              const existente = (await lector.responsables.porId(respId)) as ResponsableDetalle | null;
+              if (!existente) {
+                throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'El responsable especificado no existe.', ['responsables']);
+              }
+              if (resp.version_responsable !== undefined && existente.version !== resp.version_responsable) {
+                throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La versión del responsable no coincide.', ['responsables']);
+              }
+              const vinculo: VinculoResponsable = Object.freeze({
+                responsableId: existente.id,
+                versionResponsable: existente.version,
+                parentesco: resp.parentesco ?? 'TUTOR',
+                esPrincipal: Boolean(resp.es_principal),
+                autorizaAtencion: Boolean(resp.autoriza_atencion),
+              });
+              listaResponsables.push(Object.freeze({
+                responsable: existente,
+                vinculo,
+                versionVinculo: 1 as Version,
+              }));
+            } else {
+              const nuevoId = this.dependencias.ids.nuevo();
+              let docResp: Identificacion | undefined = undefined;
+              if (resp.documento) {
+                docResp = validarIdentificacion(resp.documento, 'responsables.documento');
+                const titularResp = await lector.identidades.titular(docResp);
+                if (titularResp !== null) {
+                  throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable ya existe en el sistema.', ['responsables']);
+                }
+              }
+              const nombresResp = (resp.nombres ?? '').trim();
+              const apellidosResp = (resp.apellidos ?? '').trim();
+              const telefonoResp = (resp.telefono ?? '').trim();
+              const detalle: ResponsableDetalle = Object.freeze({
+                id: nuevoId,
+                nombres: nombresResp,
+                apellidos: apellidosResp,
+                nombre: `${nombresResp} ${apellidosResp}`.trim(),
+                telefono: telefonoResp,
+                ...(docResp ? { documento: docResp } : {}),
+                version: 1 as Version,
+              });
+              const vinculo: VinculoResponsable = Object.freeze({
+                responsableId: nuevoId,
+                versionResponsable: 1 as Version,
+                parentesco: resp.parentesco ?? 'TUTOR',
+                esPrincipal: Boolean(resp.es_principal),
+                autorizaAtencion: Boolean(resp.autoriza_atencion),
+              });
+              listaResponsables.push(Object.freeze({
+                responsable: detalle,
+                vinculo,
+                versionVinculo: 1 as Version,
+              }));
+              cambiosResponsables.push({
+                agregado: 'responsables',
+                tipo: 'CREAR',
+                recursoId: nuevoId,
+                versionAnterior: null,
+                nuevoEstado: detalle,
+              });
+              if (docResp) {
+                cambiosResponsables.push({
+                  agregado: 'identidades',
+                  tipo: 'RESERVAR',
+                  recursoId: nuevoId,
+                  versionAnterior: null,
+                  nuevoEstado: { identificacion: docResp, titularId: nuevoId },
+                });
+              }
+            }
+          }
+        }
+
         const nuevoPaciente: Paciente = Object.freeze({
           id: pacienteId,
           codigoLegible,
@@ -142,6 +236,7 @@ export class RegistrarPaciente {
             ? { direccion: entrada.direccion.trim() } : {}),
           ...(grupoSanguineo ? { grupoSanguineo } : {}),
           ...(contactoEmergencia ? { contactoEmergencia } : {}),
+          ...(listaResponsables.length > 0 ? { responsables: Object.freeze(listaResponsables) } : {}),
           estado: 'ACTIVO',
           version: 1 as Version,
           fechaRegistro: comando.instante,
@@ -166,6 +261,7 @@ export class RegistrarPaciente {
               versionAnterior: null,
               nuevoEstado: { identificacion, titularId: nuevoPaciente.id },
             }] : []),
+            ...cambiosResponsables,
             {
               agregado: 'historiales',
               tipo: 'APERTURA',
@@ -198,6 +294,6 @@ export class RegistrarPaciente {
       },
     );
 
-    return resultadoDurable.respuesta;
+    return resultadoDurable;
   }
 }

@@ -25,11 +25,15 @@ export class RespuestaInterceptor implements NestInterceptor {
           'meta' in resultado
         ) {
           const r = resultado as { data: unknown; meta: Record<string, unknown> };
+          const correlacionEfectiva = typeof r.meta?.correlacion === 'string'
+            ? r.meta.correlacion
+            : correlacion;
+          respuesta.setHeader('X-Correlation-ID', correlacionEfectiva);
           return {
             data: r.data,
             meta: {
-              correlacion,
               ...r.meta,
+              correlacion: correlacionEfectiva,
             },
           };
         }

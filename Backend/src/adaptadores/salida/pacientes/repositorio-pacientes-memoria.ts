@@ -3,6 +3,7 @@ import { normalizarIdentificacion, normalizarNombreBusqueda } from '../../../dom
 import type {
   Paciente,
   Identificacion,
+  ResponsableDetalle,
 } from '../../../dominio/clinica/paciente.js';
 import type {
   CriteriosBusquedaPacientes,
@@ -23,6 +24,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   private readonly pacientes = new Map<string, Paciente>();
   private readonly identidades = new Map<string, string>();
   private readonly operaciones = new Map<string, OperacionIdempotente<unknown>>();
+  private readonly responsables = new Map<string, ResponsableDetalle>();
 
   constructor(semillas?: readonly Paciente[]) {
     if (semillas) {
@@ -102,6 +104,19 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         // ignorar fallo de formato en semilla
       }
     }
+    if (paciente.responsables) {
+      for (const r of paciente.responsables) {
+        this.responsables.set(r.responsable.id, r.responsable);
+        if (r.responsable.documento) {
+          try {
+            const clave = normalizarIdentificacion(r.responsable.documento.tipo, r.responsable.documento.numero);
+            this.identidades.set(clave, r.responsable.id);
+          } catch {
+            // ignorar fallo de formato en semilla
+          }
+        }
+      }
+    }
   }
 
   titularIdentidad(identificacion: Identificacion): UUID | null {
@@ -148,8 +163,12 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         titular: async (ident: Identificacion) => this.titularIdentidad(ident),
       },
       responsables: {
-        porId: async () => null,
-        porPaciente: async () => ({ elementos: [] }),
+        porId: async (id: UUID) => this.responsables.get(id) ?? null,
+        porPaciente: async (pacienteId: UUID) => {
+          const paciente = this.pacientes.get(pacienteId);
+          if (!paciente || !paciente.responsables) return { elementos: [] };
+          return { elementos: Object.freeze(paciente.responsables.map((r) => r.responsable)) };
+        },
       },
       profesionales: { porId: async () => null },
       historial: { eventos: async () => ({ elementos: [] }) },
@@ -178,6 +197,8 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         for (const cambio of plan.cambios) {
           if (cambio.agregado === 'pacientes') {
             this.pacientes.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
+          } else if (cambio.agregado === 'responsables') {
+            this.responsables.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
           } else if (cambio.agregado === 'identidades') {
             const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
             if (cambio.tipo === 'LIBERAR') {
