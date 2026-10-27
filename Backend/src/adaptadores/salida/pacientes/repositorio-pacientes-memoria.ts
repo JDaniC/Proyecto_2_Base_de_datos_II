@@ -266,9 +266,50 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
             return { elementos: [] };
           }
           const filtrados = this.eventosAuditoria.filter((ev) => ev.recursoId === pacienteId);
-          const limite = pagina?.limite ?? 50;
+          const orden = pagina?.orden ?? 'ASC';
+
+          const conIndice = filtrados.map((evento, indice) => ({ evento, indice }));
+          conIndice.sort((a, b) => {
+            const cmp = a.evento.fechaHora.localeCompare(b.evento.fechaHora);
+            if (cmp !== 0) return orden === 'DESC' ? -cmp : cmp;
+            return orden === 'DESC' ? b.indice - a.indice : a.indice - b.indice;
+          });
+          const ordenados = conIndice.map((item) => item.evento);
+
+          let inicio = 0;
+          if (pagina?.cursor) {
+            let cursorId = pagina.cursor;
+            try {
+              const raw = Buffer.from(pagina.cursor, 'base64url').toString('utf8');
+              const parseado = JSON.parse(raw) as unknown;
+              if (
+                typeof parseado === 'object' &&
+                parseado !== null &&
+                'id' in parseado &&
+                typeof (parseado as { id: string }).id === 'string'
+              ) {
+                cursorId = (parseado as { id: string }).id;
+              }
+            } catch {
+              // si no es base64url JSON, usar cursor como ID crudo
+            }
+
+            const idx = ordenados.findIndex((ev) => ev.id === cursorId);
+            if (idx !== -1) {
+              inicio = idx + 1;
+            }
+          }
+
+          const limite = Math.max(1, pagina?.limite ?? 50);
+          const elementos = ordenados.slice(inicio, inicio + limite);
+          const tieneMas = inicio + limite < ordenados.length;
+          const siguienteCursor = tieneMas && elementos.length > 0
+            ? Buffer.from(JSON.stringify({ id: elementos[elementos.length - 1]!.id, orden }), 'utf8').toString('base64url')
+            : undefined;
+
           return {
-            elementos: Object.freeze(filtrados.slice(0, limite)),
+            elementos: Object.freeze(elementos),
+            ...(siguienteCursor ? { siguienteCursor } : {}),
           };
         },
       },

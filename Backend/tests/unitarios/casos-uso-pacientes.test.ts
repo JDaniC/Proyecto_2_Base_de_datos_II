@@ -830,6 +830,78 @@ describe('casos de uso de pacientes en memoria', () => {
       const eventosInexistente = await lector.historial.eventos(uuidPublico(randomUUID()), filtro);
       assert.equal(eventosInexistente.elementos.length, 0);
     });
+
+    it('respeta orden ASC y DESC y devuelve cursor de continuación en historial de eventos', async () => {
+      let segundo = 1;
+      const relojSec = {
+        ahora: () => instanteUtc(new Date(Date.UTC(2026, 0, 1, 10, 0, segundo++)).toISOString()),
+      };
+      const registrarSec = new RegistrarPaciente({
+        ...dependenciasComandoPorDefecto,
+        reloj: relojSec,
+      });
+      const actualizarSec = new ActualizarPaciente({
+        ...dependenciasComandoPorDefecto,
+        reloj: relojSec,
+      });
+
+      const pacCreado = await registrarSec.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Historial',
+          apellidos: 'Paginacion',
+          fecha_nacimiento: '1980-01-01',
+          sexo: 'MASCULINO',
+        },
+      });
+      const histPacId = pacCreado.respuesta.id as UUID;
+
+      await actualizarSec.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        id: histPacId,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        cambios: {
+          version_esperada: 1,
+          telefono: '55512345',
+        },
+      });
+
+      const lector = (bundleHospital.pacientes as RepositorioPacientesMemoria).crearLector();
+
+      // Consulta en orden DESC con limite 1: debe devolver el evento más reciente (actualización) y siguienteCursor
+      const pag1Desc = await lector.historial.eventos(histPacId, { limite: 1, orden: 'DESC' });
+      assert.equal(pag1Desc.elementos.length, 1);
+      assert.equal((pag1Desc.elementos[0] as EventoAuditoria).caso, 'paciente.actualizar');
+      assert.ok(pag1Desc.siguienteCursor);
+
+      // Consulta página 2 con cursor en orden DESC: debe devolver el evento anterior (alta) y sin cursor
+      const pag2Desc = await lector.historial.eventos(histPacId, {
+        limite: 1,
+        orden: 'DESC',
+        cursor: pag1Desc.siguienteCursor,
+      });
+      assert.equal(pag2Desc.elementos.length, 1);
+      assert.equal((pag2Desc.elementos[0] as EventoAuditoria).caso, 'paciente.registrar');
+      assert.equal(pag2Desc.siguienteCursor, undefined);
+
+      // Consulta en orden ASC con limite 1: debe devolver el evento más antiguo (alta) y siguienteCursor
+      const pag1Asc = await lector.historial.eventos(histPacId, { limite: 1, orden: 'ASC' });
+      assert.equal(pag1Asc.elementos.length, 1);
+      assert.equal((pag1Asc.elementos[0] as EventoAuditoria).caso, 'paciente.registrar');
+      assert.ok(pag1Asc.siguienteCursor);
+
+      const pag2Asc = await lector.historial.eventos(histPacId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: pag1Asc.siguienteCursor,
+      });
+      assert.equal(pag2Asc.elementos.length, 1);
+      assert.equal((pag2Asc.elementos[0] as EventoAuditoria).caso, 'paciente.actualizar');
+      assert.equal(pag2Asc.siguienteCursor, undefined);
+    });
   });
 
   describe('ConsultarPaciente y BuscarPacientes', () => {
