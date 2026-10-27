@@ -1,0 +1,7 @@
+Requisito,Fuente,Unidad(es),Test(s),Estado
+F-E01-01 (Esqueleto backend y composición),E01-P1-01; RNF-001/004/007/029/035,Backend/src/{dominio aplicacion adaptadores composicion configuracion},Backend/tests/runtime/servidor.test.js; Backend/tests/runtime/frontera-http.test.js,CUBIERTO
+F-E01-02 (Modelos de dominio y tipos de error),E01-P1-02; RF-014; RNF-029/035,Backend/src/dominio/{clinica comun errores},Backend/tests/unitarios/dominio.test.js; Backend/tests/runtime/errores-http.test.js,CUBIERTO
+F-E01-03 (Autenticación y autorización por institución),E01-P1-03; RF-001/002/003/004/014,Backend/src/adaptadores/entrada/http/guardias; Backend/src/aplicacion/sesion,Backend/tests/runtime/autenticacion-autorizacion.test.js,CUBIERTO
+F-E01-04 (Conexiones y UoW SQL PostgreSQL/MySQL),E01-P2-01; RF-H01/C01; RNF-025,Backend/src/adaptadores/salida/{postgresql mysql}/uow,Backend/tests/runtime/uow-sql.test.js; Backend/tests/runtime/conexiones-sql.test.js,CUBIERTO
+F-E01-05 (Unidades de trabajo NoSQL MongoDB/Firestore),E01-P2-02; RF-L01/P01; RNF-025,Backend/src/adaptadores/salida/{mongodb firestore}/uow,Backend/tests/runtime/uow-mongodb.test.js; Backend/tests/runtime/uow-firestore.test.js,CUBIERTO
+F-E01-06 (Transporte HTTP y sesión Frontend),E01-P2-03; RF-001/002/003/004; RNF-034,Frontend/src/services/http/{HttpClient HttpAuthRepository},Frontend/src/test/http/*.test.ts; Frontend/src/test/http/ServiceFactoryAndUI.test.tsx,CUBIERTO
