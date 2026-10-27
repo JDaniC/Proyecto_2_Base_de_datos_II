@@ -23,6 +23,12 @@ export async function crearAplicacionHttp(
     bodyParser: false,
     logger: false,
   });
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Correlation-ID', 'Idempotency-Key', 'If-Match'],
+    exposedHeaders: ['X-Correlation-ID'],
+  });
   app.setGlobalPrefix(PREFIJO_API);
   app.use(middlewareCorrelacion);
   app.use(json({

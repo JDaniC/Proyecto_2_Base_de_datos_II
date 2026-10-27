@@ -27,6 +27,7 @@ import { MockHospitalizationRepository } from '../mocks/mockHospitalizationRepos
 import { MockHospitalExamRepository } from '../mocks/mockHospitalExamRepository';
 import { MockLaboratoryRepository } from '../mocks/mockLaboratoryRepository';
 import { MockVaccineRepository } from '../mocks/mockVaccineRepository';
+import { createHttpAuthRepository } from '../services/http';
 
 interface ServiceContainer {
   mode: ModoServiciosFrontend;
@@ -127,7 +128,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
     if (resolvedMode === 'api') {
       return {
         mode: 'api',
-        authRepository: requireApiAdapter(customAuthRepository, 'authRepository'),
+        authRepository: customAuthRepository || createHttpAuthRepository(),
         dashboardRepository: customDashboardRepository || {
           obtenerDashboard: async () => {
             throw createApiAdapterUnavailableError(
