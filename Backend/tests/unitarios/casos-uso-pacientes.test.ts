@@ -1018,6 +1018,54 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(res.data[0]!.id, pacienteId);
     });
 
+    it('exige coincidencia exacta de documento y prefijo de nombre descartando coincidencias infijas o parciales', async () => {
+      // Coincidencia exacta de documento funciona
+      const resDocExacto = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: '7777123450101' },
+      });
+      assert.equal(resDocExacto.data.length, 1);
+
+      // Subcadena parcial de documento no coincide
+      const resDocSubcadena = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: '12345' },
+      });
+      assert.equal(resDocSubcadena.data.length, 0);
+
+      // Búsqueda por prefijo de nombre o apellido funciona
+      const resPrefijo1 = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Gusta' },
+      });
+      assert.equal(resPrefijo1.data.length, 1);
+
+      const resPrefijo2 = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Adol' },
+      });
+      assert.equal(resPrefijo2.data.length, 1);
+
+      // Coincidencia infija (subcadena intermedia dentro de palabras) se descarta
+      const resInfijo1 = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'tavo' },
+      });
+      assert.equal(resInfijo1.data.length, 0);
+
+      const resInfijo2 = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'dolfo' },
+      });
+      assert.equal(resInfijo2.data.length, 0);
+    });
+
     it('mapea metadatos de baja al esquema canónico ArchivoRegistrado con fecha_hora y actor_id', () => {
       const pacienteArchivado: Paciente = {
         id: uuidPublico(randomUUID()),

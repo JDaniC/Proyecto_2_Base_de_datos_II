@@ -112,7 +112,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         return false;
       }
 
-      // 1. Coincidencia exacta o normalizada de documento
+      // 1. Coincidencia exacta de documento (sin búsqueda por subcadena)
       if (p.identificacion) {
         if (p.identificacion.numero.toUpperCase() === qRaw.toUpperCase()) return true;
         try {
@@ -120,16 +120,20 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
           if (normDoc === qNormCui || normDoc === qNormPasaporte) return true;
           const numLimpio = p.identificacion.numero.replace(/[\s-]+/gu, '').toUpperCase();
           const qLimpio = qRaw.replace(/[\s-]+/gu, '').toUpperCase();
-          if (qLimpio.length > 0 && (numLimpio === qLimpio || numLimpio.includes(qLimpio))) return true;
+          if (qLimpio.length > 0 && numLimpio === qLimpio) return true;
         } catch {
           // continuar
         }
       }
 
-      // 2. Coincidencia por nombre o apellido (sin límite de longitud en texto almacenado)
+      // 2. Coincidencia por prefijo normalizado de nombres o apellidos (sin coincidencia infija)
       if (qNormNombre && qNormNombre.length > 0) {
         const nombreCompleto = normalizarTextoBusqueda(`${p.nombres} ${p.apellidos}`);
-        if (nombreCompleto.includes(qNormNombre)) return true;
+        const palabras = nombreCompleto.split(' ').filter(Boolean);
+        for (let i = 0; i < palabras.length; i++) {
+          const restoNombre = palabras.slice(i).join(' ');
+          if (restoNombre.startsWith(qNormNombre)) return true;
+        }
       }
 
       return false;

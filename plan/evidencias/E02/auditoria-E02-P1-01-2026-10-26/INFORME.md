@@ -92,6 +92,8 @@
   - *Corrección:* `RepositorioPacientesMemoria.crearLector` filtra estrictamente por `ev.recursoId === pacienteId` y retorna arreglo vacío si el paciente no existe, preservando el aislamiento de historial por paciente. Se añadió prueba unitaria de aislamiento.
 - **D-21 (Resuelta - Codex P2):** La actualización por PATCH de `telefono`, `direccion` o `correo` con cadenas de solo espacios en blanco reemplazaba el valor existente por una cadena vacía en lugar de rechazar con 400.
   - *Corrección:* Validación estricta en `ActualizarPaciente`, `RegistrarPaciente`, `AltaPacienteDto` y `CambioPacienteDto` con `@Matches(/\S/)` y verificación de `trimmed.length > 0`, rechazando cadenas de solo espacios con `SOLICITUD_INVALIDA` (400) sin alterar el valor previo. Se añadieron pruebas unitarias y de runtime.
+- **D-22 (Resuelta - Codex P2):** En el adaptador en memoria de búsqueda de pacientes, las coincidencias por subcadena permitían encontrar pacientes cuyo documento o nombre solo contenía parcialmente el término (ej. `45678` encontraba CUI `1234567890123` y `arlo` encontraba `Carlos`), contradiciendo la especificación de búsqueda exacta por documento y prefijo normalizado de nombres establecida en `plan/entregas/E02_pacientes_historial/01_P1.md`.
+  - *Corrección:* `RepositorioPacientesMemoria.buscar` exige coincidencia exacta de documento (`numLimpio === qLimpio` o igualdad de documento normalizado) y búsqueda por prefijo de palabra normalizado (`restoNombre.startsWith(qNormNombre)`), descartando coincidencias infijas o parciales. Se incorporaron pruebas unitarias para validar la coincidencia exacta de documento y prefijo de nombre frente a subcadenas parciales e infijas.
 
 ## 4. Conclusión
 
