@@ -60,7 +60,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | Fase | Estado | Evidencia prevista |
 |---|---|---|
 | E00 | HECHA | [Cierre y demostración](evidencias/E00/CIERRE.md); PR #20 integrado (`566e75c`); Codex sin hallazgos |
-| E01 | PENDIENTE | `plan/evidencias/E01/CIERRE.md` por crear al ejecutar |
+| E01 | HECHA | [Cierre y demostración](evidencias/E01/CIERRE.md); PR #39 integrado; Codex sin hallazgos |
 | E02 | PENDIENTE | `plan/evidencias/E02/CIERRE.md` por crear al ejecutar |
 | E03 | PENDIENTE | `plan/evidencias/E03/CIERRE.md` por crear al ejecutar |
 | E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
