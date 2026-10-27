@@ -4,6 +4,10 @@ import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-
 import { CerrarSesion } from '../aplicacion/casos-uso/cuentas/cerrar-sesion.js';
 import { EstablecerSesion } from '../aplicacion/casos-uso/cuentas/establecer-sesion.js';
 import { ObtenerSesionActual } from '../aplicacion/casos-uso/cuentas/obtener-sesion-actual.js';
+import { RegistrarPaciente } from '../aplicacion/casos-uso/pacientes/registrar-paciente.js';
+import { ActualizarPaciente } from '../aplicacion/casos-uso/pacientes/actualizar-paciente.js';
+import { ConsultarPaciente } from '../aplicacion/casos-uso/pacientes/consultar-paciente.js';
+import { BuscarPacientes } from '../aplicacion/casos-uso/pacientes/buscar-pacientes.js';
 import type { BundlesInstitucionales } from '../aplicacion/puertos/bundle-institucional.js';
 import type { VerificadorIdentidad } from '../aplicacion/puertos/verificador-identidad.js';
 import { ErrorDominio } from '../dominio/compartido/error-dominio.js';
@@ -12,6 +16,8 @@ import { GuardiaAutenticacion } from '../adaptadores/entrada/http/guardia-autent
 import { GuardiaAutorizacion } from '../adaptadores/entrada/http/guardia-autorizacion.js';
 import { HealthController } from '../adaptadores/entrada/http/health.controller.js';
 import { SesionController } from '../adaptadores/entrada/http/sesion.controller.js';
+import { PacientesController } from '../adaptadores/entrada/http/pacientes/pacientes.controller.js';
+import { dependenciasComandoPorDefecto } from '../adaptadores/salida/sistema/servicios-sistema.js';
 import { crearBundlesInstitucionales } from './crear-bundles-institucionales.js';
 import {
   BUNDLES_INSTITUCIONALES,
@@ -41,7 +47,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [HealthController, SesionController] })
+@Module({ controllers: [HealthController, SesionController, PacientesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -83,6 +89,22 @@ export class AppModule {
           provide: CerrarSesion,
           useFactory: (verificador: VerificadorIdentidad) => new CerrarSesion(verificador),
           inject: [VERIFICADOR_IDENTIDAD],
+        },
+        {
+          provide: RegistrarPaciente,
+          useFactory: () => new RegistrarPaciente(dependenciasComandoPorDefecto),
+        },
+        {
+          provide: ActualizarPaciente,
+          useFactory: () => new ActualizarPaciente(dependenciasComandoPorDefecto),
+        },
+        {
+          provide: ConsultarPaciente,
+          useClass: ConsultarPaciente,
+        },
+        {
+          provide: BuscarPacientes,
+          useClass: BuscarPacientes,
         },
         {
           provide: CONSULTAR_BUNDLES_CONFIGURADOS,

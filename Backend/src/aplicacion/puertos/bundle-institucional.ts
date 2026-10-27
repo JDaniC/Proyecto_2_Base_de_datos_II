@@ -3,6 +3,8 @@ import type {
   RepositorioCuenta,
   RepositorioProfesional,
 } from './repositorio-cuenta.js';
+import type { RepositorioPacienteLectura } from './repositorio-paciente.js';
+import type { UnidadDeTrabajo } from './nucleo.js';
 
 export type EstadoPersistenciaInicial = 'NO_CONFIGURADA' | 'DISPONIBLE';
 
@@ -11,6 +13,8 @@ export interface BundleInstitucional {
   readonly estadoPersistencia: EstadoPersistenciaInicial;
   readonly cuenta?: RepositorioCuenta;
   readonly profesionales?: RepositorioProfesional;
+  readonly uow?: UnidadDeTrabajo;
+  readonly pacientes?: RepositorioPacienteLectura;
 }
 
 export type BundlesInstitucionales = readonly BundleInstitucional[];

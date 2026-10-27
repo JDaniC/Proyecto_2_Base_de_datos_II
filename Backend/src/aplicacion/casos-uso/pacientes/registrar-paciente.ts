@@ -1,0 +1,203 @@
+import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
+import { instanteUtc } from '../../../dominio/compartido/instante-utc.js';
+import { institucionAdmiteCapacidad } from '../../../dominio/compartido/autorizacion.js';
+import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
+import type { Version } from '../../../dominio/compartido/version.js';
+import {
+  validarTextoNoVacio,
+  validarSexo,
+  validarFechaNacimiento,
+  validarIdentificacion,
+  validarGrupoSanguineo,
+  validarContactoEmergencia,
+  generarCodigoLegible,
+  type Paciente,
+  type Identificacion,
+  type ContactoEmergencia,
+} from '../../../dominio/clinica/paciente.js';
+import {
+  validarPermiso,
+  validarResponsablePrincipalPediatrico,
+} from '../../../dominio/clinica/politicas-institucionales.js';
+import type { ContextoAutenticado } from '../../puertos/contexto-autenticado.js';
+import type { BundleInstitucional } from '../../puertos/bundle-institucional.js';
+import type { GeneradorIds, HashIntencion, Reloj } from '../../puertos/nucleo.js';
+import { prepararComandoEstable } from '../../servicios/preparar-comando-estable.js';
+import {
+  type AltaPacienteEntrada,
+  type PacienteDto,
+  mapearPacienteDto,
+} from './dtos-pacientes.js';
+
+export interface DependenciasRegistrarPaciente {
+  readonly reloj: Reloj;
+  readonly ids: GeneradorIds;
+  readonly hash: HashIntencion;
+}
+
+export class RegistrarPaciente {
+  constructor(private readonly dependencias: DependenciasRegistrarPaciente) {}
+
+  async ejecutar(parametros: {
+    readonly contexto: ContextoAutenticado;
+    readonly bundle: BundleInstitucional;
+    readonly claveIdempotencia: UUID;
+    readonly entrada: AltaPacienteEntrada;
+  }): Promise<PacienteDto> {
+    const { contexto, bundle, entrada } = parametros;
+    const claveIdempotencia = uuidPublico(parametros.claveIdempotencia, 'Idempotency-Key');
+
+    validarPermiso(contexto.cuenta, 'pacientes.administrar');
+    if (!institucionAdmiteCapacidad(contexto.cuenta.institucion, 'PACIENTES')) {
+      throw new ErrorDominio('SIN_PERMISO', 'La institución no admite gestión de pacientes.');
+    }
+
+    if (typeof entrada !== 'object' || entrada === null) {
+      throw solicitudInvalida('El cuerpo de alta de paciente es requerido.');
+    }
+
+    const nombres = validarTextoNoVacio(entrada.nombres, 'nombres', 80);
+    const apellidos = validarTextoNoVacio(entrada.apellidos, 'apellidos', 80);
+    const sexo = validarSexo(entrada.sexo, 'sexo');
+
+    const ahoraUtc = instanteUtc(this.dependencias.reloj.ahora());
+    const fechaLimiteCivil = ahoraUtc.slice(0, 10);
+    const fechaNacimiento = validarFechaNacimiento(entrada.fecha_nacimiento, fechaLimiteCivil, 'fecha_nacimiento');
+
+    let identificacion: Identificacion | undefined;
+    if (entrada.identificacion !== undefined && entrada.identificacion !== null) {
+      identificacion = validarIdentificacion(entrada.identificacion, 'identificacion');
+    }
+
+    if (contexto.cuenta.institucion === 'CENTRO_MEDICO_PEDIATRICO') {
+      if (!entrada.responsables || entrada.responsables.length === 0) {
+        throw solicitudInvalida('El alta pediátrica requiere al menos un responsable.', 'responsables');
+      }
+      validarResponsablePrincipalPediatrico(
+        contexto.cuenta.institucion,
+        entrada.responsables.map((r) => ({ esPrincipal: r.es_principal })),
+      );
+    }
+
+    let grupoSanguineo: string | undefined;
+    let contactoEmergencia: ContactoEmergencia | undefined;
+    if (contexto.cuenta.institucion === 'HOSPITAL_GENERAL') {
+      grupoSanguineo = validarGrupoSanguineo(contexto.cuenta.institucion, entrada.grupo_sanguineo, 'grupo_sanguineo');
+      contactoEmergencia = validarContactoEmergencia(entrada.contacto_emergencia, 'contacto_emergencia');
+    }
+
+    const comando = await prepararComandoEstable(
+      claveIdempotencia,
+      'paciente.registrar',
+      entrada,
+      ['paciente_id', 'historial_id'],
+      this.dependencias,
+    );
+
+    if (!bundle.uow) {
+      throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'El bundle no tiene unidad de trabajo configurada.');
+    }
+
+    const resultadoDurable = await bundle.uow.ejecutar<PacienteDto>(
+      contexto,
+      comando,
+      async (lector) => {
+        const operacionPrevia = await lector.operaciones.porClave<PacienteDto>(
+          contexto.cuenta.id,
+          'paciente.registrar',
+          comando.claveIdempotencia,
+        );
+        if (operacionPrevia !== null) {
+          return { tipo: 'REPETIR', operacion: operacionPrevia };
+        }
+
+        if (identificacion !== undefined) {
+          const titularExistente = await lector.identidades.titular(identificacion);
+          if (titularExistente !== null) {
+            throw new ErrorDominio(
+              'PACIENTE_DUPLICADO',
+              'La identificación ya está registrada para otro paciente.',
+              ['identificacion'],
+            );
+          }
+        }
+
+        const pacienteId = comando.ids.paciente_id!;
+        const codigoLegible = generarCodigoLegible(contexto.cuenta.institucion, pacienteId);
+
+        const nuevoPaciente: Paciente = Object.freeze({
+          id: pacienteId,
+          codigoLegible,
+          institucion: contexto.cuenta.institucion,
+          nombres,
+          apellidos,
+          fechaNacimiento,
+          sexo,
+          ...(identificacion ? { identificacion } : {}),
+          ...(typeof entrada.telefono === 'string' && entrada.telefono.trim().length > 0
+            ? { telefono: entrada.telefono.trim() } : {}),
+          ...(typeof entrada.correo === 'string' && entrada.correo.trim().length > 0
+            ? { correo: entrada.correo.trim().toLowerCase() } : {}),
+          ...(typeof entrada.direccion === 'string' && entrada.direccion.trim().length > 0
+            ? { direccion: entrada.direccion.trim() } : {}),
+          ...(grupoSanguineo ? { grupoSanguineo } : {}),
+          ...(contactoEmergencia ? { contactoEmergencia } : {}),
+          estado: 'ACTIVO',
+          version: 1 as Version,
+          fechaRegistro: comando.instante,
+        });
+
+        const dto = mapearPacienteDto(nuevoPaciente);
+
+        return {
+          tipo: 'CONFIRMAR',
+          cambios: [
+            {
+              agregado: 'pacientes',
+              tipo: 'CREAR',
+              recursoId: nuevoPaciente.id,
+              versionAnterior: null,
+              nuevoEstado: nuevoPaciente,
+            },
+            ...(identificacion ? [{
+              agregado: 'identidades',
+              tipo: 'RESERVAR',
+              recursoId: nuevoPaciente.id,
+              versionAnterior: null,
+              nuevoEstado: { identificacion, titularId: nuevoPaciente.id },
+            }] : []),
+            {
+              agregado: 'historiales',
+              tipo: 'APERTURA',
+              recursoId: comando.ids.historial_id!,
+              versionAnterior: null,
+              nuevoEstado: {
+                pacienteId: nuevoPaciente.id,
+                estado: 'ACTIVO',
+                fechaApertura: comando.instante,
+              },
+            },
+          ],
+          revisiones: [],
+          auditoria: [
+            {
+              id: this.dependencias.ids.nuevo(),
+              actorId: contexto.cuenta.id,
+              caso: 'paciente.registrar',
+              recursoId: nuevoPaciente.id,
+              fechaHora: comando.instante,
+              correlacion: contexto.correlacion,
+            },
+          ],
+          resultado: {
+            httpStatus: 201,
+            respuesta: dto,
+            correlacionOriginal: contexto.correlacion,
+          },
+        };
+      },
+    );
+
+    return resultadoDurable.respuesta;
+  }
+}

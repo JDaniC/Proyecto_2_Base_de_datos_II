@@ -17,7 +17,24 @@ export class RespuestaInterceptor implements NestInterceptor {
     respuesta.setHeader('X-Correlation-ID', correlacion);
 
     return siguiente.handle().pipe(
-      map((data: unknown) => ({ data, meta: { correlacion } })),
+      map((resultado: unknown) => {
+        if (
+          resultado !== null &&
+          typeof resultado === 'object' &&
+          'data' in resultado &&
+          'meta' in resultado
+        ) {
+          const r = resultado as { data: unknown; meta: Record<string, unknown> };
+          return {
+            data: r.data,
+            meta: {
+              correlacion,
+              ...r.meta,
+            },
+          };
+        }
+        return { data: resultado, meta: { correlacion } };
+      }),
     );
   }
 }
