@@ -32,11 +32,14 @@ describe('ServiceFactory y Flujos de Interfaz en Modo API (E01-P2-03)', () => {
     expect(services.authRepository).toBeDefined();
 
     await expect(
-      services.patientRepository.buscar('HOSPITAL_GENERAL', { termino: 'García' })
+      services.patientRepository.buscar('HOSPITAL_GENERAL', { q: 'García' })
     ).rejects.toThrowError(/503 PERSISTENCIA_NO_DISPONIBLE: Modo API activo sin adaptador HTTP configurado para patientRepository\.buscar/);
 
     await expect(
-      services.appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA', { fecha: '2026-10-26' })
+      services.appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA', {
+        fechaDesde: '2026-10-26',
+        fechaHasta: '2026-10-26',
+      })
     ).rejects.toThrowError(/503 PERSISTENCIA_NO_DISPONIBLE: Modo API activo sin adaptador HTTP configurado para appointmentRepository\.obtenerCitas/);
   });
 

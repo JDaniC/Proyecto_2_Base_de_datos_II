@@ -4,16 +4,25 @@ const STORAGE_KEY_SESSION = 'clinica_auth_session_v1';
 let memoriaToken: string | null = null;
 let memoriaSession: string | null = null;
 
-function esEntornoNavegador(): boolean {
-  return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+function obtenerStorageSeguro(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      return window.sessionStorage;
+    }
+  } catch {
+    // Si las políticas de seguridad del navegador restringen el acceso a storage (SecurityError),
+    // se devuelve null de forma controlada para activar el almacenamiento en memoria.
+  }
+  return null;
 }
 
 export const TokenStorage = {
   guardarToken(token: string): void {
     memoriaToken = token;
-    if (esEntornoNavegador()) {
+    const storage = obtenerStorageSeguro();
+    if (storage) {
       try {
-        window.sessionStorage.setItem(STORAGE_KEY_TOKEN, token);
+        storage.setItem(STORAGE_KEY_TOKEN, token);
       } catch {
         // Fallback a memoria si el almacenamiento está restringido
       }
@@ -22,9 +31,10 @@ export const TokenStorage = {
 
   obtenerToken(): string | null {
     if (memoriaToken) return memoriaToken;
-    if (esEntornoNavegador()) {
+    const storage = obtenerStorageSeguro();
+    if (storage) {
       try {
-        const guardado = window.sessionStorage.getItem(STORAGE_KEY_TOKEN);
+        const guardado = storage.getItem(STORAGE_KEY_TOKEN);
         if (guardado) {
           memoriaToken = guardado;
           return guardado;
@@ -38,9 +48,10 @@ export const TokenStorage = {
 
   guardarSesionSerializada(json: string): void {
     memoriaSession = json;
-    if (esEntornoNavegador()) {
+    const storage = obtenerStorageSeguro();
+    if (storage) {
       try {
-        window.sessionStorage.setItem(STORAGE_KEY_SESSION, json);
+        storage.setItem(STORAGE_KEY_SESSION, json);
       } catch {
         // Fallback a memoria
       }
@@ -49,9 +60,10 @@ export const TokenStorage = {
 
   obtenerSesionSerializada(): string | null {
     if (memoriaSession) return memoriaSession;
-    if (esEntornoNavegador()) {
+    const storage = obtenerStorageSeguro();
+    if (storage) {
       try {
-        const guardado = window.sessionStorage.getItem(STORAGE_KEY_SESSION);
+        const guardado = storage.getItem(STORAGE_KEY_SESSION);
         if (guardado) {
           memoriaSession = guardado;
           return guardado;
@@ -66,10 +78,11 @@ export const TokenStorage = {
   limpiar(): void {
     memoriaToken = null;
     memoriaSession = null;
-    if (esEntornoNavegador()) {
+    const storage = obtenerStorageSeguro();
+    if (storage) {
       try {
-        window.sessionStorage.removeItem(STORAGE_KEY_TOKEN);
-        window.sessionStorage.removeItem(STORAGE_KEY_SESSION);
+        storage.removeItem(STORAGE_KEY_TOKEN);
+        storage.removeItem(STORAGE_KEY_SESSION);
       } catch {
         // Ignorar
       }

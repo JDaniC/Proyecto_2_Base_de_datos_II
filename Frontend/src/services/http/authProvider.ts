@@ -143,27 +143,23 @@ export class TrialAuthProvider implements TokenProvider {
 
     const emailNormalizado = email.trim().toLowerCase();
 
-    // 1. Si se configuró Firebase Auth REST (emulador o API Key), intenta la autenticación REST directa
+    // 1. Si se configuró Firebase Auth REST (emulador o API Key), ejecuta la autenticación REST
+    // y propaga cualquier error de servicio o de red sin fallback a tablas locales (AGENTS.md, RNF-005)
     const apiKey = this.options.apiKey || (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_FIREBASE_API_KEY : undefined);
     const emulatorUrl = this.options.emulatorUrl || (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_FIREBASE_AUTH_EMULATOR_URL : undefined);
 
     if (emulatorUrl || (apiKey && apiKey !== 'demo-api-key')) {
-      try {
-        const tokenRest = await this.autenticarFirebaseRest({
-          email: emailNormalizado,
-          password,
-          apiKey: apiKey || 'demo-api-key',
-          emulatorUrl,
-        });
-        TokenStorage.guardarToken(tokenRest);
-        return tokenRest;
-      } catch (err) {
-        if (err instanceof HttpError) throw err;
-        // Si no hay emulador activo, continúa con las cuentas de ensayo locales
-      }
+      const tokenRest = await this.autenticarFirebaseRest({
+        email: emailNormalizado,
+        password,
+        apiKey: apiKey || 'demo-api-key',
+        emulatorUrl,
+      });
+      TokenStorage.guardarToken(tokenRest);
+      return tokenRest;
     }
 
-    // 2. Autenticación con cuentas sintéticas de ensayo
+    // 2. Autenticación con cuentas sintéticas de ensayo (modo aislado para tests/demostración local)
     const cuentaConfig = CUENTAS_ENSAYO[emailNormalizado];
     if (!cuentaConfig) {
       throw new HttpError({
@@ -203,15 +199,25 @@ export class TrialAuthProvider implements TokenProvider {
       : 'https://identitytoolkit.googleapis.com';
     const endpoint = `${urlBase}/v1/accounts:signInWithPassword?key=${encodeURIComponent(params.apiKey)}`;
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: params.email,
-        password: params.password,
-        returnSecureToken: true,
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: params.email,
+          password: params.password,
+          returnSecureToken: true,
+        }),
+      });
+    } catch (error: unknown) {
+      throw new HttpError({
+        status: 503,
+        codigo: '503 IDENTIDAD_NO_DISPONIBLE',
+        mensaje: 'El servicio de autenticación institucional no está disponible.',
+        causa: error,
+      });
+    }
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

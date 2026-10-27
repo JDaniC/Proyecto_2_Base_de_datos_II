@@ -3,6 +3,7 @@ import { HttpAuthRepository } from '../../services/http/httpAuthRepository';
 import { HttpClient } from '../../services/http/httpClient';
 import { TrialAuthProvider } from '../../services/http/authProvider';
 import { TokenStorage } from '../../services/http/tokenStorage';
+import { HttpError } from '../../services/http/errors';
 
 describe('HttpAuthRepository — Sesión institucional y mapeos canónicos (E01-P2-03)', () => {
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -240,5 +241,62 @@ describe('HttpAuthRepository — Sesión institucional y mapeos canónicos (E01-
 
     const cuentas = await repo.obtenerCuentasDemo();
     expect(cuentas).toEqual([]);
+  });
+
+  it('P1 regresión: propaga fallo de Firebase REST como 503 IDENTIDAD_NO_DISPONIBLE sin fallback local', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    const authProvider = new TrialAuthProvider({
+      emulatorUrl: 'http://127.0.0.1:9099',
+    });
+    const httpClient = new HttpClient({ baseUrl: '/api/v1', tokenProvider: authProvider });
+    const repo = new HttpAuthRepository(httpClient, authProvider);
+
+    // Aunque las credenciales coincidan con la tabla de ensayo, NO debe haber fallback silencioso
+    let errorLanzado: unknown = null;
+    try {
+      await repo.iniciarSesion({
+        email: 'admin.hospital@institucion.salud.gt',
+        password: 'password123',
+      });
+    } catch (err) {
+      errorLanzado = err;
+    }
+
+    expect(errorLanzado).toBeInstanceOf(HttpError);
+    const httpErr = errorLanzado as HttpError;
+    expect(httpErr.status).toBe(503);
+    expect(httpErr.codigo).toBe('503 IDENTIDAD_NO_DISPONIBLE');
+    expect(httpErr.mensaje).toContain('El servicio de autenticación institucional no está disponible');
+
+    expect(TokenStorage.obtenerToken()).toBeNull();
+  });
+
+  it('P2 regresión: TokenStorage maneja SecurityError en el getter de sessionStorage usando memoria', () => {
+    const originalGetter = Object.getOwnPropertyDescriptor(window, 'sessionStorage');
+
+    try {
+      Object.defineProperty(window, 'sessionStorage', {
+        get() {
+          throw new DOMException('The operation is insecure.', 'SecurityError');
+        },
+        configurable: true,
+      });
+
+      // No debe lanzar excepción y debe operar en memoria con total normalidad
+      expect(() => TokenStorage.guardarToken('token-seguro')).not.toThrow();
+      expect(TokenStorage.obtenerToken()).toBe('token-seguro');
+
+      expect(() => TokenStorage.guardarSesionSerializada('{"cuentaId":"123"}')).not.toThrow();
+      expect(TokenStorage.obtenerSesionSerializada()).toBe('{"cuentaId":"123"}');
+
+      expect(() => TokenStorage.limpiar()).not.toThrow();
+      expect(TokenStorage.obtenerToken()).toBeNull();
+      expect(TokenStorage.obtenerSesionSerializada()).toBeNull();
+    } finally {
+      if (originalGetter) {
+        Object.defineProperty(window, 'sessionStorage', originalGetter);
+      }
+    }
   });
 });

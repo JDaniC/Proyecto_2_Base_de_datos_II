@@ -64,6 +64,8 @@
 1. **D-01 (Ambigüedad de selectores en LoginPage tests):** La consulta por texto en pruebas de interfaz colisionaba con el botón de alternar visibilidad de contraseña (`aria-label="Ver contraseña"`). Se corrigió especificando `screen.getByPlaceholderText(/••••••••••••/i)`.
 2. **D-02 (Colisión de título y cuerpo en Alerta 503):** La aserción de texto en error 503 coincidía con dos nodos simultáneos (título del componente y cuerpo del error). Se ajustó a texto exacto unívoco.
 3. **D-03 (Filtro de campos de autoridad en mutate requests):** En mutaciones enviadas desde vistas existentes podían viajar campos residuales de authority (`actor`, `institucionId`). Se añadió `sanitizarCuerpo` en `HttpClient` para cumplir estrictamente DEC07 sin depender de que cada vista los retire manualmente.
+4. **D-04 (Observación Codex P1 — Fallback local en TrialAuthProvider):** Si se configuraba el emulador o API Key de Firebase REST y fallaba la red o el servicio, no debía recurrir a credenciales de ensayo locales en memoria ya que enmascara caídas de Firebase e infringe `AGENTS.md` (no logins alternos ni hashes locales). Se eliminó el `catch` permisivo, propagando de inmediato `503 IDENTIDAD_NO_DISPONIBLE` con la causa original.
+5. **D-05 (Observación Codex P2 — Excepción SecurityError en acceso al getter window.sessionStorage):** En navegadores o entornos de prueba con políticas de seguridad restrictivas, acceder a `window.sessionStorage` lanza `SecurityError` antes del bloque `setItem`. Se encapsuló la lectura de la propiedad dentro de `obtenerStorageSeguro()` para capturar la excepción y operar con almacenamiento en memoria sin abortar el flujo.
 
 ## 5. Dictamen final
 
