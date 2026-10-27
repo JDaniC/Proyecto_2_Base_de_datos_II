@@ -37,6 +37,21 @@ BEGIN
   ) THEN
     ALTER TABLE paciente ADD COLUMN fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) AFTER estado;
   END IF;
+
+  -- Restaurar valores demográficos respaldados en revisiones si existen
+  IF EXISTS (
+    SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'revisiones'
+  ) THEN
+    UPDATE paciente p
+    JOIN revisiones r ON r.tipo_recurso = 'paciente_demografia_v3' AND r.recurso_id = p.id_publico
+    SET
+      p.sexo = COALESCE(p.sexo, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo'))),
+      p.direccion = COALESCE(p.direccion, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion'))),
+      p.fecha_registro = COALESCE(
+        STR_TO_DATE(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), '%Y-%m-%d %H:%i:%s.%f'),
+        p.fecha_registro
+      );
+  END IF;
 END$$
 DELIMITER ;
 

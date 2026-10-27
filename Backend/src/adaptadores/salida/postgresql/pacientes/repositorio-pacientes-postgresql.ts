@@ -167,15 +167,13 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
     // Condición de búsqueda (documento exacto o prefijo de nombre)
     const clausulasBusqueda: string[] = [];
 
-    // Búsqueda por documento exacto
+    // Búsqueda por documento exacto (normalizado para CUIs preexistentes y claves de identidad)
     if (qDocCui) {
-      clausulasBusqueda.push(`p.cui = $${paramIdx}`);
-      parametros.push(qDocCui);
-      paramIdx++;
-
-      clausulasBusqueda.push(`ip.clave = $${paramIdx}`);
-      parametros.push(claveDocCui);
-      paramIdx++;
+      clausulasBusqueda.push(
+        `(regexp_replace(COALESCE(p.cui, ''), '[^0-9]', '', 'g') = $${paramIdx} OR ip.clave = $${paramIdx + 1})`,
+      );
+      parametros.push(qDocCui, claveDocCui);
+      paramIdx += 2;
     }
     if (qDocPasaporte) {
       clausulasBusqueda.push(`ip.clave = $${paramIdx}`);

@@ -13,6 +13,28 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'VERSION_MODELO_DESCONOCIDA';
   END IF;
 
+  -- Preservar valores demográficos en la tabla revisiones para recuperación sin pérdida
+  INSERT INTO revisiones (
+    id_revision, tipo_recurso, recurso_id, version, id_usuario,
+    fecha_hora, motivo, contenido_anterior
+  )
+  SELECT
+    UUID(),
+    'paciente_demografia_v3',
+    p.id_publico,
+    p.revision,
+    COALESCE((SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1), 1),
+    NOW(),
+    'RESPALDO_MIGRACION_002_REVERSION_V3_A_V2',
+    JSON_OBJECT(
+      'sexo', p.sexo,
+      'direccion', p.direccion,
+      'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f')
+    )
+  FROM paciente p
+  WHERE p.sexo IS NOT NULL OR p.direccion IS NOT NULL
+  ON DUPLICATE KEY UPDATE contenido_anterior = VALUES(contenido_anterior);
+
   IF EXISTS (
     SELECT 1 FROM information_schema.COLUMNS 
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paciente' AND COLUMN_NAME = 'sexo'

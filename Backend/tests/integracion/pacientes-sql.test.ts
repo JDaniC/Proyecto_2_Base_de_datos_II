@@ -322,6 +322,22 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   const titularLegacy = await repoPg.titularIdentidad({ tipo: 'CUI', numero: '2489777770101' });
   assert.equal(titularLegacy, idLegacy, 'titularIdentidad debe detectar CUIs preexistentes en paciente.cui');
 
+  const resBuscarLegacy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '2489-77777-0101', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBuscarLegacy.data.length, 1, 'buscar debe encontrar paciente por CUI formateado en paciente.cui');
+  assert.equal(resBuscarLegacy.data[0]?.id, idLegacy);
+
+  const resBuscarLegacyDigitos = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '2489777770101', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBuscarLegacyDigitos.data.length, 1, 'buscar debe encontrar paciente por CUI en dígitos en paciente.cui');
+  assert.equal(resBuscarLegacyDigitos.data[0]?.id, idLegacy);
+
   // Actualizar solo el teléfono del paciente legacy sin fecha de nacimiento y verificar que se preserva NULL
   await actualizar.ejecutar({
     contexto,
@@ -542,7 +558,66 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
   assert.equal(consultadoArchivado?.version, 4, 'el archivo debe avanzar la versión compartida del paciente a 4');
   assert.equal(consultadoArchivado?.baja?.causa, 'TRASLADO');
+  assert.equal(Date.parse(consultadoArchivado?.baja?.fecha ?? ''), Date.parse('2026-10-27T12:30:00Z'), 'la fecha de baja debe conservarse en UTC');
   assert.ok(consultadoArchivado?.baja?.motivo);
+
+  // Probar archivo bajo zona horaria local no UTC (America/Guatemala = UTC-6)
+  const tzAnterior = process.env.TZ;
+  try {
+    process.env.TZ = 'America/Guatemala';
+    const altaTz = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Prueba',
+        apellidos: 'Zona Horaria',
+        fecha_nacimiento: '1980-01-01',
+        sexo: 'MASCULINO',
+      },
+    });
+    const idArchTz = uuidPublico(altaTz.respuesta.id);
+    const instanteBaja = '2026-10-27T12:30:00Z';
+    await bundle.uow?.ejecutar(
+      contexto,
+      {
+        id: uuidPublico(randomUUID()),
+        caso: 'ARCHIVAR_PACIENTE',
+        claveIdempotencia: uuidPublico(randomUUID()),
+        hashEntrada: 'hash-tz-baja',
+        instante: instanteUtc(instanteBaja),
+        ids: { recurso_id: idArchTz },
+      },
+      async () => ({
+        tipo: 'CONFIRMAR',
+        resultado: {
+          httpStatus: 200,
+          respuesta: { estado: 'ARCHIVADO' },
+          correlacionOriginal: uuidPublico(randomUUID()),
+        },
+        revisiones: [],
+        cambios: [
+          {
+            agregado: 'historiales',
+            tipo: 'MODIFICAR',
+            recursoId: idArchTz,
+            versionAnterior: versionPositiva(1),
+            nuevoEstado: {
+              causa: 'FALLECIMIENTO',
+              motivo: 'Fallecimiento certificado',
+              fecha: instanteBaja,
+              actorId: contexto.cuenta.id,
+            },
+          },
+        ],
+        auditoria: [],
+      }),
+    );
+    const archConsultado = await repoPg.porId(idArchTz);
+    assert.equal(Date.parse(archConsultado?.baja?.fecha ?? ''), Date.parse(instanteBaja), 'la fecha_baja no debe alterarse por la zona horaria local del proceso');
+  } finally {
+    process.env.TZ = tzAnterior;
+  }
 
   // 11. Historial de auditoría en PostgreSQL con paginación de precisión en microsegundos
   const consultaHistorial = crearConsultaHistorialSql(pool, 'postgresql');

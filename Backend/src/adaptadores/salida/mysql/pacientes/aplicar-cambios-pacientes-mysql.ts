@@ -140,6 +140,7 @@ export async function aplicarCambiosPacientesMysql(
             throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado concurrentemente.');
           }
 
+          const fechaBajaSql = archivo.fecha.replace('T', ' ').replace('Z', '');
           await executor.consultar(
             `UPDATE historial_clinico SET
               estado = 'ARCHIVADO',
@@ -152,7 +153,7 @@ export async function aplicarCambiosPacientesMysql(
             [
               archivo.causa,
               archivo.motivo,
-              new Date(archivo.fecha),
+              fechaBajaSql,
               archivo.actorId,
               filaP.id_paciente,
             ],

@@ -327,14 +327,14 @@ export async function aplicarCambiosPacientesPostgresql(
               estado_historial = 'ARCHIVADO',
               causa_baja = $1,
               motivo_baja = $2,
-              fecha_baja = $3,
+              fecha_baja = $3::timestamp,
               actor_baja = $4,
               revision = revision + 1
             WHERE id_paciente = $5`,
             [
               archivo.causa,
               archivo.motivo,
-              new Date(archivo.fecha),
+              archivo.fecha,
               archivo.actorId,
               filaP.id_paciente,
             ],

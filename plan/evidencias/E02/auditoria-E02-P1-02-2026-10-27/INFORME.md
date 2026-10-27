@@ -63,6 +63,12 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
     - En PostgreSQL, se implementó normalización exhaustiva de caracteres latinos (`translate(LOWER(...), ...)`) que incluye diacríticos completos (`ç`, `à`, etc.), alineándola con `normalizarNombreBusqueda`.
 11. **Preservación de microsegundos en cursores de historial de auditoría:**
     - En `consulta-historial-sql.ts`, se ajustó la selección a microsegundos (`US` en PostgreSQL y `%f` en MySQL) y la comparación con `$param::timestamp` directo sin truncamiento a milisegundos en `Date`, garantizando que la paginación de eventos de auditoría no repita ni salte registros contiguos.
+12. **Preservación de datos demográficos en reversión y migración de MySQL (Migración 002):**
+    - Al revertir la migración 002 (`002_revertir_demografia_paciente_mysql.sql`), antes de descartar las columnas `sexo`, `direccion` y `fecha_registro`, se respaldan en la tabla `revisiones` bajo `tipo_recurso = 'paciente_demografia_v3'`. Al volver a aplicar `002_agregar_demografia_paciente_mysql.sql`, estos datos se restauran automáticamente mediante JOIN sobre `revisiones`.
+13. **Normalización de CUIs legados en búsqueda hospitalaria (PostgreSQL):**
+    - Se ajustó el predicado de búsqueda de CUI en PostgreSQL para evaluar `regexp_replace(COALESCE(p.cui, ''), '[^0-9]', '', 'g') = $param OR ip.clave = $param2`, permitiendo que las búsquedas por documento localicen pacientes existentes registrados con guiones o espacios en `paciente.cui`.
+14. **Invarianza de zona horaria en marcas temporales de baja (PostgreSQL y MySQL):**
+    - Al archivar pacientes, las fechas UTC suministradas se pasan directamente como string con casteo `$3::timestamp` en PostgreSQL y formato `'YYYY-MM-DD HH:MM:SS.ffffff'` en MySQL en lugar de instanciar `new Date()`, eliminando derivas causadas por la zona horaria local del proceso de Node.js (`process.env.TZ`).
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |
