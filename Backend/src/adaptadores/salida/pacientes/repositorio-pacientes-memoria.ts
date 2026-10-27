@@ -297,40 +297,68 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
             return plan.operacion.resultado;
           }
 
-          // Aplicar cambios atómicamente en memoria
+          // 1. Preparar y validar cambios en estado temporal (staging) antes de mutar el repositorio
+          const pacientesStaged = new Map<string, Paciente>();
+          const responsablesStaged = new Map<string, ResponsableDetalle>();
+          const historialesStaged = new Map<string, unknown>();
+          const identidadesLiberar: string[] = [];
+          const identidadesReservar = new Map<string, string>();
+
           for (const cambio of plan.cambios) {
             if (cambio.agregado === 'pacientes') {
-              this.pacientes.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
+              pacientesStaged.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
             } else if (cambio.agregado === 'responsables') {
-              this.responsables.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
+              responsablesStaged.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
             } else if (cambio.agregado === 'historiales' || cambio.agregado === 'historial') {
-              this.historiales.set(cambio.recursoId, cambio.nuevoEstado);
+              historialesStaged.set(cambio.recursoId, cambio.nuevoEstado);
             } else if (cambio.agregado === 'identidades') {
               const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
               if (cambio.tipo === 'LIBERAR') {
-                this.liberarIdentidad(estado.identificacion);
+                const clave = normalizarIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
+                identidadesLiberar.push(clave);
               } else {
-                this.reservarIdentidad(estado.identificacion, (estado.titularId ?? cambio.recursoId) as UUID);
+                const clave = normalizarIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
+                identidadesReservar.set(clave, (estado.titularId ?? cambio.recursoId) as UUID);
               }
             }
           }
 
-          // Guardar revisiones planificadas
+          const revisionesStaged = new Map<string, Paciente>();
           for (const rev of plan.revisiones) {
-            this.revisionesPacientes.set(`${rev.recursoId}:${rev.versionAnterior}`, rev.snapshotAnterior as Paciente);
+            revisionesStaged.set(`${rev.recursoId}:${rev.versionAnterior}`, rev.snapshotAnterior as Paciente);
           }
 
-          // Guardar auditoría planificada
-          for (const ev of plan.auditoria) {
-            this.eventosAuditoria.push(ev);
-          }
+          const auditoriaStaged = [...plan.auditoria];
 
           const opIdempotente: OperacionIdempotente<T> = Object.freeze({
             hashEntrada: comando.hashEntrada,
             resultado: plan.resultado,
           });
+          const claveOp = `${contexto.cuenta.id}:${comando.caso}:${comando.claveIdempotencia}`;
 
-          this.guardarOperacion(contexto.cuenta.id, comando.caso, comando.claveIdempotencia, opIdempotente);
+          // 2. Publicar atómicamente solo una vez que todo el procesamiento falible ha concluido con éxito
+          for (const [id, pac] of pacientesStaged) {
+            this.pacientes.set(id, pac);
+          }
+          for (const [id, resp] of responsablesStaged) {
+            this.responsables.set(id, resp);
+          }
+          for (const [id, hist] of historialesStaged) {
+            this.historiales.set(id, hist);
+          }
+          for (const clave of identidadesLiberar) {
+            this.identidades.delete(clave);
+          }
+          for (const [clave, titularId] of identidadesReservar) {
+            this.identidades.set(clave, titularId);
+          }
+          for (const [clave, snapshot] of revisionesStaged) {
+            this.revisionesPacientes.set(clave, snapshot);
+          }
+          for (const ev of auditoriaStaged) {
+            this.eventosAuditoria.push(ev);
+          }
+          this.operaciones.set(claveOp, opIdempotente);
 
           return plan.resultado;
         };

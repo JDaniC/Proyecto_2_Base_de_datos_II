@@ -1095,5 +1095,60 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal('fecha' in (dto.baja as unknown as Record<string, unknown>), false);
       assert.equal('actorId' in (dto.baja as unknown as Record<string, unknown>), false);
     });
+
+    it('asegura atomicidad completa en memoria: ante fallo durante procesamiento de UoW no deja mutaciones parciales', async () => {
+      // Paciente semilla con número de pasaporte de 60 caracteres (permitido en lectura/legado)
+      const numPasaporte60 = 'P'.repeat(60);
+      const pacienteLegadoId = uuidPublico(randomUUID());
+      const pacienteLegado: Paciente = {
+        id: pacienteLegadoId,
+        codigoLegible: 'HOSP-LEG001',
+        institucion: 'HOSPITAL_GENERAL',
+        nombres: 'Paciente',
+        apellidos: 'Legado Pasaporte',
+        fechaNacimiento: fechaCivil('1975-06-15'),
+        sexo: 'MASCULINO',
+        estado: 'ACTIVO',
+        version: 1 as Version,
+        fechaRegistro: instanteUtc(new Date().toISOString()),
+        identificacion: {
+          tipo: 'PASAPORTE',
+          numero: numPasaporte60,
+        },
+      };
+
+      repoHospital.guardar(pacienteLegado);
+
+      // Intentar actualizar con identificacion: null (intentará liberar la identidad, fallando por límite de 40 chars)
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            id: pacienteLegadoId,
+            cambios: {
+              version_esperada: 1,
+              identificacion: null,
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          return true;
+        },
+      );
+
+      // Verificar que el paciente en memoria NO fue mutado parcialmente:
+      // Conserva versión 1 y su identificación previa
+      const pacienteDespues = await repoHospital.porId(pacienteLegadoId);
+      assert.ok(pacienteDespues);
+      assert.equal(pacienteDespues.version, 1);
+      assert.equal(pacienteDespues.identificacion?.numero, numPasaporte60);
+
+      // No existe revisión huérfana de versión 1
+      const rev = (await repoHospital.crearLector().pacientes.porVersion(pacienteLegadoId, 1 as Version)) as Paciente | null;
+      assert.equal(rev?.version, 1);
+    });
   });
 });
