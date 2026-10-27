@@ -19,6 +19,10 @@ npm --prefix Frontend test -- src/test/product-scope/ src/services/errors.test.t
 
 El servidor local usa el puerto 5173. `build` comprueba tipos y genera `dist/`, que no se versiona. `npm --prefix Frontend run preview` permite probar la compilación. Las dependencias se fijan con package-lock.json.
 
+### Conexión con el backend HTTP
+
+El cliente HTTP (`Frontend/src/services/http`) se comunica con el servidor mediante la ruta canónica `/api/v1`. Durante el desarrollo local (`npm run dev` o `npm run preview` en el puerto 5173), Vite redirige automáticamente todas las peticiones bajo `/api` hacia el backend en `http://127.0.0.1:3000` (configurable mediante la variable `VITE_BACKEND_TARGET`). Adicionalmente, el servidor backend tiene CORS habilitado con soporte para las cabeceras `Authorization`, `X-Correlation-ID`, `Idempotency-Key` e `If-Match`, permitiendo también el consumo cross-origin directo si se define `VITE_API_BASE_URL=http://127.0.0.1:3000/api/v1`.
+
 Las pruebas seleccionadas comprueban el alcance vigente, fechas, mensajes y carga de pantallas. La suite histórica contiene expectativas de pantallas retiradas; no se usa su exclusión como prueba de que todo el producto está validado. Su reconciliación sigue en E06-P2-02 y DEC12 del plan.
 
 ## Flujos conservados
