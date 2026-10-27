@@ -48,7 +48,18 @@ const SELECT_PACIENTE_BASE_MYSQL = `
     ip.numero_documento
   FROM paciente p
   LEFT JOIN historial_clinico h ON p.id_paciente = h.id_paciente
-  LEFT JOIN identidades_paciente ip ON p.id_paciente = ip.id_paciente
+  LEFT JOIN (
+    SELECT
+      id_paciente,
+      clave,
+      tipo_documento,
+      numero_documento,
+      ROW_NUMBER() OVER (
+        PARTITION BY id_paciente
+        ORDER BY fecha_registro DESC, clave ASC
+      ) AS rn
+    FROM identidades_paciente
+  ) ip ON p.id_paciente = ip.id_paciente AND ip.rn = 1
 `;
 
 export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
@@ -135,16 +146,24 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
     const clausulasBusqueda: string[] = [];
 
     if (qDocCui) {
-      clausulasBusqueda.push('ip.clave = ?');
-      parametros.push(claveDocCui);
-      clausulasBusqueda.push('ip.numero_documento = ?');
-      parametros.push(qDocCui);
+      clausulasBusqueda.push(
+        `EXISTS (
+          SELECT 1 FROM identidades_paciente ip_busq
+          WHERE ip_busq.id_paciente = p.id_paciente
+            AND (ip_busq.clave = ? OR ip_busq.numero_documento = ?)
+        )`,
+      );
+      parametros.push(claveDocCui, qDocCui);
     }
     if (qDocPasaporte) {
-      clausulasBusqueda.push('ip.clave = ?');
-      parametros.push(claveDocPasaporte);
-      clausulasBusqueda.push('ip.numero_documento = ?');
-      parametros.push(qDocPasaporte);
+      clausulasBusqueda.push(
+        `EXISTS (
+          SELECT 1 FROM identidades_paciente ip_busq
+          WHERE ip_busq.id_paciente = p.id_paciente
+            AND (ip_busq.clave = ? OR ip_busq.numero_documento = ?)
+        )`,
+      );
+      parametros.push(claveDocPasaporte, qDocPasaporte);
     }
 
     // Búsqueda por prefijo normalizado de nombre en límites de palabra (sin coincidencia infija)

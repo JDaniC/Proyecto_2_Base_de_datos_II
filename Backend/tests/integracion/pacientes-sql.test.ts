@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { crearContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
@@ -788,6 +788,51 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     }),
     (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
   );
+
+  // Múltiples identidades para un mismo paciente dental: no debe duplicar filas ni paginación
+  const filaPacMy = await pool.consultar<{ id_paciente: number }>(
+    'SELECT id_paciente FROM paciente WHERE id_publico = ?',
+    [pacienteConDocId],
+  );
+  const idInternoPac = filaPacMy.filas[0]!.id_paciente;
+  const cuiExtra = '2999888880101';
+  const claveCuiExtra = createHash('sha256').update(`CUI:${cuiExtra}`).digest('hex');
+  await pool.consultar(
+    `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente, fecha_registro)
+     VALUES (?, 'CUI', ?, ?, NOW())`,
+    [claveCuiExtra, cuiExtra, idInternoPac],
+  );
+
+  // Verificar que porId devuelve exactamente una identidad determinista sin error
+  const pacMultiId = await repoMysql.porId(pacienteConDocId);
+  assert.ok(pacMultiId);
+  assert.equal(pacMultiId.id, pacienteConDocId);
+
+  // Búsqueda por nombre con límite 1 debe devolver exactamente 1 fila y no duplicar el paciente
+  const resBusqMultiNombre = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'John Michael', limite: 1, orden: 'ASC' },
+  });
+  assert.equal(resBusqMultiNombre.data.length, 1, 'búsqueda por nombre no debe duplicar paciente con múltiples identidades');
+  assert.equal(resBusqMultiNombre.data[0]?.id, pacienteConDocId);
+
+  // Búsqueda por documento 1 (PASAPORTE) y por documento 2 (CUI) deben localizar al paciente vía EXISTS
+  const resBusqDoc1 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: pasaporteNum, limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusqDoc1.data.length, 1, 'búsqueda debe encontrar paciente por su primer documento');
+  assert.equal(resBusqDoc1.data[0]?.id, pacienteConDocId);
+
+  const resBusqDoc2 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: cuiExtra, limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusqDoc2.data.length, 1, 'búsqueda debe encontrar paciente por su segundo documento asociado');
+  assert.equal(resBusqDoc2.data[0]?.id, pacienteConDocId);
 
   // 3. Búsqueda y paginación en MySQL
   const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });

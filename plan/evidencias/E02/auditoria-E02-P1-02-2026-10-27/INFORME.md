@@ -69,6 +69,9 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
     - Se ajustó el predicado de búsqueda de CUI en PostgreSQL para evaluar `regexp_replace(COALESCE(p.cui, ''), '[^0-9]', '', 'g') = $param OR ip.clave = $param2`, permitiendo que las búsquedas por documento localicen pacientes existentes registrados con guiones o espacios en `paciente.cui`.
 14. **Invarianza de zona horaria en marcas temporales de baja (PostgreSQL y MySQL):**
     - Al archivar pacientes, las fechas UTC suministradas se pasan directamente como string con casteo `$3::timestamp` en PostgreSQL y formato `'YYYY-MM-DD HH:MM:SS.ffffff'` en MySQL en lugar de instanciar `new Date()`, eliminando derivas causadas por la zona horaria local del proceso de Node.js (`process.env.TZ`).
+15. **Reducción determinista de identidades en MySQL y búsqueda exhaustiva con EXISTS:**
+    - En `repositorio-pacientes-mysql.ts`, se aplicó `ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn` en un derived table con `LEFT JOIN ... ON ip.rn = 1`, seleccionando exactamente una identidad por paciente y previniendo filas duplicadas o páginas fantasma en búsquedas y paginación.
+    - Asimismo, en MySQL y PostgreSQL la búsqueda por documento se desacopló de la proyección única mediante un predicado `EXISTS (SELECT 1 FROM identidades_paciente ip_busq WHERE ip_busq.id_paciente = p.id_paciente AND ...)`, permitiendo localizar al paciente por cualquiera de sus documentos asociados.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |
