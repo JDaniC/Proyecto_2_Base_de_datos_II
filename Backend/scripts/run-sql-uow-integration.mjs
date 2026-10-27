@@ -35,7 +35,11 @@ try {
   entorno.MYSQL_TEST_PORT = entorno.MYSQL_PORT;
   entorno.MYSQL_TEST_SECRET_FILE = join(secretos, 'mysql_app_password');
   await comando('npm', ['run', 'build:test'], { cwd: backend });
-  const salidaPruebas = await comando(process.execPath, ['--test', 'dist-test/tests/integracion/sql-uow.test.js'], { cwd: backend, env: entorno });
+  const salidaPruebas = await comando(process.execPath, [
+    '--test',
+    'dist-test/tests/integracion/sql-uow.test.js',
+    'dist-test/tests/integracion/pacientes-sql.test.js',
+  ], { cwd: backend, env: entorno });
   process.stdout.write(`${salidaPruebas}\n`);
 } finally {
   try {

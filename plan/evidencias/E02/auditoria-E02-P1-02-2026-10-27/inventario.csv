@@ -1,0 +1,15 @@
+unidad,archivo,linea,tipo,riesgo,pruebas
+crearPoolPostgresql,Backend/src/adaptadores/salida/postgresql/crear-pool-postgresql.ts,1,Funcion,HIGH,sql-uow.test.ts; pacientes-sql.test.ts
+crearPoolMysql,Backend/src/adaptadores/salida/mysql/crear-pool-mysql.ts,1,Funcion,HIGH,sql-uow.test.ts; pacientes-sql.test.ts
+mapearFilaPacientePostgresql,Backend/src/adaptadores/salida/postgresql/pacientes/mapear-paciente-postgresql.ts,48,Funcion,MEDIUM,pacientes-sql.test.ts
+aplicarCambiosPacientesPostgresql,Backend/src/adaptadores/salida/postgresql/pacientes/aplicar-cambios-pacientes-postgresql.ts,20,Funcion,CRITICAL,pacientes-sql.test.ts
+RepositorioPacientesPostgresql,Backend/src/adaptadores/salida/postgresql/pacientes/repositorio-pacientes-postgresql.ts,63,Clase,HIGH,pacientes-sql.test.ts
+crearBundlePacientesPostgresql,Backend/src/adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.ts,10,Funcion,HIGH,pacientes-sql.test.ts
+mapearFilaPacienteMysql,Backend/src/adaptadores/salida/mysql/pacientes/mapear-paciente-mysql.ts,37,Funcion,MEDIUM,pacientes-sql.test.ts
+aplicarCambiosPacientesMysql,Backend/src/adaptadores/salida/mysql/pacientes/aplicar-cambios-pacientes-mysql.ts,14,Funcion,CRITICAL,pacientes-sql.test.ts
+RepositorioPacientesMysql,Backend/src/adaptadores/salida/mysql/pacientes/repositorio-pacientes-mysql.ts,50,Clase,HIGH,pacientes-sql.test.ts
+crearBundlePacientesMysql,Backend/src/adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.ts,10,Funcion,HIGH,pacientes-sql.test.ts
+crearConsultaHistorialSql,Backend/src/adaptadores/salida/sql/consulta-historial-sql.ts,20,Funcion,MEDIUM,pacientes-sql.test.ts
+codificarCursorSql,Backend/src/adaptadores/salida/sql/cursor-paginacion-sql.ts,18,Funcion,MEDIUM,pacientes-sql.test.ts
+decodificarCursorSql,Backend/src/adaptadores/salida/sql/cursor-paginacion-sql.ts,44,Funcion,MEDIUM,pacientes-sql.test.ts
+crearDependenciasBackend,Backend/src/composicion/crear-dependencias-backend.ts,40,Funcion,HIGH,frontera.test.ts; pacientes-sql.test.ts

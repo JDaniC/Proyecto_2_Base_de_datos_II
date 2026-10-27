@@ -13,6 +13,14 @@ import { crearPoolMysql } from '../adaptadores/salida/mysql/crear-pool-mysql.js'
 import { crearClienteMongodb } from '../adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import { crearClienteFirestore } from '../adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaInstitucionalPostgresql, crearRepositorioCuentaInstitucionalMysql } from '../adaptadores/salida/identidad/repositorios-cuenta-sql.js';
+import {
+  crearRepositorioPacientesPostgresql,
+  crearUnidadDeTrabajoPacientesPostgresql,
+} from '../adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
+import {
+  crearRepositorioPacientesMysql,
+  crearUnidadDeTrabajoPacientesMysql,
+} from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
 import { crearRepositorioCuentaInstitucionalMongodb } from '../adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.js';
 import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
 import { parsearConfiguracionSql } from '../configuracion/conexiones-sql.js';
@@ -101,8 +109,16 @@ export async function crearDependenciasBackend(
     const auth: Auth = getAuth(appAuth);
 
     const repositorios: MapaRepositoriosInstitucion = {
-      HOSPITAL_GENERAL: { cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql) },
-      CLINICA_ODONTOLOGICA: { cuenta: crearRepositorioCuentaInstitucionalMysql(mysql) },
+      HOSPITAL_GENERAL: {
+        cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql),
+        pacientes: crearRepositorioPacientesPostgresql(postgresql),
+        uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
+      },
+      CLINICA_ODONTOLOGICA: {
+        cuenta: crearRepositorioCuentaInstitucionalMysql(mysql),
+        pacientes: crearRepositorioPacientesMysql(mysql),
+        uow: crearUnidadDeTrabajoPacientesMysql(mysql),
+      },
       LABORATORIO_CLINICO: { cuenta: crearRepositorioCuentaInstitucionalMongodb(mongo) },
       CENTRO_MEDICO_PEDIATRICO: { cuenta: crearRepositorioCuentaInstitucionalFirestore(firebase) },
     };
