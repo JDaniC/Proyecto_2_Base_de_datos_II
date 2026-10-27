@@ -16,6 +16,9 @@ export function generarClaveIdempotencia(): string {
   });
 }
 
+/** Genera un identificador de correlación UUID v4 compatible con Backend middlewareCorrelacion */
+export const generarIdCorrelacion = generarClaveIdempotencia;
+
 export class IdempotencyTracker {
   private claveActual: string | null = null;
 

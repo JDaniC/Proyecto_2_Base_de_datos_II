@@ -1,7 +1,7 @@
 import { TokenProvider } from './types';
 import { TokenStorage } from './tokenStorage';
 import { HttpError } from './errors';
-import { generarClaveIdempotencia } from './idempotency';
+import { generarIdCorrelacion } from './idempotency';
 
 export interface TrialAuthProviderOptions {
   readonly apiKey?: string;
@@ -119,7 +119,7 @@ export class TrialAuthProvider implements TokenProvider {
   }
 
   async establecerCredenciales(email: string, password?: string): Promise<string> {
-    const correlacion = `corr-${generarClaveIdempotencia().substring(0, 8)}`;
+    const correlacion = generarIdCorrelacion();
 
     if (!email || email.trim() === '') {
       throw new HttpError({

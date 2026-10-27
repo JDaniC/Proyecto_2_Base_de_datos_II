@@ -46,7 +46,7 @@ describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03
     const [url, init] = mockFetch.mock.calls[0];
     expect(url).toBe('/api/v1/recurso');
     expect(init.headers['Authorization']).toBe('Bearer token-prueba-123');
-    expect(init.headers['X-Correlation-ID']).toBeDefined();
+    expect(init.headers['X-Correlation-ID']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     expect(init.headers['Accept']).toBe('application/json');
     expect(res.data).toEqual({ id: 'item-1' });
     expect(res.meta.correlacion).toBe('corr-srv-456');
@@ -250,5 +250,25 @@ describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03
     }
 
     expect.fail('Debió lanzar HttpError por timeout durante el consumo del cuerpo');
+  });
+
+  it('P2 regresión: genera identificadores de correlación en formato UUID v4 aceptados por el backend', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    const client = new HttpClient({ baseUrl: '/api/v1', tokenProvider });
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    try {
+      await client.get('/sin-correlacion-explicita');
+    } catch (err: unknown) {
+      const httpErr = err as HttpError;
+      expect(httpErr.correlacion).toMatch(UUID_REGEX);
+      const [, init] = mockFetch.mock.calls[0];
+      expect(init.headers['X-Correlation-ID']).toBe(httpErr.correlacion);
+      expect(init.headers['X-Correlation-ID']).toMatch(UUID_REGEX);
+      return;
+    }
+
+    expect.fail('Debió lanzar HttpError de red con correlación UUID v4');
   });
 });

@@ -1,6 +1,6 @@
 import { AppError } from '../types';
 import { CampoInvalido, RespuestaErrorApi } from './types';
-import { generarClaveIdempotencia } from './idempotency';
+import { generarIdCorrelacion } from './idempotency';
 
 export class HttpError extends Error implements AppError {
   readonly codigo: string;
@@ -23,7 +23,7 @@ export class HttpError extends Error implements AppError {
     this.status = params.status;
     this.codigo = params.codigo;
     this.mensaje = params.mensaje;
-    this.correlacion = params.correlacion || `corr-${generarClaveIdempotencia().substring(0, 8)}`;
+    this.correlacion = params.correlacion || generarIdCorrelacion();
     this.campos = params.campos;
     this.esReintentable = params.status === 503 || params.status === 504 || params.status === 0;
 
@@ -38,7 +38,7 @@ export function parsearRespuestaError(
   payload: unknown,
   correlacionCabecera?: string | null
 ): HttpError {
-  const fallbackCorr = correlacionCabecera || `corr-${generarClaveIdempotencia().substring(0, 8)}`;
+  const fallbackCorr = correlacionCabecera || generarIdCorrelacion();
 
   if (typeof payload === 'object' && payload !== null && 'error' in payload) {
     const errorApi = payload as RespuestaErrorApi;

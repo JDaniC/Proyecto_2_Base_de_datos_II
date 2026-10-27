@@ -12,9 +12,9 @@
 - **Requisitos auditados:** 11 requisitos y decisiones arquitectónicas (RF-001, RF-003, RF-018, RF-020, RNF-005, RNF-012, RNF-034, DEC06, DEC07, DEC08, DEC11).
 - **Trazabilidad requisito → código → test:** 11/11 requisitos cubiertos con pruebas automatizadas (`CUBIERTO`).
 - **Resultados de suites de prueba:**
-  - `Frontend/src/test/http/`: 23/23 pruebas unitarias y de integración PASS (transporte, repositorio de sesión, alias institucional, reintentos seguros, manejo de 401/403/503 y regresiones Codex).
+  - `Frontend/src/test/http/`: 24/24 pruebas unitarias y de integración PASS (transporte, repositorio de sesión, alias institucional, reintentos seguros, manejo de 401/403/503 y regresiones Codex).
   - `Frontend/src/test/product-scope` y `Frontend/src/services`: 38/38 pruebas PASS.
-  - Total pruebas frontend relevantes: 61/61 PASS.
+  - Total pruebas frontend relevantes: 62/62 PASS.
   - Backend: 133 pruebas runtime/unitarias + 32 pruebas contractuales (165 PASS).
   - Compilación y bundle: `npm run build` en Frontend genera bundle limpio en 1.74s sin advertencias de tipos (`tsc --noEmit`).
   - Bundle audit: 0 drivers de base de datos (`pg`, `mysql2`, `mongodb`, `firestore`, `firebase-admin`) ni secretos embebidos en `dist/`.
@@ -67,6 +67,7 @@
 4. **D-04 (Observación Codex P1 — Fallback local en TrialAuthProvider):** Si se configuraba el emulador o API Key de Firebase REST y fallaba la red o el servicio, no debía recurrir a credenciales de ensayo locales en memoria ya que enmascara caídas de Firebase e infringe `AGENTS.md` (no logins alternos ni hashes locales). Se eliminó el `catch` permisivo, propagando de inmediato `503 IDENTIDAD_NO_DISPONIBLE` con la causa original.
 5. **D-05 (Observación Codex P2 — Excepción SecurityError en acceso al getter window.sessionStorage):** En navegadores o entornos de prueba con políticas de seguridad restrictivas, acceder a `window.sessionStorage` lanza `SecurityError` antes del bloque `setItem`. Se encapsuló la lectura de la propiedad dentro de `obtenerStorageSeguro()` para capturar la excepción y operar con almacenamiento en memoria sin abortar el flujo.
 6. **D-06 (Observación Codex P2 — Cancelación prematura de timeout antes de consumir el cuerpo HTTP):** En `HttpClient.request`, el `clearTimeout` se ejecutaba inmediatamente tras recibir las cabeceras HTTP, lo que dejaba desprotegido el streaming del cuerpo JSON en `response.json()`. Si el servidor se bloqueaba transmitiendo el cuerpo, la petición quedaba colgada indefinidamente. Se mantuvo el timeout activo a lo largo de la resolución del cuerpo, liberándolo en una cláusula `finally`, y propagando las señales de aborto sin ser absorbidas por el fallback de cuerpos vacíos.
+7. **D-07 (Observación Codex P2 — Formato canónico de ID de correlación en cliente):** Los identificadores de correlación generados por defecto en el cliente usaban el prefijo `corr-xxxxxxxx`, el cual era descartado y reemplazado en el backend por `middlewareCorrelacion` (que exige UUID RFC 4122 canónico). En escenarios donde la respuesta de red se perdía, el cliente reportaba un ID que el servidor nunca registró. Se implementó `generarIdCorrelacion()` generando UUID v4 completos, asegurando una trazabilidad de correlación extremo a extremo idéntica entre cliente y servidor.
 
 ## 5. Dictamen final
 

@@ -1,6 +1,6 @@
 import { HttpClientConfig, HttpRequestOptions, RespuestaApi, TokenProvider } from './types';
 import { crearErrorRed, HttpError, parsearRespuestaError } from './errors';
-import { generarClaveIdempotencia } from './idempotency';
+import { generarIdCorrelacion } from './idempotency';
 
 export class HttpClient {
   private readonly baseUrl: string;
@@ -35,7 +35,7 @@ export class HttpClient {
   }
 
   async request<T>(path: string, options: HttpRequestOptions = {}): Promise<RespuestaApi<T>> {
-    const correlacion = options.correlacionId || `corr-${generarClaveIdempotencia().substring(0, 8)}`;
+    const correlacion = options.correlacionId || generarIdCorrelacion();
     const url = this.construirUrl(path, options.query);
 
     const headers: Record<string, string> = {
