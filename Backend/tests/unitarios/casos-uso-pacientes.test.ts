@@ -526,6 +526,46 @@ describe('casos de uso de pacientes en memoria', () => {
       );
     });
 
+    it('rechaza alta pediátrica con responsable existente duplicado en la misma solicitud', async () => {
+      const respId = uuidPublico(randomUUID());
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Pediatrico',
+              apellidos: 'DuplicadoTutor',
+              fecha_nacimiento: '2023-01-01',
+              sexo: 'MASCULINO',
+              responsables: [
+                {
+                  responsable_id: respId,
+                  version_responsable: 1,
+                  parentesco: 'PADRE',
+                  es_principal: true,
+                  autoriza_atencion: true,
+                },
+                {
+                  responsable_id: respId,
+                  version_responsable: 1,
+                  parentesco: 'TUTOR',
+                  es_principal: false,
+                  autoriza_atencion: false,
+                },
+              ],
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /duplicado/i);
+          return true;
+        },
+      );
+    });
+
     it('rechaza alta pediátrica con más de 100 responsables arrojando LIMITE_AGREGADO', async () => {
       const muchosResponsables = Array.from({ length: 101 }, (_, i) => ({
         nombres: `Tutor ${i}`,

@@ -274,6 +274,44 @@ describe('API HTTP de pacientes', () => {
       assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
     });
 
+    it('responde 400 si un alta pediátrica incluye el mismo responsable_id duplicado', async () => {
+      const respId = randomUUID();
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Bebe',
+          apellidos: 'Duplicado',
+          fecha_nacimiento: '2023-01-01',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              responsable_id: respId,
+              version_responsable: 1,
+              parentesco: 'Tutor',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+            {
+              responsable_id: respId,
+              version_responsable: 1,
+              parentesco: 'Tutor',
+              es_principal: false,
+              autoriza_atencion: false,
+            },
+          ],
+        }),
+      });
+
+      assert.equal(respuesta.status, 400);
+      const cuerpo = await respuesta.json() as { error: { codigo: string } };
+      assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
+    });
+
     it('registra paciente pediátrico con responsables y valida campos en snake_case', async () => {
       const idempotencyKey = randomUUID();
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {

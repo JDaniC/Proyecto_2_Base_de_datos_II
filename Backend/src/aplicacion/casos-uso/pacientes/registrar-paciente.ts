@@ -117,12 +117,17 @@ export class RegistrarPaciente {
         contexto.cuenta.institucion,
         entrada.responsables.map((r) => ({ esPrincipal: r.es_principal })),
       );
+      const idsResponsablesExistentes = new Set<string>();
       for (const r of entrada.responsables) {
         if (r.responsable_id !== undefined && r.responsable_id !== null && r.responsable_id !== '') {
           if (r.nombres !== undefined || r.apellidos !== undefined || r.telefono !== undefined || r.documento !== undefined) {
             throw solicitudInvalida('Un responsable existente por ID no debe enviar nombres, apellidos, teléfono ni documento.', 'responsables');
           }
-          uuidPublico(r.responsable_id, 'responsables.responsable_id');
+          const idResp = uuidPublico(r.responsable_id, 'responsables.responsable_id');
+          if (idsResponsablesExistentes.has(idResp)) {
+            throw solicitudInvalida('El responsable existente está duplicado en la misma solicitud.', 'responsables.responsable_id');
+          }
+          idsResponsablesExistentes.add(idResp);
           if (typeof r.parentesco !== 'string' || r.parentesco.trim().length === 0 || r.parentesco.trim().length > 80) {
             throw solicitudInvalida('El parentesco es obligatorio (1-80 caracteres).', 'responsables.parentesco');
           }
