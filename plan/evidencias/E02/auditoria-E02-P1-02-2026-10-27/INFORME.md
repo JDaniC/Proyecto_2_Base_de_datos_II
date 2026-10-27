@@ -52,6 +52,15 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
    - `dividirNombre` realiza una división no destructiva respetando palabras y, en actualizaciones `MODIFICAR`/`ACTUALIZAR`, compara el nombre combinado existente; si no ha cambiado, preserva exactamente los valores almacenados en `primer_nombre` y `segundo_nombre`.
 6. **Inclusión de CUIs preexistentes en comprobaciones de titularidad:**
    - `titularIdentidad` consulta tanto `identidades_paciente.clave` como `paciente.cui` (normalizado numéricamente). Asimismo, se incorporó backfill de CUIs en el inicializador de `hospital_general` y la migración `002_backfill_identidades_hospital_postgresql.sql`.
+7. **Preservación de fecha de nacimiento desconocida (NULL) en mappers y actualizadores:**
+   - Mappers de PostgreSQL y MySQL no asignan fecha de presentación por defecto (`1900-01-01`) cuando `fecha_nacimiento` es NULL en la base de datos; la exponen como opcional/indefinida y los actualizadores persisten `NULL`, preservando datos clínicos legados.
+8. **Preservación de contactos de emergencia adicionales en actualizaciones:**
+   - Al actualizar un paciente en PostgreSQL, no se eliminan todos los contactos de emergencia (`DELETE WHERE id_paciente`). Se actualiza o inserta únicamente el contacto seleccionado si hubo cambios en él, conservando intactos todos los demás registros de contacto.
+9. **Persistencia explícita del instante de registro hospitalario:**
+   - El adaptador PostgreSQL persiste explícitamente `pac.fechaRegistro` en el INSERT de `paciente` (columna `fecha_registro`), garantizando coincidencia exacta entre el instante registrado en el comando y las posteriores lecturas.
+10. **Búsqueda en límites de palabra y normalización exhaustiva de diacríticos:**
+    - Se adaptaron los predicados de búsqueda en PostgreSQL y MySQL para coincidir por prefijo en límites de palabra (`LIKE prefix || '%' OR LIKE '% ' || prefix || '%'`), permitiendo buscar por segundos nombres o apellidos (p. ej. `Adol`) mientras se rechazan coincidencias infijas (p. ej. `dolfo`).
+    - En PostgreSQL, se implementó normalización exhaustiva de caracteres latinos (`translate(LOWER(...), ...)`) que incluye diacríticos completos (`ç`, `à`, etc.), alineándola con `normalizarNombreBusqueda`.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |

@@ -147,15 +147,12 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
       parametros.push(qDocPasaporte);
     }
 
+    // Búsqueda por prefijo normalizado de nombre en límites de palabra (sin coincidencia infija)
     const qEscapado = escaparLikeSql(qNormNombre);
-    clausulasBusqueda.push("LOWER(p.nombres) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
-    parametros.push(qEscapado);
-
-    clausulasBusqueda.push("LOWER(p.apellidos) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
-    parametros.push(qEscapado);
-
-    clausulasBusqueda.push("LOWER(CONCAT(p.nombres, ' ', p.apellidos)) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
-    parametros.push(qEscapado);
+    clausulasBusqueda.push(
+      "(CONCAT(p.nombres, ' ', p.apellidos) LIKE CONCAT(?, '%') ESCAPE '\\\\' OR CONCAT(p.nombres, ' ', p.apellidos) LIKE CONCAT('% ', ?, '%') ESCAPE '\\\\')",
+    );
+    parametros.push(qEscapado, qEscapado);
 
     condiciones.push(`(${clausulasBusqueda.join(' OR ')})`);
 

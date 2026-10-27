@@ -1,3 +1,4 @@
+import type { FechaCivil } from '../../../../dominio/compartido/fecha-civil.js';
 import { fechaCivil } from '../../../../dominio/compartido/fecha-civil.js';
 import { instanteUtc } from '../../../../dominio/compartido/instante-utc.js';
 import { uuidPublico } from '../../../../dominio/compartido/uuid.js';
@@ -69,12 +70,12 @@ export function mapearFilaPacienteMysql(fila: FilaPacienteMysql): Paciente {
     });
   }
 
-  let fechaNacimiento = fechaCivil('1900-01-01');
+  let fechaNacimiento: FechaCivil | undefined = undefined;
   if (fila.fecha_nacimiento) {
     try {
       fechaNacimiento = fechaCivil(fila.fecha_nacimiento.trim().slice(0, 10));
     } catch {
-      // conservar fecha por defecto ante datos legados
+      // conservar fecha indefinida ante datos legados no interpretables
     }
   }
 
@@ -99,7 +100,7 @@ export function mapearFilaPacienteMysql(fila: FilaPacienteMysql): Paciente {
     institucion: 'CLINICA_ODONTOLOGICA',
     nombres: (fila.nombres ?? 'Sin nombre').trim(),
     apellidos: (fila.apellidos ?? 'Sin apellido').trim(),
-    fechaNacimiento,
+    ...(fechaNacimiento ? { fechaNacimiento } : {}),
     sexo,
     ...(identificacion ? { identificacion } : {}),
     ...(fila.telefono && fila.telefono.trim().length > 0

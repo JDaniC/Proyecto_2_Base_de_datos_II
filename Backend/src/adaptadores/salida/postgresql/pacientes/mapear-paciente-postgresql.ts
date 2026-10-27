@@ -1,3 +1,4 @@
+import type { FechaCivil } from '../../../../dominio/compartido/fecha-civil.js';
 import { fechaCivil } from '../../../../dominio/compartido/fecha-civil.js';
 import { instanteUtc } from '../../../../dominio/compartido/instante-utc.js';
 import { uuidPublico } from '../../../../dominio/compartido/uuid.js';
@@ -114,12 +115,12 @@ export function mapearFilaPacientePostgresql(fila: FilaPacientePostgresql): Paci
     });
   }
 
-  let fechaNacimiento = fechaCivil('1900-01-01');
+  let fechaNacimiento: FechaCivil | undefined = undefined;
   if (fila.fecha_nacimiento) {
     try {
       fechaNacimiento = fechaCivil(fila.fecha_nacimiento.trim().slice(0, 10));
     } catch {
-      // conservar fecha por defecto ante datos legados truncados
+      // conservar fecha indefinida ante datos legados no interpretables
     }
   }
 
@@ -138,7 +139,7 @@ export function mapearFilaPacientePostgresql(fila: FilaPacientePostgresql): Paci
     institucion: 'HOSPITAL_GENERAL',
     nombres: nombres.length > 0 ? nombres : 'Sin nombre',
     apellidos: apellidos.length > 0 ? apellidos : 'Sin apellido',
-    fechaNacimiento,
+    ...(fechaNacimiento ? { fechaNacimiento } : {}),
     sexo,
     ...(identificacion ? { identificacion } : {}),
     ...(fila.telefono_principal && fila.telefono_principal.trim().length > 0

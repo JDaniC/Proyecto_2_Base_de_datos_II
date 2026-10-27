@@ -271,7 +271,9 @@ export class ActualizarPaciente {
           institucion: pacienteActual.institucion,
           nombres: nombres ?? pacienteActual.nombres,
           apellidos: apellidos ?? pacienteActual.apellidos,
-          fechaNacimiento: fechaNacimiento ?? pacienteActual.fechaNacimiento,
+          ...(fechaNacimiento !== undefined || pacienteActual.fechaNacimiento !== undefined
+            ? { fechaNacimiento: fechaNacimiento ?? pacienteActual.fechaNacimiento }
+            : {}),
           sexo: sexo ?? pacienteActual.sexo,
           estado: pacienteActual.estado,
           version: nuevaVersion,

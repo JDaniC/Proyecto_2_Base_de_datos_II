@@ -196,6 +196,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   assert.equal(consultado.nombres, 'Carlos Alberto');
   assert.equal(consultado.contacto_emergencia?.nombres, 'María Antonieta');
   assert.equal(consultado.contacto_emergencia?.telefono, '50255554321');
+  assert.equal(Date.parse(consultado.fecha_registro), Date.parse(pacienteCreado.fecha_registro), 'la fecha_registro en PostgreSQL debe coincidir exactamente con el instante registrado');
 
   const titular = await repoPg.titularIdentidad({ tipo: 'CUI', numero: cuiValido });
   assert.equal(titular, pacienteId);
@@ -310,16 +311,33 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
   );
 
-  // 8. Validación de CUIs preexistentes en paciente.cui (sin identidades_paciente)
+  // 8. Validación de CUIs preexistentes en paciente.cui (sin identidades_paciente) y preservación de fecha_nacimiento NULL
   const idLegacy = uuidPublico(randomUUID());
   await pool.consultar(
     `INSERT INTO paciente (
       id_publico, revision, cui, primer_nombre, primer_apellido, fecha_nacimiento, sexo
-    ) VALUES ($1, 1, '2489-77777-0101', 'Directo', 'Legacy', '1980-01-01', 'MASCULINO')`,
+    ) VALUES ($1, 1, '2489-77777-0101', 'Directo', 'Legacy', NULL, 'MASCULINO')`,
     [idLegacy],
   );
   const titularLegacy = await repoPg.titularIdentidad({ tipo: 'CUI', numero: '2489777770101' });
   assert.equal(titularLegacy, idLegacy, 'titularIdentidad debe detectar CUIs preexistentes en paciente.cui');
+
+  // Actualizar solo el teléfono del paciente legacy sin fecha de nacimiento y verificar que se preserva NULL
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: idLegacy,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50255550000',
+    },
+  });
+  const resLegacyDb = await pool.consultar<{ fecha_nacimiento: unknown }>(
+    'SELECT fecha_nacimiento FROM paciente WHERE id_publico = $1',
+    [idLegacy],
+  );
+  assert.equal(resLegacyDb.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL debe preservarse tras actualizar');
 
   await assert.rejects(
     () => registrar.ejecutar({
@@ -337,7 +355,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
   );
 
-  // 9. Desduplicación determinista ante múltiples contactos de emergencia
+  // 9. Desduplicación determinista ante múltiples contactos de emergencia y preservación en actualizaciones
   await pool.consultar(
     `INSERT INTO contacto_emergencia (
       id_publico, revision, id_paciente, primer_nombre,
@@ -355,8 +373,84 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   const aparicionesCarlos = resMultiCe.data.filter((p) => p.id === pacienteId).length;
   assert.equal(aparicionesCarlos, 1, 'el paciente debe figurar una sola vez a pesar de tener múltiples contactos de emergencia');
 
-  // 10. Archivo del paciente mediante UoW y control de versión compartida
-  // Intento con versión desactualizada (stale version 1 cuando paciente está en version 2)
+  // Actualizar solo el teléfono del paciente y verificar que no se borran los otros contactos de emergencia
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      telefono: '50255558888',
+    },
+  });
+  const resContactos = await pool.consultar<{ cant: number | string }>(
+    `SELECT count(*) AS cant FROM contacto_emergencia ce
+     JOIN paciente p ON p.id_paciente = ce.id_paciente
+     WHERE p.id_publico = $1`,
+    [pacienteId],
+  );
+  assert.equal(Number(resContactos.filas[0]?.cant), 2, 'los múltiples contactos de emergencia deben preservarse');
+
+  // 10. Búsqueda por límites de palabra y diacríticos normalizados completos
+  const cuiGustavo = '2489123450103';
+  await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Gustavo Adolfo',
+      apellidos: 'Bécquer Ramírez',
+      fecha_nacimiento: '1985-02-17',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiGustavo },
+    },
+  });
+
+  const resWordBoundary = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Adol', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resWordBoundary.data.some((p) => p.nombres.includes('Gustavo')), 'debe encontrar por prefijo en límite de palabra Adol');
+
+  const resInfix = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'dolfo', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(!resInfix.data.some((p) => p.nombres.includes('Gustavo')), 'no debe coincidir por infijo dolfo');
+
+  const cuiFrancois = '2489123450104';
+  await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'François',
+      apellidos: 'Àlvaro Peña',
+      fecha_nacimiento: '1988-11-23',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiFrancois },
+    },
+  });
+
+  const resFrancois = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'francois', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resFrancois.data.some((p) => p.nombres === 'François'), 'francois normalizado debe encontrar François');
+
+  const resAlvaro = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'alvaro', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resAlvaro.data.some((p) => p.nombres === 'François'), 'alvaro normalizado debe encontrar Àlvaro');
+
+  // 11. Archivo del paciente mediante UoW y control de versión compartida
+  // Intento con versión desactualizada (stale version 2 cuando paciente está en version 3)
   await assert.rejects(
     async () => {
       await bundle.uow?.ejecutar(
@@ -382,7 +476,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
               agregado: 'historiales',
               tipo: 'MODIFICAR',
               recursoId: pacienteId,
-              versionAnterior: versionPositiva(1),
+              versionAnterior: versionPositiva(2),
               nuevoEstado: {
                 causa: 'TRASLADO',
                 motivo: 'Intento con versión stale',
@@ -398,7 +492,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
   );
 
-  // Archivo correcto con versión vigente 2
+  // Archivo correcto con versión vigente 3
   await bundle.uow?.ejecutar(
     contexto,
     {
@@ -422,7 +516,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
           agregado: 'historiales',
           tipo: 'MODIFICAR',
           recursoId: pacienteId,
-          versionAnterior: versionPositiva(2),
+          versionAnterior: versionPositiva(3),
           nuevoEstado: {
             causa: 'TRASLADO',
             motivo: 'Traslado a hospital departamental de Quetzaltenango',
@@ -446,7 +540,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
 
   const consultadoArchivado = await repoPg.porId(pacienteId);
   assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
-  assert.equal(consultadoArchivado?.version, 3, 'el archivo debe avanzar la versión compartida del paciente a 3');
+  assert.equal(consultadoArchivado?.version, 4, 'el archivo debe avanzar la versión compartida del paciente a 4');
   assert.equal(consultadoArchivado?.baja?.causa, 'TRASLADO');
   assert.ok(consultadoArchivado?.baja?.motivo);
 
@@ -666,6 +760,58 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     }),
     (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
   );
+
+  // Verificación de búsqueda por límite de palabra y preservación de fecha_nacimiento NULL en MySQL
+  const idLegacyMy = uuidPublico(randomUUID());
+  await pool.consultar(
+    `INSERT INTO paciente (
+      id_publico, revision, nombres, apellidos, fecha_nacimiento, sexo, estado
+    ) VALUES (?, 1, 'Legacy Dental', 'Prueba', NULL, 'FEMENINO', 'ACTIVO')`,
+    [idLegacyMy],
+  );
+
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: idLegacyMy,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50233334444',
+    },
+  });
+  const filaLegacyMy = await pool.consultar<{ fecha_nacimiento: unknown }>(
+    'SELECT fecha_nacimiento FROM paciente WHERE id_publico = ?',
+    [idLegacyMy],
+  );
+  assert.equal(filaLegacyMy.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL en MySQL debe preservarse');
+
+  const altaGustavoMy = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Gustavo Adolfo',
+      apellidos: 'Bécquer Sánchez',
+      fecha_nacimiento: '1982-03-12',
+      sexo: 'MASCULINO',
+    },
+  });
+  const idGustavoMy = altaGustavoMy.respuesta.id;
+
+  const resWordBoundaryMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Adol', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resWordBoundaryMy.data.some((p) => p.id === idGustavoMy), 'búsqueda en MySQL por Adol debe encontrar Gustavo Adolfo');
+
+  const resInfixMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'dolfo', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(!resInfixMy.data.some((p) => p.id === idGustavoMy), 'búsqueda en MySQL no debe coincidir por infijo dolfo');
 
   // 5. Archivo del paciente dental mediante UoW con validación de versión compartida
   // Intento de archivo con versión desactualizada 1

@@ -45,8 +45,9 @@ export async function aplicarCambiosPacientesPostgresql(
           `INSERT INTO paciente (
             id_publico, revision, cui, primer_nombre, segundo_nombre,
             primer_apellido, segundo_apellido, fecha_nacimiento, sexo,
-            tipo_sangre, telefono_principal, correo_principal, direccion
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            tipo_sangre, telefono_principal, correo_principal, direccion,
+            fecha_registro
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
           RETURNING id_paciente`,
           [
             pac.id,
@@ -56,12 +57,13 @@ export async function aplicarCambiosPacientesPostgresql(
             segundoNombre,
             primerApellido,
             segundoApellido,
-            pac.fechaNacimiento,
+            pac.fechaNacimiento ?? null,
             pac.sexo,
             pac.grupoSanguineo ?? null,
             pac.telefono ?? null,
             pac.correo ?? null,
             pac.direccion ?? null,
+            pac.fechaRegistro,
           ],
         );
 
@@ -157,7 +159,7 @@ export async function aplicarCambiosPacientesPostgresql(
             segundoNombre,
             primerApellido,
             segundoApellido,
-            pac.fechaNacimiento,
+            pac.fechaNacimiento ?? null,
             pac.sexo,
             pac.grupoSanguineo ?? null,
             pac.telefono ?? null,
@@ -170,60 +172,96 @@ export async function aplicarCambiosPacientesPostgresql(
 
         const idPaciente = filaPrevia.id_paciente;
 
-        // Recuperar contacto de emergencia previo para preservar componentes de nombres si no cambiaron
+        // Recuperar el contacto de emergencia previo para actualizarlo sin tocar otros contactos
         const resCePrevio = await executor.consultar<{
+          id_contacto: number | string;
           primer_nombre: string;
           segundo_nombre: string | null;
           primer_apellido: string;
           segundo_apellido: string | null;
+          parentesco: string;
+          telefono: string;
         }>(
-          `SELECT primer_nombre, segundo_nombre, primer_apellido, segundo_apellido
-           FROM contacto_emergencia WHERE id_paciente = $1`,
+          `SELECT id_contacto, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+           FROM contacto_emergencia WHERE id_paciente = $1
+           ORDER BY id_contacto ASC LIMIT 1`,
           [idPaciente],
         );
         const cePrevio = resCePrevio.filas[0];
 
-        await executor.consultar(
-          'DELETE FROM contacto_emergencia WHERE id_paciente = $1',
-          [idPaciente],
-        );
-
         if (pac.contactoEmergencia) {
-          let ceNom1: string;
-          let ceNom2: string | null;
           const ceNomComb = cePrevio ? [cePrevio.primer_nombre, cePrevio.segundo_nombre].filter(Boolean).join(' ') : '';
-          if (cePrevio && pac.contactoEmergencia.nombres === ceNomComb) {
-            ceNom1 = cePrevio.primer_nombre;
-            ceNom2 = cePrevio.segundo_nombre;
-          } else {
-            [ceNom1, ceNom2] = dividirNombre(pac.contactoEmergencia.nombres);
-          }
-
-          let ceApe1: string;
-          let ceApe2: string | null;
           const ceApeComb = cePrevio ? [cePrevio.primer_apellido, cePrevio.segundo_apellido].filter(Boolean).join(' ') : '';
-          if (cePrevio && pac.contactoEmergencia.apellidos === ceApeComb) {
-            ceApe1 = cePrevio.primer_apellido;
-            ceApe2 = cePrevio.segundo_apellido;
-          } else {
-            [ceApe1, ceApe2] = dividirNombre(pac.contactoEmergencia.apellidos);
-          }
+          const coincide = cePrevio
+            && pac.contactoEmergencia.nombres === ceNomComb
+            && pac.contactoEmergencia.apellidos === ceApeComb
+            && pac.contactoEmergencia.parentesco === cePrevio.parentesco
+            && pac.contactoEmergencia.telefono === cePrevio.telefono;
 
+          if (!coincide) {
+            let ceNom1: string;
+            let ceNom2: string | null;
+            if (cePrevio && pac.contactoEmergencia.nombres === ceNomComb) {
+              ceNom1 = cePrevio.primer_nombre;
+              ceNom2 = cePrevio.segundo_nombre;
+            } else {
+              [ceNom1, ceNom2] = dividirNombre(pac.contactoEmergencia.nombres);
+            }
+
+            let ceApe1: string;
+            let ceApe2: string | null;
+            if (cePrevio && pac.contactoEmergencia.apellidos === ceApeComb) {
+              ceApe1 = cePrevio.primer_apellido;
+              ceApe2 = cePrevio.segundo_apellido;
+            } else {
+              [ceApe1, ceApe2] = dividirNombre(pac.contactoEmergencia.apellidos);
+            }
+
+            if (cePrevio) {
+              await executor.consultar(
+                `UPDATE contacto_emergencia SET
+                  revision = revision + 1,
+                  primer_nombre = $1,
+                  segundo_nombre = $2,
+                  primer_apellido = $3,
+                  segundo_apellido = $4,
+                  parentesco = $5,
+                  telefono = $6
+                WHERE id_contacto = $7`,
+                [
+                  ceNom1,
+                  ceNom2,
+                  ceApe1,
+                  ceApe2,
+                  pac.contactoEmergencia.parentesco,
+                  pac.contactoEmergencia.telefono,
+                  cePrevio.id_contacto,
+                ],
+              );
+            } else {
+              await executor.consultar(
+                `INSERT INTO contacto_emergencia (
+                  id_publico, revision, id_paciente, primer_nombre,
+                  segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+                ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)`,
+                [
+                  uuidPublico(randomUUID()),
+                  idPaciente,
+                  ceNom1,
+                  ceNom2,
+                  ceApe1,
+                  ceApe2,
+                  pac.contactoEmergencia.parentesco,
+                  pac.contactoEmergencia.telefono,
+                ],
+              );
+            }
+          }
+        } else if (cePrevio) {
+          // El paciente ya no tiene contacto de emergencia: eliminar únicamente el contacto seleccionado
           await executor.consultar(
-            `INSERT INTO contacto_emergencia (
-              id_publico, revision, id_paciente, primer_nombre,
-              segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
-            ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)`,
-            [
-              uuidPublico(randomUUID()),
-              idPaciente,
-              ceNom1,
-              ceNom2,
-              ceApe1,
-              ceApe2,
-              pac.contactoEmergencia.parentesco,
-              pac.contactoEmergencia.telefono,
-            ],
+            'DELETE FROM contacto_emergencia WHERE id_contacto = $1',
+            [cePrevio.id_contacto],
           );
         }
       }

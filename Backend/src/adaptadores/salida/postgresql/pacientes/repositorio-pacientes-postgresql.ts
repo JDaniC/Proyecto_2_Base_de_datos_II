@@ -24,6 +24,9 @@ import {
   mapearFilaPacientePostgresql,
 } from './mapear-paciente-postgresql.js';
 
+const DIACRITICOS_CON = 'àáâãäåçèéêëìíîïñòóôõöùúûüýÿāăąćĉċčďēĕėęěĝğġģĥĩīĭįĵķĺļľńņňōŏőŕŗřśŝşšţťũūŭůűųŵŷźżž';
+const DIACRITICOS_SIN = 'aaaaaaceeeeiiiinooooouuuuyyaaaccccdeeeeegggghiiiijklllnnnooorrrssssttuuuuuuwyzzz';
+
 const SELECT_PACIENTE_BASE = `
   SELECT
     p.id_paciente,
@@ -180,23 +183,16 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
       paramIdx++;
     }
 
-    // Búsqueda por prefijo normalizado de nombre con escape de comodines
-    // Utiliza translate() para eliminar diacríticos de forma determinista en PostgreSQL
+    // Búsqueda por prefijo normalizado de nombre en límites de palabra (sin coincidencia infija)
+    // Utiliza translate() para eliminar diacríticos de forma determinista y exhaustiva en PostgreSQL
     const qEscapado = escaparLikeSql(qNormNombre);
-    const translateExpr = (col: string) => `translate(LOWER(${col}), 'áéíóúüñÁÉÍÓÚÜÑ', 'aeiouunAEIOUUN')`;
-    clausulasBusqueda.push(`${translateExpr('p.primer_nombre')} LIKE $${paramIdx} || '%' ESCAPE '\\'`);
-    parametros.push(qEscapado);
-    paramIdx++;
-
-    clausulasBusqueda.push(`${translateExpr('p.primer_apellido')} LIKE $${paramIdx} || '%' ESCAPE '\\'`);
-    parametros.push(qEscapado);
-    paramIdx++;
+    const nombreCompletoExpr = `translate(LOWER(CONCAT_WS(' ', p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido)), '${DIACRITICOS_CON}', '${DIACRITICOS_SIN}')`;
 
     clausulasBusqueda.push(
-      `${translateExpr("p.primer_nombre || ' ' || COALESCE(p.segundo_nombre || ' ', '') || p.primer_apellido")} LIKE $${paramIdx} || '%' ESCAPE '\\'`,
+      `(${nombreCompletoExpr} LIKE $${paramIdx} || '%' ESCAPE '\\' OR ${nombreCompletoExpr} LIKE '% ' || $${paramIdx + 1} || '%' ESCAPE '\\')`,
     );
-    parametros.push(qEscapado);
-    paramIdx++;
+    parametros.push(qEscapado, qEscapado);
+    paramIdx += 2;
 
     condiciones.push(`(${clausulasBusqueda.join(' OR ')})`);
 
