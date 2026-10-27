@@ -214,4 +214,41 @@ describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03
 
     expect.fail('Debió lanzar HttpError de red');
   });
+
+  it('P2 regresión: mantiene activo el timeout durante la lectura del cuerpo y aborta si la respuesta se bloquea', async () => {
+    // Simula una respuesta cuyos encabezados llegan rápido pero la lectura del JSON se bloquea o demora
+    mockFetch.mockImplementationOnce((_url, init) => {
+      const signal = init?.signal as AbortSignal;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'X-Correlation-ID': 'corr-bloqueo' }),
+        json: () =>
+          new Promise((_, reject) => {
+            if (signal.aborted) {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+              return;
+            }
+            signal.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+          }),
+      });
+    });
+
+    const client = new HttpClient({ baseUrl: '/api/v1', tokenProvider });
+
+    // Con timeout de 20ms, la promesa del cuerpo debe ser abortada y mapeada a 503 PERSISTENCIA_NO_DISPONIBLE
+    try {
+      await client.get('/stream-lento', { timeoutMs: 20 });
+    } catch (err: unknown) {
+      const httpErr = err as HttpError;
+      expect(httpErr.status).toBe(503);
+      expect(httpErr.codigo).toBe('503 PERSISTENCIA_NO_DISPONIBLE');
+      expect(httpErr.esReintentable).toBe(true);
+      return;
+    }
+
+    expect.fail('Debió lanzar HttpError por timeout durante el consumo del cuerpo');
+  });
 });

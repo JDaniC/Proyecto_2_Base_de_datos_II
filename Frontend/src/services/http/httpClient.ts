@@ -77,8 +77,6 @@ export class HttpClient {
         signal: options.signal || abortController.signal,
       });
 
-      clearTimeout(timeout);
-
       const correlationHeader = response.headers.get('X-Correlation-ID') || correlacion;
 
       if (!response.ok) {
@@ -86,7 +84,18 @@ export class HttpClient {
           this.tokenProvider?.onTokenExpirado?.();
         }
 
-        const payloadError = await response.json().catch(() => null);
+        let payloadError: unknown = null;
+        try {
+          payloadError = await response.json();
+        } catch (jsonErr: unknown) {
+          if (
+            abortController.signal.aborted ||
+            options.signal?.aborted ||
+            (jsonErr instanceof Error && jsonErr.name === 'AbortError')
+          ) {
+            throw jsonErr;
+          }
+        }
         throw parsearRespuestaError(response.status, payloadError, correlationHeader);
       }
 
@@ -98,7 +107,19 @@ export class HttpClient {
         };
       }
 
-      const payload = await response.json().catch(() => ({}));
+      let payload: unknown;
+      try {
+        payload = await response.json();
+      } catch (jsonErr: unknown) {
+        if (
+          abortController.signal.aborted ||
+          options.signal?.aborted ||
+          (jsonErr instanceof Error && jsonErr.name === 'AbortError')
+        ) {
+          throw jsonErr;
+        }
+        payload = {};
+      }
       if (typeof payload === 'object' && payload !== null && 'data' in payload) {
         const respuesta = payload as RespuestaApi<T>;
         return {
@@ -112,11 +133,12 @@ export class HttpClient {
         meta: { correlacion: correlationHeader },
       };
     } catch (err: unknown) {
-      clearTimeout(timeout);
       if (err instanceof HttpError) {
         throw err;
       }
       throw crearErrorRed(err, correlacion);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
