@@ -1,9 +1,9 @@
 Componente,Riesgo,Archivo,Unidades,CoberturaTests
-Configuracion y arranque,CRITICAL,Backend/src/configuracion,validar-entorno; crear-servidor,Backend/tests/runtime/servidor.test.js
-Frontera HTTP y Filtros,HIGH,Backend/src/adaptadores/entrada/http,filtro-errores; correlacion; swagger,Backend/tests/runtime/frontera-http.test.js
-Dominio y Tipos,CRITICAL,Backend/src/dominio,entidades; errores; valores-comunes,Backend/tests/unitarios/dominio.test.js
-Autenticacion y Autorizacion,CRITICAL,Backend/src/adaptadores/entrada/http/guardias,guard-autenticacion; guard-institucion; resolver-sesion,Backend/tests/runtime/autenticacion-autorizacion.test.js
-UoW PostgreSQL y MySQL,CRITICAL,Backend/src/adaptadores/salida/{postgresql mysql}/uow,UowPostgresql; UowMysql; transacciones; rollback,Backend/tests/runtime/uow-sql.test.js
-UoW MongoDB y Firestore,CRITICAL,Backend/src/adaptadores/salida/{mongodb firestore}/uow,UowMongodb; UowFirestore; transacciones; rollback,Backend/tests/runtime/uow-mongodb.test.js; Backend/tests/runtime/uow-firestore.test.js
-Cliente HTTP Frontend,HIGH,Frontend/src/services/http,HttpClient; HttpAuthRepository; TrialAuthProvider,Frontend/src/test/http/*.test.ts
+Configuracion y arranque,CRITICAL,Backend/src/configuracion,validar-entorno; crear-servidor,Backend/tests/runtime/startup.test.ts; Backend/tests/runtime/configuracion.test.ts
+Frontera HTTP y Filtros,HIGH,Backend/src/adaptadores/entrada/http,filtro-errores; correlacion; swagger,Backend/tests/runtime/http.test.ts; Backend/tests/runtime/openapi.test.ts
+Dominio y Tipos,CRITICAL,Backend/src/dominio,entidades; errores; valores-comunes,Backend/tests/unitarios/valores-compartidos.test.ts; Backend/tests/unitarios/json-canonico.test.ts; Backend/tests/unitarios/contexto-autenticado.test.ts
+Autenticacion y Autorizacion,CRITICAL,Backend/src/adaptadores/entrada/http/guardias,guard-autenticacion; guard-institucion; resolver-sesion,Backend/tests/runtime/autenticacion.test.ts; Backend/tests/unitarios/identidad-y-provision.test.ts
+UoW PostgreSQL y MySQL,CRITICAL,Backend/src/adaptadores/salida/{postgresql mysql}/uow,UowPostgresql; UowMysql; transacciones; rollback,Backend/tests/unitarios/conexiones-sql.test.ts; Backend/tests/unitarios/adquirir-con-limite.test.ts; Backend/tests/unitarios/unidad-de-trabajo-sql.test.ts; Backend/tests/integracion/sql-uow.test.ts
+UoW MongoDB y Firestore,CRITICAL,Backend/src/adaptadores/salida/{mongodb firestore}/uow,UowMongodb; UowFirestore; transacciones; rollback,Backend/tests/unitarios/conexiones-mongodb.test.ts; Backend/tests/unitarios/unidad-de-trabajo-mongodb.test.ts; Backend/tests/unitarios/conexiones-firestore.test.ts; Backend/tests/unitarios/validador-firestore.test.ts; Backend/tests/unitarios/unidad-de-trabajo-firestore.test.ts; Backend/tests/integracion/nosql-uow.test.ts
+Cliente HTTP Frontend,HIGH,Frontend/src/services/http,HttpClient; HttpAuthRepository; TrialAuthProvider,Frontend/src/test/http/HttpClient.test.ts; Frontend/src/test/http/HttpAuthRepository.test.ts
 Service Factory Frontend,MEDIUM,Frontend/src/app/serviceFactory.ts,createServices; requireApiAdapter,Frontend/src/test/http/ServiceFactoryAndUI.test.tsx
