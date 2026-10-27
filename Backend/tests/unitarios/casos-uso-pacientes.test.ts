@@ -146,6 +146,36 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(segundo.correlacionOriginal, primero.correlacionOriginal);
     });
 
+    it('serializa ejecuciones concurrentes con la misma clave de idempotencia devolviendo el mismo registro', async () => {
+      const claveIdempotencia = uuidPublico(randomUUID());
+      const entrada = {
+        nombres: 'Concurrente',
+        apellidos: 'Idempotente',
+        fecha_nacimiento: '1987-07-07',
+        sexo: 'MASCULINO' as const,
+        identificacion: { tipo: 'CUI' as const, numero: '9988776650101' },
+      };
+
+      const [res1, res2] = await Promise.all([
+        registrarPaciente.ejecutar({
+          contexto: contextoHospital,
+          bundle: bundleHospital,
+          claveIdempotencia,
+          entrada,
+        }),
+        registrarPaciente.ejecutar({
+          contexto: contextoHospital,
+          bundle: bundleHospital,
+          claveIdempotencia,
+          entrada,
+        }),
+      ]);
+
+      assert.equal(res1.respuesta.id, res2.respuesta.id);
+      assert.equal(res1.respuesta.codigo_legible, res2.respuesta.codigo_legible);
+      assert.equal(res1.correlacionOriginal, res2.correlacionOriginal);
+    });
+
     it('rechaza repetición con carga útil distinta usando la misma clave de idempotencia (CLAVE_REUTILIZADA)', async () => {
       const claveIdempotencia = uuidPublico(randomUUID());
       await registrarPaciente.ejecutar({
@@ -575,6 +605,47 @@ describe('casos de uso de pacientes en memoria', () => {
           return true;
         },
       );
+    });
+
+    it('serializa actualizaciones concurrentes impidiendo colisión de versiones (bloqueo optimista concurrente)', async () => {
+      const resultados = await Promise.allSettled([
+        actualizarPaciente.ejecutar({
+          contexto: contextoHospital,
+          bundle: bundleHospital,
+          id: pacienteId,
+          claveIdempotencia: uuidPublico(randomUUID()),
+          cambios: {
+            version_esperada: 1,
+            telefono: '55511111',
+          },
+        }),
+        actualizarPaciente.ejecutar({
+          contexto: contextoHospital,
+          bundle: bundleHospital,
+          id: pacienteId,
+          claveIdempotencia: uuidPublico(randomUUID()),
+          cambios: {
+            version_esperada: 1,
+            telefono: '55522222',
+          },
+        }),
+      ]);
+
+      const exitosos = resultados.filter((r) => r.status === 'fulfilled');
+      const fallidos = resultados.filter((r) => r.status === 'rejected');
+
+      assert.equal(exitosos.length, 1);
+      assert.equal(fallidos.length, 1);
+
+      const error = (fallidos[0] as PromiseRejectedResult).reason as ErrorDominio;
+      assert.equal(error.codigo, 'VERSION_DESACTUALIZADA');
+
+      const pacienteFinal = await consultarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        id: pacienteId,
+      });
+      assert.equal(pacienteFinal.version, 2);
     });
   });
 

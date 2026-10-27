@@ -65,6 +65,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   private readonly identidades = new Map<string, string>();
   private readonly operaciones = new Map<string, OperacionIdempotente<unknown>>();
   private readonly responsables = new Map<string, ResponsableDetalle>();
+  private colaUow: Promise<unknown> = Promise.resolve();
 
   constructor(semillas?: readonly Paciente[]) {
     if (semillas) {
@@ -248,40 +249,46 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         comando: ComandoEstable,
         planificar: (lector: LectorTransaccional) => Promise<PlanDeEscrituras<T, TEstado, TSnapshot>>,
       ): Promise<ResultadoDurable<T>> => {
-        const lector = this.crearLector();
-        const plan = await planificar(lector);
+        const operacionSecuencial = async (): Promise<ResultadoDurable<T>> => {
+          const lector = this.crearLector();
+          const plan = await planificar(lector);
 
-        if (plan.tipo === 'REPETIR') {
-          if (plan.operacion.hashEntrada !== comando.hashEntrada) {
-            throw new ErrorDominio('CLAVE_REUTILIZADA', 'La clave de idempotencia ya se usó con otra solicitud.');
+          if (plan.tipo === 'REPETIR') {
+            if (plan.operacion.hashEntrada !== comando.hashEntrada) {
+              throw new ErrorDominio('CLAVE_REUTILIZADA', 'La clave de idempotencia ya se usó con otra solicitud.');
+            }
+            return plan.operacion.resultado;
           }
-          return plan.operacion.resultado;
-        }
 
-        // Aplicar cambios atómicamente en memoria
-        for (const cambio of plan.cambios) {
-          if (cambio.agregado === 'pacientes') {
-            this.pacientes.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
-          } else if (cambio.agregado === 'responsables') {
-            this.responsables.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
-          } else if (cambio.agregado === 'identidades') {
-            const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
-            if (cambio.tipo === 'LIBERAR') {
-              this.liberarIdentidad(estado.identificacion);
-            } else {
-              this.reservarIdentidad(estado.identificacion, (estado.titularId ?? cambio.recursoId) as UUID);
+          // Aplicar cambios atómicamente en memoria
+          for (const cambio of plan.cambios) {
+            if (cambio.agregado === 'pacientes') {
+              this.pacientes.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
+            } else if (cambio.agregado === 'responsables') {
+              this.responsables.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
+            } else if (cambio.agregado === 'identidades') {
+              const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
+              if (cambio.tipo === 'LIBERAR') {
+                this.liberarIdentidad(estado.identificacion);
+              } else {
+                this.reservarIdentidad(estado.identificacion, (estado.titularId ?? cambio.recursoId) as UUID);
+              }
             }
           }
-        }
 
-        const opIdempotente: OperacionIdempotente<T> = Object.freeze({
-          hashEntrada: comando.hashEntrada,
-          resultado: plan.resultado,
-        });
+          const opIdempotente: OperacionIdempotente<T> = Object.freeze({
+            hashEntrada: comando.hashEntrada,
+            resultado: plan.resultado,
+          });
 
-        this.guardarOperacion(contexto.cuenta.id, comando.caso, comando.claveIdempotencia, opIdempotente);
+          this.guardarOperacion(contexto.cuenta.id, comando.caso, comando.claveIdempotencia, opIdempotente);
 
-        return plan.resultado;
+          return plan.resultado;
+        };
+
+        const proximo = this.colaUow.then(operacionSecuencial, operacionSecuencial);
+        this.colaUow = proximo.catch(() => {});
+        return proximo;
       },
     };
   }

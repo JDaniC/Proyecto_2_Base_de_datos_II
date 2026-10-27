@@ -76,6 +76,8 @@
   - *Corrección:* `RepositorioPacientesMemoria.buscar` ordena primero por `fechaRegistro` (comparación cronológica ISO UTC) y usa `id` (UUID) como desempate determinista, admitiendo orden `ASC` y `DESC`.
 - **D-13 (Resuelta - Codex P2):** `ContactoEmergencia` y `ContactoEmergenciaDto` utilizaban el formato preliminar `{ nombre, telefono, relacion }` en lugar de los campos canónicos publicados en `Contacto` del contrato OpenAPI `{ nombres, apellidos, parentesco, telefono }`.
   - *Corrección:* `ContactoEmergencia` en el dominio y `ContactoEmergenciaDto` en el DTO HTTP alineados con `Contacto` de OpenAPI: `nombres` (1-80), `apellidos` (1-80), `parentesco` (1-60) y `telefono` (1-30). Se actualizaron validaciones de dominio y pruebas unitarias y de runtime.
+- **D-14 (Resuelta - Codex P2):** Comandos concurrentes en memoria contra el mismo recurso podían completar la fase de planificación sobre un estado no actualizado antes de que el otro confirmara.
+  - *Corrección:* `RepositorioPacientesMemoria.crearUnidadDeTrabajo` serializa la secuencia completa read-plan-write a través de una cola encadenada de promesas (`colaUow`). Se añadieron pruebas unitarias para registrar en paralelo con la misma clave de idempotencia (devolviendo el mismo registro) y para actualizar concurrentemente con la misma versión esperada (rechazando la segunda con `VERSION_DESACTUALIZADA`).
 
 ## 4. Conclusión
 
