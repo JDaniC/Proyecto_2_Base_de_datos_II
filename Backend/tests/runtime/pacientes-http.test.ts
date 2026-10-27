@@ -243,6 +243,37 @@ describe('API HTTP de pacientes', () => {
       assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
     });
 
+    it('responde 400 si un responsable nuevo pediátrico carece de documento', async () => {
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Bebe',
+          apellidos: 'SinDocumento',
+          fecha_nacimiento: '2023-01-01',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              nombres: 'Tutor',
+              apellidos: 'Valido',
+              telefono: '55512345',
+              parentesco: 'Tutor',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        }),
+      });
+
+      assert.equal(respuesta.status, 400);
+      const cuerpo = await respuesta.json() as { error: { codigo: string } };
+      assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
+    });
+
     it('registra paciente pediátrico con responsables y valida campos en snake_case', async () => {
       const idempotencyKey = randomUUID();
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
@@ -317,6 +348,7 @@ describe('API HTTP de pacientes', () => {
               parentesco: 'Padre',
               es_principal: true,
               autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '2020202020101' },
             },
           ],
         }),
@@ -336,6 +368,7 @@ describe('API HTTP de pacientes', () => {
         parentesco: 'Tutor',
         es_principal: i === 0,
         autoriza_atencion: true,
+        documento: { tipo: 'CUI', numero: `3000000000${String(i).padStart(3, '0')}` },
       }));
 
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {

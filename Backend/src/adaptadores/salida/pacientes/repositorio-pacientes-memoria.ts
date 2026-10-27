@@ -255,10 +255,53 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
       },
       responsables: {
         porId: async (id: UUID) => this.responsables.get(id) ?? null,
-        porPaciente: async (pacienteId: UUID) => {
+        porPaciente: async (pacienteId: UUID, pagina?: FiltrosPagina): Promise<Pagina<ResponsableDetalle>> => {
           const paciente = this.pacientes.get(pacienteId);
-          if (!paciente || !paciente.responsables) return { elementos: [] };
-          return { elementos: Object.freeze(paciente.responsables.map((r) => r.responsable)) };
+          if (!paciente || !paciente.responsables || paciente.responsables.length === 0) {
+            return { elementos: [] };
+          }
+          const orden = pagina?.orden ?? 'ASC';
+          const conIndice = paciente.responsables.map((r, indice) => ({ responsable: r.responsable, indice }));
+          conIndice.sort((a, b) => {
+            return orden === 'DESC' ? b.indice - a.indice : a.indice - b.indice;
+          });
+          const ordenados = conIndice.map((item) => item.responsable);
+
+          let inicio = 0;
+          if (pagina?.cursor) {
+            let cursorId = pagina.cursor;
+            try {
+              const raw = Buffer.from(pagina.cursor, 'base64url').toString('utf8');
+              const parseado = JSON.parse(raw) as unknown;
+              if (
+                typeof parseado === 'object' &&
+                parseado !== null &&
+                'id' in parseado &&
+                typeof (parseado as { id: string }).id === 'string'
+              ) {
+                cursorId = (parseado as { id: string }).id;
+              }
+            } catch {
+              // si no es base64url JSON, usar cursor como ID crudo
+            }
+
+            const idx = ordenados.findIndex((r) => r.id === cursorId);
+            if (idx !== -1) {
+              inicio = idx + 1;
+            }
+          }
+
+          const limite = Math.max(1, pagina?.limite ?? 50);
+          const elementos = ordenados.slice(inicio, inicio + limite);
+          const tieneMas = inicio + limite < ordenados.length;
+          const siguienteCursor = tieneMas && elementos.length > 0
+            ? Buffer.from(JSON.stringify({ id: elementos[elementos.length - 1]!.id, orden }), 'utf8').toString('base64url')
+            : undefined;
+
+          return {
+            elementos: Object.freeze(elementos),
+            ...(siguienteCursor ? { siguienteCursor } : {}),
+          };
         },
       },
       profesionales: { porId: async () => null },

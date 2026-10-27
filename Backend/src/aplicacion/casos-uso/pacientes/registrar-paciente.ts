@@ -119,8 +119,8 @@ export class RegistrarPaciente {
       );
       for (const r of entrada.responsables) {
         if (r.responsable_id !== undefined && r.responsable_id !== null && r.responsable_id !== '') {
-          if (r.nombres !== undefined || r.apellidos !== undefined) {
-            throw solicitudInvalida('Un responsable existente por ID no debe enviar nombres ni apellidos.', 'responsables');
+          if (r.nombres !== undefined || r.apellidos !== undefined || r.telefono !== undefined || r.documento !== undefined) {
+            throw solicitudInvalida('Un responsable existente por ID no debe enviar nombres, apellidos, teléfono ni documento.', 'responsables');
           }
           uuidPublico(r.responsable_id, 'responsables.responsable_id');
           if (typeof r.parentesco !== 'string' || r.parentesco.trim().length === 0 || r.parentesco.trim().length > 80) {
@@ -154,9 +154,10 @@ export class RegistrarPaciente {
           if (typeof r.autoriza_atencion !== 'boolean') {
             throw solicitudInvalida('El campo autoriza_atencion debe ser booleano.', 'responsables.autoriza_atencion');
           }
-          if (r.documento !== undefined && r.documento !== null) {
-            validarIdentificacion(r.documento, 'responsables.documento');
+          if (r.documento === undefined || r.documento === null) {
+            throw solicitudInvalida('El documento del responsable es obligatorio.', 'responsables.documento');
           }
+          validarIdentificacion(r.documento, 'responsables.documento');
         }
       }
     } else {
@@ -264,19 +265,16 @@ export class RegistrarPaciente {
               }));
             } else {
               const nuevoId = comando.ids[`responsable_id_${idx}`]!;
-              let docResp: Identificacion | undefined = undefined;
-              if (resp.documento) {
-                docResp = validarIdentificacion(resp.documento, 'responsables.documento');
-                const claveDoc = `${docResp.tipo}:${normalizarIdentificacion(docResp.tipo, docResp.numero)}`;
-                if (identidadesEnEstaSolicitud.has(claveDoc)) {
-                  throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable está duplicada en la misma solicitud.', ['responsables']);
-                }
-                const titularResp = await lector.identidades.titular(docResp);
-                if (titularResp !== null) {
-                  throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable ya existe en el sistema.', ['responsables']);
-                }
-                identidadesEnEstaSolicitud.add(claveDoc);
+              const docResp = validarIdentificacion(resp.documento!, 'responsables.documento');
+              const claveDoc = `${docResp.tipo}:${normalizarIdentificacion(docResp.tipo, docResp.numero)}`;
+              if (identidadesEnEstaSolicitud.has(claveDoc)) {
+                throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable está duplicada en la misma solicitud.', ['responsables']);
               }
+              const titularResp = await lector.identidades.titular(docResp);
+              if (titularResp !== null) {
+                throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable ya existe en el sistema.', ['responsables']);
+              }
+              identidadesEnEstaSolicitud.add(claveDoc);
               const nombresResp = (resp.nombres ?? '').trim();
               const apellidosResp = (resp.apellidos ?? '').trim();
               const telefonoResp = (resp.telefono ?? '').trim();
@@ -286,7 +284,7 @@ export class RegistrarPaciente {
                 apellidos: apellidosResp,
                 nombre: `${nombresResp} ${apellidosResp}`.trim(),
                 telefono: telefonoResp,
-                ...(docResp ? { documento: docResp } : {}),
+                documento: docResp,
                 version: 1 as Version,
               });
               const vinculo: VinculoResponsable = Object.freeze({

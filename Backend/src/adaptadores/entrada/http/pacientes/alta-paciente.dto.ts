@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsIn,
   IsInt,
@@ -88,7 +89,8 @@ export class ResponsableAltaDto {
   @MaxLength(30)
   telefono?: string;
 
-  @IsOptional()
+  @ValidateIf((o: ResponsableAltaDto) => !o.responsable_id)
+  @IsDefined({ message: 'El documento es obligatorio para un nuevo responsable' })
   @ValidateNested()
   @Type(() => IdentificacionDto)
   documento?: IdentificacionDto;

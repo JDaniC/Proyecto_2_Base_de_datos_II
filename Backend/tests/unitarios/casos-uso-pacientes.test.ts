@@ -23,7 +23,7 @@ import { uuidPublico, type UUID } from '../../src/dominio/compartido/uuid.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { fechaCivil } from '../../src/dominio/compartido/fecha-civil.js';
 import type { Version } from '../../src/dominio/compartido/version.js';
-import { type Paciente, generarCodigoLegible } from '../../src/dominio/clinica/paciente.js';
+import { type Paciente, type ResponsableDetalle, generarCodigoLegible } from '../../src/dominio/clinica/paciente.js';
 import { type PacienteDto, mapearPacienteDto } from '../../src/aplicacion/casos-uso/pacientes/dtos-pacientes.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 
@@ -469,6 +469,7 @@ describe('casos de uso de pacientes en memoria', () => {
                   parentesco: 'Madre',
                   es_principal: true,
                   autoriza_atencion: true,
+                  documento: { tipo: 'CUI', numero: '2020202020101' },
                 },
               ],
             },
@@ -669,6 +670,7 @@ describe('casos de uso de pacientes en memoria', () => {
               parentesco: 'Tutor',
               es_principal: true,
               autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '2020202020102' },
             },
           ],
         },
@@ -1292,6 +1294,7 @@ describe('casos de uso de pacientes en memoria', () => {
               parentesco: 'MADRE',
               es_principal: true,
               autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '2020202020103' },
             },
           ],
         },
@@ -1306,6 +1309,98 @@ describe('casos de uso de pacientes en memoria', () => {
       const resp1 = p1Typed.cambios.find((c) => c.agregado === 'responsables');
       const resp2 = p2Typed.cambios.find((c) => c.agregado === 'responsables');
       assert.equal(resp1?.recursoId, resp2?.recursoId);
+    });
+
+    it('exige documento en cada responsable pediátrico nuevo', async () => {
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Pediatrico',
+              apellidos: 'SinDoc',
+              fecha_nacimiento: '2023-01-01',
+              sexo: 'MASCULINO',
+              responsables: [
+                {
+                  nombres: 'Tutor',
+                  apellidos: 'Valido',
+                  telefono: '55512345',
+                  parentesco: 'PADRE',
+                  es_principal: true,
+                  autoriza_atencion: true,
+                },
+              ],
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.ok(error.campos?.includes('responsables.documento'));
+          return true;
+        },
+      );
+    });
+
+    it('soporta ordenamiento y cursores de continuación en porPaciente del lector transaccional', async () => {
+      const reg = await registrarPaciente.ejecutar({
+        contexto: contextoPediatria,
+        bundle: bundlePediatria,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Hijo',
+          apellidos: 'Perez',
+          fecha_nacimiento: '2022-01-01',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              nombres: 'Tutor 1',
+              apellidos: 'Perez',
+              telefono: '55511111',
+              parentesco: 'PADRE',
+              es_principal: true,
+              autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '1111222233101' },
+            },
+            {
+              nombres: 'Tutor 2',
+              apellidos: 'Perez',
+              telefono: '55522222',
+              parentesco: 'MADRE',
+              es_principal: false,
+              autoriza_atencion: true,
+              documento: { tipo: 'CUI', numero: '4444555566101' },
+            },
+          ],
+        },
+      });
+
+      const lector = repoPediatria.crearLector();
+      const pId = reg.respuesta.id as UUID;
+
+      // Orden DESC con limite 1: debe devolver Tutor 2 primero
+      const p1 = await lector.responsables.porPaciente(pId, { limite: 1, orden: 'DESC' });
+      assert.equal(p1.elementos.length, 1);
+      assert.equal((p1.elementos[0] as ResponsableDetalle)?.nombres, 'Tutor 2');
+      assert.ok(p1.siguienteCursor);
+
+      // Usar siguienteCursor: debe devolver Tutor 1 y no tener siguiente cursor
+      const p2 = await lector.responsables.porPaciente(pId, {
+        limite: 1,
+        orden: 'DESC',
+        cursor: p1.siguienteCursor,
+      });
+      assert.equal(p2.elementos.length, 1);
+      assert.equal((p2.elementos[0] as ResponsableDetalle)?.nombres, 'Tutor 1');
+      assert.equal(p2.siguienteCursor, undefined);
+
+      // Orden ASC con limite 1: debe devolver Tutor 1 primero
+      const pAsc = await lector.responsables.porPaciente(pId, { limite: 1, orden: 'ASC' });
+      assert.equal(pAsc.elementos.length, 1);
+      assert.equal((pAsc.elementos[0] as ResponsableDetalle)?.nombres, 'Tutor 1');
+      assert.ok(pAsc.siguienteCursor);
     });
   });
 });
