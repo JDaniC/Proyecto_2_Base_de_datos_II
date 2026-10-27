@@ -21,54 +21,56 @@
 
 Se verificó en GitHub que los PR de las seis tareas están integrados (`MERGED`) hacia `develop` y que sus commits son ancestros de `465cb89`.
 
-## Demostración integrada
+## Demostración integrada y distinción de entornos
 
-La demostración conjunta de E01 se realizó sobre la base integrada indicada, empleando datos sintéticos y entornos aislados:
+En conformidad con AGENTS.md §Persistencia y verificación, se distinguen explícitamente las suites unitarias/simuladas de las pruebas de integración en motores reales ejecutadas sobre la base `465cb89`:
 
-1. **Arranque y composición del servidor:**
-   - Se ejecutó `npm --prefix Backend test` pasando 165/165 pruebas (133 unitarias/runtime y 32 contractuales).
-   - El servidor arranca con prefijo `/api/v1`, OpenAPI v1 congelado (22 rutas, 26 operaciones), DTOs cerrados, filtro canónico de excepciones y composición en cuatro bundles institucionales inmutables sin dependencia cruzada ni singleton mutable.
+### 1. Pruebas de integración en motores reales (PostgreSQL, MySQL, MongoDB y emulador Firestore/Auth)
 
-2. **Resolución de identidad y autorización institucional:**
-   - Se probó el ciclo de vida de sesión en las cuatro instituciones (`HOSPITAL_REGIONAL`, `CLINICA_DENTAL`, `LABORATORIO_CLINICO`, `CENTRO_MEDICO_PEDIATRICO` con alias UI `CENTRO_PEDIATRICO`).
-   - El token Bearer es verificado vía Firebase Auth REST/Admin; la institución y permisos proceden estrictamente del token y cuenta local en base de datos.
-   - Peticiones con token expirado, malformado o revocado responden `401`.
-   - Claims discordantes con la cuenta local o intentos de inyectar institución/rol por el cliente responden `403`.
+Se ejecutaron las suites de integración que interactúan con motores reales en localhost:
 
-3. **Atomicidad y transacciones por motor (UoW):**
-   - **PostgreSQL (`bdii-databases-postgres-1`):** SAVEPOINT y ROLLBACK transaccional; carreras de concurrencia y rechazo de escrituras parciales.
-   - **MySQL (`bdii-databases-mysql-1`):** Transacciones InnoDB con confirmación determinista y reversión de transacciones ambiguas.
-   - **MongoDB (`bdii-databases-mongodb-1`):** Sesión transaccional multi-documento con réplica set; operaciones y auditorías atómicas; reversión integral ante excepciones de negocio o duplicidad.
-   - **Firestore (`demo-bdii-cierre`):** `runTransaction` determinista con lecturas obligatorias antes de escrituras; validación de tamaño (<256 KB) y canonización NFKC de claves únicas.
+- **SQL (`npm --prefix Backend run test:integration:sql` — 2/2 PASS):**
+  - **PostgreSQL:** Conexión a `127.0.0.1:15432` (`bdii-databases-postgres-1`). Valida mapper, atomicidad transaccional, confirmación con SAVEPOINT, reversión integral ante excepciones y recuperación del pool.
+  - **MySQL:** Conexión a `127.0.0.1:13306` (`bdii-databases-mysql-1`). Valida InnoDB, atomicidad, descarte de conexiones ambiguas, rollback determinista y pool recuperado.
+- **NoSQL (`npm --prefix Backend run test:integration:nosql` — 3/3 PASS):**
+  - **MongoDB:** Conexión a replica set en contenedor aislado. Ejecuta transacción multi-documento con `ClientSession`, verifica inserción atómica de operación/auditoría y comprueba reversión completa ante fallo de negocio.
+  - **Firestore (Emulador local `demo-bdii-pediatria`):** Valida `runTransaction`, lecturas obligatorias antes de escrituras, límite de tamaño (<256 KB) y rollback atómico sin mutaciones huérfanas.
+  - **Firebase Auth Emulator:** Valida claims canónicos institucionales, verificación de revocación de token e invalidación de sesión en servidor.
 
-4. **Transporte HTTP y frontend conectado:**
-   - Se ejecutó `npm --prefix Frontend test src/test/http/ src/test/product-scope src/services` pasando 66/66 pruebas (28 de transporte HTTP/sesión y 38 de alcance de producto).
-   - Cliente HTTP inyecta automáticamente cabeceras `Authorization: Bearer <token>`, `X-Correlation-ID` e `Idempotency-Key` (UUID estable por intención).
-   - Sanitización en el cliente elimina cualquier claim de autoridad (`actor`, `institucionId`, `rol`, `profesional`) de los cuerpos antes del envío (DEC07).
-   - Fallos de red o persistencia no disponible se traducen limpiamente a `503 PERSISTENCIA_NO_DISPONIBLE` conservando los datos del formulario para reintento seguro.
-   - Cero drivers de base de datos ni credenciales empaquetadas en el bundle de producción de Frontend (`npm run build` PASS).
+### 2. Pruebas unitarias, runtime y contractuales (en memoria / mocks / jsdom)
 
-5. **Scripts y herramientas del repositorio:**
-   - 34/34 pruebas en Python de `cola.py`, `validar_pr.py` y `auto_merge.py` PASS.
+- **Backend (`npm --prefix Backend test` — 165/165 PASS):**
+  - 133 pruebas unitarias y de runtime (`Backend/tests/runtime/` y `Backend/tests/unitarios/`) que validan la composición de 4 bundles inmutables, parsing y validación de DTOs, filtro canónico de errores HTTP, resolución de sesión y valores compartidos de dominio.
+  - 32 pruebas contractuales OpenAPI (`Backend/tests/contratos/`) que validan las 22 rutas, 26 operaciones y arnés CA01–CA20 en modo offline.
+- **Frontend (`npm --prefix Frontend test src/test/http/ src/test/product-scope src/services` — 66/66 PASS):**
+  - 28 pruebas de cliente HTTP y autenticación (`Frontend/src/test/http/`) con `fetch` mockeado, validando inyección de cabeceras (`Authorization: Bearer`, `X-Correlation-ID`, `Idempotency-Key`), sanitización de autoridad en cliente (DEC07), y manejo de errores 401/403/503.
+  - 38 pruebas de alcance de producto y regresiones de formularios en jsdom.
+- **Auditoría de bundle (`npm --prefix Frontend run build` — PASS):**
+  - Compilación limpia sin dependencias de SDKs de base de datos ni credenciales filtradas.
+
+### 3. Alcance y límites de la fase E01
+
+- La fase E01 acredita la fundación hexagonal (UoW, transacciones por motor, transporte HTTP y autenticación institucional).
+- **Límite explícito:** E01 no afirma persistencia completa de historias clínicas ni pacientes de extremo a extremo (UI→API→Motor). Las pantallas clínicas del frontend continúan protegidas por `requireApiAdapter` devolviendo `503 PERSISTENCIA_NO_DISPONIBLE` para prohibir el fallback silencioso a simuladores. Los repositorios reales de pacientes se implementan en la fase E02.
 
 ## Resultados
 
 | Criterio de salida E01 | Evidencia | Estado | Observación |
 |---|---|---|---|
 | Seis tareas terminadas e integradas | PR #22, #25, #28, #30, #32, #37; `origin/develop` `465cb89` | PASS | Confirmado en GitHub y por ancestría Git |
-| API arranca y expone salud y contrato OpenAPI | 165 pruebas Backend PASS | PASS | `/api/v1` operativo; DTOs cerrados y catálogo de errores canónico |
-| Autenticación institucional vía Bearer en cuatro bundles | Pruebas de autenticación y autorización HTTP | PASS | Derivación estricta desde token + cuenta local; no se confía en la UI |
-| Unidades de trabajo con rollback atómico en 4 motores | Tests de integración y unitarios UoW PG, MySQL, Mongo, Firestore | PASS | Cero escrituras parciales ante fallo en ninguno de los 4 motores |
-| Transporte HTTP y sesión en Frontend | 66 pruebas Frontend PASS; bundle audit limpio | PASS | Interfaz conectada a API real; no recurre a mocks en modo API |
-| Cero secretos en Git ni logs | Auditoría de seguridad y sanitización | PASS | Cuentas y tokens de ensayo sintéticos; variables de entorno validadas |
-| Revisión automática e integración del PR documental | PR #39 | PASS | Codex revisó sin hallazgos sobre el SHA actual |
+| UoW y rollback atómico en motores reales | `test:integration:sql` (2/2) y `test:integration:nosql` (3/3) PASS | PASS | Verificado en PostgreSQL, MySQL, MongoDB replica set y Firestore emulator |
+| Autenticación institucional vía Bearer | Pruebas de runtime y emulador Firebase Auth PASS | PASS | Derivación estricta desde token verificado + cuenta local; rechazo de 401/403 |
+| Servidor y contrato OpenAPI | 165 pruebas Backend PASS | PASS | Prefijo `/api/v1` y composición en 4 bundles inmutables |
+| Transporte HTTP en Frontend | 66 pruebas Frontend PASS; bundle build limpio | PASS | Cabeceras de correlación e idempotencia; 503 sin fallback a mocks |
+| Cero secretos en Git ni logs | Auditoría de variables y código | PASS | Secretos sintéticos en entornos de prueba efímeros |
+| Revisión automática de Codex | PR #39 | PASS | Codex revisó sin hallazgos el commit de cierre |
 
 ## Entrega al siguiente responsable
 
-- Backend fundacional con 4 adaptadores UoW listos para recibir repositorios de dominio.
-- Frontend con cliente HTTP y autenticación integrados; `ServiceContext` preparado para sustitución progresiva de repositorios en E02–E05.
-- Siguiente trabajo disponible: **E02-P1-01** (Crear casos comunes de pacientes e identidad), tras la integración de este cierre.
+- Fundación hexagonal con 4 unidades de trabajo operativas y verificadas contra motores reales.
+- Transporte HTTP en frontend listo para la inyección progresiva de repositorios en `ServiceContext`.
+- Siguiente tarea disponible: **E02-P1-01** (Casos comunes de pacientes e identidad en Backend).
 
 ## Decisión
 
-Los criterios de salida de E01 están satisfechos al 100%. Se formaliza el cierre de la fase E01 en el tablero, habilitando el inicio de la fase E02.
+Criterios de salida de E01 cumplidos y verificados con distinción entre pruebas de integración en motores reales y pruebas unitarias/simuladas. Se formaliza el cierre de la fase E01.
