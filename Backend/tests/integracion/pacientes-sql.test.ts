@@ -544,10 +544,26 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   assert.equal(consultadoArchivado?.baja?.causa, 'TRASLADO');
   assert.ok(consultadoArchivado?.baja?.motivo);
 
-  // 11. Historial de auditoría en PostgreSQL
+  // 11. Historial de auditoría en PostgreSQL con paginación de precisión en microsegundos
   const consultaHistorial = crearConsultaHistorialSql(pool, 'postgresql');
   const paginaEventos = await consultaHistorial.eventos(pacienteId, { limite: 20, orden: 'ASC' });
   assert.ok(paginaEventos.elementos.length >= 2, 'debe registrar eventos de auditoría para registro y modificaciones');
+
+  const pagEventos1 = await consultaHistorial.eventos(pacienteId, { limite: 1, orden: 'ASC' });
+  assert.equal(pagEventos1.elementos.length, 1);
+  assert.ok(pagEventos1.siguienteCursor, 'debe generar siguienteCursor con microsegundos');
+
+  const pagEventos2 = await consultaHistorial.eventos(pacienteId, {
+    limite: 1,
+    orden: 'ASC',
+    cursor: pagEventos1.siguienteCursor,
+  });
+  assert.equal(pagEventos2.elementos.length, 1);
+  assert.notEqual(
+    pagEventos2.elementos[0]?.id,
+    pagEventos1.elementos[0]?.id,
+    'la paginación de auditoría en PostgreSQL debe avanzar sin repetir el mismo evento',
+  );
 });
 
 test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia optimista y archivo en clinica_odontologica', {

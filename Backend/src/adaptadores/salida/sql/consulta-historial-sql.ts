@@ -50,13 +50,19 @@ export function crearConsultaHistorialSql(
       parametros.push(pacienteId);
 
       if (cursorFecha && cursorId) {
-        condiciones.push(`(a.fecha_hora ${operador} ${p(idx++)} OR (a.fecha_hora = ${p(idx++)} AND a.id_publico ${operador} ${p(idx++)}))`);
-        parametros.push(new Date(cursorFecha), new Date(cursorFecha), cursorId);
+        if (dialecto === 'postgresql') {
+          condiciones.push(`(a.fecha_hora ${operador} $${idx}::timestamp OR (a.fecha_hora = $${idx}::timestamp AND a.id_publico ${operador} $${idx + 1}))`);
+          parametros.push(cursorFecha, cursorId);
+          idx += 2;
+        } else {
+          condiciones.push(`(a.fecha_hora ${operador} ? OR (a.fecha_hora = ? AND a.id_publico ${operador} ?))`);
+          parametros.push(cursorFecha, cursorFecha, cursorId);
+        }
       }
 
       const fechaCol = dialecto === 'postgresql'
-        ? 'TO_CHAR(a.fecha_hora AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"\') AS fecha_hora'
-        : "DATE_FORMAT(a.fecha_hora, '%Y-%m-%dT%H:%i:%s.000Z') AS fecha_hora";
+        ? 'TO_CHAR(a.fecha_hora AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS.US"Z"\') AS fecha_hora'
+        : "DATE_FORMAT(a.fecha_hora, '%Y-%m-%dT%H:%i:%s.%fZ') AS fecha_hora";
 
       const sql = `
         SELECT
@@ -98,7 +104,11 @@ export function crearConsultaHistorialSql(
           actorId: uuidPublico(fila.actor_id),
           caso: fila.caso,
           recursoId: uuidPublico(fila.recurso_id),
-          fechaHora: instanteUtc(new Date(fila.fecha_hora).toISOString()),
+          fechaHora: instanteUtc(
+            typeof fila.fecha_hora === 'string'
+              ? fila.fecha_hora
+              : (fila.fecha_hora as Date).toISOString(),
+          ),
           correlacion,
           ...(motivo ? { motivo } : {}),
         });
@@ -108,8 +118,8 @@ export function crearConsultaHistorialSql(
       if (haySiguiente && filasRetorno.length > 0) {
         const ultima = filasRetorno[filasRetorno.length - 1]!;
         siguienteCursor = Buffer.from(JSON.stringify({
-          f: new Date(ultima.fecha_hora).toISOString(),
-          id: ultima.id_publico,
+          f: String(ultima.fecha_hora),
+          id: String(ultima.id_publico),
         })).toString('base64url');
       }
 

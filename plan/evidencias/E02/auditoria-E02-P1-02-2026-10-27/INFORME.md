@@ -61,6 +61,8 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
 10. **Búsqueda en límites de palabra y normalización exhaustiva de diacríticos:**
     - Se adaptaron los predicados de búsqueda en PostgreSQL y MySQL para coincidir por prefijo en límites de palabra (`LIKE prefix || '%' OR LIKE '% ' || prefix || '%'`), permitiendo buscar por segundos nombres o apellidos (p. ej. `Adol`) mientras se rechazan coincidencias infijas (p. ej. `dolfo`).
     - En PostgreSQL, se implementó normalización exhaustiva de caracteres latinos (`translate(LOWER(...), ...)`) que incluye diacríticos completos (`ç`, `à`, etc.), alineándola con `normalizarNombreBusqueda`.
+11. **Preservación de microsegundos en cursores de historial de auditoría:**
+    - En `consulta-historial-sql.ts`, se ajustó la selección a microsegundos (`US` en PostgreSQL y `%f` en MySQL) y la comparación con `$param::timestamp` directo sin truncamiento a milisegundos en `Date`, garantizando que la paginación de eventos de auditoría no repita ni salte registros contiguos.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |
