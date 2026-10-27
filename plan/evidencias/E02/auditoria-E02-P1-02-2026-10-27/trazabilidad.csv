@@ -4,12 +4,17 @@ REQ-CA03-PG-CUI,plan/01_ALCANCE_Y_DECISIONES.md §DEC-004; hospital_general_post
 REQ-CA03-PG-CONTACTO,plan/03_CONTRATOS_Y_FLUJOS.md §CA03; hospital_general_postgresql.sql,aplicarCambiosPacientesPostgresql; mapearFilaPacientePostgresql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-PG-CONSULTA,plan/03_CONTRATOS_Y_FLUJOS.md §CA03,RepositorioPacientesPostgresql.porId; porVersion,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-PG-BUSQUEDA,plan/03_CONTRATOS_Y_FLUJOS.md §CA03,RepositorioPacientesPostgresql.buscar; codificarCursorSql; decodificarCursorSql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
+REQ-CA03-PG-CURSOR-MICROSEGUNDOS,plan/03_CONTRATOS_Y_FLUJOS.md §CA03; Codex Finding 2,RepositorioPacientesPostgresql.buscar; mapearFilaPacientePostgresql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-PG-CONCURRENCIA,plan/02_ARQUITECTURA_HEXAGONAL.md §Persistencia,aplicarCambiosPacientesPostgresql; crearUnidadDeTrabajoPacientesPostgresql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-PG-ARCHIVO,plan/03_CONTRATOS_Y_FLUJOS.md §CA03; hospital_general_postgresql.sql,aplicarCambiosPacientesPostgresql; crearConsultaHistorialSql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-ALTA-SIN-DOC,plan/01_ALCANCE_Y_DECISIONES.md §DEC-004; clinica_odontologica_mysql.sql,aplicarCambiosPacientesMysql; RepositorioPacientesMysql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-ALTA-CON-DOC,plan/01_ALCANCE_Y_DECISIONES.md §DEC-004; clinica_odontologica_mysql.sql,aplicarCambiosPacientesMysql; RepositorioPacientesMysql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
+REQ-CA03-MY-DEMOGRAFIA,plan/03_CONTRATOS_Y_FLUJOS.md §CA03; clinica_odontologica_mysql.sql v3; Codex Finding 1,aplicarCambiosPacientesMysql; mapearFilaPacienteMysql; RepositorioPacientesMysql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-CONSULTA,plan/03_CONTRATOS_Y_FLUJOS.md §CA03,RepositorioPacientesMysql.porId; porVersion,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-BUSQUEDA,plan/03_CONTRATOS_Y_FLUJOS.md §CA03,RepositorioPacientesMysql.buscar; codificarCursorSql; decodificarCursorSql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-CONCURRENCIA,plan/02_ARQUITECTURA_HEXAGONAL.md §Persistencia,aplicarCambiosPacientesMysql; crearUnidadDeTrabajoPacientesMysql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-CA03-MY-ARCHIVO,plan/03_CONTRATOS_Y_FLUJOS.md §CA03; clinica_odontologica_mysql.sql,aplicarCambiosPacientesMysql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
+REQ-CA03-SQL-CURSOR-HMAC,plan/03_CONTRATOS_Y_FLUJOS.md §Paginación; Codex Finding 3,codificarCursorSql; decodificarCursorSql,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
+REQ-CA03-SQL-LIKE-ESCAPE,plan/03_CONTRATOS_Y_FLUJOS.md §Búsqueda; Codex Finding 5,escaparLikeSql; RepositorioPacientesPostgresql.buscar; RepositorioPacientesMysql.buscar,Backend/tests/integracion/pacientes-sql.test.ts,CUBIERTO
 REQ-IDEMPOTENCIA-SQL,plan/02_ARQUITECTURA_HEXAGONAL.md §Persistencia,crearUnidadDeTrabajoSql,Backend/tests/integracion/pacientes-sql.test.ts; sql-uow.test.ts,CUBIERTO
+REQ-TEST-ISOLATION-SQL,plan/00_PLAN_MAESTRO.md §Aislamiento; Codex Finding 4,run-sql-uow-integration.mjs; pacientes-sql.test.ts,Backend/tests/integracion/pacientes-sql.test.ts; sql-uow.test.ts,CUBIERTO

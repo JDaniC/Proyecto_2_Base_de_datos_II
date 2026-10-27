@@ -24,16 +24,18 @@ export async function aplicarCambiosPacientesMysql(
         await executor.consultar(
           `INSERT INTO paciente (
             id_publico, revision, nombres, apellidos,
-            fecha_nacimiento, telefono, correo, estado
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVO')`,
+            fecha_nacimiento, sexo, telefono, correo, direccion, estado
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO')`,
           [
             pac.id,
             pac.version,
             pac.nombres,
             pac.apellidos,
             pac.fechaNacimiento,
+            pac.sexo,
             pac.telefono ?? null,
             pac.correo ?? null,
+            pac.direccion ?? null,
           ],
         );
 
@@ -72,8 +74,10 @@ export async function aplicarCambiosPacientesMysql(
             nombres = ?,
             apellidos = ?,
             fecha_nacimiento = ?,
+            sexo = ?,
             telefono = ?,
             correo = ?,
+            direccion = ?,
             estado = ?
           WHERE id_publico = ?`,
           [
@@ -81,8 +85,10 @@ export async function aplicarCambiosPacientesMysql(
             pac.nombres,
             pac.apellidos,
             pac.fechaNacimiento,
+            pac.sexo,
             pac.telefono ?? null,
             pac.correo ?? null,
+            pac.direccion ?? null,
             nuevoEstadoPaciente,
             pac.id,
           ],

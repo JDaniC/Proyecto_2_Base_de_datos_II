@@ -17,6 +17,7 @@ import type { EjecutorSql, PoolSql } from '../../sql/tipos-sql.js';
 import {
   codificarCursorSql,
   decodificarCursorSql,
+  escaparLikeSql,
 } from '../../sql/cursor-paginacion-sql.js';
 import {
   type FilaPacienteMysql,
@@ -31,8 +32,10 @@ const SELECT_PACIENTE_BASE_MYSQL = `
     p.nombres,
     p.apellidos,
     DATE_FORMAT(p.fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento,
+    p.sexo,
     p.telefono,
     p.correo,
+    p.direccion,
     p.estado,
     h.estado AS historial_estado,
     DATE_FORMAT(h.fecha_apertura, '%Y-%m-%dT00:00:00.000Z') AS fecha_apertura,
@@ -143,14 +146,15 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
       parametros.push(qDocPasaporte);
     }
 
-    clausulasBusqueda.push('LOWER(p.nombres) LIKE CONCAT(?, \'%\')');
-    parametros.push(qNormNombre);
+    const qEscapado = escaparLikeSql(qNormNombre);
+    clausulasBusqueda.push("LOWER(p.nombres) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
+    parametros.push(qEscapado);
 
-    clausulasBusqueda.push('LOWER(p.apellidos) LIKE CONCAT(?, \'%\')');
-    parametros.push(qNormNombre);
+    clausulasBusqueda.push("LOWER(p.apellidos) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
+    parametros.push(qEscapado);
 
-    clausulasBusqueda.push('LOWER(CONCAT(p.nombres, \' \', p.apellidos)) LIKE CONCAT(?, \'%\')');
-    parametros.push(qNormNombre);
+    clausulasBusqueda.push("LOWER(CONCAT(p.nombres, ' ', p.apellidos)) LIKE CONCAT(?, '%') ESCAPE '\\\\'");
+    parametros.push(qEscapado);
 
     condiciones.push(`(${clausulasBusqueda.join(' OR ')})`);
 
@@ -165,6 +169,7 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
     if (criterios.cursor) {
       const decoded = decodificarCursorSql(
         criterios.cursor,
+        'CLINICA_ODONTOLOGICA',
         qNormNombre,
         criterios.orden,
         criterios.estado,
@@ -198,6 +203,8 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
       const ultimaFila = filasRetorno[filasRetorno.length - 1]!;
       siguienteCursor = codificarCursorSql({
         v: 1,
+        recurso: 'pacientes',
+        institucion: 'CLINICA_ODONTOLOGICA',
         q: qNormNombre,
         orden: criterios.orden,
         ...(criterios.estado ? { estado: criterios.estado } : {}),

@@ -17,6 +17,7 @@ import type { EjecutorSql, PoolSql } from '../../sql/tipos-sql.js';
 import {
   codificarCursorSql,
   decodificarCursorSql,
+  escaparLikeSql,
 } from '../../sql/cursor-paginacion-sql.js';
 import {
   type FilaPacientePostgresql,
@@ -39,12 +40,12 @@ const SELECT_PACIENTE_BASE = `
     p.telefono_principal,
     p.correo_principal,
     p.direccion,
-    TO_CHAR(p.fecha_registro AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS fecha_registro,
+    TO_CHAR(p.fecha_registro AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS fecha_registro,
     h.numero_historial,
     h.estado_historial,
     h.causa_baja,
     h.motivo_baja,
-    TO_CHAR(h.fecha_baja AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS fecha_baja,
+    TO_CHAR(h.fecha_baja AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS fecha_baja,
     h.actor_baja,
     ce.primer_nombre AS ce_primer_nombre,
     ce.segundo_nombre AS ce_segundo_nombre,
@@ -156,21 +157,22 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
       paramIdx++;
     }
 
-    // Búsqueda por prefijo normalizado de nombre
+    // Búsqueda por prefijo normalizado de nombre con escape de comodines
     // Utiliza translate() para eliminar diacríticos de forma determinista en PostgreSQL
+    const qEscapado = escaparLikeSql(qNormNombre);
     const translateExpr = (col: string) => `translate(LOWER(${col}), 'áéíóúüñÁÉÍÓÚÜÑ', 'aeiouunAEIOUUN')`;
-    clausulasBusqueda.push(`${translateExpr('p.primer_nombre')} LIKE $${paramIdx} || '%'`);
-    parametros.push(qNormNombre);
+    clausulasBusqueda.push(`${translateExpr('p.primer_nombre')} LIKE $${paramIdx} || '%' ESCAPE '\\'`);
+    parametros.push(qEscapado);
     paramIdx++;
 
-    clausulasBusqueda.push(`${translateExpr('p.primer_apellido')} LIKE $${paramIdx} || '%'`);
-    parametros.push(qNormNombre);
+    clausulasBusqueda.push(`${translateExpr('p.primer_apellido')} LIKE $${paramIdx} || '%' ESCAPE '\\'`);
+    parametros.push(qEscapado);
     paramIdx++;
 
     clausulasBusqueda.push(
-      `${translateExpr("p.primer_nombre || ' ' || COALESCE(p.segundo_nombre || ' ', '') || p.primer_apellido")} LIKE $${paramIdx} || '%'`,
+      `${translateExpr("p.primer_nombre || ' ' || COALESCE(p.segundo_nombre || ' ', '') || p.primer_apellido")} LIKE $${paramIdx} || '%' ESCAPE '\\'`,
     );
-    parametros.push(qNormNombre);
+    parametros.push(qEscapado);
     paramIdx++;
 
     condiciones.push(`(${clausulasBusqueda.join(' OR ')})`);
@@ -186,15 +188,16 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
     if (criterios.cursor) {
       const decoded = decodificarCursorSql(
         criterios.cursor,
+        'HOSPITAL_GENERAL',
         qNormNombre,
         criterios.orden,
         criterios.estado,
       );
       const operador = criterios.orden === 'ASC' ? '>' : '<';
       condiciones.push(
-        `(p.fecha_registro ${operador} $${paramIdx} OR (p.fecha_registro = $${paramIdx} AND p.id_publico ${operador} $${paramIdx + 1}))`,
+        `(p.fecha_registro ${operador} $${paramIdx}::timestamp OR (p.fecha_registro = $${paramIdx}::timestamp AND p.id_publico ${operador} $${paramIdx + 1}))`,
       );
-      parametros.push(new Date(decoded.fecha), decoded.id);
+      parametros.push(decoded.fecha, decoded.id);
       paramIdx += 2;
     }
 
@@ -220,10 +223,12 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
       const ultimaFila = filasRetorno[filasRetorno.length - 1]!;
       siguienteCursor = codificarCursorSql({
         v: 1,
+        recurso: 'pacientes',
+        institucion: 'HOSPITAL_GENERAL',
         q: qNormNombre,
         orden: criterios.orden,
         ...(criterios.estado ? { estado: criterios.estado } : {}),
-        f: new Date(ultimaFila.fecha_registro).toISOString(),
+        f: String(ultimaFila.fecha_registro),
         id: String(ultimaFila.id_publico),
       });
     }

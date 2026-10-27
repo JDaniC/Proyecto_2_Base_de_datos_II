@@ -103,8 +103,11 @@ export function mapearFilaPacientePostgresql(fila: FilaPacientePostgresql): Paci
 
   let baja: Paciente['baja'];
   if (estado === 'ARCHIVADO' && fila.fecha_baja) {
+    const fechaBajaStr = typeof fila.fecha_baja === 'string'
+      ? fila.fecha_baja
+      : (fila.fecha_baja as Date).toISOString();
     baja = Object.freeze({
-      fecha: instanteUtc(new Date(fila.fecha_baja).toISOString()),
+      fecha: instanteUtc(fechaBajaStr),
       motivo: (fila.motivo_baja ?? 'Sin motivo registrado').trim(),
       causa: (fila.causa_baja ?? 'OTRA_ADMINISTRATIVA') as CausaArchivoPaciente,
       actorId: uuidPublico(fila.actor_baja ?? idPublico),
@@ -153,7 +156,11 @@ export function mapearFilaPacientePostgresql(fila: FilaPacientePostgresql): Paci
     ...(contactoEmergencia ? { contactoEmergencia } : {}),
     estado,
     version: versionPositiva(convertirNumero(fila.revision)),
-    fechaRegistro: instanteUtc(new Date(fila.fecha_registro).toISOString()),
+    fechaRegistro: instanteUtc(
+      typeof fila.fecha_registro === 'string'
+        ? fila.fecha_registro
+        : (fila.fecha_registro as Date).toISOString(),
+    ),
     ...(baja ? { baja } : {}),
   });
 }

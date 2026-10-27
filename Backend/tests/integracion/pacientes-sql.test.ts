@@ -59,7 +59,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   await pool.consultar('UPDATE usuario SET id_personal = $1 WHERE auth_uid = $2', [profesional.filas[0]?.id_personal, uid]);
 
   const rolPermisos = JSON.stringify(['pacientes.administrar', 'historial.archivar', 'historial.leer']);
-  await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', $1::jsonb) ON CONFLICT (nombre) DO UPDATE SET permisos = EXCLUDED.permisos", [rolPermisos]);
+  await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('SECRETARIA', $1::jsonb) ON CONFLICT (nombre) DO UPDATE SET permisos = EXCLUDED.permisos", [rolPermisos]);
   const resUsuario = await pool.consultar<{ id_usuario: number | string }>(
     'SELECT id_usuario FROM usuario WHERE auth_uid = $1',
     [uid],
@@ -69,7 +69,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
 
   await pool.consultar(
     'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
-    [idUsuarioInterno, 'MEDICO'],
+    [idUsuarioInterno, 'SECRETARIA'],
   );
 
   const cuentaDb = await crearRepositorioCuentaPostgresql(pool).porUid(uid);
@@ -213,13 +213,67 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   assert.equal(resBusquedaDoc.data.length, 1);
   assert.equal(resBusquedaDoc.data[0]?.id, pacienteId);
 
-  // Búsqueda por prefijo sin acento "Gomez" debe encontrar "Gómez Morales"
+  // Registro de segundo paciente con el mismo apellido para verificar paginación con precisión de microsegundos
+  const cuiValido2 = '2489123450102';
+  const alta2 = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Ana Sofía',
+      apellidos: 'Gómez Castillo',
+      fecha_nacimiento: '1995-08-20',
+      sexo: 'FEMENINO',
+      identificacion: { tipo: 'CUI', numero: cuiValido2 },
+      telefono: '50255559988',
+    },
+  });
+  const paciente2Id = uuidPublico(alta2.respuesta.id);
+
+  // Escape de comodines SQL: búsqueda por '%' no debe coincidir con pacientes
+  const resBusquedaComodin = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '%', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusquedaComodin.data.length, 0, 'la búsqueda por % escapado no debe devolver registros');
+
+  // Búsqueda por prefijo sin acento "Gomez" debe encontrar ambos pacientes
   const resBusquedaPrefijo = await buscar.ejecutar({
     contexto,
     bundle,
     entrada: { q: 'Gomez', limite: 10, orden: 'ASC' },
   });
   assert.ok(resBusquedaPrefijo.data.some((p) => p.id === pacienteId));
+  assert.ok(resBusquedaPrefijo.data.some((p) => p.id === paciente2Id));
+
+  // Paginación con cursor y microsegundos: primera página con límite 1
+  const pag1 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Gomez', limite: 1, orden: 'ASC' },
+  });
+  assert.equal(pag1.data.length, 1);
+  assert.ok(pag1.meta.siguiente_cursor);
+
+  // Segunda página usando el cursor generado
+  const pag2 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: pag1.meta.siguiente_cursor },
+  });
+  assert.equal(pag2.data.length, 1);
+  assert.notEqual(pag2.data[0]?.id, pag1.data[0]?.id, 'la segunda página debe avanzar al siguiente paciente');
+
+  // Rechazo de cursor alterado / sin firma válida
+  await assert.rejects(
+    () => buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: pag1.meta.siguiente_cursor + '_corrupto' },
+    }),
+    (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
+  );
 
   // 7. Actualización y concurrencia optimista
   const modificado = await actualizar.ejecutar({
@@ -380,7 +434,7 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   const consultar = new ConsultarPaciente();
   const buscar = new BuscarPacientes();
 
-  // 1. Alta de paciente dental sin documento de identificación
+  // 1. Alta de paciente dental sin documento de identificación (con sexo y dirección demográfica)
   const altaSinDoc = await registrar.ejecutar({
     contexto,
     bundle,
@@ -392,6 +446,7 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
       sexo: 'FEMENINO',
       telefono: '50244441111',
       correo: 'estela.ramirez@ejemplo.com',
+      direccion: '5ta Avenida 12-45 Zona 1, Ciudad',
     },
   });
 
@@ -400,6 +455,8 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   assert.ok(pacienteSinDocId);
   assert.equal(pacienteSinDoc.identificacion, undefined);
   assert.equal(pacienteSinDoc.estado, 'ACTIVO');
+  assert.equal(pacienteSinDoc.sexo, 'FEMENINO');
+  assert.equal(pacienteSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
 
   // Verificar en base de datos: NO debe existir registro en identidades_paciente
   const resIdent = await pool.consultar(
@@ -407,6 +464,14 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     [pacienteSinDocId],
   );
   assert.equal(resIdent.filas.length, 0, 'paciente sin documento no debe tener fila en identidades_paciente');
+
+  // Verificar persistencia de sexo y dirección directamente en la tabla paciente de MySQL
+  const filaDbInicial = await pool.consultar<{ sexo: string; direccion: string }>(
+    'SELECT sexo, direccion FROM paciente WHERE id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(filaDbInicial.filas[0]?.sexo, 'FEMENINO');
+  assert.equal(filaDbInicial.filas[0]?.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
 
   // 2. Alta de paciente dental CON pasaporte
   const pasaporteNum = `P${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -452,6 +517,16 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });
   assert.equal(consultadoSinDoc.id, pacienteSinDocId);
   assert.equal(consultadoSinDoc.nombres, 'Estela Beatriz');
+  assert.equal(consultadoSinDoc.sexo, 'FEMENINO');
+  assert.equal(consultadoSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+
+  // Escape de comodines en MySQL: búsqueda por '%' no debe coincidir con pacientes
+  const resBusquedaComodinMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '%', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusquedaComodinMy.data.length, 0, 'la búsqueda por % en MySQL no debe coincidir con pacientes');
 
   const resBusqueda = await buscar.ejecutar({
     contexto,
@@ -469,10 +544,21 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     cambios: {
       version_esperada: 1,
       telefono: '50244449999',
+      direccion: 'Nueva Dirección Modificada 7ma Calle 3-21',
     },
   });
   assert.equal(modificado.respuesta.version, 2);
   assert.equal(modificado.respuesta.telefono, '50244449999');
+  assert.equal(modificado.respuesta.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
+
+  const consultadoModificado = await repoMysql.porId(pacienteSinDocId);
+  assert.equal(consultadoModificado?.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
+
+  const filaDbModificada = await pool.consultar<{ direccion: string }>(
+    'SELECT direccion FROM paciente WHERE id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(filaDbModificada.filas[0]?.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
 
   await assert.rejects(
     () => actualizar.ejecutar({

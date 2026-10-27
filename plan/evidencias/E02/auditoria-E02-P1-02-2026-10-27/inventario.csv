@@ -12,4 +12,5 @@ crearBundlePacientesMysql,Backend/src/adaptadores/salida/mysql/pacientes/crear-b
 crearConsultaHistorialSql,Backend/src/adaptadores/salida/sql/consulta-historial-sql.ts,20,Funcion,MEDIUM,pacientes-sql.test.ts
 codificarCursorSql,Backend/src/adaptadores/salida/sql/cursor-paginacion-sql.ts,18,Funcion,MEDIUM,pacientes-sql.test.ts
 decodificarCursorSql,Backend/src/adaptadores/salida/sql/cursor-paginacion-sql.ts,44,Funcion,MEDIUM,pacientes-sql.test.ts
+escaparLikeSql,Backend/src/adaptadores/salida/sql/cursor-paginacion-sql.ts,17,Funcion,MEDIUM,pacientes-sql.test.ts
 crearDependenciasBackend,Backend/src/composicion/crear-dependencias-backend.ts,40,Funcion,HIGH,frontera.test.ts; pacientes-sql.test.ts

@@ -37,6 +37,7 @@ try {
   await comando('npm', ['run', 'build:test'], { cwd: backend });
   const salidaPruebas = await comando(process.execPath, [
     '--test',
+    '--test-concurrency=1',
     'dist-test/tests/integracion/sql-uow.test.js',
     'dist-test/tests/integracion/pacientes-sql.test.js',
   ], { cwd: backend, env: entorno });
