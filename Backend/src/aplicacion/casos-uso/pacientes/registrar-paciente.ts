@@ -179,11 +179,20 @@ export class RegistrarPaciente {
       }
     }
 
+    const nombresIds = ['paciente_id', 'historial_id', 'evento_auditoria_id'];
+    if (contexto.cuenta.institucion === 'CENTRO_MEDICO_PEDIATRICO' && entrada.responsables) {
+      entrada.responsables.forEach((r, idx) => {
+        if (!r.responsable_id) {
+          nombresIds.push(`responsable_id_${idx}`);
+        }
+      });
+    }
+
     const comando = await prepararComandoEstable(
       claveIdempotencia,
       'paciente.registrar',
       entrada,
-      ['paciente_id', 'historial_id'],
+      nombresIds,
       this.dependencias,
     );
 
@@ -230,7 +239,8 @@ export class RegistrarPaciente {
         const cambiosResponsables: CambioPlanificado[] = [];
 
         if (contexto.cuenta.institucion === 'CENTRO_MEDICO_PEDIATRICO' && entrada.responsables) {
-          for (const resp of entrada.responsables) {
+          for (let idx = 0; idx < entrada.responsables.length; idx++) {
+            const resp = entrada.responsables[idx]!;
             if (resp.responsable_id) {
               const respId = uuidPublico(resp.responsable_id, 'responsable_id');
               const existente = (await lector.responsables.porId(respId)) as ResponsableDetalle | null;
@@ -253,7 +263,7 @@ export class RegistrarPaciente {
                 versionVinculo: 1 as Version,
               }));
             } else {
-              const nuevoId = this.dependencias.ids.nuevo();
+              const nuevoId = comando.ids[`responsable_id_${idx}`]!;
               let docResp: Identificacion | undefined = undefined;
               if (resp.documento) {
                 docResp = validarIdentificacion(resp.documento, 'responsables.documento');
@@ -366,7 +376,7 @@ export class RegistrarPaciente {
           revisiones: [],
           auditoria: [
             {
-              id: this.dependencias.ids.nuevo(),
+              id: comando.ids.evento_auditoria_id!,
               actorId: contexto.cuenta.id,
               caso: 'paciente.registrar',
               recursoId: nuevoPaciente.id,

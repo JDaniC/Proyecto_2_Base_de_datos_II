@@ -144,7 +144,7 @@ export class ActualizarPaciente {
       claveIdempotencia,
       'paciente.actualizar',
       { id: pacienteId, cambios },
-      ['revision_id'],
+      ['revision_id', 'evento_auditoria_id'],
       this.dependencias,
     );
 
@@ -311,7 +311,7 @@ export class ActualizarPaciente {
           ],
           auditoria: [
             {
-              id: this.dependencias.ids.nuevo(),
+              id: comando.ids.evento_auditoria_id!,
               actorId: contexto.cuenta.id,
               caso: 'paciente.actualizar',
               recursoId: pacienteActual.id,

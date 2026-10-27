@@ -6,7 +6,15 @@ import { ActualizarPaciente } from '../../src/aplicacion/casos-uso/pacientes/act
 import { ConsultarPaciente } from '../../src/aplicacion/casos-uso/pacientes/consultar-paciente.js';
 import { BuscarPacientes } from '../../src/aplicacion/casos-uso/pacientes/buscar-pacientes.js';
 import { RepositorioPacientesMemoria } from '../../src/adaptadores/salida/pacientes/repositorio-pacientes-memoria.js';
-import type { EventoAuditoria } from '../../src/aplicacion/puertos/nucleo.js';
+import type {
+  EventoAuditoria,
+  UnidadDeTrabajo,
+  PlanConfirmacion,
+  PlanDeEscrituras,
+  LectorTransaccional,
+  ComandoEstable,
+  ResultadoDurable,
+} from '../../src/aplicacion/puertos/nucleo.js';
 import { dependenciasComandoPorDefecto } from '../../src/adaptadores/salida/sistema/servicios-sistema.js';
 import { crearContextoAutenticado, type ContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
@@ -16,7 +24,7 @@ import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { fechaCivil } from '../../src/dominio/compartido/fecha-civil.js';
 import type { Version } from '../../src/dominio/compartido/version.js';
 import { type Paciente, generarCodigoLegible } from '../../src/dominio/clinica/paciente.js';
-import { mapearPacienteDto } from '../../src/aplicacion/casos-uso/pacientes/dtos-pacientes.js';
+import { type PacienteDto, mapearPacienteDto } from '../../src/aplicacion/casos-uso/pacientes/dtos-pacientes.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 
 describe('casos de uso de pacientes en memoria', () => {
@@ -1234,6 +1242,70 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(codigo2, 'LAB-ABCDEF99000040008000000000000002');
       assert.ok(codigo1.length <= 60);
       assert.ok(codigo2.length <= 60);
+    });
+
+    it('produce planes de escritura deterministas con los mismos IDs de responsable y auditoria al reintentar callback', async () => {
+      let intentos = 0;
+      let plan1: PlanConfirmacion<PacienteDto> | null = null;
+      let plan2: PlanConfirmacion<PacienteDto> | null = null;
+
+      const uowConReintento: UnidadDeTrabajo = {
+        ejecutar: async <T, TEstado, TSnapshot>(
+          contexto: ContextoAutenticado,
+          comando: ComandoEstable,
+          planificar: (lector: LectorTransaccional) => Promise<PlanDeEscrituras<T, TEstado, TSnapshot>>,
+        ): Promise<ResultadoDurable<T>> => {
+          const lector = (bundlePediatria.pacientes as RepositorioPacientesMemoria).crearLector();
+          intentos++;
+          const p1 = await planificar(lector);
+          if (p1.tipo === 'CONFIRMAR') {
+            plan1 = p1 as unknown as PlanConfirmacion<PacienteDto>;
+          }
+          intentos++;
+          const p2 = await planificar(lector);
+          if (p2.tipo === 'CONFIRMAR') {
+            plan2 = p2 as unknown as PlanConfirmacion<PacienteDto>;
+          }
+          return bundlePediatria.uow!.ejecutar(contexto, comando, async () => p2);
+        },
+      };
+
+      const bundleConReintento: BundleInstitucional = {
+        ...bundlePediatria,
+        uow: uowConReintento,
+      };
+
+      await registrarPaciente.ejecutar({
+        contexto: contextoPediatria,
+        bundle: bundleConReintento,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Pediatrico',
+          apellidos: 'Reintento',
+          fecha_nacimiento: '2020-01-01',
+          sexo: 'FEMENINO',
+          responsables: [
+            {
+              nombres: 'Madre',
+              apellidos: 'Tutor',
+              telefono: '55511223',
+              parentesco: 'MADRE',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        },
+      });
+
+      assert.equal(intentos, 2);
+      assert.ok(plan1);
+      assert.ok(plan2);
+      const p1Typed = plan1 as PlanConfirmacion<PacienteDto>;
+      const p2Typed = plan2 as PlanConfirmacion<PacienteDto>;
+      assert.equal(p1Typed.auditoria[0]?.id, p2Typed.auditoria[0]?.id);
+      const resp1 = p1Typed.cambios.find((c) => c.agregado === 'responsables');
+      const resp2 = p2Typed.cambios.find((c) => c.agregado === 'responsables');
+      assert.equal(resp1?.recursoId, resp2?.recursoId);
     });
   });
 });
