@@ -1,0 +1,7 @@
+Requisito,Fuente,Unidad(es),Test(s),Estado
+F-E02-01 (Dominio clinico de pacientes y validaciones),E02-P1-01; RF-005/006/007/008; M01-M04,Backend/src/dominio/clinica/paciente.ts,Backend/tests/unitarios/casos-uso-pacientes.test.ts,CUBIERTO
+F-E02-02 (Alta de paciente e idempotencia con UoW),E02-P1-01; RF-005/014; RNF-025,Backend/src/aplicacion/casos-uso/pacientes/registrar-paciente.ts,Backend/tests/unitarios/casos-uso-pacientes.test.ts; Backend/tests/runtime/pacientes-http.test.ts,CUBIERTO
+F-E02-03 (Actualizacion demografica y bloqueo optimista),E02-P1-01; RF-006; RNF-025,Backend/src/aplicacion/casos-uso/pacientes/actualizar-paciente.ts,Backend/tests/unitarios/casos-uso-pacientes.test.ts; Backend/tests/runtime/pacientes-http.test.ts,CUBIERTO
+F-E02-04 (Consulta individual y aislamiento institucional),E02-P1-01; RF-007; RNF-029/035,Backend/src/aplicacion/casos-uso/pacientes/consultar-paciente.ts,Backend/tests/unitarios/casos-uso-pacientes.test.ts; Backend/tests/runtime/pacientes-http.test.ts,CUBIERTO
+F-E02-05 (Busqueda y paginacion de pacientes),E02-P1-01; RF-008,Backend/src/aplicacion/casos-uso/pacientes/buscar-pacientes.ts,Backend/tests/unitarios/casos-uso-pacientes.test.ts; Backend/tests/runtime/pacientes-http.test.ts,CUBIERTO
+F-E02-06 (Endpoints HTTP y validacion DTO de pacientes),E02-P1-01; OpenAPI /pacientes; RNF-001/007,Backend/src/adaptadores/entrada/http/pacientes,Backend/tests/runtime/pacientes-http.test.ts,CUBIERTO

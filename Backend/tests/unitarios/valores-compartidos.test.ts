@@ -4,7 +4,12 @@ import { dinero, sumarDinero } from '../../src/dominio/compartido/dinero.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import { fechaCivil } from '../../src/dominio/compartido/fecha-civil.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
-import { normalizarIdentificacion, normalizarNombreBusqueda, VERSION_NORMALIZACION } from '../../src/dominio/compartido/normalizacion.js';
+import {
+  derivarClaveIdentificacion,
+  normalizarIdentificacion,
+  normalizarNombreBusqueda,
+  VERSION_NORMALIZACION,
+} from '../../src/dominio/compartido/normalizacion.js';
 import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
 import { versionPositiva, VERSION_MAXIMA } from '../../src/dominio/compartido/version.js';
 
@@ -68,5 +73,10 @@ describe('valores comunes del dominio', () => {
     rechazaSolicitud(() => normalizarIdentificacion('CUI', ' -- '));
     rechazaSolicitud(() => normalizarIdentificacion('CUI', '1'.repeat(21)));
     rechazaSolicitud(() => normalizarIdentificacion('OTRO', '123'));
+    assert.equal(derivarClaveIdentificacion('DPI', ' 1234 56789 0101 '), 'DPI:1234567890101');
+    assert.equal(derivarClaveIdentificacion('dpi', '12345'), 'DPI:12345');
+    assert.equal(derivarClaveIdentificacion('PASAPORTE', '1'.repeat(60)), `PASAPORTE:${'1'.repeat(60)}`);
+    rechazaSolicitud(() => derivarClaveIdentificacion('T'.repeat(41), '123'));
+    rechazaSolicitud(() => derivarClaveIdentificacion('DPI', '1'.repeat(121)));
   });
 });

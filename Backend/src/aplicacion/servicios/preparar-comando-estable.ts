@@ -23,7 +23,8 @@ export async function prepararComandoEstable<T extends object>(
     throw solicitudInvalida('Los nombres de IDs deben ser únicos y tener entre 1 y 80 caracteres.', 'ids');
   }
 
-  const serializado = serializarJCS(dtoValidado);
+  const dtoPlano = (JSON.parse(JSON.stringify(dtoValidado)) ?? {}) as object;
+  const serializado = serializarJCS(dtoPlano);
   const hashEntrada = await dependencias.hash.sha256(serializado);
   if (!HASH_SHA256.test(hashEntrada)) throw solicitudInvalida('El proveedor de hash devolvió un SHA-256 inválido.');
 

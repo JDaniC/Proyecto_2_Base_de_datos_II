@@ -49,7 +49,7 @@ export interface FiltrosPagina {
 export interface RepositorioPorId<T> { porId(id: UUID): Promise<T | null>; }
 export interface RepositorioPorVersion<T> { porVersion(id: UUID, version: Version): Promise<T | null>; }
 export interface RepositorioCuenta<TCuenta> { porUid(uidVerificado: string): Promise<TCuenta | null>; }
-export interface Identificacion { readonly tipo: 'CUI' | 'PASAPORTE'; readonly numero: string; }
+export interface Identificacion { readonly tipo: 'CUI' | 'PASAPORTE' | string; readonly numero: string; }
 export interface RepositorioIdentidades { titular(identificacionNormalizada: Identificacion): Promise<UUID | null>; }
 export type RepositorioPaciente<TPaciente> = RepositorioPorId<TPaciente> & RepositorioPorVersion<TPaciente>;
 export type RepositorioCita<TCita> = RepositorioPorId<TCita>;
