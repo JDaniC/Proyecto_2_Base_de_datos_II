@@ -16,6 +16,7 @@ import type {
 } from '../../../aplicacion/puertos/repositorio-paciente.js';
 import type {
   Pagina,
+  FiltrosPagina,
   LectorTransaccional,
   OperacionIdempotente,
   UnidadDeTrabajo,
@@ -256,9 +257,16 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
       },
       profesionales: { porId: async () => null },
       historial: {
-        eventos: async () => ({
-          elementos: Object.freeze([...this.eventosAuditoria]),
-        }),
+        eventos: async (pacienteId: UUID, pagina?: FiltrosPagina) => {
+          if (!this.pacientes.has(pacienteId)) {
+            return { elementos: [] };
+          }
+          const filtrados = this.eventosAuditoria.filter((ev) => ev.recursoId === pacienteId);
+          const limite = pagina?.limite ?? 50;
+          return {
+            elementos: Object.freeze(filtrados.slice(0, limite)),
+          };
+        },
       },
       operaciones: {
         porClave: async <T>(actorId: UUID, caso: string, clave: UUID) =>

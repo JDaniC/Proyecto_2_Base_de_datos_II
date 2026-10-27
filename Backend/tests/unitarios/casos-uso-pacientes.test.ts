@@ -6,6 +6,7 @@ import { ActualizarPaciente } from '../../src/aplicacion/casos-uso/pacientes/act
 import { ConsultarPaciente } from '../../src/aplicacion/casos-uso/pacientes/consultar-paciente.js';
 import { BuscarPacientes } from '../../src/aplicacion/casos-uso/pacientes/buscar-pacientes.js';
 import { RepositorioPacientesMemoria } from '../../src/adaptadores/salida/pacientes/repositorio-pacientes-memoria.js';
+import type { EventoAuditoria } from '../../src/aplicacion/puertos/nucleo.js';
 import { dependenciasComandoPorDefecto } from '../../src/adaptadores/salida/sistema/servicios-sistema.js';
 import { crearContextoAutenticado, type ContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
@@ -515,6 +516,38 @@ describe('casos de uso de pacientes en memoria', () => {
         },
       );
     });
+
+    it('rechaza alta pediátrica con más de 100 responsables arrojando LIMITE_AGREGADO', async () => {
+      const muchosResponsables = Array.from({ length: 101 }, (_, i) => ({
+        nombres: `Tutor ${i}`,
+        apellidos: 'Prueba',
+        telefono: '55512345',
+        parentesco: 'Tutor',
+        es_principal: i === 0,
+        autoriza_atencion: true,
+      }));
+
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Pediatrico',
+              apellidos: 'MuchosTutores',
+              fecha_nacimiento: '2023-01-01',
+              sexo: 'MASCULINO',
+              responsables: muchosResponsables,
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'LIMITE_AGREGADO');
+          return true;
+        },
+      );
+    });
   });
 
   describe('ActualizarPaciente', () => {
@@ -719,6 +752,83 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.ok(v2);
       assert.equal(v2.version, 2);
       assert.equal(v2.telefono, '55599887');
+    });
+
+    it('rechaza cambios de teléfono o dirección compuestos solo por espacios en blanco', async () => {
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            id: pacienteId,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            cambios: {
+              version_esperada: 1,
+              telefono: '    ',
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /espacios/i);
+          return true;
+        },
+      );
+
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            id: pacienteId,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            cambios: {
+              version_esperada: 1,
+              direccion: '   \t  ',
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /espacios/i);
+          return true;
+        },
+      );
+
+      const conservado = await consultarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        id: pacienteId,
+      });
+      assert.equal(conservado.version, 1);
+      assert.equal(conservado.telefono, '55598765');
+    });
+
+    it('aísla los eventos de historial por pacienteId en la UoW en memoria', async () => {
+      const otroPaciente = await registrarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Otro',
+          apellidos: 'Paciente Historial',
+          fecha_nacimiento: '1995-05-05',
+          sexo: 'FEMENINO',
+        },
+      });
+
+      const lector = (bundleHospital.pacientes as RepositorioPacientesMemoria).crearLector();
+      const filtro = { limite: 50, orden: 'ASC' as const };
+      const eventos1 = await lector.historial.eventos(pacienteId, filtro);
+      assert.ok(eventos1.elementos.length > 0);
+      assert.ok(eventos1.elementos.every((ev) => (ev as EventoAuditoria).recursoId === pacienteId));
+
+      const eventos2 = await lector.historial.eventos(otroPaciente.respuesta.id as UUID, filtro);
+      assert.ok(eventos2.elementos.length > 0);
+      assert.ok(eventos2.elementos.every((ev) => (ev as EventoAuditoria).recursoId === otroPaciente.respuesta.id));
+
+      const eventosInexistente = await lector.historial.eventos(uuidPublico(randomUUID()), filtro);
+      assert.equal(eventosInexistente.elementos.length, 0);
     });
   });
 

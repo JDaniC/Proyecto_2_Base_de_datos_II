@@ -101,6 +101,45 @@ export class ActualizarPaciente {
       contactoEmergencia = validarContactoEmergencia(contexto.cuenta.institucion, cambios.contacto_emergencia, 'contacto_emergencia');
     }
 
+    let nuevoTelefono: string | null | undefined = undefined;
+    if (cambios.telefono === null) {
+      nuevoTelefono = null;
+    } else if (cambios.telefono !== undefined) {
+      if (typeof cambios.telefono !== 'string' || cambios.telefono.trim().length === 0) {
+        throw solicitudInvalida('El teléfono no puede estar vacío ni contener solo espacios.', 'telefono');
+      }
+      if (cambios.telefono.trim().length > 30) {
+        throw solicitudInvalida('El teléfono excede 30 caracteres.', 'telefono');
+      }
+      nuevoTelefono = cambios.telefono.trim();
+    }
+
+    let nuevaDireccion: string | null | undefined = undefined;
+    if (cambios.direccion === null) {
+      nuevaDireccion = null;
+    } else if (cambios.direccion !== undefined) {
+      if (typeof cambios.direccion !== 'string' || cambios.direccion.trim().length === 0) {
+        throw solicitudInvalida('La dirección no puede estar vacía ni contener solo espacios.', 'direccion');
+      }
+      if (cambios.direccion.trim().length > 500) {
+        throw solicitudInvalida('La dirección excede 500 caracteres.', 'direccion');
+      }
+      nuevaDireccion = cambios.direccion.trim();
+    }
+
+    let nuevoCorreo: string | null | undefined = undefined;
+    if (cambios.correo === null) {
+      nuevoCorreo = null;
+    } else if (cambios.correo !== undefined) {
+      if (typeof cambios.correo !== 'string' || cambios.correo.trim().length === 0) {
+        throw solicitudInvalida('El correo no puede estar vacío ni contener solo espacios.', 'correo');
+      }
+      if (cambios.correo.trim().length > 254) {
+        throw solicitudInvalida('El correo excede 254 caracteres.', 'correo');
+      }
+      nuevoCorreo = cambios.correo.trim().toLowerCase();
+    }
+
     const comando = await prepararComandoEstable(
       claveIdempotencia,
       'paciente.actualizar',
@@ -194,22 +233,22 @@ export class ActualizarPaciente {
           }
         }
 
-        const telefonoFinal = cambios.telefono === null
+        const telefonoFinal = nuevoTelefono === null
           ? undefined
-          : cambios.telefono !== undefined
-            ? cambios.telefono.trim()
+          : nuevoTelefono !== undefined
+            ? nuevoTelefono
             : pacienteActual.telefono;
 
-        const correoFinal = cambios.correo === null
+        const correoFinal = nuevoCorreo === null
           ? undefined
-          : cambios.correo !== undefined
-            ? cambios.correo.trim().toLowerCase()
+          : nuevoCorreo !== undefined
+            ? nuevoCorreo
             : pacienteActual.correo;
 
-        const direccionFinal = cambios.direccion === null
+        const direccionFinal = nuevaDireccion === null
           ? undefined
-          : cambios.direccion !== undefined
-            ? cambios.direccion.trim()
+          : nuevaDireccion !== undefined
+            ? nuevaDireccion
             : pacienteActual.direccion;
 
         const grupoSanguineoFinal = grupoSanguineo === null

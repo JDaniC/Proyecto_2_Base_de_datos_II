@@ -86,6 +86,12 @@
   - *Corrección:* `RepositorioPacientesMemoria.buscar` normaliza `q` según las reglas de documento y limpia caracteres de separación, permitiendo coincidencias deterministas con documentos formateados.
 - **D-18 (Resuelta - Codex P2):** La serialización de paciente archivado emitía `baja` con campos internos de dominio `{ fecha, actorId }` en lugar de los campos canónicos `{ causa, motivo, fecha_hora, actor_id }` requeridos por OpenAPI.
   - *Corrección:* Se introdujo `ArchivoRegistradoDto` y `mapearPacienteDto` proyecta explícitamente `fecha_hora` y `actor_id` conforme al esquema `ArchivoRegistrado`.
+- **D-19 (Resuelta - Codex P2):** El alta pediátrica no limitaba el número de responsables a 100 elementos conforme al contrato OpenAPI, admitiendo 101 elementos en lugar de responder con `413 LIMITE_AGREGADO`.
+  - *Corrección:* Validación previa en `RegistrarPaciente` que comprueba `entrada.responsables.length <= 100`, arrojando `ErrorDominio('LIMITE_AGREGADO')` que el filtro HTTP mapea a 413 con código `LIMITE_AGREGADO`. Se añadieron pruebas unitarias y de runtime.
+- **D-20 (Resuelta - Codex P2):** En la UoW en memoria, `historial.eventos` ignoraba el argumento `pacienteId`, exponiendo eventos de auditoría de otros pacientes y de pacientes inexistentes.
+  - *Corrección:* `RepositorioPacientesMemoria.crearLector` filtra estrictamente por `ev.recursoId === pacienteId` y retorna arreglo vacío si el paciente no existe, preservando el aislamiento de historial por paciente. Se añadió prueba unitaria de aislamiento.
+- **D-21 (Resuelta - Codex P2):** La actualización por PATCH de `telefono`, `direccion` o `correo` con cadenas de solo espacios en blanco reemplazaba el valor existente por una cadena vacía en lugar de rechazar con 400.
+  - *Corrección:* Validación estricta en `ActualizarPaciente`, `RegistrarPaciente`, `AltaPacienteDto` y `CambioPacienteDto` con `@Matches(/\S/)` y verificación de `trimmed.length > 0`, rechazando cadenas de solo espacios con `SOLICITUD_INVALIDA` (400) sin alterar el valor previo. Se añadieron pruebas unitarias y de runtime.
 
 ## 4. Conclusión
 

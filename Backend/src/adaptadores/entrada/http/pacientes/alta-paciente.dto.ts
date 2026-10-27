@@ -119,6 +119,7 @@ export class AltaPacienteDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/\S/, { message: 'telefono no puede contener solo espacios' })
   @MaxLength(30)
   telefono?: string;
 
@@ -129,6 +130,7 @@ export class AltaPacienteDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/\S/, { message: 'direccion no puede contener solo espacios' })
   @MaxLength(500)
   direccion?: string;
 

@@ -328,6 +328,38 @@ describe('API HTTP de pacientes', () => {
       assert.equal(cuerpo.error.mensaje, 'La solicitud no es válida.');
     });
 
+    it('responde 413 LIMITE_AGREGADO si un alta pediátrica incluye más de 100 responsables', async () => {
+      const muchos = Array.from({ length: 101 }, (_, i) => ({
+        nombres: `Tutor ${i}`,
+        apellidos: 'Prueba',
+        telefono: '55512345',
+        parentesco: 'Tutor',
+        es_principal: i === 0,
+        autoriza_atencion: true,
+      }));
+
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Pediatrico',
+          apellidos: 'MuchosResponsables',
+          fecha_nacimiento: '2023-01-01',
+          sexo: 'MASCULINO',
+          responsables: muchos,
+        }),
+      });
+
+      assert.equal(respuesta.status, 413);
+      const cuerpo = await respuesta.json() as { error: { codigo: string; mensaje: string }; meta: { correlacion: string } };
+      assert.equal(cuerpo.error.codigo, 'LIMITE_AGREGADO');
+      assert.ok(cuerpo.meta.correlacion);
+    });
+
     it('responde 400 si falta la cabecera Idempotency-Key', async () => {
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
         method: 'POST',
@@ -520,6 +552,23 @@ describe('API HTTP de pacientes', () => {
         },
         body: JSON.stringify({
           version_esperada: 2,
+        }),
+      });
+
+      assert.equal(respuesta.status, 400);
+    });
+
+    it('responde 400 si se envían valores de contacto compuestos únicamente de espacios en blanco', async () => {
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes/${pacienteId}`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminHosp}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          version_esperada: 2,
+          telefono: '   ',
         }),
       });
 

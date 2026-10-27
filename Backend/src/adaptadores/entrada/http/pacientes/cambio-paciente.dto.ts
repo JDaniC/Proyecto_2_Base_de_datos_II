@@ -51,6 +51,7 @@ export class CambioPacienteDto {
   @ValidateIf((_obj, val) => val !== null)
   @IsString()
   @IsNotEmpty()
+  @Matches(/\S/, { message: 'telefono no puede contener solo espacios' })
   @MaxLength(30)
   telefono?: string | null;
 
@@ -64,6 +65,7 @@ export class CambioPacienteDto {
   @ValidateIf((_obj, val) => val !== null)
   @IsString()
   @IsNotEmpty()
+  @Matches(/\S/, { message: 'direccion no puede contener solo espacios' })
   @MaxLength(500)
   direccion?: string | null;
 

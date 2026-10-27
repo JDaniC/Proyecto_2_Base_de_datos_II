@@ -73,9 +73,45 @@ export class RegistrarPaciente {
       identificacion = validarIdentificacion(entrada.identificacion, 'identificacion');
     }
 
+    let telefono: string | undefined;
+    if (entrada.telefono !== undefined) {
+      if (typeof entrada.telefono !== 'string' || entrada.telefono.trim().length === 0) {
+        throw solicitudInvalida('El teléfono no puede estar vacío ni contener solo espacios.', 'telefono');
+      }
+      if (entrada.telefono.trim().length > 30) {
+        throw solicitudInvalida('El teléfono excede 30 caracteres.', 'telefono');
+      }
+      telefono = entrada.telefono.trim();
+    }
+
+    let correo: string | undefined;
+    if (entrada.correo !== undefined) {
+      if (typeof entrada.correo !== 'string' || entrada.correo.trim().length === 0) {
+        throw solicitudInvalida('El correo no puede estar vacío ni contener solo espacios.', 'correo');
+      }
+      if (entrada.correo.trim().length > 254) {
+        throw solicitudInvalida('El correo excede 254 caracteres.', 'correo');
+      }
+      correo = entrada.correo.trim().toLowerCase();
+    }
+
+    let direccion: string | undefined;
+    if (entrada.direccion !== undefined) {
+      if (typeof entrada.direccion !== 'string' || entrada.direccion.trim().length === 0) {
+        throw solicitudInvalida('La dirección no puede estar vacía ni contener solo espacios.', 'direccion');
+      }
+      if (entrada.direccion.trim().length > 500) {
+        throw solicitudInvalida('La dirección excede 500 caracteres.', 'direccion');
+      }
+      direccion = entrada.direccion.trim();
+    }
+
     if (contexto.cuenta.institucion === 'CENTRO_MEDICO_PEDIATRICO') {
       if (!entrada.responsables || entrada.responsables.length === 0) {
         throw solicitudInvalida('El alta pediátrica requiere al menos un responsable.', 'responsables');
+      }
+      if (entrada.responsables.length > 100) {
+        throw new ErrorDominio('LIMITE_AGREGADO', 'El número de responsables excede el límite de 100.', ['responsables']);
       }
       validarResponsablePrincipalPediatrico(
         contexto.cuenta.institucion,
@@ -284,12 +320,9 @@ export class RegistrarPaciente {
           fechaNacimiento,
           sexo,
           ...(identificacion ? { identificacion } : {}),
-          ...(typeof entrada.telefono === 'string' && entrada.telefono.trim().length > 0
-            ? { telefono: entrada.telefono.trim() } : {}),
-          ...(typeof entrada.correo === 'string' && entrada.correo.trim().length > 0
-            ? { correo: entrada.correo.trim().toLowerCase() } : {}),
-          ...(typeof entrada.direccion === 'string' && entrada.direccion.trim().length > 0
-            ? { direccion: entrada.direccion.trim() } : {}),
+          ...(telefono ? { telefono } : {}),
+          ...(correo ? { correo } : {}),
+          ...(direccion ? { direccion } : {}),
           ...(grupoSanguineo ? { grupoSanguineo } : {}),
           ...(contactoEmergencia ? { contactoEmergencia } : {}),
           ...(listaResponsables.length > 0 ? { responsables: Object.freeze(listaResponsables) } : {}),
