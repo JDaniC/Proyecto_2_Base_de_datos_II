@@ -2,11 +2,18 @@ import type {
   Paciente,
   Identificacion,
   ContactoEmergencia,
-  ArchivoRegistrado,
+  CausaArchivoPaciente,
   Sexo,
   EstadoPaciente,
 } from '../../../dominio/clinica/paciente.js';
 import type { Institucion } from '../../../dominio/compartido/institucion.js';
+
+export interface ArchivoRegistradoDto {
+  readonly causa: CausaArchivoPaciente;
+  readonly motivo: string;
+  readonly fecha_hora: string;
+  readonly actor_id: string;
+}
 
 export interface ResponsableDto {
   readonly id: string;
@@ -98,7 +105,7 @@ export interface PacienteDto {
   readonly version: number;
   readonly fecha_registro: string;
   readonly responsables?: readonly ResponsablePacienteDto[];
-  readonly baja?: ArchivoRegistrado;
+  readonly baja?: ArchivoRegistradoDto;
 }
 
 export interface RespuestaPacienteDto {
@@ -159,6 +166,15 @@ export function mapearPacienteDto(paciente: Paciente): PacienteDto {
           ),
         }
       : {}),
-    ...(paciente.baja ? { baja: paciente.baja } : {}),
+    ...(paciente.baja
+      ? {
+          baja: Object.freeze({
+            causa: paciente.baja.causa,
+            motivo: paciente.baja.motivo,
+            fecha_hora: paciente.baja.fecha,
+            actor_id: paciente.baja.actorId,
+          }),
+        }
+      : {}),
   });
 }

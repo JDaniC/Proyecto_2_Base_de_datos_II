@@ -78,6 +78,14 @@
   - *Corrección:* `ContactoEmergencia` en el dominio y `ContactoEmergenciaDto` en el DTO HTTP alineados con `Contacto` de OpenAPI: `nombres` (1-80), `apellidos` (1-80), `parentesco` (1-60) y `telefono` (1-30). Se actualizaron validaciones de dominio y pruebas unitarias y de runtime.
 - **D-14 (Resuelta - Codex P2):** Comandos concurrentes en memoria contra el mismo recurso podían completar la fase de planificación sobre un estado no actualizado antes de que el otro confirmara.
   - *Corrección:* `RepositorioPacientesMemoria.crearUnidadDeTrabajo` serializa la secuencia completa read-plan-write a través de una cola encadenada de promesas (`colaUow`). Se añadieron pruebas unitarias para registrar en paralelo con la misma clave de idempotencia (devolviendo el mismo registro) y para actualizar concurrentemente con la misma versión esperada (rechazando la segunda con `VERSION_DESACTUALIZADA`).
+- **D-15 (Resuelta - Codex P2):** El ciclo de confirmación en la UoW en memoria descartaba `plan.revisiones`, `plan.auditoria` e historiales, impidiendo consultar versiones previas del paciente (`porVersion` devolvía `null`).
+  - *Corrección:* `RepositorioPacientesMemoria` almacena las revisiones indexadas por `(recursoId, versionAnterior)`, eventos de auditoría e historiales; `porVersion` resuelve tanto la versión actual como las instantáneas históricas registradas.
+- **D-16 (Resuelta - Codex P2):** Si un alta pediátrica incluía múltiples tutores nuevos con el mismo documento, la consulta a identidades previas no detectaba la duplicidad interna dentro de la misma solicitud.
+  - *Corrección:* `RegistrarPaciente` acumula las identidades procesadas en la solicitud en `identidadesEnEstaSolicitud` y rechaza con `PACIENTE_DUPLICADO` cualquier colisión entre responsables o con el paciente.
+- **D-17 (Resuelta - Codex P2):** La búsqueda de pacientes por documento no normalizaba el término `q`, impidiendo encontrar al paciente mediante formatos con guiones o espacios (ej. `2099-12345-0101`).
+  - *Corrección:* `RepositorioPacientesMemoria.buscar` normaliza `q` según las reglas de documento y limpia caracteres de separación, permitiendo coincidencias deterministas con documentos formateados.
+- **D-18 (Resuelta - Codex P2):** La serialización de paciente archivado emitía `baja` con campos internos de dominio `{ fecha, actorId }` en lugar de los campos canónicos `{ causa, motivo, fecha_hora, actor_id }` requeridos por OpenAPI.
+  - *Corrección:* Se introdujo `ArchivoRegistradoDto` y `mapearPacienteDto` proyecta explícitamente `fecha_hora` y `actor_id` conforme al esquema `ArchivoRegistrado`.
 
 ## 4. Conclusión
 

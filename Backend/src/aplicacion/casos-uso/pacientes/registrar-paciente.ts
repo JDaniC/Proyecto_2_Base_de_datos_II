@@ -1,5 +1,6 @@
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 import { instanteUtc } from '../../../dominio/compartido/instante-utc.js';
+import { normalizarIdentificacion } from '../../../dominio/compartido/normalizacion.js';
 import { institucionAdmiteCapacidad } from '../../../dominio/compartido/autorizacion.js';
 import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
 import type { Version } from '../../../dominio/compartido/version.js';
@@ -170,6 +171,8 @@ export class RegistrarPaciente {
           return { tipo: 'REPETIR', operacion: operacionPrevia };
         }
 
+        const identidadesEnEstaSolicitud = new Set<string>();
+
         if (identificacion !== undefined) {
           const titularExistente = await lector.identidades.titular(identificacion);
           if (titularExistente !== null) {
@@ -179,6 +182,9 @@ export class RegistrarPaciente {
               ['identificacion'],
             );
           }
+          identidadesEnEstaSolicitud.add(
+            `${identificacion.tipo}:${normalizarIdentificacion(identificacion.tipo, identificacion.numero)}`,
+          );
         }
 
         const pacienteId = comando.ids.paciente_id!;
@@ -215,10 +221,15 @@ export class RegistrarPaciente {
               let docResp: Identificacion | undefined = undefined;
               if (resp.documento) {
                 docResp = validarIdentificacion(resp.documento, 'responsables.documento');
+                const claveDoc = `${docResp.tipo}:${normalizarIdentificacion(docResp.tipo, docResp.numero)}`;
+                if (identidadesEnEstaSolicitud.has(claveDoc)) {
+                  throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable está duplicada en la misma solicitud.', ['responsables']);
+                }
                 const titularResp = await lector.identidades.titular(docResp);
                 if (titularResp !== null) {
                   throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable ya existe en el sistema.', ['responsables']);
                 }
+                identidadesEnEstaSolicitud.add(claveDoc);
               }
               const nombresResp = (resp.nombres ?? '').trim();
               const apellidosResp = (resp.apellidos ?? '').trim();

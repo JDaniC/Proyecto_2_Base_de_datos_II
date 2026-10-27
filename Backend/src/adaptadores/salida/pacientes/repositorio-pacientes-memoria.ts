@@ -22,6 +22,7 @@ import type {
   PlanDeEscrituras,
   ResultadoDurable,
   ComandoEstable,
+  EventoAuditoria,
 } from '../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../aplicacion/puertos/contexto-autenticado.js';
 
@@ -65,6 +66,9 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   private readonly identidades = new Map<string, string>();
   private readonly operaciones = new Map<string, OperacionIdempotente<unknown>>();
   private readonly responsables = new Map<string, ResponsableDetalle>();
+  private readonly revisionesPacientes = new Map<string, Paciente>();
+  private readonly eventosAuditoria: EventoAuditoria[] = [];
+  private readonly historiales = new Map<string, unknown>();
   private colaUow: Promise<unknown> = Promise.resolve();
 
   constructor(semillas?: readonly Paciente[]) {
@@ -89,17 +93,33 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
       qNormNombre = normalizarTextoBusqueda(qRaw);
     }
 
+    let qNormCui: string | null = null;
+    let qNormPasaporte: string | null = null;
+    try {
+      qNormCui = normalizarIdentificacion('CUI', qRaw);
+    } catch {
+      // no es formato CUI
+    }
+    try {
+      qNormPasaporte = normalizarIdentificacion('PASAPORTE', qRaw);
+    } catch {
+      // no es formato PASAPORTE
+    }
+
     const todos = Array.from(this.pacientes.values()).filter((p) => {
       if (criterios.estado && criterios.estado !== 'TODOS' && p.estado !== criterios.estado) {
         return false;
       }
 
-      // 1. Coincidencia exacta de documento
+      // 1. Coincidencia exacta o normalizada de documento
       if (p.identificacion) {
         if (p.identificacion.numero.toUpperCase() === qRaw.toUpperCase()) return true;
         try {
           const normDoc = normalizarIdentificacion(p.identificacion.tipo, p.identificacion.numero);
-          if (normDoc === qRaw || normDoc.includes(qRaw.toUpperCase())) return true;
+          if (normDoc === qNormCui || normDoc === qNormPasaporte) return true;
+          const numLimpio = p.identificacion.numero.replace(/[\s-]+/gu, '').toUpperCase();
+          const qLimpio = qRaw.replace(/[\s-]+/gu, '').toUpperCase();
+          if (qLimpio.length > 0 && (numLimpio === qLimpio || numLimpio.includes(qLimpio))) return true;
         } catch {
           // continuar
         }
@@ -217,7 +237,8 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         porId: async (id: UUID) => this.pacientes.get(id) ?? null,
         porVersion: async (id: UUID, version: number) => {
           const p = this.pacientes.get(id);
-          return p && p.version === version ? p : null;
+          if (p && p.version === version) return p;
+          return this.revisionesPacientes.get(`${id}:${version}`) ?? null;
         },
       },
       citas: { porId: async () => null },
@@ -234,7 +255,11 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         },
       },
       profesionales: { porId: async () => null },
-      historial: { eventos: async () => ({ elementos: [] }) },
+      historial: {
+        eventos: async () => ({
+          elementos: Object.freeze([...this.eventosAuditoria]),
+        }),
+      },
       operaciones: {
         porClave: async <T>(actorId: UUID, caso: string, clave: UUID) =>
           this.obtenerOperacion(actorId, caso, clave) as OperacionIdempotente<T> | null,
@@ -266,6 +291,8 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
               this.pacientes.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
             } else if (cambio.agregado === 'responsables') {
               this.responsables.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
+            } else if (cambio.agregado === 'historiales' || cambio.agregado === 'historial') {
+              this.historiales.set(cambio.recursoId, cambio.nuevoEstado);
             } else if (cambio.agregado === 'identidades') {
               const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
               if (cambio.tipo === 'LIBERAR') {
@@ -274,6 +301,16 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
                 this.reservarIdentidad(estado.identificacion, (estado.titularId ?? cambio.recursoId) as UUID);
               }
             }
+          }
+
+          // Guardar revisiones planificadas
+          for (const rev of plan.revisiones) {
+            this.revisionesPacientes.set(`${rev.recursoId}:${rev.versionAnterior}`, rev.snapshotAnterior as Paciente);
+          }
+
+          // Guardar auditoría planificada
+          for (const ev of plan.auditoria) {
+            this.eventosAuditoria.push(ev);
           }
 
           const opIdempotente: OperacionIdempotente<T> = Object.freeze({

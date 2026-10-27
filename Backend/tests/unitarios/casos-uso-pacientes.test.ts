@@ -12,6 +12,10 @@ import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-in
 import { CUENTAS_SINTETICAS } from '../../src/adaptadores/salida/identidad/semillas-sinteticas.js';
 import { uuidPublico, type UUID } from '../../src/dominio/compartido/uuid.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
+import { fechaCivil } from '../../src/dominio/compartido/fecha-civil.js';
+import type { Version } from '../../src/dominio/compartido/version.js';
+import type { Paciente } from '../../src/dominio/clinica/paciente.js';
+import { mapearPacienteDto } from '../../src/aplicacion/casos-uso/pacientes/dtos-pacientes.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 
 describe('casos de uso de pacientes en memoria', () => {
@@ -468,6 +472,49 @@ describe('casos de uso de pacientes en memoria', () => {
         },
       );
     });
+
+    it('rechaza documentos duplicados entre responsables nuevos dentro de la misma solicitud', async () => {
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Hermanos',
+              apellidos: 'Gemelos',
+              fecha_nacimiento: '2023-01-01',
+              sexo: 'MASCULINO',
+              responsables: [
+                {
+                  nombres: 'Padre Uno',
+                  apellidos: 'Lopez',
+                  telefono: '55511111',
+                  documento: { tipo: 'CUI', numero: '2020303040101' },
+                  parentesco: 'Padre',
+                  es_principal: true,
+                  autoriza_atencion: true,
+                },
+                {
+                  nombres: 'Padre Dos',
+                  apellidos: 'Lopez',
+                  telefono: '55522222',
+                  documento: { tipo: 'CUI', numero: '2020-30304-0101' },
+                  parentesco: 'Padre',
+                  es_principal: false,
+                  autoriza_atencion: true,
+                },
+              ],
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'PACIENTE_DUPLICADO');
+          assert.match(error.message, /duplicada/i);
+          return true;
+        },
+      );
+    });
   });
 
   describe('ActualizarPaciente', () => {
@@ -647,6 +694,32 @@ describe('casos de uso de pacientes en memoria', () => {
       });
       assert.equal(pacienteFinal.version, 2);
     });
+
+    it('preserva las revisiones históricas en el repositorio tras actualizar paciente', async () => {
+      const resActualizado = await actualizarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        id: pacienteId,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        cambios: {
+          version_esperada: 1,
+          telefono: '55599887',
+        },
+      });
+
+      assert.equal(resActualizado.respuesta.version, 2);
+
+      const lector = (bundleHospital.pacientes as RepositorioPacientesMemoria).crearLector();
+      const v1 = (await lector.pacientes.porVersion(pacienteId, 1 as Version)) as Paciente | null;
+      assert.ok(v1);
+      assert.equal(v1.version, 1);
+      assert.equal(v1.telefono, '55598765');
+
+      const v2 = (await lector.pacientes.porVersion(pacienteId, 2 as Version)) as Paciente | null;
+      assert.ok(v2);
+      assert.equal(v2.version, 2);
+      assert.equal(v2.telefono, '55599887');
+    });
   });
 
   describe('ConsultarPaciente y BuscarPacientes', () => {
@@ -822,6 +895,47 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(resDesc.data.length, 2);
       assert.equal(resDesc.data[0]!.id, p2.respuesta.id);
       assert.equal(resDesc.data[1]!.id, p1.respuesta.id);
+    });
+
+    it('encuentra paciente por documento formateado con guiones y espacios', async () => {
+      const res = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: '7777-12345-0101' },
+      });
+
+      assert.equal(res.data.length, 1);
+      assert.equal(res.data[0]!.id, pacienteId);
+    });
+
+    it('mapea metadatos de baja al esquema canónico ArchivoRegistrado con fecha_hora y actor_id', () => {
+      const pacienteArchivado: Paciente = {
+        id: uuidPublico(randomUUID()),
+        codigoLegible: 'HOSP-ABC123',
+        institucion: 'HOSPITAL_GENERAL',
+        nombres: 'Paciente',
+        apellidos: 'Archivado',
+        fechaNacimiento: fechaCivil('1970-01-01'),
+        sexo: 'MASCULINO',
+        estado: 'ARCHIVADO',
+        version: 2 as Version,
+        fechaRegistro: instanteUtc(new Date().toISOString()),
+        baja: {
+          causa: 'FALLECIMIENTO',
+          motivo: 'Causa médica confirmada',
+          fecha: instanteUtc(new Date().toISOString()),
+          actorId: uuidPublico(randomUUID()),
+        },
+      };
+
+      const dto = mapearPacienteDto(pacienteArchivado);
+      assert.ok(dto.baja);
+      assert.equal(dto.baja.causa, 'FALLECIMIENTO');
+      assert.equal(dto.baja.motivo, 'Causa médica confirmada');
+      assert.equal(dto.baja.fecha_hora, pacienteArchivado.baja!.fecha);
+      assert.equal(dto.baja.actor_id, pacienteArchivado.baja!.actorId);
+      assert.equal('fecha' in (dto.baja as unknown as Record<string, unknown>), false);
+      assert.equal('actorId' in (dto.baja as unknown as Record<string, unknown>), false);
     });
   });
 });
