@@ -15,7 +15,7 @@ import { uuidPublico, type UUID } from '../../src/dominio/compartido/uuid.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { fechaCivil } from '../../src/dominio/compartido/fecha-civil.js';
 import type { Version } from '../../src/dominio/compartido/version.js';
-import type { Paciente } from '../../src/dominio/clinica/paciente.js';
+import { type Paciente, generarCodigoLegible } from '../../src/dominio/clinica/paciente.js';
 import { mapearPacienteDto } from '../../src/aplicacion/casos-uso/pacientes/dtos-pacientes.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 
@@ -100,7 +100,7 @@ describe('casos de uso de pacientes en memoria', () => {
 
       const paciente = resultado.respuesta;
       assert.ok(paciente.id);
-      assert.match(paciente.codigo_legible, /^HOSP-[A-F0-9]{6}$/);
+      assert.match(paciente.codigo_legible, /^HOSP-[A-F0-9]{32}$/);
       assert.equal(paciente.nombres, 'Carlos Alberto');
       assert.equal(paciente.apellidos, 'Gomez Alvarez');
       assert.equal(paciente.fecha_nacimiento, '1985-06-15');
@@ -1221,6 +1221,19 @@ describe('casos de uso de pacientes en memoria', () => {
       // No existe revisión huérfana de versión 1
       const rev = (await repoHospital.crearLector().pacientes.porVersion(pacienteLegadoId, 1 as Version)) as Paciente | null;
       assert.equal(rev?.version, 1);
+    });
+
+    it('genera códigos legibles resistentes a colisiones para UUIDs que comparten prefijo y no colisionan', () => {
+      const id1 = 'abcdef00-0000-4000-8000-000000000001' as UUID;
+      const id2 = 'abcdef99-0000-4000-8000-000000000002' as UUID;
+      const codigo1 = generarCodigoLegible('LABORATORIO_CLINICO', id1);
+      const codigo2 = generarCodigoLegible('LABORATORIO_CLINICO', id2);
+
+      assert.notEqual(codigo1, codigo2);
+      assert.equal(codigo1, 'LAB-ABCDEF00000040008000000000000001');
+      assert.equal(codigo2, 'LAB-ABCDEF99000040008000000000000002');
+      assert.ok(codigo1.length <= 60);
+      assert.ok(codigo2.length <= 60);
     });
   });
 });

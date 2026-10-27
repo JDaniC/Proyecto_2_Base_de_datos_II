@@ -65,6 +65,7 @@ function decodificarCursor(cursor: string): CursorBusquedaInterno {
 export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   private readonly pacientes = new Map<string, Paciente>();
   private readonly identidades = new Map<string, string>();
+  private readonly codigosPacientes = new Map<string, string>();
   private readonly operaciones = new Map<string, OperacionIdempotente<unknown>>();
   private readonly responsables = new Map<string, ResponsableDetalle>();
   private readonly revisionesPacientes = new Map<string, Paciente>();
@@ -184,6 +185,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
 
   guardar(paciente: Paciente): void {
     this.pacientes.set(paciente.id, paciente);
+    this.codigosPacientes.set(paciente.codigoLegible, paciente.id);
     if (paciente.identificacion) {
       try {
         const clave = normalizarIdentificacion(paciente.identificacion.tipo, paciente.identificacion.numero);
@@ -340,6 +342,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
 
           // 1. Preparar y validar cambios en estado temporal (staging) antes de mutar el repositorio
           const pacientesStaged = new Map<string, Paciente>();
+          const codigosStaged = new Map<string, string>();
           const responsablesStaged = new Map<string, ResponsableDetalle>();
           const historialesStaged = new Map<string, unknown>();
           const identidadesLiberar: string[] = [];
@@ -347,7 +350,17 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
 
           for (const cambio of plan.cambios) {
             if (cambio.agregado === 'pacientes') {
-              pacientesStaged.set(cambio.recursoId, cambio.nuevoEstado as Paciente);
+              const pac = cambio.nuevoEstado as Paciente;
+              const titularCodigo = this.codigosPacientes.get(pac.codigoLegible);
+              if (titularCodigo && titularCodigo !== pac.id) {
+                throw new ErrorDominio('ESTADO_INVALIDO', 'El código legible de paciente ya está en uso.');
+              }
+              const titularStaged = codigosStaged.get(pac.codigoLegible);
+              if (titularStaged && titularStaged !== pac.id) {
+                throw new ErrorDominio('ESTADO_INVALIDO', 'El código legible de paciente ya está en uso en esta operación.');
+              }
+              codigosStaged.set(pac.codigoLegible, pac.id);
+              pacientesStaged.set(cambio.recursoId, pac);
             } else if (cambio.agregado === 'responsables') {
               responsablesStaged.set(cambio.recursoId, cambio.nuevoEstado as ResponsableDetalle);
             } else if (cambio.agregado === 'historiales' || cambio.agregado === 'historial') {
@@ -380,6 +393,9 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
           // 2. Publicar atómicamente solo una vez que todo el procesamiento falible ha concluido con éxito
           for (const [id, pac] of pacientesStaged) {
             this.pacientes.set(id, pac);
+          }
+          for (const [codigo, titularId] of codigosStaged) {
+            this.codigosPacientes.set(codigo, titularId);
           }
           for (const [id, resp] of responsablesStaged) {
             this.responsables.set(id, resp);

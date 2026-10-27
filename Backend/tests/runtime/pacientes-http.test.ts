@@ -125,7 +125,7 @@ describe('API HTTP de pacientes', () => {
       assert.equal(respuesta.status, 201);
       const cuerpo = await respuesta.json() as { data: PacienteDto; meta: { correlacion: string } };
       assert.ok(cuerpo.data.id);
-      assert.match(cuerpo.data.codigo_legible, /^HOSP-[A-F0-9]{6}$/);
+      assert.match(cuerpo.data.codigo_legible, /^HOSP-[A-F0-9]{32}$/);
       assert.equal(cuerpo.data.nombres, 'Julio Cesar');
       assert.equal(cuerpo.data.apellidos, 'Mendez Montenegro');
       assert.equal(cuerpo.data.grupo_sanguineo, 'A+');

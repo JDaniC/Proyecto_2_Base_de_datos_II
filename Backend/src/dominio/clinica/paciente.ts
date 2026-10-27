@@ -184,6 +184,6 @@ export function generarCodigoLegible(institucion: Institucion, id: UUID): string
     CENTRO_MEDICO_PEDIATRICO: 'PED',
   };
   const prefijo = prefijos[institucion] ?? 'PAC';
-  const corto = id.replace(/-/g, '').slice(0, 6).toUpperCase();
-  return `${prefijo}-${corto}`;
+  const hex = id.replace(/-/g, '').toUpperCase();
+  return `${prefijo}-${hex}`;
 }
