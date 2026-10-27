@@ -123,6 +123,9 @@ export class ActualizarPaciente {
           comando.claveIdempotencia,
         );
         if (opPrevia !== null) {
+          if (opPrevia.hashEntrada !== comando.hashEntrada) {
+            throw new ErrorDominio('CLAVE_REUTILIZADA', 'La clave de idempotencia ya se usó con otra solicitud.');
+          }
           return { tipo: 'REPETIR', operacion: opPrevia };
         }
 

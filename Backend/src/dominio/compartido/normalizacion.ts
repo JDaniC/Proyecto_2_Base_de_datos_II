@@ -2,10 +2,15 @@ import { solicitudInvalida } from './error-dominio.js';
 
 export const VERSION_NORMALIZACION = 1 as const;
 
+/** Normaliza texto eliminando diacríticos, colapsando espacios y a minúsculas sin límite de longitud para coincidencia. */
+export function normalizarTextoBusqueda(valor: string): string {
+  return valor.normalize('NFD').replace(/\p{M}/gu, '').trim().replace(/\s+/gu, ' ').toLowerCase();
+}
+
 /** Clave de búsqueda para nombres; no sustituye ni reescribe el texto clínico almacenado. */
 export function normalizarNombreBusqueda(valor: unknown): string {
   if (typeof valor !== 'string') throw solicitudInvalida('El nombre debe ser texto.', 'nombre');
-  const clave = valor.normalize('NFD').replace(/\p{M}/gu, '').trim().replace(/\s+/gu, ' ').toLowerCase();
+  const clave = normalizarTextoBusqueda(valor);
   if (clave.length === 0) throw solicitudInvalida('El término de nombre no puede estar vacío.', 'nombre');
   if ([...clave].length > 120) throw solicitudInvalida('El término de nombre excede 120 caracteres.', 'nombre');
   return clave;

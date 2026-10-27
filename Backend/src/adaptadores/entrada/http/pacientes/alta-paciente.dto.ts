@@ -3,11 +3,15 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
+  Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -42,10 +46,12 @@ export class ContactoEmergenciaDto {
 
 export class ResponsableAltaDto {
   @IsOptional()
-  @IsString()
+  @IsUUID()
   responsable_id?: string;
 
-  @IsOptional()
+  @ValidateIf((o: ResponsableAltaDto) => o.responsable_id !== undefined && o.responsable_id !== null && o.responsable_id !== '')
+  @IsInt()
+  @Min(1)
   version_responsable?: number;
 
   @IsString()
@@ -59,18 +65,21 @@ export class ResponsableAltaDto {
   @IsBoolean()
   autoriza_atencion!: boolean;
 
-  @IsOptional()
+  @ValidateIf((o: ResponsableAltaDto) => !o.responsable_id)
   @IsString()
+  @IsNotEmpty()
   @MaxLength(200)
   nombres?: string;
 
-  @IsOptional()
+  @ValidateIf((o: ResponsableAltaDto) => !o.responsable_id)
   @IsString()
+  @IsNotEmpty()
   @MaxLength(200)
   apellidos?: string;
 
-  @IsOptional()
+  @ValidateIf((o: ResponsableAltaDto) => !o.responsable_id)
   @IsString()
+  @IsNotEmpty()
   @MaxLength(30)
   telefono?: string;
 

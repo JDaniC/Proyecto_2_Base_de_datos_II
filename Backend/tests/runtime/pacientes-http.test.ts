@@ -172,6 +172,71 @@ describe('API HTTP de pacientes', () => {
       assert.equal(res2.headers.get('x-correlation-id'), cuerpo1.meta.correlacion);
     });
 
+    it('responde 409 si se reintenta con la misma clave de idempotencia pero carga útil distinta (CLAVE_REUTILIZADA)', async () => {
+      const idempotencyKey = randomUUID();
+      const res1 = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminHosp}`,
+          'idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          nombres: 'Primer',
+          apellidos: 'Intento',
+          fecha_nacimiento: '1985-01-01',
+          sexo: 'MASCULINO',
+        }),
+      });
+      assert.equal(res1.status, 201);
+
+      const res2 = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminHosp}`,
+          'idempotency-key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          nombres: 'Segundo',
+          apellidos: 'IntentoDiferente',
+          fecha_nacimiento: '1985-01-01',
+          sexo: 'MASCULINO',
+        }),
+      });
+      assert.equal(res2.status, 409);
+      const cuerpo2 = await res2.json() as { error: { codigo: string } };
+      assert.equal(cuerpo2.error.codigo, 'CLAVE_REUTILIZADA');
+    });
+
+    it('responde 400 si un responsable nuevo pediátrico carece de nombres o teléfono', async () => {
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Bebe',
+          apellidos: 'Incompleto',
+          fecha_nacimiento: '2023-01-01',
+          sexo: 'MASCULINO',
+          responsables: [
+            {
+              parentesco: 'Tutor',
+              es_principal: true,
+              autoriza_atencion: true,
+            },
+          ],
+        }),
+      });
+
+      assert.equal(respuesta.status, 400);
+      const cuerpo = await respuesta.json() as { error: { codigo: string } };
+      assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
+    });
+
     it('registra paciente pediátrico con responsables y valida campos en snake_case', async () => {
       const idempotencyKey = randomUUID();
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
@@ -475,6 +540,16 @@ describe('API HTTP de pacientes', () => {
       });
 
       assert.equal(respuesta.status, 400);
+    });
+
+    it('responde 400 si se envía un cursor inválido o malformado', async () => {
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes?q=Laura&cursor=cursor-invalido-123`, {
+        headers: { 'authorization': `Bearer ${tokenSecretariaHosp}` },
+      });
+
+      assert.equal(respuesta.status, 400);
+      const cuerpo = await respuesta.json() as { error: { codigo: string } };
+      assert.equal(cuerpo.error.codigo, 'SOLICITUD_INVALIDA');
     });
   });
 });

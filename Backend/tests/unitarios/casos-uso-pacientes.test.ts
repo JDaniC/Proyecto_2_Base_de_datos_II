@@ -142,6 +142,41 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(segundo.correlacionOriginal, primero.correlacionOriginal);
     });
 
+    it('rechaza repetición con carga útil distinta usando la misma clave de idempotencia (CLAVE_REUTILIZADA)', async () => {
+      const claveIdempotencia = uuidPublico(randomUUID());
+      await registrarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia,
+        entrada: {
+          nombres: 'Primero',
+          apellidos: 'Original',
+          fecha_nacimiento: '1985-01-01',
+          sexo: 'MASCULINO',
+        },
+      });
+
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            claveIdempotencia,
+            entrada: {
+              nombres: 'Diferente',
+              apellidos: 'Modificado',
+              fecha_nacimiento: '1985-01-01',
+              sexo: 'MASCULINO',
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'CLAVE_REUTILIZADA');
+          return true;
+        },
+      );
+    });
+
     it('rechaza identificación duplicada', async () => {
       const ident = { tipo: 'CUI' as const, numero: '2099999990101' };
       await registrarPaciente.ejecutar({
@@ -334,6 +369,36 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(paciente2.responsables.length, 1);
       assert.equal(paciente2.responsables[0]!.responsable.id, primero.responsable.id);
       assert.equal(paciente2.responsables[0]!.vinculo.responsable_id, primero.responsable.id);
+    });
+
+    it('rechaza responsable nuevo pediátrico sin nombres o apellidos requeridos', async () => {
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Bebe',
+              apellidos: 'SinTutorCompleto',
+              fecha_nacimiento: '2023-05-01',
+              sexo: 'FEMENINO',
+              responsables: [
+                {
+                  parentesco: 'Tia',
+                  es_principal: true,
+                  autoriza_atencion: true,
+                } as unknown as { parentesco: string; es_principal: boolean; autoriza_atencion: boolean },
+              ],
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /nombres/i);
+          return true;
+        },
+      );
     });
 
     it('rechaza grupo_sanguineo y contacto_emergencia en alta no hospitalaria', async () => {
@@ -564,6 +629,69 @@ describe('casos de uso de pacientes en memoria', () => {
 
       assert.equal(resultado.data.length, 1);
       assert.equal(resultado.data[0]!.id, pacienteId);
+    });
+
+    it('encuentra paciente con nombres y apellidos combinados mayores a 120 caracteres', async () => {
+      // 64 caracteres en nombres empezando con 'Ana' y 60 caracteres en apellidos
+      const nombresLargos = 'Ana ' + 'A'.repeat(60);
+      const apellidosLargos = 'B'.repeat(60);
+      const creado = await registrarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: nombresLargos,
+          apellidos: apellidosLargos,
+          fecha_nacimiento: '1989-05-05',
+          sexo: 'FEMENINO',
+        },
+      });
+
+      const resultado = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Ana' },
+      });
+
+      assert.ok(resultado.data.some((p) => p.id === creado.respuesta.id));
+    });
+
+    it('rechaza cursor inválido o con orden/filtros discordantes', async () => {
+      const pag1 = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Gustavo', limite: 1, orden: 'ASC' },
+      });
+
+      await assert.rejects(
+        async () => {
+          await buscarPacientes.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            entrada: { q: 'Gustavo', cursor: 'cursor-invalido-malformado' },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          return true;
+        },
+      );
+
+      if (pag1.meta.siguiente_cursor) {
+        await assert.rejects(
+          async () => {
+            await buscarPacientes.ejecutar({
+              contexto: contextoHospital,
+              bundle: bundleHospital,
+              entrada: { q: 'Gustavo', cursor: pag1.meta.siguiente_cursor!, orden: 'DESC' },
+            });
+          },
+          (error: ErrorDominio) => {
+            assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+            return true;
+          },
+        );
+      }
     });
   });
 });

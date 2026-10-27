@@ -1,5 +1,10 @@
 import type { UUID } from '../../../dominio/compartido/uuid.js';
-import { normalizarIdentificacion, normalizarNombreBusqueda } from '../../../dominio/compartido/normalizacion.js';
+import {
+  normalizarIdentificacion,
+  normalizarNombreBusqueda,
+  normalizarTextoBusqueda,
+} from '../../../dominio/compartido/normalizacion.js';
+import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 import type {
   Paciente,
   Identificacion,
@@ -19,6 +24,41 @@ import type {
   ComandoEstable,
 } from '../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../aplicacion/puertos/contexto-autenticado.js';
+
+interface CursorBusquedaInterno {
+  readonly q: string;
+  readonly orden: string;
+  readonly estado: string;
+  readonly id: string;
+}
+
+function codificarCursor(payload: CursorBusquedaInterno): string {
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+}
+
+function decodificarCursor(cursor: string): CursorBusquedaInterno {
+  try {
+    const json = Buffer.from(cursor, 'base64url').toString('utf8');
+    const parseado = JSON.parse(json) as unknown;
+    if (
+      typeof parseado === 'object' &&
+      parseado !== null &&
+      'q' in parseado &&
+      'orden' in parseado &&
+      'estado' in parseado &&
+      'id' in parseado &&
+      typeof (parseado as CursorBusquedaInterno).q === 'string' &&
+      typeof (parseado as CursorBusquedaInterno).orden === 'string' &&
+      typeof (parseado as CursorBusquedaInterno).estado === 'string' &&
+      typeof (parseado as CursorBusquedaInterno).id === 'string'
+    ) {
+      return parseado as CursorBusquedaInterno;
+    }
+  } catch {
+    // ignorar y lanzar abajo
+  }
+  throw solicitudInvalida('El cursor de paginación es inválido o está malformado.', 'cursor');
+}
 
 export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   private readonly pacientes = new Map<string, Paciente>();
@@ -45,7 +85,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
     try {
       qNormNombre = normalizarNombreBusqueda(qRaw);
     } catch {
-      qNormNombre = qRaw.toLowerCase();
+      qNormNombre = normalizarTextoBusqueda(qRaw);
     }
 
     const todos = Array.from(this.pacientes.values()).filter((p) => {
@@ -64,28 +104,50 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         }
       }
 
-      // 2. Coincidencia por prefijo de nombre o apellido
-      try {
-        const nombreCompleto = normalizarNombreBusqueda(`${p.nombres} ${p.apellidos}`);
-        if (qNormNombre && nombreCompleto.includes(qNormNombre)) return true;
-      } catch {
-        // continuar
+      // 2. Coincidencia por nombre o apellido (sin límite de longitud en texto almacenado)
+      if (qNormNombre && qNormNombre.length > 0) {
+        const nombreCompleto = normalizarTextoBusqueda(`${p.nombres} ${p.apellidos}`);
+        if (nombreCompleto.includes(qNormNombre)) return true;
       }
 
       return false;
     });
 
+    const orden = criterios.orden ?? 'ASC';
+    const estado = criterios.estado ?? 'TODOS';
+
     todos.sort((a, b) => {
       const cmp = a.nombres.localeCompare(b.nombres);
-      if (cmp !== 0) return criterios.orden === 'DESC' ? -cmp : cmp;
-      return criterios.orden === 'DESC' ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
+      if (cmp !== 0) return orden === 'DESC' ? -cmp : cmp;
+      return orden === 'DESC' ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
     });
 
-    const inicio = criterios.cursor ? Math.max(0, todos.findIndex((p) => p.id === criterios.cursor) + 1) : 0;
+    let inicio = 0;
+    if (criterios.cursor) {
+      const decoded = decodificarCursor(criterios.cursor);
+      if (
+        decoded.q !== criterios.q ||
+        decoded.orden !== orden ||
+        decoded.estado !== estado
+      ) {
+        throw solicitudInvalida('El cursor no coincide con los parámetros o el orden de la búsqueda.', 'cursor');
+      }
+      const idx = todos.findIndex((p) => p.id === decoded.id);
+      if (idx === -1) {
+        throw solicitudInvalida('El cursor hace referencia a un registro que no pertenece a los resultados.', 'cursor');
+      }
+      inicio = idx + 1;
+    }
+
     const fin = inicio + criterios.limite;
     const elementos = todos.slice(inicio, fin);
     const siguienteCursor = fin < todos.length && elementos.length > 0
-      ? elementos[elementos.length - 1]!.id
+      ? codificarCursor({
+          q: criterios.q,
+          orden,
+          estado,
+          id: elementos[elementos.length - 1]!.id,
+        })
       : undefined;
 
     return Object.freeze({
@@ -190,6 +252,9 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         const plan = await planificar(lector);
 
         if (plan.tipo === 'REPETIR') {
+          if (plan.operacion.hashEntrada !== comando.hashEntrada) {
+            throw new ErrorDominio('CLAVE_REUTILIZADA', 'La clave de idempotencia ya se usó con otra solicitud.');
+          }
           return plan.operacion.resultado;
         }
 

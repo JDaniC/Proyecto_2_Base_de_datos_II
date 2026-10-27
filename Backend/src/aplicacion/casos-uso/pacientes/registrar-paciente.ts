@@ -80,6 +80,48 @@ export class RegistrarPaciente {
         contexto.cuenta.institucion,
         entrada.responsables.map((r) => ({ esPrincipal: r.es_principal })),
       );
+      for (const r of entrada.responsables) {
+        if (r.responsable_id !== undefined && r.responsable_id !== null && r.responsable_id !== '') {
+          if (r.nombres !== undefined || r.apellidos !== undefined) {
+            throw solicitudInvalida('Un responsable existente por ID no debe enviar nombres ni apellidos.', 'responsables');
+          }
+          uuidPublico(r.responsable_id, 'responsables.responsable_id');
+          if (typeof r.parentesco !== 'string' || r.parentesco.trim().length === 0 || r.parentesco.trim().length > 80) {
+            throw solicitudInvalida('El parentesco es obligatorio (1-80 caracteres).', 'responsables.parentesco');
+          }
+          if (typeof r.es_principal !== 'boolean') {
+            throw solicitudInvalida('El campo es_principal debe ser booleano.', 'responsables.es_principal');
+          }
+          if (typeof r.autoriza_atencion !== 'boolean') {
+            throw solicitudInvalida('El campo autoriza_atencion debe ser booleano.', 'responsables.autoriza_atencion');
+          }
+          if (r.version_responsable === undefined || !Number.isInteger(r.version_responsable) || r.version_responsable < 1) {
+            throw solicitudInvalida('La versión del responsable existente es obligatoria.', 'responsables.version_responsable');
+          }
+        } else {
+          if (typeof r.nombres !== 'string' || r.nombres.trim().length === 0 || r.nombres.trim().length > 200) {
+            throw solicitudInvalida('Los nombres del responsable son obligatorios (1-200 caracteres).', 'responsables.nombres');
+          }
+          if (typeof r.apellidos !== 'string' || r.apellidos.trim().length === 0 || r.apellidos.trim().length > 200) {
+            throw solicitudInvalida('Los apellidos del responsable son obligatorios (1-200 caracteres).', 'responsables.apellidos');
+          }
+          if (typeof r.telefono !== 'string' || r.telefono.trim().length === 0 || r.telefono.trim().length > 30) {
+            throw solicitudInvalida('El teléfono del responsable es obligatorio (1-30 caracteres).', 'responsables.telefono');
+          }
+          if (typeof r.parentesco !== 'string' || r.parentesco.trim().length === 0 || r.parentesco.trim().length > 80) {
+            throw solicitudInvalida('El parentesco del responsable es obligatorio (1-80 caracteres).', 'responsables.parentesco');
+          }
+          if (typeof r.es_principal !== 'boolean') {
+            throw solicitudInvalida('El campo es_principal debe ser booleano.', 'responsables.es_principal');
+          }
+          if (typeof r.autoriza_atencion !== 'boolean') {
+            throw solicitudInvalida('El campo autoriza_atencion debe ser booleano.', 'responsables.autoriza_atencion');
+          }
+          if (r.documento !== undefined && r.documento !== null) {
+            validarIdentificacion(r.documento, 'responsables.documento');
+          }
+        }
+      }
     } else {
       if (entrada.responsables !== undefined) {
         throw solicitudInvalida('El campo responsables solo aplica a CENTRO_MEDICO_PEDIATRICO.', 'responsables');
@@ -122,6 +164,9 @@ export class RegistrarPaciente {
           comando.claveIdempotencia,
         );
         if (operacionPrevia !== null) {
+          if (operacionPrevia.hashEntrada !== comando.hashEntrada) {
+            throw new ErrorDominio('CLAVE_REUTILIZADA', 'La clave de idempotencia ya se usó con otra solicitud.');
+          }
           return { tipo: 'REPETIR', operacion: operacionPrevia };
         }
 
