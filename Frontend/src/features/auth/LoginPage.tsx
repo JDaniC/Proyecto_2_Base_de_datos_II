@@ -30,6 +30,7 @@ export const LoginPage: React.FC = () => {
   const [enviando, setEnviando] = useState<boolean>(false);
   const [errorGlobal, setErrorGlobal] = useState<AppError | null>(null);
   const [campoError, setCampoError] = useState<string | null>(null);
+  const [campoPasswordError, setCampoPasswordError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
   // Redirigir a /sesion-activa si ya existe sesión
@@ -43,6 +44,7 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     setErrorGlobal(null);
     setCampoError(null);
+    setCampoPasswordError(null);
     setEnviando(true);
 
     try {
@@ -65,6 +67,9 @@ export const LoginPage: React.FC = () => {
       setErrorGlobal({ ...appErr, mensaje: getErrorMessage(err, 'No se pudo iniciar sesión. Inténtalo de nuevo.') });
       if (appErr.campos?.email) {
         setCampoError(appErr.campos.email);
+      }
+      if (appErr.campos?.password) {
+        setCampoPasswordError(appErr.campos.password);
       }
     } finally {
       setEnviando(false);
@@ -145,7 +150,11 @@ export const LoginPage: React.FC = () => {
               label="Contraseña"
               type={mostrarPassword ? 'text' : 'password'}
               value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                if (campoPasswordError) setCampoPasswordError(null);
+              }}
+              error={campoPasswordError || undefined}
               placeholder="••••••••••••"
               leftIcon={<Lock size={18} />}
               rightIcon={

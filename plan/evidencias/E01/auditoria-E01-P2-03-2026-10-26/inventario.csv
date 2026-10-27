@@ -1,0 +1,18 @@
+ID,Unidad,Tipo,Riesgo,Requisito(s),Entradas,Efectos,Dependencias,Tests existentes,Estado
+U01,generarClaveIdempotencia,Función,HIGH,DEC08 / RNF-034,Ninguna,Genera UUID v4 estándar,crypto / Math.random,HttpClient.test.ts,PASS
+U02,IdempotencyTracker,Clase,HIGH,DEC08 / RNF-034,Intención de formulario,Conserva clave ante reintentos y renueva por comando,generarClaveIdempotencia,HttpClient.test.ts,PASS
+U03,HttpError,Clase / Error,MEDIUM,RF-020 / RNF-033,Parámetros de error,Estructura error tipado compatible con AppError,Error nativo,HttpClient.test.ts,PASS
+U04,parsearRespuestaError,Función,HIGH,RF-020 / RNF-033,Status y payload del servidor,Traduce errores backend a HttpError con correlación y campos,HttpError,HttpClient.test.ts,PASS
+U05,crearErrorRed,Función,HIGH,RNF-034 / RF-020,Error de fetch / caída de red,Genera HttpError 503 con esReintentable = true,HttpError,HttpClient.test.ts,PASS
+U06,TokenStorage,Objeto / Almacén,HIGH,RF-001 / RNF-012,Token y sesión serializada,Persistencia en sessionStorage con fallback a memoria,sessionStorage,HttpAuthRepository.test.ts,PASS
+U07,TrialAuthProvider,Clase / TokenProvider,CRITICAL,RF-001 / RF-003,Email y contraseña,Autentica credenciales y emite token de ensayo o REST,TokenStorage / fetch,HttpAuthRepository.test.ts,PASS
+U08,HttpClient.request,Método,CRITICAL,RF-001 / RF-003 / DEC07 / DEC08,Path y opciones HTTP,Inyecta Bearer, correlación, Idempotency-Key y sanitiza autoridad,fetch / TokenProvider,HttpClient.test.ts,PASS
+U09,HttpClient.sanitizarCuerpo,Método privado,HIGH,DEC07 / RNF-005,Body del comando,Elimina campos de autoridad (actor, institucionId, rol, profesional),Ninguna,HttpClient.test.ts,PASS
+U10,HttpAuthRepository.iniciarSesion,Método,CRITICAL,RF-001 / RF-003 / DEC06,Credenciales,POST /sesion sin body y mapea CENTRO_MEDICO_PEDIATRICO a CENTRO_PEDIATRICO,HttpClient / TrialAuthProvider,HttpAuthRepository.test.ts,PASS
+U11,HttpAuthRepository.obtenerSesionActual,Método,CRITICAL,RF-001 / RF-003 / DEC06,Ninguna,GET /sesion, actualiza roles/permisos y maneja 401/503,HttpClient / TokenStorage,HttpAuthRepository.test.ts,PASS
+U12,HttpAuthRepository.cerrarSesion,Método,HIGH,RF-001,Ninguna,POST /sesion/cierre y limpia almacenamiento local,HttpClient / TokenStorage,HttpAuthRepository.test.ts,PASS
+U13,HttpAuthRepository.obtenerCuentasDemo,Método,LOW,DEC11,Ninguna,Retira cuentas demo en entrega devolviendo array vacío,Ninguna,HttpAuthRepository.test.ts,PASS
+U14,createHttpServices,Función / Factory,CRITICAL,DEC11 / RNF-005,Opciones de factory,Inyecta HttpAuthRepository y bloquea módulos no integrados con 503,ServiceContext / HttpClient,ServiceFactoryAndUI.test.tsx,PASS
+U15,ServiceProvider (modo api),Componente React,CRITICAL,DEC11 / RNF-005,mode="api",Provee contenedor de servicios API sin fallback a mocks,React / ServiceFactory,ServiceFactoryAndUI.test.tsx,PASS
+U16,AuthSessionProvider,Componente React,HIGH,RF-001 / RNF-034,children,Administra sesión reactiva, carga y suscripción a expiración 401,React / HttpAuthRepository,ServiceFactoryAndUI.test.tsx,PASS
+U17,LoginPage,Componente React,HIGH,RF-001 / RNF-034,Formulario login,Acceso a institución sin selector y preservación en error 503,useAuthSession / Input,ServiceFactoryAndUI.test.tsx,PASS

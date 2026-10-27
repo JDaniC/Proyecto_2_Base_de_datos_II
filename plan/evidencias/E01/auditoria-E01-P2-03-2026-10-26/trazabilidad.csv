@@ -1,0 +1,12 @@
+Requisito,Fuente,Unidades que lo implementan,Test(s) de verificación,Estado
+RF-001: Iniciar y cerrar sesión de usuarios autorizados,plan/05_TRAZABILIDAD.md; 02_P2.md §03,U06 U07 U10 U11 U12 U16 U17,HttpAuthRepository.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+RF-003: Cada usuario opera dentro de una institución sin selector cliente,plan/05_TRAZABILIDAD.md; 02_P2.md §03,U07 U10 U11 U17,HttpAuthRepository.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+RF-018: Interfaz coherente sin exponer el motor de base de datos utilizado,plan/05_TRAZABILIDAD.md; 01_ALCANCE_Y_DECISIONES.md,U08 U10 U14 U15 U17,HttpAuthRepository.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+RF-020: Errores identificables para datos inválidos permisos y 503,plan/05_TRAZABILIDAD.md; 03_CONTRATOS_Y_FLUJOS.md,U03 U04 U05 U08,HttpClient.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+RNF-005: Frontend no selecciona motores ni almacena sus credenciales,plan/05_TRAZABILIDAD.md; 02_ARQUITECTURA_HEXAGONAL.md,U08 U09 U14 U15,HttpClient.test.ts; ServiceFactoryAndUI.test.tsx; Bundle Audit,CUBIERTO
+RNF-012: Secretos y credenciales fuera del bundle frontend,plan/05_TRAZABILIDAD.md; 04_PRUEBAS_Y_ENTREGA.md,U06 U07 U08,Bundle Audit (cero drivers en dist/); HttpAuthRepository.test.ts,CUBIERTO
+RNF-034: Estados comprensibles de carga error y reintento seguro sin perder formulario,plan/05_TRAZABILIDAD.md; 03_CONTRATOS_Y_FLUJOS.md,U01 U02 U05 U16 U17,HttpClient.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+DEC06: Mapper CENTRO_MEDICO_PEDIATRICO <-> CENTRO_PEDIATRICO,plan/01_ALCANCE_Y_DECISIONES.md,U10 U11,HttpAuthRepository.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO
+DEC07: Omisión estricta de campos de autoridad en cliente,plan/01_ALCANCE_Y_DECISIONES.md,U08 U09,HttpClient.test.ts,CUBIERTO
+DEC08: Idempotency-Key UUID estable por intención conservado en reintentos,plan/01_ALCANCE_Y_DECISIONES.md,U01 U02 U08,HttpClient.test.ts,CUBIERTO
+DEC11: Retiro de cuentas demo en entrega y prohibición de fallback a mocks,plan/01_ALCANCE_Y_DECISIONES.md; 02_P2.md §03,U13 U14 U15,HttpAuthRepository.test.ts; ServiceFactoryAndUI.test.tsx,CUBIERTO

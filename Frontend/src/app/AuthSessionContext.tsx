@@ -19,6 +19,14 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     let montado = true;
+
+    const authRepoConExpiracion = authRepository as { onExpiracion?: (cb: () => void) => () => void };
+    const cancelarSuscripcion = authRepoConExpiracion.onExpiracion?.(() => {
+      if (montado) {
+        setSesion(null);
+      }
+    });
+
     authRepository
       .obtenerSesionActual()
       .then((sesionGuardada) => {
@@ -33,6 +41,7 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     return () => {
       montado = false;
+      cancelarSuscripcion?.();
     };
   }, [authRepository]);
 
