@@ -339,6 +339,11 @@ export class RegistrarPaciente {
           fechaRegistro: comando.instante,
         });
 
+        const tamanoAgregado = new TextEncoder().encode(JSON.stringify(nuevoPaciente)).length;
+        if (tamanoAgregado > 262144) {
+          throw new ErrorDominio('LIMITE_AGREGADO', 'El tamaño del agregado de paciente excede el límite de 256 KiB.', ['pacientes']);
+        }
+
         const dto = mapearPacienteDto(nuevoPaciente);
 
         return {

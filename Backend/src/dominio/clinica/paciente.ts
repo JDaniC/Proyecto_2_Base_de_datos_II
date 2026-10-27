@@ -110,8 +110,15 @@ export function validarIdentificacion(valor: unknown, campo = 'identificacion'):
   if (typeof obj.numero !== 'string' || obj.numero.trim().length === 0) {
     throw solicitudInvalida('El número de identificación no puede estar vacío.', `${campo}.numero`);
   }
-  // Normalizar y comprobar que cumple el formato
-  normalizarIdentificacion(obj.tipo, obj.numero);
+  const limiteCaptura = obj.tipo === 'CUI' ? 20 : 40;
+  if (obj.numero.length > limiteCaptura) {
+    throw solicitudInvalida('El número excede el límite de captura.', `${campo}.numero`);
+  }
+  const clave = normalizarIdentificacion(obj.tipo, obj.numero);
+  const canonico = clave.slice(obj.tipo.length + 1);
+  if (canonico.length > limiteCaptura) {
+    throw solicitudInvalida('El número excede el límite de captura.', `${campo}.numero`);
+  }
   return Object.freeze({
     tipo: obj.tipo,
     numero: obj.numero.trim(),

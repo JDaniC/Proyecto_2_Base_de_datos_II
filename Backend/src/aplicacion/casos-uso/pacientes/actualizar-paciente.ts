@@ -286,6 +286,11 @@ export class ActualizarPaciente {
           ...(pacienteActual.baja ? { baja: pacienteActual.baja } : {}),
         });
 
+        const tamanoAgregado = new TextEncoder().encode(JSON.stringify(pacienteActualizado)).length;
+        if (tamanoAgregado > 262144) {
+          throw new ErrorDominio('LIMITE_AGREGADO', 'El tamaño del agregado de paciente excede el límite de 256 KiB.', ['pacientes']);
+        }
+
         const dto = mapearPacienteDto(pacienteActualizado);
 
         return {

@@ -16,14 +16,28 @@ export function normalizarNombreBusqueda(valor: unknown): string {
   return clave;
 }
 
+export interface OpcionesNormalizacionIdentificacion {
+  readonly admitirLegado?: boolean;
+}
+
 /** Clave comparable de identificación personal; conserva tipo y no se usa para fusionar por nombre. */
-export function normalizarIdentificacion(tipo: string, numero: unknown): string {
+export function normalizarIdentificacion(
+  tipo: string,
+  numero: unknown,
+  opciones?: OpcionesNormalizacionIdentificacion,
+): string {
   if (tipo !== 'CUI' && tipo !== 'PASAPORTE') throw solicitudInvalida('El tipo de identificación no está admitido.', 'identificacion.tipo');
   if (typeof numero !== 'string') throw solicitudInvalida('El número de identificación debe ser texto.', 'identificacion.numero');
-  const limite = tipo === 'CUI' ? 20 : 40;
+  const admitirLegado = opciones?.admitirLegado ?? false;
+  const limite = admitirLegado ? 80 : (tipo === 'CUI' ? 20 : 40);
   if (numero.length > limite) throw solicitudInvalida('El número excede el límite de captura.', 'identificacion.numero');
   const canonico = numero.normalize('NFC').trim().replace(/[\s-]+/gu, '').toUpperCase();
   if (canonico.length === 0) throw solicitudInvalida('El número de identificación no puede estar vacío.', 'identificacion.numero');
   if (canonico.length > limite) throw solicitudInvalida('El número excede el límite de captura.', 'identificacion.numero');
   return `${tipo}:${canonico}`;
+}
+
+/** Deriva la clave de reserva o búsqueda para un documento existente/almacenado sin aplicar límites de captura nueva. */
+export function derivarClaveIdentificacion(tipo: string, numero: unknown): string {
+  return normalizarIdentificacion(tipo, numero, { admitirLegado: true });
 }

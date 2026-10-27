@@ -393,6 +393,39 @@ describe('API HTTP de pacientes', () => {
       assert.ok(cuerpo.meta.correlacion);
     });
 
+    it('responde 413 LIMITE_AGREGADO si el agregado ensamblado excede 256 KiB', async () => {
+      const tutoresGrandes = Array.from({ length: 100 }, (_, i) => ({
+        nombres: 'あ'.repeat(200),
+        apellidos: 'い'.repeat(200),
+        telefono: '55512345',
+        parentesco: 'TUTOR',
+        es_principal: i === 0,
+        autoriza_atencion: true,
+        documento: { tipo: 'CUI', numero: `4000000000${String(i).padStart(3, '0')}` },
+      }));
+
+      const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${tokenAdminPed}`,
+          'idempotency-key': randomUUID(),
+        },
+        body: JSON.stringify({
+          nombres: 'Pediatrico',
+          apellidos: 'SuperPesado',
+          fecha_nacimiento: '2023-01-01',
+          sexo: 'MASCULINO',
+          responsables: tutoresGrandes,
+        }),
+      });
+
+      assert.equal(respuesta.status, 413);
+      const cuerpo = await respuesta.json() as { error: { codigo: string; mensaje: string }; meta: { correlacion: string } };
+      assert.equal(cuerpo.error.codigo, 'LIMITE_AGREGADO');
+      assert.ok(cuerpo.meta.correlacion);
+    });
+
     it('responde 400 si falta la cabecera Idempotency-Key', async () => {
       const respuesta = await fetch(`${baseUrl}/api/v1/pacientes`, {
         method: 'POST',

@@ -1178,8 +1178,7 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal('actorId' in (dto.baja as unknown as Record<string, unknown>), false);
     });
 
-    it('asegura atomicidad completa en memoria: ante fallo durante procesamiento de UoW no deja mutaciones parciales', async () => {
-      // Paciente semilla con número de pasaporte de 60 caracteres (permitido en lectura/legado)
+    it('permite remover o reemplazar identificaciones legadas de 60 caracteres sin aplicar límite de captura en la liberación', async () => {
       const numPasaporte60 = 'P'.repeat(60);
       const pacienteLegadoId = uuidPublico(randomUUID());
       const pacienteLegado: Paciente = {
@@ -1201,36 +1200,164 @@ describe('casos de uso de pacientes en memoria', () => {
 
       repoHospital.guardar(pacienteLegado);
 
-      // Intentar actualizar con identificacion: null (intentará liberar la identidad, fallando por límite de 40 chars)
+      // 1. Remover identificación legada (identificacion: null) debe tener éxito y liberar la identidad
+      const resRemocion = await actualizarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        id: pacienteLegadoId,
+        cambios: {
+          version_esperada: 1,
+          identificacion: null,
+        },
+      });
+
+      assert.equal(resRemocion.respuesta.version, 2);
+      assert.equal(resRemocion.respuesta.identificacion, undefined);
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'PASAPORTE', numero: numPasaporte60 }), null);
+
+      // 2. Paciente con pasaporte legado reemplazado por uno nuevo válido
+      const pacienteLegado2Id = uuidPublico(randomUUID());
+      const numPasaporte60B = 'Q'.repeat(60);
+      repoHospital.guardar({
+        ...pacienteLegado,
+        id: pacienteLegado2Id,
+        codigoLegible: 'HOSP-LEG002',
+        identificacion: { tipo: 'PASAPORTE', numero: numPasaporte60B },
+      });
+
+      const resReemplazo = await actualizarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        id: pacienteLegado2Id,
+        cambios: {
+          version_esperada: 1,
+          identificacion: { tipo: 'PASAPORTE', numero: 'PAS123456789' },
+        },
+      });
+
+      assert.equal(resReemplazo.respuesta.version, 2);
+      assert.equal(resReemplazo.respuesta.identificacion?.numero, 'PAS123456789');
+
+      // 3. Intento de suministrar un pasaporte nuevo que supera límite de captura (40) es rechazado
       await assert.rejects(
         async () => {
           await actualizarPaciente.ejecutar({
             contexto: contextoHospital,
             bundle: bundleHospital,
             claveIdempotencia: uuidPublico(randomUUID()),
-            id: pacienteLegadoId,
+            id: pacienteLegado2Id,
             cambios: {
-              version_esperada: 1,
-              identificacion: null,
+              version_esperada: 2,
+              identificacion: { tipo: 'PASAPORTE', numero: 'X'.repeat(45) },
             },
           });
         },
         (error: ErrorDominio) => {
           assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /límite de captura/);
+          return true;
+        },
+      );
+    });
+
+    it('asegura atomicidad completa en memoria: ante fallo durante procesamiento de UoW no deja mutaciones parciales', async () => {
+      // Paciente 1 y Paciente 2 registrados
+      const p1 = await registrarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Primero',
+          apellidos: 'Original',
+          fecha_nacimiento: '1980-01-01',
+          sexo: 'MASCULINO',
+          identificacion: { tipo: 'CUI', numero: '1000000000001' },
+        },
+      });
+
+      const p2 = await registrarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Segundo',
+          apellidos: 'Original',
+          fecha_nacimiento: '1985-01-01',
+          sexo: 'FEMENINO',
+          identificacion: { tipo: 'CUI', numero: '1000000000002' },
+        },
+      });
+      assert.ok(p2.respuesta.id);
+
+      // Intentar actualizar P1 con el documento duplicado de P2 -> falla PACIENTE_DUPLICADO
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            id: p1.respuesta.id as UUID,
+            cambios: {
+              version_esperada: 1,
+              nombres: 'Nombre Mutado Que No Debe Persistir',
+              identificacion: { tipo: 'CUI', numero: '1000000000002' },
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'PACIENTE_DUPLICADO');
           return true;
         },
       );
 
-      // Verificar que el paciente en memoria NO fue mutado parcialmente:
-      // Conserva versión 1 y su identificación previa
-      const pacienteDespues = await repoHospital.porId(pacienteLegadoId);
-      assert.ok(pacienteDespues);
-      assert.equal(pacienteDespues.version, 1);
-      assert.equal(pacienteDespues.identificacion?.numero, numPasaporte60);
+      // Verificar que P1 NO fue mutado parcialmente: conserva versión 1 y nombre original
+      const p1Despues = await repoHospital.porId(p1.respuesta.id as UUID);
+      assert.ok(p1Despues);
+      assert.equal(p1Despues.version, 1);
+      assert.equal(p1Despues.nombres, 'Primero');
+      assert.equal(p1Despues.identificacion?.numero, '1000000000001');
 
       // No existe revisión huérfana de versión 1
-      const rev = (await repoHospital.crearLector().pacientes.porVersion(pacienteLegadoId, 1 as Version)) as Paciente | null;
+      const rev = (await repoHospital.crearLector().pacientes.porVersion(p1.respuesta.id as UUID, 1 as Version)) as Paciente | null;
       assert.equal(rev?.version, 1);
+    });
+
+    it('rechaza agregado de paciente pediátrico que excede 256 KiB arrojando LIMITE_AGREGADO', async () => {
+      // 100 tutores con nombres y apellidos CJK de 200 caracteres (cada carácter son 3 bytes UTF-8)
+      // En la solicitud la suma cabe dentro de límites de payload pero el agregado ensamblado con `nombre` supera 256 KiB
+      const tutoresGrandes = Array.from({ length: 100 }, (_, i) => ({
+        nombres: 'あ'.repeat(200),
+        apellidos: 'い'.repeat(200),
+        telefono: '55512345',
+        parentesco: 'TUTOR',
+        es_principal: i === 0,
+        autoriza_atencion: true,
+        documento: { tipo: 'CUI' as const, numero: `4000000000${String(i).padStart(3, '0')}` },
+      }));
+
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoPediatria,
+            bundle: bundlePediatria,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Pediatrico',
+              apellidos: 'SuperPesado',
+              fecha_nacimiento: '2023-01-01',
+              sexo: 'MASCULINO',
+              responsables: tutoresGrandes,
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'LIMITE_AGREGADO');
+          assert.match(error.message, /256 KiB/);
+          return true;
+        },
+      );
     });
 
     it('genera códigos legibles resistentes a colisiones para UUIDs que comparten prefijo y no colisionan', () => {

@@ -1,5 +1,6 @@
 import type { UUID } from '../../../dominio/compartido/uuid.js';
 import {
+  derivarClaveIdentificacion,
   normalizarIdentificacion,
   normalizarNombreBusqueda,
   normalizarTextoBusqueda,
@@ -117,7 +118,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
       if (p.identificacion) {
         if (p.identificacion.numero.toUpperCase() === qRaw.toUpperCase()) return true;
         try {
-          const normDoc = normalizarIdentificacion(p.identificacion.tipo, p.identificacion.numero);
+          const normDoc = derivarClaveIdentificacion(p.identificacion.tipo, p.identificacion.numero);
           if (normDoc === qNormCui || normDoc === qNormPasaporte) return true;
           const numLimpio = p.identificacion.numero.replace(/[\s-]+/gu, '').toUpperCase();
           const qLimpio = qRaw.replace(/[\s-]+/gu, '').toUpperCase();
@@ -188,7 +189,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
     this.codigosPacientes.set(paciente.codigoLegible, paciente.id);
     if (paciente.identificacion) {
       try {
-        const clave = normalizarIdentificacion(paciente.identificacion.tipo, paciente.identificacion.numero);
+        const clave = derivarClaveIdentificacion(paciente.identificacion.tipo, paciente.identificacion.numero);
         this.identidades.set(clave, paciente.id);
       } catch {
         // ignorar fallo de formato en semilla
@@ -199,7 +200,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
         this.responsables.set(r.responsable.id, r.responsable);
         if (r.responsable.documento) {
           try {
-            const clave = normalizarIdentificacion(r.responsable.documento.tipo, r.responsable.documento.numero);
+            const clave = derivarClaveIdentificacion(r.responsable.documento.tipo, r.responsable.documento.numero);
             this.identidades.set(clave, r.responsable.id);
           } catch {
             // ignorar fallo de formato en semilla
@@ -211,7 +212,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
 
   titularIdentidad(identificacion: Identificacion): UUID | null {
     try {
-      const clave = normalizarIdentificacion(identificacion.tipo, identificacion.numero);
+      const clave = derivarClaveIdentificacion(identificacion.tipo, identificacion.numero);
       const titular = this.identidades.get(clave);
       return (titular as UUID) ?? null;
     } catch {
@@ -225,7 +226,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
   }
 
   liberarIdentidad(identificacion: Identificacion): void {
-    const clave = normalizarIdentificacion(identificacion.tipo, identificacion.numero);
+    const clave = derivarClaveIdentificacion(identificacion.tipo, identificacion.numero);
     this.identidades.delete(clave);
   }
 
@@ -411,7 +412,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
             } else if (cambio.agregado === 'identidades') {
               const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
               if (cambio.tipo === 'LIBERAR') {
-                const clave = normalizarIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
+                const clave = derivarClaveIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
                 identidadesLiberar.push(clave);
               } else {
                 const clave = normalizarIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
