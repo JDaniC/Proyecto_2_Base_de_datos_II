@@ -21,11 +21,12 @@ export async function aplicarCambiosPacientesMysql(
     if (cambio.agregado === 'pacientes') {
       if (cambio.tipo === 'CREAR') {
         const pac = cambio.nuevoEstado as Paciente;
+        const fechaRegSql = pac.fechaRegistro ? pac.fechaRegistro.replace('T', ' ').replace('Z', '') : null;
         await executor.consultar(
           `INSERT INTO paciente (
             id_publico, revision, nombres, apellidos,
-            fecha_nacimiento, sexo, telefono, correo, direccion, estado
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO')`,
+            fecha_nacimiento, sexo, telefono, correo, direccion, estado, fecha_registro
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO', COALESCE(?, NOW(6)))`,
           [
             pac.id,
             pac.version,
@@ -36,6 +37,7 @@ export async function aplicarCambiosPacientesMysql(
             pac.telefono ?? null,
             pac.correo ?? null,
             pac.direccion ?? null,
+            fechaRegSql,
           ],
         );
 
@@ -126,35 +128,41 @@ export async function aplicarCambiosPacientesMysql(
       if (cambio.tipo === 'MODIFICAR') {
         const archivo = cambio.nuevoEstado as ArchivoRegistrado;
         if (archivo && archivo.motivo && archivo.causa) {
-          const resId = await executor.consultar<{ id_paciente: number | string }>(
-            'SELECT id_paciente FROM paciente WHERE id_publico = ?',
+          const resP = await executor.consultar<{ id_paciente: number | string; revision: number | string }>(
+            'SELECT id_paciente, revision FROM paciente WHERE id_publico = ? FOR UPDATE',
             [cambio.recursoId],
           );
-          const idPaciente = resId.filas[0]?.id_paciente;
-          if (idPaciente !== undefined) {
-            await executor.consultar(
-              `UPDATE historial_clinico SET
-                estado = 'ARCHIVADO',
-                causa_baja = ?,
-                motivo_baja = ?,
-                fecha_baja = ?,
-                actor_baja = ?,
-                revision = revision + 1
-              WHERE id_paciente = ?`,
-              [
-                archivo.causa,
-                archivo.motivo,
-                new Date(archivo.fecha),
-                archivo.actorId,
-                idPaciente,
-              ],
-            );
-
-            await executor.consultar(
-              "UPDATE paciente SET estado = 'INACTIVO' WHERE id_paciente = ?",
-              [idPaciente],
-            );
+          const filaP = resP.filas[0];
+          if (!filaP) {
+            throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se encontró el paciente para archivar.');
           }
+          if (cambio.versionAnterior !== null && Number(filaP.revision) !== Number(cambio.versionAnterior)) {
+            throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado concurrentemente.');
+          }
+
+          await executor.consultar(
+            `UPDATE historial_clinico SET
+              estado = 'ARCHIVADO',
+              causa_baja = ?,
+              motivo_baja = ?,
+              fecha_baja = ?,
+              actor_baja = ?,
+              revision = revision + 1
+            WHERE id_paciente = ?`,
+            [
+              archivo.causa,
+              archivo.motivo,
+              new Date(archivo.fecha),
+              archivo.actorId,
+              filaP.id_paciente,
+            ],
+          );
+
+          // Avanzar la revisión compartida del paciente de forma atómica
+          await executor.consultar(
+            "UPDATE paciente SET estado = 'INACTIVO', revision = revision + 1 WHERE id_paciente = ?",
+            [filaP.id_paciente],
+          );
         }
       }
     }

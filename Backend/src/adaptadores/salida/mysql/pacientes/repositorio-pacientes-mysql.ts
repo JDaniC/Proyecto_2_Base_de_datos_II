@@ -37,8 +37,9 @@ const SELECT_PACIENTE_BASE_MYSQL = `
     p.correo,
     p.direccion,
     p.estado,
+    DATE_FORMAT(p.fecha_registro, '%Y-%m-%dT%H:%i:%s.%fZ') AS fecha_registro,
     h.estado AS historial_estado,
-    DATE_FORMAT(h.fecha_apertura, '%Y-%m-%dT00:00:00.000Z') AS fecha_apertura,
+    DATE_FORMAT(h.fecha_apertura, '%Y-%m-%d') AS fecha_apertura,
     h.causa_baja,
     h.motivo_baja,
     DATE_FORMAT(h.fecha_baja, '%Y-%m-%dT%H:%i:%s.000Z') AS fecha_baja,
@@ -165,7 +166,7 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
       condiciones.push("(p.estado = 'INACTIVO' OR h.estado = 'ARCHIVADO')");
     }
 
-    // Cursor
+    // Cursor con precisión de microsegundos sobre fecha_registro
     if (criterios.cursor) {
       const decoded = decodificarCursorSql(
         criterios.cursor,
@@ -175,10 +176,11 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
         criterios.estado,
       );
       const operador = criterios.orden === 'ASC' ? '>' : '<';
+      const fechaSql = decoded.fecha.replace('T', ' ').replace('Z', '');
       condiciones.push(
-        `(h.fecha_apertura ${operador} ? OR (h.fecha_apertura = ? AND p.id_publico ${operador} ?))`,
+        `(p.fecha_registro ${operador} ? OR (p.fecha_registro = ? AND p.id_publico ${operador} ?))`,
       );
-      parametros.push(decoded.fecha.slice(0, 10), decoded.fecha.slice(0, 10), decoded.id);
+      parametros.push(fechaSql, fechaSql, decoded.id);
     }
 
     const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
@@ -188,7 +190,7 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
     const sql = `
       ${SELECT_PACIENTE_BASE_MYSQL}
       ${whereClause}
-      ORDER BY h.fecha_apertura ${orden}, p.id_publico ${orden}
+      ORDER BY p.fecha_registro ${orden}, p.id_publico ${orden}
       LIMIT ?
     `;
     parametros.push(limite + 1);
@@ -208,7 +210,7 @@ export class RepositorioPacientesMysql implements RepositorioPacienteLectura {
         q: qNormNombre,
         orden: criterios.orden,
         ...(criterios.estado ? { estado: criterios.estado } : {}),
-        f: ultimaFila.fecha_apertura ?? new Date().toISOString(),
+        f: String(ultimaFila.fecha_registro ?? new Date().toISOString()),
         id: String(ultimaFila.id_publico),
       });
     }

@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS paciente (
     correo VARCHAR(254),
     direccion TEXT,
     estado VARCHAR(30) COLLATE utf8mb4_0900_bin NOT NULL DEFAULT 'ACTIVO',
+    fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (id_paciente),
     CONSTRAINT chk_paciente_estado CHECK (estado IN ('ACTIVO','INACTIVO')),
     CONSTRAINT chk_paciente_textos CHECK (LENGTH(TRIM(nombres))>0 AND LENGTH(TRIM(apellidos))>0 AND LENGTH(TRIM(estado))>0)

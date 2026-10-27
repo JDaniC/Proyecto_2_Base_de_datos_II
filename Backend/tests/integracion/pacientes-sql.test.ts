@@ -310,7 +310,95 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
   );
 
-  // 8. Archivo del paciente mediante UoW
+  // 8. Validación de CUIs preexistentes en paciente.cui (sin identidades_paciente)
+  const idLegacy = uuidPublico(randomUUID());
+  await pool.consultar(
+    `INSERT INTO paciente (
+      id_publico, revision, cui, primer_nombre, primer_apellido, fecha_nacimiento, sexo
+    ) VALUES ($1, 1, '2489-77777-0101', 'Directo', 'Legacy', '1980-01-01', 'MASCULINO')`,
+    [idLegacy],
+  );
+  const titularLegacy = await repoPg.titularIdentidad({ tipo: 'CUI', numero: '2489777770101' });
+  assert.equal(titularLegacy, idLegacy, 'titularIdentidad debe detectar CUIs preexistentes en paciente.cui');
+
+  await assert.rejects(
+    () => registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Intruso',
+        apellidos: 'Duplicado',
+        fecha_nacimiento: '1990-01-01',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'CUI', numero: '2489 77777 0101' },
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
+  );
+
+  // 9. Desduplicación determinista ante múltiples contactos de emergencia
+  await pool.consultar(
+    `INSERT INTO contacto_emergencia (
+      id_publico, revision, id_paciente, primer_nombre,
+      segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+    ) SELECT $1, 1, p.id_paciente, 'Segundo', 'Contacto', 'Emergencia', 'Test', 'HERMANO', '50255551234'
+    FROM paciente p WHERE p.id_publico = $2`,
+    [uuidPublico(randomUUID()), pacienteId],
+  );
+
+  const resMultiCe = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Carlos', limite: 10, orden: 'ASC' },
+  });
+  const aparicionesCarlos = resMultiCe.data.filter((p) => p.id === pacienteId).length;
+  assert.equal(aparicionesCarlos, 1, 'el paciente debe figurar una sola vez a pesar de tener múltiples contactos de emergencia');
+
+  // 10. Archivo del paciente mediante UoW y control de versión compartida
+  // Intento con versión desactualizada (stale version 1 cuando paciente está en version 2)
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-stale',
+          instante: instanteUtc('2026-10-27T12:30:00Z'),
+          ids: { recurso_id: pacienteId },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: pacienteId,
+              versionAnterior: versionPositiva(1),
+              nuevoEstado: {
+                causa: 'TRASLADO',
+                motivo: 'Intento con versión stale',
+                fecha: '2026-10-27T12:30:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // Archivo correcto con versión vigente 2
   await bundle.uow?.ejecutar(
     contexto,
     {
@@ -334,7 +422,7 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
           agregado: 'historiales',
           tipo: 'MODIFICAR',
           recursoId: pacienteId,
-          versionAnterior: versionPositiva(1),
+          versionAnterior: versionPositiva(2),
           nuevoEstado: {
             causa: 'TRASLADO',
             motivo: 'Traslado a hospital departamental de Quetzaltenango',
@@ -358,10 +446,11 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
 
   const consultadoArchivado = await repoPg.porId(pacienteId);
   assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
+  assert.equal(consultadoArchivado?.version, 3, 'el archivo debe avanzar la versión compartida del paciente a 3');
   assert.equal(consultadoArchivado?.baja?.causa, 'TRASLADO');
   assert.ok(consultadoArchivado?.baja?.motivo);
 
-  // 9. Historial de auditoría en PostgreSQL
+  // 11. Historial de auditoría en PostgreSQL
   const consultaHistorial = crearConsultaHistorialSql(pool, 'postgresql');
   const paginaEventos = await consultaHistorial.eventos(pacienteId, { limite: 20, orden: 'ASC' });
   assert.ok(paginaEventos.elementos.length >= 2, 'debe registrar eventos de auditoría para registro y modificaciones');
@@ -457,6 +546,8 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   assert.equal(pacienteSinDoc.estado, 'ACTIVO');
   assert.equal(pacienteSinDoc.sexo, 'FEMENINO');
   assert.equal(pacienteSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+  assert.ok(pacienteSinDoc.fecha_registro);
+  assert.notEqual(pacienteSinDoc.fecha_registro.slice(11, 19), '00:00:00', 'debe registrar instante UTC real y no inventar medianoche');
 
   // Verificar en base de datos: NO debe existir registro en identidades_paciente
   const resIdent = await pool.consultar(
@@ -519,6 +610,8 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   assert.equal(consultadoSinDoc.nombres, 'Estela Beatriz');
   assert.equal(consultadoSinDoc.sexo, 'FEMENINO');
   assert.equal(consultadoSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+  assert.equal(Date.parse(consultadoSinDoc.fecha_registro), Date.parse(pacienteSinDoc.fecha_registro));
+  assert.ok(consultadoSinDoc.fecha_registro.startsWith(pacienteSinDoc.fecha_registro.slice(0, -1)));
 
   // Escape de comodines en MySQL: búsqueda por '%' no debe coincidir con pacientes
   const resBusquedaComodinMy = await buscar.ejecutar({
@@ -574,7 +667,50 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
   );
 
-  // 5. Archivo del paciente dental mediante UoW
+  // 5. Archivo del paciente dental mediante UoW con validación de versión compartida
+  // Intento de archivo con versión desactualizada 1
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-mysql-stale',
+          instante: instanteUtc('2026-10-27T12:30:00Z'),
+          ids: { recurso_id: pacienteSinDocId },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: pacienteSinDocId,
+              versionAnterior: versionPositiva(1),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Intento con versión desactualizada',
+                fecha: '2026-10-27T12:30:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // Archivo correcto con versión 2
   await bundle.uow?.ejecutar(
     contexto,
     {
@@ -598,7 +734,7 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
           agregado: 'historiales',
           tipo: 'MODIFICAR',
           recursoId: pacienteSinDocId,
-          versionAnterior: versionPositiva(1),
+          versionAnterior: versionPositiva(2),
           nuevoEstado: {
             causa: 'FALLECIMIENTO',
             motivo: 'Certificado de defunción presentado por familiar',
@@ -622,6 +758,7 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
 
   const consultadoArchivado = await repoMysql.porId(pacienteSinDocId);
   assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
+  assert.equal(consultadoArchivado?.version, 3, 'el archivo en MySQL debe avanzar la versión compartida a 3');
   assert.equal(consultadoArchivado?.baja?.causa, 'FALLECIMIENTO');
 
   // En MySQL el paciente debe figurar con estado 'INACTIVO' y el historial 'ARCHIVADO'

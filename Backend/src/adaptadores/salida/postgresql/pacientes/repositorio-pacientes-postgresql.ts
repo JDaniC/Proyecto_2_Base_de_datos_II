@@ -57,8 +57,27 @@ const SELECT_PACIENTE_BASE = `
     ip.numero_documento
   FROM paciente p
   LEFT JOIN historial_clinico h ON p.id_paciente = h.id_paciente
-  LEFT JOIN contacto_emergencia ce ON p.id_paciente = ce.id_paciente
-  LEFT JOIN identidades_paciente ip ON p.id_paciente = ip.id_paciente
+  LEFT JOIN (
+    SELECT DISTINCT ON (id_paciente)
+      id_paciente,
+      primer_nombre,
+      segundo_nombre,
+      primer_apellido,
+      segundo_apellido,
+      parentesco,
+      telefono
+    FROM contacto_emergencia
+    ORDER BY id_paciente, id_contacto ASC
+  ) ce ON p.id_paciente = ce.id_paciente
+  LEFT JOIN (
+    SELECT DISTINCT ON (id_paciente)
+      id_paciente,
+      clave,
+      tipo_documento,
+      numero_documento
+    FROM identidades_paciente
+    ORDER BY id_paciente, fecha_registro DESC, clave ASC
+  ) ip ON p.id_paciente = ip.id_paciente
 `;
 
 export class RepositorioPacientesPostgresql implements RepositorioPacienteLectura {
@@ -97,13 +116,17 @@ export class RepositorioPacientesPostgresql implements RepositorioPacienteLectur
     } catch {
       return null;
     }
+    const tipoNorm = identificacion.tipo.trim().toUpperCase();
+    const cuiDigitos = tipoNorm === 'CUI' ? identificacion.numero.replace(/[^0-9]/g, '') : '';
     const sql = `
       SELECT p.id_publico
-      FROM identidades_paciente ip
-      JOIN paciente p ON ip.id_paciente = p.id_paciente
+      FROM paciente p
+      LEFT JOIN identidades_paciente ip ON ip.id_paciente = p.id_paciente
       WHERE ip.clave = $1
+         OR ($2 = 'CUI' AND regexp_replace(COALESCE(p.cui, ''), '[^0-9]', '', 'g') = $3 AND LENGTH($3) = 13)
+      LIMIT 1
     `;
-    const resultado = await this.ejecutor.consultar<{ id_publico: string }>(sql, [clave]);
+    const resultado = await this.ejecutor.consultar<{ id_publico: string }>(sql, [clave, tipoNorm, cuiDigitos]);
     const fila = resultado.filas[0];
     return fila ? (fila.id_publico as UUID) : null;
   }

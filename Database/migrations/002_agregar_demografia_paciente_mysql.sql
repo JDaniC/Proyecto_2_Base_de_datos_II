@@ -1,4 +1,4 @@
--- Migración explícita 002 (v2 -> v3): agregar demografía completa (sexo, direccion) a paciente en MySQL (E02-P1-02).
+-- Migración explícita 002 (v2 -> v3): agregar demografía completa (sexo, direccion, fecha_registro) a paciente en MySQL (E02-P1-02).
 -- No destructiva: preserva todas las filas previas, historiales, citas y auditoría.
 
 USE clinica_odontologica;
@@ -31,11 +31,21 @@ BEGIN
     ALTER TABLE paciente ADD COLUMN direccion TEXT AFTER correo;
   END IF;
 
-  CALL _huella_modelo(@bdii_huella);
-  UPDATE modelo_database SET version = 3, huella = @bdii_huella WHERE id = 1;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paciente' AND COLUMN_NAME = 'fecha_registro'
+  ) THEN
+    ALTER TABLE paciente ADD COLUMN fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) AFTER estado;
+  END IF;
 END$$
 DELIMITER ;
 
 CALL _migrar_v2_a_v3();
 DROP PROCEDURE IF EXISTS _migrar_v2_a_v3;
+
+-- Calcular la huella DESPUÉS de eliminar los procedimientos temporales de migración
+-- para que coincida exactamente con la huella generada por el inicializador canónico v3.
+CALL _huella_modelo(@bdii_huella);
+UPDATE modelo_database SET version = 3, huella = @bdii_huella WHERE id = 1;
+
 DO RELEASE_LOCK('bdii_clinica_inicializador_v2');

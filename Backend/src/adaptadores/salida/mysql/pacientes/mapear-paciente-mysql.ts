@@ -24,6 +24,7 @@ export interface FilaPacienteMysql extends Record<string, unknown> {
   correo: string | null;
   direccion?: string | null;
   estado: string;
+  fecha_registro?: string | null;
   historial_estado: string | null;
   fecha_apertura: string | null;
   causa_baja: string | null;
@@ -86,9 +87,11 @@ export function mapearFilaPacienteMysql(fila: FilaPacienteMysql): Paciente {
     }
   }
 
-  const fechaRegistroIso = fila.fecha_apertura
-    ? new Date(fila.fecha_apertura).toISOString()
-    : new Date().toISOString();
+  const fechaRegistroIso = typeof fila.fecha_registro === 'string'
+    ? fila.fecha_registro
+    : fila.fecha_apertura
+      ? (typeof fila.fecha_apertura === 'string' ? fila.fecha_apertura : new Date(fila.fecha_apertura).toISOString())
+      : new Date().toISOString();
 
   return Object.freeze({
     id: idPublico,
