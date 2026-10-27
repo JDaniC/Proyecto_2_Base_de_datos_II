@@ -13,7 +13,7 @@ export type EstadoPaciente = 'ACTIVO' | 'ARCHIVADO';
 export type CausaArchivoPaciente = 'TRASLADO' | 'FALLECIMIENTO' | 'OTRA_ADMINISTRATIVA';
 
 export interface Identificacion {
-  readonly tipo: TipoIdentificacion;
+  readonly tipo: TipoIdentificacion | string;
   readonly numero: string;
 }
 

@@ -1302,6 +1302,129 @@ describe('casos de uso de pacientes en memoria', () => {
       );
     });
 
+    it('admite tipos de documento legados (como DPI) al liberar identidad en actualizacion pero los rechaza en nueva captura', async () => {
+      // 1. Paciente semilla con identificación legada 'DPI'
+      const pacienteDpiId = uuidPublico(randomUUID());
+      const numDpi = '1234567890101';
+      repoHospital.guardar({
+        id: pacienteDpiId,
+        codigoLegible: 'HOSP-DPI001',
+        institucion: 'HOSPITAL_GENERAL',
+        nombres: 'Paciente',
+        apellidos: 'Legado Dpi',
+        fechaNacimiento: fechaCivil('1970-01-01'),
+        sexo: 'MASCULINO',
+        estado: 'ACTIVO',
+        version: 1 as Version,
+        fechaRegistro: instanteUtc(new Date().toISOString()),
+        identificacion: {
+          tipo: 'DPI',
+          numero: numDpi,
+        },
+      });
+
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'DPI', numero: numDpi }), pacienteDpiId);
+
+      // 2. Liberación al remover identificación (identificacion: null)
+      const resRemocionDpi = await actualizarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        id: pacienteDpiId,
+        cambios: {
+          version_esperada: 1,
+          identificacion: null,
+        },
+      });
+
+      assert.equal(resRemocionDpi.respuesta.version, 2);
+      assert.equal(resRemocionDpi.respuesta.identificacion, undefined);
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'DPI', numero: numDpi }), null);
+
+      // 3. Paciente 2 con DPI legado reemplazado por un nuevo CUI válido
+      const pacienteDpi2Id = uuidPublico(randomUUID());
+      const numDpi2 = '9876543210101';
+      repoHospital.guardar({
+        id: pacienteDpi2Id,
+        codigoLegible: 'HOSP-DPI002',
+        institucion: 'HOSPITAL_GENERAL',
+        nombres: 'Paciente',
+        apellidos: 'Legado Dpi Dos',
+        fechaNacimiento: fechaCivil('1972-02-02'),
+        sexo: 'FEMENINO',
+        estado: 'ACTIVO',
+        version: 1 as Version,
+        fechaRegistro: instanteUtc(new Date().toISOString()),
+        identificacion: {
+          tipo: 'DPI',
+          numero: numDpi2,
+        },
+      });
+
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'DPI', numero: numDpi2 }), pacienteDpi2Id);
+
+      const resReemplazoCui = await actualizarPaciente.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        id: pacienteDpi2Id,
+        cambios: {
+          version_esperada: 1,
+          identificacion: { tipo: 'CUI', numero: '2000000000101' },
+        },
+      });
+
+      assert.equal(resReemplazoCui.respuesta.version, 2);
+      assert.equal(resReemplazoCui.respuesta.identificacion?.tipo, 'CUI');
+      assert.equal(resReemplazoCui.respuesta.identificacion?.numero, '2000000000101');
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'DPI', numero: numDpi2 }), null);
+      assert.equal(await repoHospital.titularIdentidad({ tipo: 'CUI', numero: '2000000000101' }), pacienteDpi2Id);
+
+      // 4. Intento de suministrar 'DPI' en nueva captura (alta) es rechazado
+      await assert.rejects(
+        async () => {
+          await registrarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            entrada: {
+              nombres: 'Captura',
+              apellidos: 'Invalida Dpi',
+              fecha_nacimiento: '1990-01-01',
+              sexo: 'MASCULINO',
+              identificacion: { tipo: 'DPI' as unknown as 'CUI', numero: '3000000000101' },
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /CUI o PASAPORTE/);
+          return true;
+        },
+      );
+
+      // 5. Intento de suministrar 'DPI' en nueva captura (actualización) es rechazado
+      await assert.rejects(
+        async () => {
+          await actualizarPaciente.ejecutar({
+            contexto: contextoHospital,
+            bundle: bundleHospital,
+            claveIdempotencia: uuidPublico(randomUUID()),
+            id: pacienteDpi2Id,
+            cambios: {
+              version_esperada: 2,
+              identificacion: { tipo: 'DPI' as unknown as 'CUI', numero: '3000000000101' },
+            },
+          });
+        },
+        (error: ErrorDominio) => {
+          assert.equal(error.codigo, 'SOLICITUD_INVALIDA');
+          assert.match(error.message, /CUI o PASAPORTE/);
+          return true;
+        },
+      );
+    });
+
     it('asegura atomicidad completa en memoria: ante fallo durante procesamiento de UoW no deja mutaciones parciales', async () => {
       // Paciente 1 y Paciente 2 registrados
       const p1 = await registrarPaciente.ejecutar({

@@ -26,15 +26,27 @@ export function normalizarIdentificacion(
   numero: unknown,
   opciones?: OpcionesNormalizacionIdentificacion,
 ): string {
-  if (tipo !== 'CUI' && tipo !== 'PASAPORTE') throw solicitudInvalida('El tipo de identificación no está admitido.', 'identificacion.tipo');
-  if (typeof numero !== 'string') throw solicitudInvalida('El número de identificación debe ser texto.', 'identificacion.numero');
   const admitirLegado = opciones?.admitirLegado ?? false;
-  const limite = admitirLegado ? 80 : (tipo === 'CUI' ? 20 : 40);
+  if (typeof tipo !== 'string' || tipo.trim().length === 0) {
+    throw solicitudInvalida('El tipo de identificación es requerido.', 'identificacion.tipo');
+  }
+  const tipoNorm = tipo.trim().toUpperCase();
+  if (!admitirLegado) {
+    if (tipo !== 'CUI' && tipo !== 'PASAPORTE') {
+      throw solicitudInvalida('El tipo de identificación no está admitido.', 'identificacion.tipo');
+    }
+  } else {
+    if (tipoNorm.length > 40) {
+      throw solicitudInvalida('El tipo de identificación excede 40 caracteres.', 'identificacion.tipo');
+    }
+  }
+  if (typeof numero !== 'string') throw solicitudInvalida('El número de identificación debe ser texto.', 'identificacion.numero');
+  const limite = admitirLegado ? 120 : (tipoNorm === 'CUI' ? 20 : 40);
   if (numero.length > limite) throw solicitudInvalida('El número excede el límite de captura.', 'identificacion.numero');
   const canonico = numero.normalize('NFC').trim().replace(/[\s-]+/gu, '').toUpperCase();
   if (canonico.length === 0) throw solicitudInvalida('El número de identificación no puede estar vacío.', 'identificacion.numero');
   if (canonico.length > limite) throw solicitudInvalida('El número excede el límite de captura.', 'identificacion.numero');
-  return `${tipo}:${canonico}`;
+  return `${tipoNorm}:${canonico}`;
 }
 
 /** Deriva la clave de reserva o búsqueda para un documento existente/almacenado sin aplicar límites de captura nueva. */

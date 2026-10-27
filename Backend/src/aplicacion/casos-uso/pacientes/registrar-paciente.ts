@@ -234,7 +234,7 @@ export class RegistrarPaciente {
             );
           }
           identidadesEnEstaSolicitud.add(
-            `${identificacion.tipo}:${normalizarIdentificacion(identificacion.tipo, identificacion.numero)}`,
+            normalizarIdentificacion(identificacion.tipo, identificacion.numero),
           );
         }
 
@@ -271,7 +271,7 @@ export class RegistrarPaciente {
             } else {
               const nuevoId = comando.ids[`responsable_id_${idx}`]!;
               const docResp = validarIdentificacion(resp.documento!, 'responsables.documento');
-              const claveDoc = `${docResp.tipo}:${normalizarIdentificacion(docResp.tipo, docResp.numero)}`;
+              const claveDoc = normalizarIdentificacion(docResp.tipo, docResp.numero);
               if (identidadesEnEstaSolicitud.has(claveDoc)) {
                 throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación del responsable está duplicada en la misma solicitud.', ['responsables']);
               }
