@@ -117,7 +117,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
     const estado = criterios.estado ?? 'TODOS';
 
     todos.sort((a, b) => {
-      const cmp = a.nombres.localeCompare(b.nombres);
+      const cmp = a.fechaRegistro.localeCompare(b.fechaRegistro);
       if (cmp !== 0) return orden === 'DESC' ? -cmp : cmp;
       return orden === 'DESC' ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
     });

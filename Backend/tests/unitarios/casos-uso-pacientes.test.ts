@@ -85,9 +85,10 @@ describe('casos de uso de pacientes en memoria', () => {
           identificacion: { tipo: 'CUI', numero: '2099123450101' },
           grupo_sanguineo: 'O+',
           contacto_emergencia: {
-            nombre: 'Maria Gomez',
+            nombres: 'Maria',
+            apellidos: 'Gomez',
+            parentesco: 'Hermana',
             telefono: '55512345',
-            relacion: 'Hermana',
           },
         },
       });
@@ -101,7 +102,10 @@ describe('casos de uso de pacientes en memoria', () => {
       assert.equal(paciente.sexo, 'MASCULINO');
       assert.equal(paciente.identificacion?.numero, '2099123450101');
       assert.equal(paciente.grupo_sanguineo, 'O+');
-      assert.equal(paciente.contacto_emergencia?.nombre, 'Maria Gomez');
+      assert.equal(paciente.contacto_emergencia?.nombres, 'Maria');
+      assert.equal(paciente.contacto_emergencia?.apellidos, 'Gomez');
+      assert.equal(paciente.contacto_emergencia?.parentesco, 'Hermana');
+      assert.equal(paciente.contacto_emergencia?.telefono, '55512345');
       assert.equal(paciente.estado, 'ACTIVO');
       assert.equal(paciente.version, 1);
     });
@@ -692,6 +696,61 @@ describe('casos de uso de pacientes en memoria', () => {
           },
         );
       }
+    });
+
+    it('ordena resultados por fecha_registro y UUID de forma determinista', async () => {
+      let tiempoSec = 1;
+      const relojSecuencial = {
+        ahora: () => instanteUtc(new Date(Date.UTC(2026, 0, 1, 10, 0, tiempoSec++)).toISOString()),
+      };
+      const registrarConReloj = new RegistrarPaciente({
+        ...dependenciasComandoPorDefecto,
+        reloj: relojSecuencial,
+      });
+
+      const p1 = await registrarConReloj.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Zacarias Orden',
+          apellidos: 'Test',
+          fecha_nacimiento: '1990-01-01',
+          sexo: 'MASCULINO',
+        },
+      });
+
+      const p2 = await registrarConReloj.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        claveIdempotencia: uuidPublico(randomUUID()),
+        entrada: {
+          nombres: 'Abel Orden',
+          apellidos: 'Test',
+          fecha_nacimiento: '1991-01-01',
+          sexo: 'MASCULINO',
+        },
+      });
+
+      const resAsc = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Orden', orden: 'ASC' },
+      });
+
+      assert.equal(resAsc.data.length, 2);
+      assert.equal(resAsc.data[0]!.id, p1.respuesta.id);
+      assert.equal(resAsc.data[1]!.id, p2.respuesta.id);
+
+      const resDesc = await buscarPacientes.ejecutar({
+        contexto: contextoHospital,
+        bundle: bundleHospital,
+        entrada: { q: 'Orden', orden: 'DESC' },
+      });
+
+      assert.equal(resDesc.data.length, 2);
+      assert.equal(resDesc.data[0]!.id, p2.respuesta.id);
+      assert.equal(resDesc.data[1]!.id, p1.respuesta.id);
     });
   });
 });

@@ -72,6 +72,10 @@
   - *Corrección:* Separación de la función `normalizarTextoBusqueda` (sin límite arbitrario) para el texto almacenado del paciente, reservando el límite de 120 caracteres exclusivamente para el término de búsqueda ingresado `q`.
 - **D-11 (Resuelta - Codex P2):** El cursor de búsqueda de pacientes trataba UUIDs sin verificar que coincidieran con la consulta o el orden de la página.
   - *Corrección:* Cursor opaco codificado en base64url que encapsula `{ q, orden, estado, id }`, validando estrictamente que el cursor pertenezca a la misma consulta, orden y estado; si hay discrepancia o alteración, rechaza con `400 SOLICITUD_INVALIDA`.
+- **D-12 (Resuelta - Codex P2):** El orden de búsqueda de pacientes ordenaba por `nombres` en lugar del orden canónico por `(fecha_registro, UUID)`.
+  - *Corrección:* `RepositorioPacientesMemoria.buscar` ordena primero por `fechaRegistro` (comparación cronológica ISO UTC) y usa `id` (UUID) como desempate determinista, admitiendo orden `ASC` y `DESC`.
+- **D-13 (Resuelta - Codex P2):** `ContactoEmergencia` y `ContactoEmergenciaDto` utilizaban el formato preliminar `{ nombre, telefono, relacion }` en lugar de los campos canónicos publicados en `Contacto` del contrato OpenAPI `{ nombres, apellidos, parentesco, telefono }`.
+  - *Corrección:* `ContactoEmergencia` en el dominio y `ContactoEmergenciaDto` en el DTO HTTP alineados con `Contacto` de OpenAPI: `nombres` (1-80), `apellidos` (1-80), `parentesco` (1-60) y `telefono` (1-30). Se actualizaron validaciones de dominio y pruebas unitarias y de runtime.
 
 ## 4. Conclusión
 

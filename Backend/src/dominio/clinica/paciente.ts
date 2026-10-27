@@ -18,9 +18,10 @@ export interface Identificacion {
 }
 
 export interface ContactoEmergencia {
-  readonly nombre: string;
+  readonly nombres: string;
+  readonly apellidos: string;
+  readonly parentesco: string;
   readonly telefono: string;
-  readonly relacion?: string;
 }
 
 export interface VinculoResponsable {
@@ -163,15 +164,15 @@ export function validarContactoEmergencia(institucion: Institucion, valor: unkno
     throw solicitudInvalida('El contacto de emergencia debe ser un objeto.', campo);
   }
   const obj = valor as Record<string, unknown>;
-  const nombre = validarTextoNoVacio(obj.nombre, `${campo}.nombre`, 200);
+  const nombres = validarTextoNoVacio(obj.nombres, `${campo}.nombres`, 80);
+  const apellidos = validarTextoNoVacio(obj.apellidos, `${campo}.apellidos`, 80);
+  const parentesco = validarTextoNoVacio(obj.parentesco, `${campo}.parentesco`, 60);
   const telefono = validarTextoNoVacio(obj.telefono, `${campo}.telefono`, 30);
-  const relacion = typeof obj.relacion === 'string' && obj.relacion.trim().length > 0
-    ? obj.relacion.trim().slice(0, 80)
-    : undefined;
   return Object.freeze({
-    nombre,
+    nombres,
+    apellidos,
+    parentesco,
     telefono,
-    ...(relacion !== undefined ? { relacion } : {}),
   });
 }
 

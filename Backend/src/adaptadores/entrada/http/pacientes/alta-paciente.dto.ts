@@ -30,18 +30,23 @@ export class IdentificacionDto {
 export class ContactoEmergenciaDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(200)
-  nombre!: string;
+  @MaxLength(80)
+  nombres!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  apellidos!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(60)
+  parentesco!: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(30)
   telefono!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  relacion?: string;
 }
 
 export class ResponsableAltaDto {

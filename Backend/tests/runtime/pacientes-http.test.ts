@@ -114,7 +114,9 @@ describe('API HTTP de pacientes', () => {
           identificacion: { tipo: 'CUI', numero: '2020123450101' },
           grupo_sanguineo: 'A+',
           contacto_emergencia: {
-            nombre: 'Patricia Mendez',
+            nombres: 'Patricia',
+            apellidos: 'Mendez',
+            parentesco: 'Hermana',
             telefono: '55543210',
           },
         }),
@@ -127,6 +129,10 @@ describe('API HTTP de pacientes', () => {
       assert.equal(cuerpo.data.nombres, 'Julio Cesar');
       assert.equal(cuerpo.data.apellidos, 'Mendez Montenegro');
       assert.equal(cuerpo.data.grupo_sanguineo, 'A+');
+      assert.equal(cuerpo.data.contacto_emergencia?.nombres, 'Patricia');
+      assert.equal(cuerpo.data.contacto_emergencia?.apellidos, 'Mendez');
+      assert.equal(cuerpo.data.contacto_emergencia?.parentesco, 'Hermana');
+      assert.equal(cuerpo.data.contacto_emergencia?.telefono, '55543210');
       assert.equal(cuerpo.data.version, 1);
       assert.ok(cuerpo.meta.correlacion);
     });
