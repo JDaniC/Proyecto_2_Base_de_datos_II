@@ -49,8 +49,8 @@ const CUENTAS_ENSAYO: Record<string, CuentaEnsayoConfig> = {
     passwordPorDefecto: 'admin1234',
   },
   'odontologo.dental@institucion.salud.gt': {
-    uid: 'fixture-uid-dental-odontologo',
-    token: 'token-fixture-uid-dental-odontologo',
+    uid: 'fixture-uid-odontologo',
+    token: 'token-fixture-uid-odontologo',
     passwordPorDefecto: 'odontologo1234',
   },
   'secretaria.dental@institucion.salud.gt': {
@@ -88,8 +88,8 @@ const CUENTAS_ENSAYO: Record<string, CuentaEnsayoConfig> = {
     passwordPorDefecto: 'admin1234',
   },
   'pediatra.pediatria@institucion.salud.gt': {
-    uid: 'fixture-uid-pediatria-pediatra',
-    token: 'token-fixture-uid-pediatria-pediatra',
+    uid: 'fixture-uid-pediatra',
+    token: 'token-fixture-uid-pediatra',
     passwordPorDefecto: 'pediatra1234',
   },
   'secretaria.pediatria@institucion.salud.gt': {
@@ -199,6 +199,11 @@ export class TrialAuthProvider implements TokenProvider {
       : 'https://identitytoolkit.googleapis.com';
     const endpoint = `${urlBase}/v1/accounts:signInWithPassword?key=${encodeURIComponent(params.apiKey)}`;
 
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => {
+      abortController.abort(new Error('Timeout de autenticación Firebase tras 15000 ms'));
+    }, 15000);
+
     let res: Response;
     try {
       res = await fetch(endpoint, {
@@ -209,42 +214,46 @@ export class TrialAuthProvider implements TokenProvider {
           password: params.password,
           returnSecureToken: true,
         }),
+        signal: abortController.signal,
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const mensaje = (data as { error?: { message?: string } })?.error?.message;
+        if (mensaje === 'EMAIL_NOT_FOUND' || mensaje === 'INVALID_PASSWORD' || mensaje === 'INVALID_LOGIN_CREDENTIALS') {
+          throw new HttpError({
+            status: 401,
+            codigo: '401 NO_AUTENTICADO',
+            mensaje: 'Credenciales inválidas. Verifique su correo y contraseña institucional.',
+          });
+        }
+        throw new HttpError({
+          status: res.status,
+          codigo: `${res.status} ERROR_AUTENTICACION`,
+          mensaje: 'No fue posible validar las credenciales en el proveedor de identidad.',
+        });
+      }
+
+      const payload = (await res.json()) as { idToken?: string };
+      if (!payload.idToken) {
+        throw new HttpError({
+          status: 500,
+          codigo: '500 ERROR_INTERNO',
+          mensaje: 'El proveedor de autenticación no devolvió un token de acceso válido.',
+        });
+      }
+
+      return payload.idToken;
     } catch (error: unknown) {
+      if (error instanceof HttpError) throw error;
       throw new HttpError({
         status: 503,
         codigo: '503 IDENTIDAD_NO_DISPONIBLE',
         mensaje: 'El servicio de autenticación institucional no está disponible.',
         causa: error,
       });
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const mensaje = (data as { error?: { message?: string } })?.error?.message;
-      if (mensaje === 'EMAIL_NOT_FOUND' || mensaje === 'INVALID_PASSWORD' || mensaje === 'INVALID_LOGIN_CREDENTIALS') {
-        throw new HttpError({
-          status: 401,
-          codigo: '401 NO_AUTENTICADO',
-          mensaje: 'Credenciales inválidas. Verifique su correo y contraseña institucional.',
-        });
-      }
-      throw new HttpError({
-        status: res.status,
-        codigo: `${res.status} ERROR_AUTENTICACION`,
-        mensaje: 'No fue posible validar las credenciales en el proveedor de identidad.',
-      });
-    }
-
-    const payload = (await res.json()) as { idToken?: string };
-    if (!payload.idToken) {
-      throw new HttpError({
-        status: 500,
-        codigo: '500 ERROR_INTERNO',
-        mensaje: 'El proveedor de autenticación no devolvió un token de acceso válido.',
-      });
-    }
-
-    return payload.idToken;
   }
 }

@@ -271,4 +271,53 @@ describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03
 
     expect.fail('Debió lanzar HttpError de red con correlación UUID v4');
   });
+
+  it('P2 regresión: combina la señal del llamador con el timeout interno', async () => {
+    // Si el llamador provee su propia señal (no abortada), el timeout interno debe seguir funcionando y abortar
+    const callerController = new AbortController();
+
+    mockFetch.mockImplementationOnce((_url, init) => {
+      const signal = init?.signal as AbortSignal;
+      return new Promise((_, reject) => {
+        signal.addEventListener('abort', () => {
+          reject(new DOMException('The operation was aborted.', 'AbortError'));
+        });
+      });
+    });
+
+    const client = new HttpClient({ baseUrl: '/api/v1', tokenProvider });
+
+    try {
+      await client.get('/recurso-con-senal', { signal: callerController.signal, timeoutMs: 25 });
+    } catch (err: unknown) {
+      const httpErr = err as HttpError;
+      expect(httpErr.status).toBe(503);
+      expect(httpErr.codigo).toBe('503 PERSISTENCIA_NO_DISPONIBLE');
+      return;
+    }
+
+    expect.fail('Debió abortar por timeout a pesar de que la señal del llamador no estaba abortada');
+  });
+
+  it('P2 regresión: propaga fallo de lectura de cuerpo truncado como 503 sin fabricar datos exitosos', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'Content-Type': 'application/json', 'Content-Length': '100' }),
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+    });
+
+    const client = new HttpClient({ baseUrl: '/api/v1', tokenProvider });
+
+    try {
+      await client.get('/cuerpo-truncado');
+    } catch (err: unknown) {
+      const httpErr = err as HttpError;
+      expect(httpErr.status).toBe(503);
+      expect(httpErr.codigo).toBe('503 PERSISTENCIA_NO_DISPONIBLE');
+      return;
+    }
+
+    expect.fail('Debió rechazar cuerpo truncado como error de transporte');
+  });
 });

@@ -299,4 +299,46 @@ describe('HttpAuthRepository — Sesión institucional y mapeos canónicos (E01-
       }
     }
   });
+
+  it('P1 regresión: no devuelve autoridad en caché ante fallos de servidor (503) en obtenerSesionActual', async () => {
+    // Guarda token y sesión serializada previa en storage
+    TokenStorage.guardarToken('token-valido');
+    TokenStorage.guardarSesionSerializada(
+      JSON.stringify({
+        cuentaId: '00000000-0000-4000-8000-000000000101',
+        email: 'admin.hospital@institucion.salud.gt',
+        institucionId: 'HOSPITAL_GENERAL',
+        permisos: ['pacientes.administrar', 'usuarios.administrar'],
+      })
+    );
+
+    // Servidor responde 503
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      headers: new Headers({ 'X-Correlation-ID': 'corr-503' }),
+      json: async () => ({
+        error: { codigo: 'PERSISTENCIA_NO_DISPONIBLE', mensaje: 'BD no disponible' },
+      }),
+    });
+
+    const authProvider = new TrialAuthProvider();
+    const httpClient = new HttpClient({ baseUrl: '/api/v1', tokenProvider: authProvider });
+    const repo = new HttpAuthRepository(httpClient, authProvider);
+
+    // Debe propagar el error 503 y NUNCA devolver la autoridad en caché no verificada
+    await expect(repo.obtenerSesionActual()).rejects.toThrowError(HttpError);
+  });
+
+  it('P2 regresión: tokens clínicos concuerdan exactamente con las semillas del backend (semillas-sinteticas.ts)', async () => {
+    const authProvider = new TrialAuthProvider();
+
+    // Odontólogo: fixture-uid-odontologo
+    const tokenDental = await authProvider.establecerCredenciales('odontologo.dental@institucion.salud.gt', 'odontologo1234');
+    expect(tokenDental).toBe('token-fixture-uid-odontologo');
+
+    // Pediatra: fixture-uid-pediatra
+    const tokenPediatra = await authProvider.establecerCredenciales('pediatra.pediatria@institucion.salud.gt', 'pediatra1234');
+    expect(tokenPediatra).toBe('token-fixture-uid-pediatra');
+  });
 });

@@ -2,6 +2,23 @@ import { HttpClientConfig, HttpRequestOptions, RespuestaApi, TokenProvider } fro
 import { crearErrorRed, HttpError, parsearRespuestaError } from './errors';
 import { generarIdCorrelacion } from './idempotency';
 
+function combinarSenales(senal1?: AbortSignal, senal2?: AbortSignal): AbortSignal | undefined {
+  if (!senal1) return senal2;
+  if (!senal2) return senal1;
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([senal1, senal2]);
+  }
+  const controller = new AbortController();
+  const onAbort = () => controller.abort(senal1.aborted ? senal1.reason : senal2.reason);
+  if (senal1.aborted || senal2.aborted) {
+    onAbort();
+  } else {
+    senal1.addEventListener('abort', onAbort, { once: true });
+    senal2.addEventListener('abort', onAbort, { once: true });
+  }
+  return controller.signal;
+}
+
 export class HttpClient {
   private readonly baseUrl: string;
   private readonly tokenProvider?: TokenProvider;
@@ -74,7 +91,7 @@ export class HttpClient {
         method: options.method || 'GET',
         headers,
         body: requestBody,
-        signal: options.signal || abortController.signal,
+        signal: combinarSenales(options.signal, abortController.signal),
       });
 
       const correlationHeader = response.headers.get('X-Correlation-ID') || correlacion;
@@ -118,7 +135,12 @@ export class HttpClient {
         ) {
           throw jsonErr;
         }
-        payload = {};
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength === '0') {
+          payload = undefined;
+        } else {
+          throw jsonErr;
+        }
       }
       if (typeof payload === 'object' && payload !== null && 'data' in payload) {
         const respuesta = payload as RespuestaApi<T>;

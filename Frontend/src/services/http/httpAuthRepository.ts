@@ -132,15 +132,9 @@ export class HttpAuthRepository implements AuthRepository {
         return null;
       }
 
-      // Si hay caída de servicio (503), intentamos devolver la sesión en caché local
-      // para que la interfaz no pierda el estado de navegación mientras el usuario reintenta
-      const cacheada = this.recuperarSesionCacheada();
-      if (cacheada) {
-        this.sesionEnMemoria = cacheada;
-        return cacheada;
-      }
-
-      return null;
+      // Prohibido devolver autoridad en caché no verificada ante caídas del servidor (AGENTS.md / RNF-005).
+      // Se propaga el error para que la interfaz presente el estado indisponible en lugar de asumir permisos vigentes.
+      throw err;
     }
   }
 
