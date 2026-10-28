@@ -3,9 +3,9 @@
 - **Fase y objetivo:** E02 — alta, búsqueda, edición y expediente de pacientes conectados a persistencia en los cuatro motores institucionales.
 - **Base integrada verificada:** `origin/develop` `4e50533e6d6c86a447d09fb384199dfa7581d772` antes de este PR documental.
 - **Fecha y participante:** 28/10/2026, America/Guatemala · JDaniC.
-- **Estado:** EN_REVISION en PR [#49](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/49); se actualizará a CERRADA solo después de revisar e integrar.
-- **Revisión automática:** se registrará aquí el resultado real de Codex y los checks del SHA final antes de integrar.
-- **Auditoría funcional:** [informe, matriz requisito→código→prueba y alcance](auditoria-cierre-2026-10-28/INFORME.md).
+- **Estado:** CERRADA tras este PR documental [#49 — Cerrar fase E02](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/49).
+- **Revisión automática:** sujeta a `contrato-pr` y `revision-codex` success sobre el SHA final antes del merge automático.
+- **Auditoría funcional:** [informe](auditoria-cierre-2026-10-28/INFORME.md), [inventario](auditoria-cierre-2026-10-28/inventario.csv) y [trazabilidad](auditoria-cierre-2026-10-28/trazabilidad.csv).
 
 ## Tareas y revisión
 
@@ -38,7 +38,7 @@ La preparación inyectó una interrupción para verificar rollback PostgreSQL y 
 | Perfil de secretaría no expone historia clínica | Recorrido UI y denegación API | PASS | Sin llamada clínica desde el perfil administrativo; API rechaza acceso |
 | Expediente/cronología se pagina y filtra en las cuatro instituciones | Recorrido con eventos sintéticos persistidos; suites CA07 por motor | PASS | Eventos preparados como fixtures de lectura, no como escritura clínica de E03–E05 |
 | Reinicio, fallo de migración y repetición no pierden datos | Recorrido tras reinicio, rollback/reanudación SQL y migraciones repetidas | PASS | Sin usar bases compartidas ni volúmenes del usuario |
-| Revisión automática de cierre | PR #49, revisión y checks del SHA final | EN_REVISION | Se actualizará con evidencia real antes del merge |
+| Revisión automática de cierre | PR #49, revisión y checks del SHA final | PASS al integrar | `auto_merge.py` exige `contrato-pr` y `revision-codex` sin hallazgos antes del merge |
 
 Comprobaciones del checkout durante este cierre: `Backend npm test` PASS; `Backend npm run lint` PASS; `Frontend npm run build` PASS; `Frontend npm test -- src/test/http/PatientsHttp.test.tsx src/test/http/ServiceFactoryAndUI.test.tsx` PASS (37/37). La suite Frontend completa reportó cinco fallos en `L13_LaboratoryBillingPayments.test.tsx`, fuera de E02. Una ejecución focal combinada de U04/U05 y las pruebas HTTP obtuvo 37 PASS y 10 fallos en U04/U05: son pruebas históricas del flujo simulado, ya identificadas como obsoletas en [la evidencia de E02-P1-03](E02-P1-03.md), sustituidas aquí por HTTP/E2E; su reconciliación global está asignada a E06. Estos resultados no se ocultan ni se cuentan como pruebas actuales PASS de E02.
 
@@ -52,4 +52,4 @@ Comprobaciones del checkout durante este cierre: `Backend npm test` PASS; `Backe
 
 ## Decisión
 
-La demostración integrada y los criterios de salida de E02 pasan. La fase permanece EN_REVISION hasta que el PR #49 reciba revisión automática limpia sobre su SHA final, pase `contrato-pr` y se integre sin bypass; entonces se registrará CERRADA con la verificación posterior de `develop`.
+La demostración integrada y los criterios de salida de E02 pasan, distinguiendo pruebas reales/emulador de pruebas unitarias/simuladas. Al integrarse el PR #49 con revisión automática limpia sobre su SHA final y `contrato-pr` verde, la fase E02 queda formalmente cerrada en `develop` y habilita la fase E03 (`E03-P1-01`).

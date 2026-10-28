@@ -14,8 +14,8 @@
 
 Los seis criterios individuales están HECHA en `develop`; los PR #40–#48 de implementación/cierre individual están integrados y no había PR abiertos al reservar la fase. PR de cierre #49 ya está listo. Reproducida dos veces la demostración integrada `npm run test:integration:pacientes:ui`: 32 PASS, 0 FAIL, 0 BLOCKED, con PostgreSQL, MySQL y MongoDB aislados, Firebase Auth/Firestore emulados y navegador Chromium. El guion confirmó rollback/reanudación de migraciones, reinicio del backend y reejecución sin pérdida de eventos.
 
-Auditoría funcional de fase: cero desviaciones confirmadas para sus criterios de salida; ver matriz prevista en `plan/evidencias/E02/auditoria-cierre-2026-10-28/INFORME.md`.
+Auditoría funcional de fase: cero desviaciones confirmadas para sus criterios de salida; ver matriz e inventario en `plan/evidencias/E02/auditoria-cierre-2026-10-28/INFORME.md`, `inventario.csv` y `trazabilidad.csv`.
 
 ## Continuidad
 
-Próxima acción: comprobar `contrato-pr` y solicitar/esperar revisión nativa de Codex sobre el SHA final del PR #49; resolver cada hallazgo y repetir verificaciones afectadas. Tras revisión limpia e integración autorizada, verificar `develop` y cerrar fase/documentación. La suite global de Frontend conserva 5 fallos fuera de E02 en L13 y 10 pruebas U04/U05 obsoletas con sustitutos documentados; no se presentan como verdes.
+Próxima acción: comprobar `contrato-pr` y esperar revisión nativa de Codex sobre el SHA final del PR #49; resolver cada hallazgo y repetir verificaciones afectadas. Al integrarse PR #49 en `develop`, la puerta de cierre de E02 queda `HECHA` y desbloquea `E03-P1-01` en `python3 scripts/github/cola.py`. La suite global de Frontend conserva 5 fallos fuera de E02 en L13 y 10 pruebas U04/U05 obsoletas con sustitutos documentados; no se presentan como verdes.

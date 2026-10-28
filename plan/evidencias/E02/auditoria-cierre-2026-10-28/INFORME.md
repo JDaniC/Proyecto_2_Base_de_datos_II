@@ -19,7 +19,7 @@ La prueba integrada fue ejecutada dos veces en esta sesión; el recorrido final 
 | E02-P2-03 | Expediente, proyección, cursor y mezcla ordenada por motor | HIGH | Casos de uso/adaptadores de historial y migración 004; PR #45 y cierre #46 | 24 comprobaciones CA07; evidencia P2-03 | PASS |
 | E02-P1-03 | Formularios, mappers, cliente HTTP, ficha/perfil y cronología React | HIGH | `Frontend/src/features/patients`, `Frontend/src/services/http/patients`; PR #47 y cierre #48 | Suite frontend y 32 recorridos con navegador/motores; evidencia P1-03 | PASS |
 
-Este inventario agrupa las capacidades a nivel de puerta de fase. Los inventarios por función/callback, análisis de clases de equivalencia y matrices exhaustivas de cada unidad están en los seis informes de evidencia enlazados en `CIERRE.md`; no se sustituyen por este resumen.
+Este inventario agrupa las capacidades a nivel de puerta de fase (detalle estructurado en [inventario.csv](inventario.csv) y matriz en [trazabilidad.csv](trazabilidad.csv)). Los inventarios por función/callback, análisis de clases de equivalencia y matrices exhaustivas de cada unidad están en los seis informes de evidencia enlazados en `CIERRE.md`; no se sustituyen por este resumen.
 
 ## 3. Matriz requisito → código → prueba
 
