@@ -122,6 +122,11 @@
       "resultado": "PASS"
     },
     {
+      "caso": "hermanos reutilizan responsable registrado y mantienen autorización por vínculo",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
       "caso": "secretaría: perfil administrativo, sin llamada clínica; API deniega historial",
       "institucion": "HOSPITAL_GENERAL",
       "resultado": "PASS"
@@ -153,7 +158,7 @@
     }
   ],
   "resumen": {
-    "PASS": 30,
+    "PASS": 31,
     "FAIL": 0,
     "BLOCKED": 0
   }

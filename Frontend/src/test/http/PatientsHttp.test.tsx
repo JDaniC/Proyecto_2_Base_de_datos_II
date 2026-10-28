@@ -62,6 +62,12 @@ describe('Adaptador HTTP de pacientes E02', () => {
     await createHttpPatientRepository(http()).crear('CENTRO_PEDIATRICO', { ...entrada(), responsables: [{ id: '', nombre: 'Ana María De la Cruz', nombres: 'Ana María', apellidos: 'De la Cruz', documento: 'PRUEBA', tipoDocumento: 'PASAPORTE', telefono: '55550000', parentesco: 'Madre', esPrincipal: true, autorizaAtencion: false }] });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).responsables[0]).toEqual({ nombres: 'Ana María', apellidos: 'De la Cruz', documento: { tipo: 'PASAPORTE', numero: 'PRUEBA' }, telefono: '55550000', parentesco: 'Madre', es_principal: true, autoriza_atencion: false });
   });
+  it('alta de hermano referencia al responsable existente por UUID y versión, sin modificar sus datos', async () => {
+    fetchMock.mockResolvedValue(respuesta(paciente()));
+    await createHttpPatientRepository(http()).crear('CENTRO_PEDIATRICO', { ...entrada(), responsables: [{ id, version: 4, nombre: 'Tutor Prueba', parentesco: 'Madre', telefono: '55550000', esPrincipal: true, autorizaAtencion: false }] });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).responsables).toEqual([{ responsable_id: id, version_responsable: 4, parentesco: 'Madre', es_principal: true, autoriza_atencion: false }]);
+    await expect(createHttpPatientRepository(http()).crear('CENTRO_PEDIATRICO', { ...entrada(), responsables: [{ id: 'no-uuid', version: 0, nombre: 'Tutor', parentesco: 'Madre', telefono: '', esPrincipal: true, autorizaAtencion: true }] })).rejects.toMatchObject({ status: 400 });
+  });
   it('PATCH distingue omisión, valor y eliminación, exige versión y no escribe responsables', async () => {
     fetchMock.mockResolvedValue(respuesta(paciente()));
     await createHttpPatientRepository(http()).actualizar('HOSPITAL_GENERAL', id, { correo: '', numeroIdentificacion: '', versionEsperada: 3, idempotencyKey: clave });
@@ -127,6 +133,21 @@ describe('Pacientes React con transporte HTTP controlado', () => {
     await screen.findByText('Actual Prueba'); resolver(respuesta([paciente({ nombres: 'Antigua' })]));
     await waitFor(() => expect(screen.queryByText('Antigua Prueba')).not.toBeInTheDocument());
   });
+  it('reintentar una página fallida conserva cursor, número de página e historial', async () => {
+    let caida = true;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('cursor=pagina-dos')) {
+        if (caida) { caida = false; return fallo('PERSISTENCIA_NO_DISPONIBLE', 503); }
+        return respuesta([paciente({ nombres: 'Segunda' })]);
+      }
+      return respuesta([paciente()], 'pagina-dos');
+    });
+    const user = userEvent.setup(); mostrar('/pacientes'); await screen.findByText('Busca un paciente para comenzar');
+    await user.type(screen.getByRole('searchbox'), 'Ana'); await screen.findByText('Ána Prueba');
+    await user.click(screen.getByRole('button', { name: 'Página siguiente' })); await user.click(await screen.findByRole('button', { name: 'Reintentar búsqueda' }));
+    await screen.findByText('Segunda Prueba'); expect(fetchMock.mock.calls.at(-1)?.[0]).toContain('cursor=pagina-dos'); expect(screen.getByText(/Página 2/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Página anterior' })); await screen.findByText('Ána Prueba'); expect(fetchMock.mock.calls.at(-1)?.[0]).not.toContain('cursor=');
+  });
   it('secretaría carga solo perfil administrativo y no solicita datos clínicos', async () => {
     fetchMock.mockResolvedValue(respuesta(paciente())); mostrar(`/pacientes/${id}`, sesion('HOSPITAL_GENERAL', false));
     await screen.findByRole('heading', { name: 'Ána Prueba' }); expect(screen.getByText('Perfil administrativo')).toBeInTheDocument();
@@ -180,5 +201,17 @@ describe('Pacientes React con transporte HTTP controlado', () => {
     await user.type(screen.getByLabelText('Teléfono principal de contacto'), '55559999'); await user.click(screen.getByRole('button', { name: 'Guardar cambios de paciente' }));
     await screen.findByText(/Otra sesión modificó/);
     const patch = fetchMock.mock.calls.find(([, opts]) => opts.method === 'PATCH')!; expect(JSON.parse(patch[1].body)).toEqual({ version_esperada: 3, telefono: '55559999' });
+  });
+  it('permite seleccionar responsable desde otro menor sin cargar notas clínicas', async () => {
+    const ped = paciente({ institucion: 'CENTRO_MEDICO_PEDIATRICO', responsables: [{ responsable: { id: clave, nombre: 'Tutor Prueba', nombres: 'Tutor', apellidos: 'Prueba', telefono: '55550000', version: 2 }, vinculo: { responsable_id: clave, version_responsable: 2, parentesco: 'Padre', es_principal: true, autoriza_atencion: false }, version_vinculo: 1 }] });
+    fetchMock.mockImplementation(async (url: string, opts: RequestInit) => opts.method === 'POST' ? fallo('VERSION_DESACTUALIZADA', 409) : respuesta(url.includes('?') ? [ped] : ped));
+    const user = userEvent.setup(); mostrar('/pacientes/nuevo', sesion('CENTRO_PEDIATRICO', false));
+    await user.type(await screen.findByLabelText(/Nombres del paciente/), 'Hermana'); await user.type(screen.getByLabelText(/Apellidos del paciente/), 'Prueba'); fireEvent.change(screen.getByLabelText(/Fecha de nacimiento/), { target: { value: '2020-01-01' } });
+    await user.selectOptions(screen.getByLabelText('Origen del responsable'), 'EXISTENTE'); await user.type(screen.getByLabelText('Buscar menor con responsable registrado'), 'Hermano'); await user.click(screen.getByRole('button', { name: 'Buscar menor' }));
+    await user.click(await screen.findByRole('button', { name: 'Ver responsables de Ána Prueba' })); await user.click(await screen.findByRole('button', { name: 'Vincular a Tutor Prueba' }));
+    await user.click(screen.getByRole('button', { name: 'Registrar paciente' })); await screen.findByText(/Los datos del responsable cambiaron/);
+    const post = fetchMock.mock.calls.find(([, opts]) => opts.method === 'POST')!;
+    expect(JSON.parse(post[1].body).responsables).toEqual([{ responsable_id: clave, version_responsable: 2, parentesco: 'Madre', es_principal: true, autoriza_atencion: true }]);
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('expediente'))).toBe(true);
   });
 });

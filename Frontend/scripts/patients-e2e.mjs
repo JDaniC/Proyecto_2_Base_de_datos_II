@@ -127,6 +127,28 @@ export async function recorrerPacientes({ browser, url, cuentas, reiniciarBacken
       await page.getByRole('button', { name: 'Alternar orden cronológico' }).click(); await page.getByText('Evento sintético 21', { exact: true }).waitFor();
       await page.getByLabel('Tipo de evento').selectOption('RECETA'); await page.getByText('Sin eventos en esta cronología').waitFor();
       paso('cronología persistida sintética: cursor, inversión global y filtro del servidor', cuenta.institucion);
+      if (i === 3) {
+        await page.goto(`${url}/pacientes/nuevo`);
+        await page.getByLabel(/Nombres del paciente/).fill('HermanaUI'); await page.getByLabel(/Apellidos del paciente/).fill('Prueba Sintética');
+        await page.getByLabel(/Fecha de nacimiento/).fill('2022-01-01');
+        await page.getByLabel('Nombres del responsable *').fill('Responsable Sintética'); await page.getByLabel('Apellidos del responsable *').fill('Prueba');
+        await page.getByLabel('Documento del responsable *').fill('1234567890102'); await page.getByLabel('Teléfono del tutor').fill('55550001');
+        const repetido = page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/api/v1/pacientes'));
+        await page.getByRole('button', { name: 'Registrar paciente' }).click(); assert.equal((await repetido).status(), 409);
+        await page.getByRole('button', { name: 'Seleccionar responsable registrado' }).click();
+        await page.getByLabel('Buscar menor con responsable registrado').fill(nombres); await page.getByRole('button', { name: 'Buscar menor', exact: true }).click();
+        await page.getByRole('button', { name: `Ver responsables de ${nombres} Prueba Sintética` }).click();
+        await page.getByRole('button', { name: 'Vincular a Responsable Sintética Prueba' }).click();
+        const hermano = page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/api/v1/pacientes'));
+        await page.getByRole('button', { name: 'Registrar paciente' }).click();
+        const respuestaHermano = await hermano; assert.equal(respuestaHermano.status(), 201);
+        const nuevoHermano = (await respuestaHermano.json()).data;
+        assert.equal(nuevoHermano.responsables[0].responsable.id, data.responsables[0].responsable.id);
+        assert.equal(nuevoHermano.responsables[0].vinculo.autoriza_atencion, true);
+        await page.waitForURL(`${url}/pacientes/${nuevoHermano.id}`);
+        await page.reload(); await page.getByRole('heading', { name: 'HermanaUI Prueba Sintética' }).waitFor();
+        paso('hermanos reutilizan responsable registrado y mantienen autorización por vínculo', cuenta.institucion);
+      }
       const clinical = await page.evaluate(() => Object.entries(localStorage).filter(([k]) => !/token|auth|session|sesion/i.test(k)));
       assert.deepEqual(clinical, [], 'no se guardan pacientes como respaldo local');
       pacientes.push({ id: data.id, cuenta, nombres });

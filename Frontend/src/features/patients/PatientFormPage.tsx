@@ -21,6 +21,7 @@ import { Panel } from '../../design-system/components/Panel';
 import { Alert } from '../../design-system/components/Alert';
 import { Toast } from '../../design-system/components/Toast';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
+import { ExistingGuardianSelector } from './components/ExistingGuardianSelector';
 
 export const PatientFormPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -74,6 +75,9 @@ const PatientForm: React.FC = () => {
   const [respTelefono, setRespTelefono] = useState('');
   const [respEsPrincipal, setRespEsPrincipal] = useState(true);
   const [respAutoriza, setRespAutoriza] = useState(true);
+  const [usarResponsableExistente, setUsarResponsableExistente] = useState(false);
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState<ResponsablePediatrico | null>(null);
+  const [duplicadoResponsable, setDuplicadoResponsable] = useState(false);
 
   // Estados de control
   const [cargandoInicial, setCargandoInicial] = useState(isEditing);
@@ -152,6 +156,7 @@ const PatientForm: React.FC = () => {
     if (envioActivo.current || cargaFallida) return;
     setErrorValidacion(null);
     setErrorDuplicado(null);
+    setDuplicadoResponsable(false);
 
     // Validaciones base
     if (!nombres.trim() || !apellidos.trim()) {
@@ -181,7 +186,11 @@ const PatientForm: React.FC = () => {
 
     // Validación Pediatría: Responsable principal y autorización
     if (institucionId === 'CENTRO_PEDIATRICO' && !(esApi && isEditing)) {
-      if (!respNombre.trim() || (esApi && (!respApellidos.trim() || !respDocumento.trim() || !respTelefono.trim()))) {
+      if (esApi && usarResponsableExistente && !responsableSeleccionado) {
+        setErrorValidacion('Busca un menor y selecciona al responsable registrado que vincularás.');
+        return;
+      }
+      if (!(esApi && usarResponsableExistente) && (!respNombre.trim() || (esApi && (!respApellidos.trim() || !respDocumento.trim() || !respTelefono.trim())))) {
         setErrorValidacion('En Pediatría es obligatorio registrar los datos del responsable legal / tutor.');
         return;
       }
@@ -219,7 +228,9 @@ const PatientForm: React.FC = () => {
           : undefined;
 
       const responsablePrincipal =
-        institucionId === 'CENTRO_PEDIATRICO' && respNombre.trim()
+        esApi && usarResponsableExistente && responsableSeleccionado
+          ? [{ ...responsableSeleccionado, parentesco: respParentesco, esPrincipal: respEsPrincipal, autorizaAtencion: respAutoriza }]
+          : institucionId === 'CENTRO_PEDIATRICO' && respNombre.trim()
           ? [
               {
                 id: responsablesExistentes.find(r => r.esPrincipal)?.id || `resp-${Date.now()}`,
@@ -287,10 +298,14 @@ const PatientForm: React.FC = () => {
     } catch (err) {
       if (err instanceof HttpError) {
         setResultadoIncierto(err.esReintentable || err.status >= 500);
+        const esResponsable = Object.keys(err.campos ?? {}).some((c) => c.startsWith('responsables')) || (institucionId === 'CENTRO_PEDIATRICO' && !isEditing && usarResponsableExistente);
         if (err.codigo.includes('PACIENTE_DUPLICADO')) {
-          setErrorValidacion('El documento ya está registrado. Busca el paciente existente para reutilizar su perfil.');
+          // El contrato público puede omitir el campo del conflicto: no inferir a quién identifica.
+          const puedeSerResponsable = esResponsable || (institucionId === 'CENTRO_PEDIATRICO' && !isEditing);
+          setDuplicadoResponsable(puedeSerResponsable);
+          setErrorValidacion(puedeSerResponsable ? 'Ya existe la identificación del paciente o de su responsable. Busca el paciente existente o selecciona un responsable registrado.' : 'El documento ya está registrado. Busca el paciente existente para reutilizar su perfil.');
         } else if (err.codigo.includes('VERSION_DESACTUALIZADA')) {
-          setErrorValidacion('Otra sesión modificó este perfil. Tus cambios siguen aquí; revisa el perfil actualizado antes de volver a editar.');
+          setErrorValidacion(esResponsable ? 'Los datos del responsable cambiaron. Vuelve a seleccionarlo para revisar su versión actual; conservamos los datos del menor.' : 'Otra sesión modificó este perfil. Tus cambios siguen aquí; revisa el perfil actualizado antes de volver a editar.');
         } else {
           setErrorValidacion([getErrorMessage(err, 'No se pudo guardar.'), ...Object.values(err.campos ?? {})].join(' '));
         }
@@ -437,9 +452,10 @@ const PatientForm: React.FC = () => {
         </div>
       )}
 
-      {esApi && errorValidacion?.includes('documento ya está registrado') && (
+      {esApi && (errorValidacion?.includes('documento ya está registrado') || duplicadoResponsable) && numeroIdentificacion.trim() && (
         <Button variant="secondary" onClick={() => navigate(`/pacientes?q=${encodeURIComponent(numeroIdentificacion.trim())}`)}>Buscar paciente existente</Button>
       )}
+      {duplicadoResponsable && <Button type="button" variant="secondary" onClick={() => { setUsarResponsableExistente(true); setResponsableSeleccionado(null); }}>Seleccionar responsable registrado</Button>}
       {resultadoIncierto && <Alert variant="warning" title="Resultado pendiente de confirmar">Conservamos los datos y la misma solicitud. Reintenta el envío para confirmar su resultado antes de cambiar los datos.</Alert>}
       {cargaFallida && <Button onClick={() => window.location.reload()}>Recargar perfil</Button>}
 
@@ -600,6 +616,11 @@ const PatientForm: React.FC = () => {
             subtitle="Responsable principal del menor; la autorización de atención se registra por separado"
             style={{ marginBottom: '20px' }}
           >
+            {esApi && <Select label="Origen del responsable" value={usarResponsableExistente ? 'EXISTENTE' : 'NUEVO'} onChange={(e) => { setUsarResponsableExistente(e.target.value === 'EXISTENTE'); setResponsableSeleccionado(null); }} options={[{ value: 'NUEVO', label: 'Registrar nuevo responsable' }, { value: 'EXISTENTE', label: 'Vincular responsable registrado' }]} />}
+            {esApi && usarResponsableExistente ? <>
+              <ExistingGuardianSelector seleccionado={responsableSeleccionado} onSelect={setResponsableSeleccionado} />
+              <Select label="Parentesco con el nuevo menor" value={respParentesco} onChange={(e) => setRespParentesco(e.target.value)} options={['Madre', 'Padre', 'Tutor Legal', 'Abuelo/a'].map((value) => ({ value, label: value }))} />
+            </> : <>
             <div
               style={{
                 display: 'grid',
@@ -645,6 +666,7 @@ const PatientForm: React.FC = () => {
                 placeholder="Ej. 5555-9401"
               />
             </div>
+            </>}
 
             <div
               style={{

@@ -424,7 +424,7 @@ export const PatientsListPage: React.FC = () => {
       )}
 
       {/* Contenedor Principal de la Tabla */}
-      {error ? <Alert variant="danger" title="No se pudo buscar">{error}<Button variant="secondary" onClick={() => cargarPacientes()}>Reintentar búsqueda</Button></Alert> : cargando ? (
+      {error ? <Alert variant="danger" title="No se pudo buscar">{error}<Button variant="secondary" onClick={() => cargarPacientes(cursorActual)}>Reintentar búsqueda</Button></Alert> : cargando ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <SkeletonLoader variant="rectangular" height="64px" />
           <SkeletonLoader variant="rectangular" height="64px" />

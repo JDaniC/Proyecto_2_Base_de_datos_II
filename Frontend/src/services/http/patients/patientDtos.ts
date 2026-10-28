@@ -37,7 +37,7 @@ export interface AltaPacienteHttp {
   direccion?: string;
   grupo_sanguineo?: string;
   contacto_emergencia?: ContactoDto;
-  responsables?: { nombres: string; apellidos: string; documento: IdentificacionDto; telefono: string; parentesco: string; es_principal: boolean; autoriza_atencion: boolean }[];
+  responsables?: ({ responsable_id: string; version_responsable: number; parentesco: string; es_principal: boolean; autoriza_atencion: boolean } | { nombres: string; apellidos: string; documento: IdentificacionDto; telefono: string; parentesco: string; es_principal: boolean; autoriza_atencion: boolean })[];
 }
 export interface EventoDto {
   id: string;

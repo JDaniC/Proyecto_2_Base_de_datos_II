@@ -25,6 +25,10 @@ export function mapearAlta(dto: CrearPacienteDTO): AltaPacienteHttp {
     ...(dto.grupoSanguineo?.trim() ? { grupo_sanguineo: dto.grupoSanguineo.trim() } : {}),
     ...(dto.contactoEmergencia ? { contacto_emergencia: contacto(dto.contactoEmergencia) } : {}),
     ...(dto.responsables ? { responsables: dto.responsables.map((r) => {
+      if (r.version !== undefined) {
+        if (!Number.isInteger(r.version) || r.version < 1 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id)) return invalido('Vuelve a seleccionar al responsable para obtener su versión actual.');
+        return { responsable_id: r.id, version_responsable: r.version, parentesco: r.parentesco, es_principal: r.esPrincipal, autoriza_atencion: r.autorizaAtencion };
+      }
       if (!r.nombres?.trim() || !r.apellidos?.trim() || !r.documento?.trim()) return invalido('Captura nombres, apellidos y documento del responsable.');
       return { nombres: r.nombres.trim(), apellidos: r.apellidos.trim(), documento: identificacion(r.tipoDocumento || 'CUI', r.documento), telefono: r.telefono.trim(), parentesco: r.parentesco, es_principal: r.esPrincipal, autoriza_atencion: r.autorizaAtencion };
     }) } : {}),
