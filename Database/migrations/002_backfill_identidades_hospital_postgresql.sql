@@ -23,7 +23,31 @@ $$;
 DO $$
 DECLARE
   columnas_existian boolean;
+  version_actual integer;
+  huella_actual text;
 BEGIN
+  IF to_regclass('hospital_general.modelo_database') IS NULL THEN
+    RAISE EXCEPTION 'ESQUEMA_SIN_MANIFIESTO_NO_MIGRABLE' USING ERRCODE='23514';
+  END IF;
+
+  SELECT version, huella INTO version_actual, huella_actual
+  FROM hospital_general.modelo_database
+  WHERE id = 1
+  FOR UPDATE;
+
+  IF version_actual IS NULL THEN
+    RAISE EXCEPTION 'ESQUEMA_SIN_MANIFIESTO_NO_MIGRABLE' USING ERRCODE='23514';
+  END IF;
+
+  IF version_actual NOT IN (2, 3) THEN
+    RAISE EXCEPTION 'VERSION_MODELO_DESCONOCIDA' USING ERRCODE='23514';
+  END IF;
+
+  -- Validar que el esquema actual coincida con la huella registrada antes de aplicar cambios
+  IF huella_actual IS DISTINCT FROM pg_temp.huella_hospital() THEN
+    RAISE EXCEPTION 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' USING ERRCODE='23514';
+  END IF;
+
   SELECT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'hospital_general' AND table_name = 'paciente' AND column_name = 'clave_identidad_activa'

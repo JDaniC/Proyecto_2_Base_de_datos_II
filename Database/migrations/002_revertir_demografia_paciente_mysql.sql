@@ -33,7 +33,7 @@ BEGIN
       'clave_identidad_activa', p.clave_identidad_activa
     )
   FROM paciente p
-  WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL OR p.clave_identidad_activa IS NOT NULL
+  WHERE (p.fecha_registro IS NOT NULL OR p.sexo IS NOT NULL OR p.direccion IS NOT NULL OR p.clave_identidad_activa IS NOT NULL
          OR EXISTS (SELECT 1 FROM identidades_paciente ip WHERE ip.id_paciente = p.id_paciente))
     AND NOT EXISTS (
       SELECT 1 FROM revisiones r
