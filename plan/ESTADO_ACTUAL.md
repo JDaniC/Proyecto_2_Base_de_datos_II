@@ -1,12 +1,12 @@
 # Estado para continuar en un chat nuevo
 
-Corte observado: 25/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
+Corte observado: 28/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
 
 ## Producto y entradas
 
 - Entrega final objetivo: 05/11/2026; [cronograma](09_CRONOGRAMA_HASTA_05_NOV.md). La estimación original excede la capacidad supuesta; recalibrar en E00.
 - Cuatro modelos y herramientas en Database/. Hospital→PostgreSQL, dental→MySQL, laboratorio→MongoDB y pediatría→Firestore.
-- Frontend/ React implementado con simuladores. Backend/ incluye contrato común OpenAPI, firmas de diseño, fixtures y validador documental de E00-P1-03; todavía no contiene servidor/casos de uso/adaptadores implementados. No afirmar persistencia UI→API real. Reutilizar UI; no reconstruirla desde cero.
+- Frontend/ React conecta sesión y pacientes por HTTP en modo API: alta, búsqueda, edición y expediente/cronología paginados. Backend/ incluye servidor/casos/adaptadores reales de esas capacidades para cuatro motores. Clínica y módulos E03–E05 continúan según sus tareas; no afirmar que estén integrados por el recorrido de pacientes. Reutilizar UI; no reconstruirla desde cero.
 - [Alcance portable](01_ALCANCE_Y_DECISIONES.md), [arquitectura](02_ARQUITECTURA_HEXAGONAL.md), [contratos](03_CONTRATOS_Y_FLUJOS.md) y [plan maestro](00_PLAN_MAESTRO.md).
 
 ## Estado técnico que no debe confundirse con pruebas actuales
@@ -48,3 +48,6 @@ Corte E01 (26/10/2026, America/Guatemala): las seis tareas E01 están HECHA (E01
 
 
 Corte de lectura de historial (28/10/2026, America/Guatemala): PR #45 integrado en develop (`4217236`), Codex sin hallazgos sobre `f0a4750`. Backend expone historial/expediente paginados con cuatro adaptadores, proyección v1 y migración 004 independiente de M01–M04. CA07 acredita 24 comprobaciones con PG/MySQL/Mongo reales aislados y emulador Firestore; [evidencia](evidencias/E02/E02-P2-03.md). Preparar también instalaciones nuevas con la migración explícita; legado clínico sin procedencia/versiones verificables queda RECONCILIAR/503. Los escritores E03–E05 y la conexión UI E02-P1-03 conservan su alcance futuro; no se acredita clínica UI→API→BD completa. Consultar tablero/cola para seleccionar la próxima tarea; no abrir automáticamente toda la fase.
+
+
+Corte de integración React de pacientes (28/10/2026, America/Guatemala): PR #47 MERGED en develop (`41082c9`), revisión nativa Codex sin hallazgos sobre `bfbc38a`; contrato-pr/revision-codex SUCCESS. Alta/búsqueda/PATCH/perfil administrativo y expediente paginado usan HTTP; 99 pruebas frontend y 32 comprobaciones con navegador y cuatro motores aislados/emulados PASS, con recarga, responsables compartidos, reintentos y reinicio del backend. [Evidencia](evidencias/E02/E02-P1-03.md). Los eventos del recorrido son fixtures del índice de lectura, sin acreditar escritores clínicos E03–E05. El estado oficial se actualiza en tablero mediante el cierre documental; la demostración/cierre de fase E02 sigue pendiente y es la próxima puerta, sin iniciar E03 automáticamente.
