@@ -285,54 +285,33 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
         if (titular) candidatosId.add(titular);
       }
 
-      if (candidatosId.size > 0) {
-        const coincidencias: { nombreBusqueda: string; id: string }[] = [];
-        for (const candId of candidatosId) {
-          const snap = await this.obtenerDoc(this.firestore.doc(`pacientes/${candId}`));
-          if (!snap.exists) continue;
-          const datos = snap.data() as DocumentoPacienteFirestore;
-          const coincideEstado =
-            !criterios.estado ||
-            criterios.estado === 'TODOS' ||
-            datos.estado === criterios.estado;
-          if (coincideEstado) {
-            coincidencias.push({ nombreBusqueda: datos.nombre_busqueda, id: snap.id });
-          }
-        }
-        if (coincidencias.length > 0) {
-          const comparar = (
-            a: { nombreBusqueda: string; id: string },
-            b: { nombreBusqueda: string; id: string },
-          ): number => {
-            const base =
-              a.nombreBusqueda < b.nombreBusqueda ? -1
-                : a.nombreBusqueda > b.nombreBusqueda ? 1
-                  : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-            return direccion === 'asc' ? base : -base;
-          };
-          coincidencias.sort(comparar);
-          const restantes = posicionCursor
-            ? coincidencias.filter((c) => comparar(c, posicionCursor!) > 0)
-            : coincidencias;
-          const pagina = restantes.slice(0, criterios.limite);
-          const elementos: Paciente[] = [];
-          for (const c of pagina) {
-            const pac = await this.porId(uuidPublico(c.id));
-            if (pac) elementos.push(pac);
-          }
-          const ultimo = pagina[pagina.length - 1];
-          const siguienteCursor =
-            restantes.length > criterios.limite && ultimo
-              ? crearCursor(ultimo.nombreBusqueda, ultimo.id)
-              : undefined;
-          return Object.freeze({
-            elementos: Object.freeze(elementos),
-            ...(siguienteCursor ? { siguienteCursor } : {}),
-          });
+      type Clave = { nombreBusqueda: string; id: string };
+      const comparar = (a: Clave, b: Clave): number => {
+        const base =
+          a.nombreBusqueda < b.nombreBusqueda ? -1
+            : a.nombreBusqueda > b.nombreBusqueda ? 1
+              : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+        return direccion === 'asc' ? base : -base;
+      };
+      const coincidencias = new Map<string, Clave>();
+
+      // Coincidencias documentales exactas posteriores al cursor
+      for (const candId of candidatosId) {
+        const snap = await this.obtenerDoc(this.firestore.doc(`pacientes/${candId}`));
+        if (!snap.exists) continue;
+        const datos = snap.data() as DocumentoPacienteFirestore;
+        const coincideEstado =
+          !criterios.estado ||
+          criterios.estado === 'TODOS' ||
+          datos.estado === criterios.estado;
+        const clave = { nombreBusqueda: datos.nombre_busqueda, id: snap.id };
+        if (coincideEstado && (!posicionCursor || comparar(clave, posicionCursor) > 0)) {
+          coincidencias.set(snap.id, clave);
         }
       }
 
-      // 2. Búsqueda por prefijo de nombre sobre claves_nombre en límites de palabra
+      // 2. Búsqueda por prefijo de nombre sobre claves_nombre en límites de palabra.
+      //    Se combina con las coincidencias documentales (equivalente al OR de SQL/MongoDB).
       let query: Query = this.firestore.collection('pacientes');
       if (criterios.estado && criterios.estado !== 'TODOS') {
         query = query.where('estado', '==', criterios.estado);
@@ -347,25 +326,28 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
         query = query.startAfter(posicionCursor.nombreBusqueda, posicionCursor.id);
       }
 
+      // limite + 1 por nombre basta: la unión con las coincidencias documentales
+      // (todas posteriores al cursor) contiene los primeros `limite` elementos combinados.
       const snapDocs = await this.obtenerQuery(query.limit(criterios.limite + 1));
-      const haySiguiente = snapDocs.docs.length > criterios.limite;
-      const docsPagina = haySiguiente
-        ? snapDocs.docs.slice(0, criterios.limite)
-        : snapDocs.docs;
+      for (const docSnap of snapDocs.docs) {
+        const datos = docSnap.data() as DocumentoPacienteFirestore;
+        coincidencias.set(docSnap.id, { nombreBusqueda: datos.nombre_busqueda, id: docSnap.id });
+      }
+
+      const ordenadas = [...coincidencias.values()].sort(comparar);
+      const pagina = ordenadas.slice(0, criterios.limite);
 
       const elementos: Paciente[] = [];
-      for (const docSnap of docsPagina) {
-        const id = uuidPublico(docSnap.id);
-        const pac = await this.porId(id);
+      for (const c of pagina) {
+        const pac = await this.porId(uuidPublico(c.id));
         if (pac) elementos.push(pac);
       }
 
-      let siguienteCursor: string | undefined;
-      if (haySiguiente && docsPagina.length > 0) {
-        const ultimoDoc = docsPagina[docsPagina.length - 1]!;
-        const datosUltimo = ultimoDoc.data() as DocumentoPacienteFirestore;
-        siguienteCursor = crearCursor(datosUltimo.nombre_busqueda, ultimoDoc.id);
-      }
+      const ultimo = pagina[pagina.length - 1];
+      const siguienteCursor =
+        ordenadas.length > criterios.limite && ultimo
+          ? crearCursor(ultimo.nombreBusqueda, ultimo.id)
+          : undefined;
 
       return Object.freeze({
         elementos: Object.freeze(elementos),

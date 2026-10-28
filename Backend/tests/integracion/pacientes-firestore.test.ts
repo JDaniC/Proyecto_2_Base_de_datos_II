@@ -682,6 +682,54 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
       new Set([docPag1.data[0]!.id, docPag2.data[0]!.id]),
       new Set([resMenorCui.respuesta.id, resMenorPasaporte.respuesta.id]),
     );
+
+    // Coincidencia documental y por nombre se combinan (equivalente al OR de SQL/MongoDB)
+    const resPasaporteNombre = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Camila',
+        apellidos: 'Torres',
+        fecha_nacimiento: '2023-03-20',
+        sexo: 'FEMENINO',
+        identificacion: { tipo: 'PASAPORTE', numero: 'DIEGO' },
+        responsables: [
+          {
+            nombres: 'Marta',
+            apellidos: 'Torres',
+            telefono: '+502 4433 2213',
+            parentesco: 'MADRE',
+            es_principal: true,
+            autoriza_atencion: true,
+            documento: { tipo: 'CUI', numero: '4433221300101' },
+          },
+        ],
+      },
+    });
+    const resMixta = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Diego', limite: 10, orden: 'ASC' },
+    });
+    const idsMixta = resMixta.data.map((p) => p.id);
+    assert.ok(idsMixta.includes(resPasaporteNombre.respuesta.id), 'incluye coincidencia documental');
+    assert.ok(idsMixta.includes(resMenorCui.respuesta.id), 'incluye coincidencia por nombre');
+    const mixta1 = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Diego', limite: 1, orden: 'ASC' },
+    });
+    const mixta2 = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Diego', limite: 1, orden: 'ASC', cursor: mixta1.meta.siguiente_cursor! },
+    });
+    assert.deepEqual(
+      [mixta1.data[0]!.id, mixta2.data[0]!.id],
+      resMixta.data.slice(0, 2).map((p) => p.id),
+      'la paginación combinada conserva el orden sin duplicar',
+    );
   });
 
   await t.test('7. Archivo de paciente: impide modificaciones posteriores', async () => {
