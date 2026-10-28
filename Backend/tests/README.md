@@ -1,5 +1,11 @@
 # Arnés de aceptación
 
+## Persistencia MongoDB de pacientes — E02-P2-01
+
+Desde la raíz, `npm --prefix Backend run test:integration:pacientes:mongodb` prepara un proyecto Docker aleatorio con MongoDB 8.0.32, replica set, secretos nuevos escritos en LF y cuentas administrativas/de aplicación distintas. No usa bases ni volúmenes de desarrollo. Verifica instalación nueva, migración desde el validador anterior, fallo tardío y recuperación, duplicados, idempotencia, carreras, versiones, contactos secundarios, búsqueda indexada/cursor, proyección y revocación. El `finally` elimina únicamente su proyecto y su directorio temporal comprobado.
+
+El archivo de integración se omite sin las variables aisladas del runner; una omisión no acredita persistencia. Los contextos sintéticos de los casos comunes no sustituyen la verificación Firebase en HTTP. Los flujos clínicos posteriores y la cronología completa pertenecen a sus tareas.
+
 Estos tests usan el runner integrado de Node.js y no requieren instalar paquetes:
 
 ```sh

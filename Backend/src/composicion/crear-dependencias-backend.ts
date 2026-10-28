@@ -13,7 +13,7 @@ import { crearPoolMysql } from '../adaptadores/salida/mysql/crear-pool-mysql.js'
 import { crearClienteMongodb } from '../adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import { crearClienteFirestore } from '../adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaInstitucionalPostgresql, crearRepositorioCuentaInstitucionalMysql } from '../adaptadores/salida/identidad/repositorios-cuenta-sql.js';
-import { crearRepositorioCuentaInstitucionalMongodb } from '../adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.js';
+import { crearBundlePacientesMongodb } from '../adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
 import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
 import { parsearConfiguracionSql } from '../configuracion/conexiones-sql.js';
 import { parsearConfiguracionMongodb } from '../configuracion/conexiones-mongodb.js';
@@ -103,7 +103,7 @@ export async function crearDependenciasBackend(
     const repositorios: MapaRepositoriosInstitucion = {
       HOSPITAL_GENERAL: { cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql) },
       CLINICA_ODONTOLOGICA: { cuenta: crearRepositorioCuentaInstitucionalMysql(mysql) },
-      LABORATORIO_CLINICO: { cuenta: crearRepositorioCuentaInstitucionalMongodb(mongo) },
+      LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),
       CENTRO_MEDICO_PEDIATRICO: { cuenta: crearRepositorioCuentaInstitucionalFirestore(firebase) },
     };
     const cerrar = async (): Promise<void> => {
