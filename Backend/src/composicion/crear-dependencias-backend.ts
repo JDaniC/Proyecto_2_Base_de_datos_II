@@ -22,7 +22,7 @@ import {
   crearUnidadDeTrabajoPacientesMysql,
 } from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
 import { crearBundlePacientesMongodb } from '../adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
-import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
+import { crearBundlePacientesFirestore } from '../adaptadores/salida/firestore/pacientes/crear-bundle-pacientes-firestore.js';
 import { parsearConfiguracionSql, ErrorConfiguracionSql, type ConfiguracionSql } from '../configuracion/conexiones-sql.js';
 import { parsearConfiguracionMongodb } from '../configuracion/conexiones-mongodb.js';
 import { parsearConfiguracionFirestore } from '../configuracion/conexiones-firestore.js';
@@ -132,7 +132,7 @@ export async function crearDependenciasBackend(
         uow: crearUnidadDeTrabajoPacientesMysql(mysql),
       },
       LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),
-      CENTRO_MEDICO_PEDIATRICO: { cuenta: crearRepositorioCuentaInstitucionalFirestore(firebase) },
+      CENTRO_MEDICO_PEDIATRICO: crearBundlePacientesFirestore(firebase),
     };
     const cerrar = async (): Promise<void> => {
       const errores: unknown[] = [];

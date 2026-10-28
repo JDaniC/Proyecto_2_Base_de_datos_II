@@ -23,7 +23,7 @@ import {
   ErrorModelo,
 } from './validador-firestore.js';
 
-interface DatosOperacionFirestore {
+export interface DatosOperacionFirestore {
   readonly hash_entrada: string;
   readonly codigo_respuesta: number;
   readonly respuesta: {
@@ -254,7 +254,7 @@ function empaquetarRespuestaOperacion<T>(
   };
 }
 
-function desempaquetarRespuestaOperacion<T>(
+export function desempaquetarRespuestaOperacion<T>(
   respuesta: { data: Record<string, unknown>; meta: { correlacion: string } },
 ): T {
   if (respuesta.data && typeof respuesta.data === 'object' && respuesta.data.__respuestaPlana === true) {
@@ -308,9 +308,13 @@ function traducirErrorModelo(error: ErrorModelo): ErrorDominio {
     return new ErrorDominio('DOSIS_DUPLICADA', 'La dosis no coincide con el identificador compuesto.');
   }
   if (error.codigo === 'CLAVE_INVALIDA' || error.codigo === 'ID_INVALIDO' || error.codigo === 'RUTA_INVALIDA') {
-    return new ErrorDominio('SOLICITUD_INVALIDA', 'Identificador o ruta no válidos.');
+    return new ErrorDominio('SOLICITUD_INVALIDA', 'Identificador o ruta no válidos.', error.campos);
   }
-  return new ErrorDominio('ESTADO_INVALIDO', 'El documento no cumple con las restricciones del modelo pediátrico.');
+  return new ErrorDominio(
+    'ESTADO_INVALIDO',
+    `El documento no cumple con las restricciones del modelo pediátrico${error.campos.length > 0 ? `: ${error.campos.join(', ')}` : ''}.`,
+    error.campos,
+  );
 }
 
 function traducirErrorFirestore(error: unknown): ErrorDominio | null {
