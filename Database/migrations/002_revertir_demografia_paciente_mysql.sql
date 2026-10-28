@@ -24,6 +24,13 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
   END IF;
 
+  -- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía
+  IF NOT EXISTS (SELECT 1 FROM usuario) THEN
+    INSERT INTO usuario (id_usuario, id_publico, revision, auth_uid, proveedor_identidad, institucion_id, nombre_usuario, estado)
+    VALUES (1, UUID(), 1, 'bdii_migracion_sistema', 'FIREBASE', 'CLINICA_ODONTOLOGICA', 'sistema_migracion', 'ACTIVO')
+    ON DUPLICATE KEY UPDATE id_usuario = id_usuario;
+  END IF;
+
   -- Preservar valores demográficos en la tabla revisiones para recuperación sin pérdida
   INSERT INTO revisiones (
     id_revision, tipo_recurso, recurso_id, version, id_usuario,
