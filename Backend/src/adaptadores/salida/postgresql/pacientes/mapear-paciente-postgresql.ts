@@ -44,6 +44,7 @@ export interface FilaPacientePostgresql extends Record<string, unknown> {
   ce_telefono: string | null;
   tipo_documento: string | null;
   numero_documento: string | null;
+  clave_identidad_activa?: string | null;
 }
 
 function convertirNumero(valor: unknown): number {

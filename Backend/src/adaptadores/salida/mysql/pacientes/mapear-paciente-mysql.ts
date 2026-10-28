@@ -26,6 +26,7 @@ export interface FilaPacienteMysql extends Record<string, unknown> {
   direccion?: string | null;
   estado: string;
   fecha_registro?: string | null;
+  clave_identidad_activa?: string | null;
   historial_estado: string | null;
   fecha_apertura: string | null;
   causa_baja: string | null;

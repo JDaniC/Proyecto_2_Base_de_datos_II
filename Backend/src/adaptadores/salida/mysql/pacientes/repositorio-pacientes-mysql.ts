@@ -44,22 +44,12 @@ const SELECT_PACIENTE_BASE_MYSQL = `
     h.motivo_baja,
     DATE_FORMAT(h.fecha_baja, '%Y-%m-%dT%H:%i:%s.000Z') AS fecha_baja,
     h.actor_baja,
+    p.clave_identidad_activa,
     ip.tipo_documento,
     ip.numero_documento
   FROM paciente p
   LEFT JOIN historial_clinico h ON p.id_paciente = h.id_paciente
-  LEFT JOIN (
-    SELECT
-      id_paciente,
-      clave,
-      tipo_documento,
-      numero_documento,
-      ROW_NUMBER() OVER (
-        PARTITION BY id_paciente
-        ORDER BY fecha_registro DESC, clave ASC
-      ) AS rn
-    FROM identidades_paciente
-  ) ip ON p.id_paciente = ip.id_paciente AND ip.rn = 1
+  LEFT JOIN identidades_paciente ip ON p.clave_identidad_activa = ip.clave
 `;
 
 export class RepositorioPacientesMysql implements RepositorioPacienteLectura {

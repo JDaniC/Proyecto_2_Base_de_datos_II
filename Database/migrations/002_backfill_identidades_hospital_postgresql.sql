@@ -7,6 +7,8 @@ BEGIN;
 SET LOCAL search_path TO hospital_general, public;
 SELECT pg_advisory_xact_lock(hashtext('bdii_hospital_inicializador_v2'));
 
+ALTER TABLE paciente ADD COLUMN IF NOT EXISTS clave_identidad_activa CHAR(64) DEFAULT NULL;
+
 INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
 SELECT
   encode(sha256(('CUI:' || regexp_replace(p.cui, '[^0-9]', '', 'g'))::bytea), 'hex'),
@@ -16,5 +18,9 @@ SELECT
 FROM paciente p
 WHERE p.cui IS NOT NULL AND LENGTH(TRIM(regexp_replace(p.cui, '[^0-9]', '', 'g'))) = 13
 ON CONFLICT (clave) DO NOTHING;
+
+UPDATE paciente p
+SET clave_identidad_activa = encode(sha256(('CUI:' || regexp_replace(p.cui, '[^0-9]', '', 'g'))::bytea), 'hex')
+WHERE p.cui IS NOT NULL AND LENGTH(TRIM(regexp_replace(p.cui, '[^0-9]', '', 'g'))) = 13 AND p.clave_identidad_activa IS NULL;
 
 COMMIT;

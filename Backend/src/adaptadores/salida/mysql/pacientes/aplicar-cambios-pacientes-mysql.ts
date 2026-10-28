@@ -22,11 +22,17 @@ export async function aplicarCambiosPacientesMysql(
       if (cambio.tipo === 'CREAR') {
         const pac = cambio.nuevoEstado as Paciente;
         const fechaRegSql = pac.fechaRegistro ? pac.fechaRegistro.replace('T', ' ').replace('Z', '') : null;
+        const claveActiva = pac.identificacion
+          ? createHash('sha256')
+              .update(derivarClaveIdentificacion(pac.identificacion.tipo, pac.identificacion.numero))
+              .digest('hex')
+          : null;
         await executor.consultar(
           `INSERT INTO paciente (
             id_publico, revision, nombres, apellidos,
-            fecha_nacimiento, sexo, telefono, correo, direccion, estado, fecha_registro
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO', COALESCE(?, NOW(6)))`,
+            fecha_nacimiento, sexo, telefono, correo, direccion, estado, fecha_registro,
+            clave_identidad_activa
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO', COALESCE(?, NOW(6)), ?)`,
           [
             pac.id,
             pac.version,
@@ -38,6 +44,7 @@ export async function aplicarCambiosPacientesMysql(
             pac.correo ?? null,
             pac.direccion ?? null,
             fechaRegSql,
+            claveActiva,
           ],
         );
 
@@ -70,6 +77,11 @@ export async function aplicarCambiosPacientesMysql(
         if (Number(filaPrevia.revision) !== cambio.versionAnterior) {
           throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado por otro proceso.');
         }
+        const claveActiva = pac.identificacion
+          ? createHash('sha256')
+              .update(derivarClaveIdentificacion(pac.identificacion.tipo, pac.identificacion.numero))
+              .digest('hex')
+          : null;
         await executor.consultar(
           `UPDATE paciente SET
             revision = ?,
@@ -80,7 +92,8 @@ export async function aplicarCambiosPacientesMysql(
             telefono = ?,
             correo = ?,
             direccion = ?,
-            estado = ?
+            estado = ?,
+            clave_identidad_activa = ?
           WHERE id_publico = ?`,
           [
             pac.version,
@@ -92,6 +105,7 @@ export async function aplicarCambiosPacientesMysql(
             pac.correo ?? null,
             pac.direccion ?? null,
             nuevoEstadoPaciente,
+            claveActiva,
             pac.id,
           ],
         );

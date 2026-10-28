@@ -29,16 +29,24 @@ BEGIN
     JSON_OBJECT(
       'sexo', p.sexo,
       'direccion', p.direccion,
-      'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f')
+      'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f'),
+      'clave_identidad_activa', p.clave_identidad_activa
     )
   FROM paciente p
-  WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL)
+  WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL OR p.clave_identidad_activa IS NOT NULL)
     AND NOT EXISTS (
       SELECT 1 FROM revisiones r
       WHERE r.tipo_recurso = 'paciente_demografia_v3'
         AND r.recurso_id = p.id_publico
         AND r.version = p.revision
     );
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paciente' AND COLUMN_NAME = 'clave_identidad_activa'
+  ) THEN
+    ALTER TABLE paciente DROP COLUMN clave_identidad_activa;
+  END IF;
 
   IF EXISTS (
     SELECT 1 FROM information_schema.COLUMNS 

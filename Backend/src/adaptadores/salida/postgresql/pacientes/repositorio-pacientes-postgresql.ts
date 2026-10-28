@@ -56,6 +56,7 @@ const SELECT_PACIENTE_BASE = `
     ce.segundo_apellido AS ce_segundo_apellido,
     ce.parentesco AS ce_parentesco,
     ce.telefono AS ce_telefono,
+    p.clave_identidad_activa,
     ip.tipo_documento,
     ip.numero_documento
   FROM paciente p
@@ -72,15 +73,7 @@ const SELECT_PACIENTE_BASE = `
     FROM contacto_emergencia
     ORDER BY id_paciente, id_contacto ASC
   ) ce ON p.id_paciente = ce.id_paciente
-  LEFT JOIN (
-    SELECT DISTINCT ON (id_paciente)
-      id_paciente,
-      clave,
-      tipo_documento,
-      numero_documento
-    FROM identidades_paciente
-    ORDER BY id_paciente, fecha_registro DESC, clave ASC
-  ) ip ON p.id_paciente = ip.id_paciente
+  LEFT JOIN identidades_paciente ip ON p.clave_identidad_activa = ip.clave
 `;
 
 export class RepositorioPacientesPostgresql implements RepositorioPacienteLectura {

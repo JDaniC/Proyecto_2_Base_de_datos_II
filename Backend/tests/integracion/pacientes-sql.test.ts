@@ -299,6 +299,27 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.tipo, 'PASAPORTE');
   assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.numero, pasExtraPg);
 
+  // Retiro de identificación mediante PATCH identificacion: null en PostgreSQL con múltiples reservas previas
+  const actRetiroDocPg = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: paciente2Id,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      identificacion: null,
+    },
+  });
+  assert.equal(actRetiroDocPg.respuesta.identificacion, undefined, 'la respuesta del retiro en PostgreSQL debe omitir la identificación');
+
+  // En lecturas posteriores (porId y consultar), la identificación debe permanecer ausente (undefined)
+  // y NO debe exponer automáticamente otra reserva remanente (como el CUI previo)
+  const pac2SinDocTrasRetiro = await repoPg.porId(paciente2Id);
+  assert.equal(pac2SinDocTrasRetiro?.identificacion, undefined, 'GET porId en PostgreSQL tras retiro no debe exponer otra reserva remanente');
+
+  const consultado2TrasRetiro = await consultar.ejecutar({ contexto, bundle, id: paciente2Id });
+  assert.equal(consultado2TrasRetiro.identificacion, undefined, 'caso de uso consultar en PostgreSQL no debe exponer otra reserva remanente');
+
   // 7. Actualización y concurrencia optimista
   const modificado = await actualizar.ejecutar({
     contexto,
@@ -959,6 +980,27 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   });
   assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.tipo, 'CUI');
   assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.numero, cuiExtra);
+
+  // Retiro de identificación mediante PATCH identificacion: null con múltiples reservas previas en MySQL
+  const actRetiroDocMy = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteConDocId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      identificacion: null,
+    },
+  });
+  assert.equal(actRetiroDocMy.respuesta.identificacion, undefined, 'la respuesta del retiro debe omitir la identificación');
+
+  // En lecturas posteriores (porId y consultar), la identificación debe permanecer ausente (undefined)
+  // y NO debe exponer automáticamente otra reserva remanente (como el pasaporte)
+  const pacSinDocTrasRetiro = await repoMysql.porId(pacienteConDocId);
+  assert.equal(pacSinDocTrasRetiro?.identificacion, undefined, 'GET porId tras retiro no debe exponer otra reserva remanente');
+
+  const consultadoTrasRetiro = await consultar.ejecutar({ contexto, bundle, id: pacienteConDocId });
+  assert.equal(consultadoTrasRetiro.identificacion, undefined, 'caso de uso consultar no debe exponer otra reserva remanente');
 
   // Probar ciclos repetidos de reversión y restauración de respaldo demográfico sin violar tabla append-only
   const sentenciaRespaldo = `

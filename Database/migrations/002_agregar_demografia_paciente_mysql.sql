@@ -38,6 +38,13 @@ BEGIN
     ALTER TABLE paciente ADD COLUMN fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) AFTER estado;
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'paciente' AND COLUMN_NAME = 'clave_identidad_activa'
+  ) THEN
+    ALTER TABLE paciente ADD COLUMN clave_identidad_activa CHAR(64) DEFAULT NULL AFTER fecha_registro;
+  END IF;
+
   -- Restaurar valores demográficos respaldados en revisiones si existen
   IF EXISTS (
     SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'revisiones'
@@ -60,6 +67,10 @@ BEGIN
       p.fecha_registro = COALESCE(
         STR_TO_DATE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), 'null'), '%Y-%m-%d %H:%i:%s.%f'),
         p.fecha_registro
+      ),
+      p.clave_identidad_activa = COALESCE(
+        p.clave_identidad_activa,
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.clave_identidad_activa')), 'null')
       );
   END IF;
 END$$

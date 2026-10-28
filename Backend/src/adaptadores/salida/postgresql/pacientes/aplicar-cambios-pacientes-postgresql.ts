@@ -39,20 +39,26 @@ export async function aplicarCambiosPacientesPostgresql(
       if (cambio.tipo === 'CREAR') {
         const pac = cambio.nuevoEstado as Paciente;
         const cui = pac.identificacion?.tipo === 'CUI' ? pac.identificacion.numero : null;
+        const claveActiva = pac.identificacion
+          ? createHash('sha256')
+              .update(derivarClaveIdentificacion(pac.identificacion.tipo, pac.identificacion.numero))
+              .digest('hex')
+          : null;
         const [primerNombre, segundoNombre] = dividirNombre(pac.nombres);
         const [primerApellido, segundoApellido] = dividirNombre(pac.apellidos);
         const resPaciente = await executor.consultar<{ id_paciente: number | string }>(
           `INSERT INTO paciente (
-            id_publico, revision, cui, primer_nombre, segundo_nombre,
+            id_publico, revision, cui, clave_identidad_activa, primer_nombre, segundo_nombre,
             primer_apellido, segundo_apellido, fecha_nacimiento, sexo,
             tipo_sangre, telefono_principal, correo_principal, direccion,
             fecha_registro
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           RETURNING id_paciente`,
           [
             pac.id,
             pac.version,
             cui,
+            claveActiva,
             primerNombre,
             segundoNombre,
             primerApellido,
@@ -104,6 +110,11 @@ export async function aplicarCambiosPacientesPostgresql(
       } else if (cambio.tipo === 'MODIFICAR' || cambio.tipo === 'ACTUALIZAR') {
         const pac = cambio.nuevoEstado as Paciente;
         const cui = pac.identificacion?.tipo === 'CUI' ? pac.identificacion.numero.replace(/[^0-9]/g, '') : null;
+        const claveActiva = pac.identificacion
+          ? createHash('sha256')
+              .update(derivarClaveIdentificacion(pac.identificacion.tipo, pac.identificacion.numero))
+              .digest('hex')
+          : null;
 
         // Recuperar registro existente bajo bloqueo pesimista
         const resPrevio = await executor.consultar<{
@@ -151,8 +162,9 @@ export async function aplicarCambiosPacientesPostgresql(
             telefono_principal = $9,
             correo_principal = $10,
             direccion = $11,
-            cui = $12
-          WHERE id_paciente = $13`,
+            cui = $12,
+            clave_identidad_activa = $13
+          WHERE id_paciente = $14`,
           [
             pac.version,
             primerNombre,
@@ -166,6 +178,7 @@ export async function aplicarCambiosPacientesPostgresql(
             pac.correo ?? null,
             pac.direccion ?? null,
             cui,
+            claveActiva,
             filaPrevia.id_paciente,
           ],
         );
