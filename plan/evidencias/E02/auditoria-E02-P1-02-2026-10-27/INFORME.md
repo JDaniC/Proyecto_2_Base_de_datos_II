@@ -81,6 +81,8 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
     - En `002_agregar_demografia_paciente_mysql.sql`, se envolvieron las extracciones JSON con `NULLIF(JSON_UNQUOTE(JSON_EXTRACT(...)), 'null')`, garantizando que campos nulos en JSON (p. ej. `direccion` nula cuando el paciente solo declaró sexo) se restauren como `NULL` en SQL y no como la cadena literal `'null'`.
 19. **Autenticación HMAC y validación estricta de cursores de auditoría:**
     - En `consulta-historial-sql.ts`, se integraron `codificarCursorSql` y `decodificarCursorSql` con firma HMAC, vinculando el cursor a la institución, el recurso (`eventos_auditoria`), el `pacienteId` y el ordenamiento. Se eliminó la omisión silenciosa de errores para rechazar cursores corruptos, alterados o pertenecientes a otro paciente con `ErrorDominio('SOLICITUD_INVALIDA')`.
+20. **Exigencia de historial clínico coincidente antes de confirmar archivo (PostgreSQL y MySQL):**
+    - En `aplicarCambiosPacientesPostgresql`, se añadió `RETURNING id_historial` a la sentencia `UPDATE historial_clinico SET estado_historial = 'ARCHIVADO' ...` comprobando que afecte al menos una fila. En `aplicarCambiosPacientesMysql`, se consulta y bloquea `SELECT id_historial FROM historial_clinico WHERE id_paciente = ? FOR UPDATE`. Si el paciente no posee fila en `historial_clinico` (p. ej. paciente legado), la transacción falla de inmediato con `PERSISTENCIA_NO_DISPONIBLE`, evitando avanzar la revisión del paciente o dejarlo en estado activo tras un archivo reportado como exitoso.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |

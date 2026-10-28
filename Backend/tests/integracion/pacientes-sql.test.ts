@@ -378,6 +378,59 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   );
   assert.equal(resLegacyDb.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL debe preservarse tras actualizar');
 
+  // Intento de archivar paciente legado sin fila historial_clinico debe fallar y no avanzar la revisión del paciente
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-legacy-sin-historial',
+          instante: instanteUtc('2026-10-27T12:00:00Z'),
+          ids: { recurso_id: idLegacy },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: idLegacy,
+              versionAnterior: versionPositiva(2),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Paciente legado sin historial',
+                fecha: '2026-10-27T12:00:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'PERSISTENCIA_NO_DISPONIBLE');
+      return true;
+    },
+    'archivar un paciente sin historial_clinico debe fallar con PERSISTENCIA_NO_DISPONIBLE',
+  );
+
+  const resLegacyRev = await pool.consultar<{ revision: number | string }>(
+    'SELECT revision FROM paciente WHERE id_publico = $1',
+    [idLegacy],
+  );
+  assert.equal(Number(resLegacyRev.filas[0]?.revision), 2, 'la revisión del paciente no debe avanzar si falló el archivo');
+
   await assert.rejects(
     () => registrar.ejecutar({
       contexto,
@@ -1058,6 +1111,60 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
     [idLegacyMy],
   );
   assert.equal(filaLegacyMy.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL en MySQL debe preservarse');
+
+  // Intento de archivar paciente legado dental sin fila historial_clinico debe fallar
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-legacy-mysql-sin-historial',
+          instante: instanteUtc('2026-10-27T12:00:00Z'),
+          ids: { recurso_id: idLegacyMy },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: idLegacyMy,
+              versionAnterior: versionPositiva(2),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Paciente legado dental sin historial',
+                fecha: '2026-10-27T12:00:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'PERSISTENCIA_NO_DISPONIBLE');
+      return true;
+    },
+    'archivar paciente dental sin historial_clinico debe fallar con PERSISTENCIA_NO_DISPONIBLE',
+  );
+
+  const filaLegacyRevMy = await pool.consultar<{ revision: number | string; estado: string }>(
+    'SELECT revision, estado FROM paciente WHERE id_publico = ?',
+    [idLegacyMy],
+  );
+  assert.equal(Number(filaLegacyRevMy.filas[0]?.revision), 2, 'la revisión en MySQL no debe avanzar si falló el archivo');
+  assert.equal(filaLegacyRevMy.filas[0]?.estado, 'ACTIVO', 'el paciente debe permanecer ACTIVO si falló el archivo');
 
   const altaGustavoMy = await registrar.ejecutar({
     contexto,

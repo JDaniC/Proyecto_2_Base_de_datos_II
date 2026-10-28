@@ -156,6 +156,14 @@ export async function aplicarCambiosPacientesMysql(
             throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado concurrentemente.');
           }
 
+          const resHist = await executor.consultar<{ id_historial: number | string }>(
+            'SELECT id_historial FROM historial_clinico WHERE id_paciente = ? FOR UPDATE',
+            [filaP.id_paciente],
+          );
+          if (resHist.filas.length === 0) {
+            throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se encontró el historial clínico para archivar.');
+          }
+
           const fechaBajaSql = archivo.fecha.replace('T', ' ').replace('Z', '');
           await executor.consultar(
             `UPDATE historial_clinico SET

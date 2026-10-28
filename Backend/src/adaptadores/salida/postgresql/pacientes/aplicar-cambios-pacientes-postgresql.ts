@@ -338,7 +338,7 @@ export async function aplicarCambiosPacientesPostgresql(
             throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado concurrentemente.');
           }
 
-          await executor.consultar(
+          const resHist = await executor.consultar<{ id_historial: number | string }>(
             `UPDATE historial_clinico SET
               estado_historial = 'ARCHIVADO',
               causa_baja = $1,
@@ -346,7 +346,8 @@ export async function aplicarCambiosPacientesPostgresql(
               fecha_baja = $3::timestamp,
               actor_baja = $4,
               revision = revision + 1
-            WHERE id_paciente = $5`,
+            WHERE id_paciente = $5
+            RETURNING id_historial`,
             [
               archivo.causa,
               archivo.motivo,
@@ -355,6 +356,9 @@ export async function aplicarCambiosPacientesPostgresql(
               filaP.id_paciente,
             ],
           );
+          if (resHist.filas.length === 0) {
+            throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se encontró el historial clínico para archivar.');
+          }
 
           // Avanzar la revisión compartida del paciente de forma atómica
           await executor.consultar(
