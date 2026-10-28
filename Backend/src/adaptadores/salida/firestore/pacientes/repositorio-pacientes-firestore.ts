@@ -267,7 +267,7 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
         }
       }
 
-      // 2. Búsqueda por prefijo de nombre sobre nombre_busqueda
+      // 2. Búsqueda por prefijo de nombre sobre claves_nombre en límites de palabra
       let query: Query = this.firestore.collection('pacientes');
       if (criterios.estado && criterios.estado !== 'TODOS') {
         query = query.where('estado', '==', criterios.estado);
@@ -275,8 +275,7 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
 
       const direccion = criterios.orden === 'ASC' ? 'asc' : 'desc';
       query = query
-        .where('nombre_busqueda', '>=', qNorm)
-        .where('nombre_busqueda', '<=', qNorm + '\uf8ff')
+        .where('claves_nombre', 'array-contains', qNorm)
         .orderBy('nombre_busqueda', direccion)
         .orderBy(FieldPath.documentId(), direccion);
 

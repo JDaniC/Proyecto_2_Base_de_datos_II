@@ -29,6 +29,7 @@ export interface DocumentoPacienteFirestore {
   readonly nombres: string;
   readonly apellidos: string;
   readonly nombre_busqueda: string;
+  readonly claves_nombre?: readonly string[];
   readonly fecha_nacimiento: string;
   readonly sexo?: string;
   readonly grupo_sanguineo?: string;
@@ -196,6 +197,21 @@ export function mapearPacienteFirestore(
   });
 }
 
+export function generarClavesNombre(nombres: string, apellidos: string): string[] {
+  const normalizado = normalizarTextoBusqueda(`${nombres} ${apellidos}`);
+  const palabras = normalizado.split(' ').filter(Boolean);
+  const claves = new Set<string>();
+
+  for (let i = 0; i < palabras.length; i++) {
+    const frase = palabras.slice(i).join(' ');
+    for (let len = 1; len <= Math.min(frase.length, 100); len++) {
+      claves.add(frase.slice(0, len));
+    }
+  }
+
+  return [...claves].slice(0, 300);
+}
+
 export function mapearADocumentoPacienteFirestore(
   paciente: Paciente,
 ): DocumentoPacienteFirestore {
@@ -203,12 +219,14 @@ export function mapearADocumentoPacienteFirestore(
     `${paciente.nombres} ${paciente.apellidos}`,
   );
   const fechaApertura = new Date(paciente.fechaRegistro);
+  const clavesNombre = generarClavesNombre(paciente.nombres, paciente.apellidos);
 
   return {
     revision: Number(paciente.version),
     nombres: paciente.nombres,
     apellidos: paciente.apellidos,
     nombre_busqueda: nombreBusqueda,
+    claves_nombre: clavesNombre,
     fecha_nacimiento: paciente.fechaNacimiento
       ? paciente.fechaNacimiento.toString()
       : '2000-01-01',

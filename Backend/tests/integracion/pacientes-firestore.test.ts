@@ -463,6 +463,51 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
     assert.ok(resLucia.data.length >= 1);
     assert.equal(resLucia.data[0]?.nombres, 'Lucía Valentina');
 
+    // Búsqueda por prefijo en límite de palabra: apellido 'Garc' debe encontrar a Mateo Alexander García Pérez
+    const resGarc = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: {
+        q: 'Garc',
+        limite: 10,
+        orden: 'ASC',
+      },
+    });
+    assert.ok(
+      resGarc.data.some((p) => p.id === primerMenorId),
+      'debe encontrar paciente por prefijo de apellido Garc',
+    );
+
+    // Búsqueda por prefijo en límite de palabra: segundo nombre 'Alex'
+    const resAlex = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: {
+        q: 'Alex',
+        limite: 10,
+        orden: 'ASC',
+      },
+    });
+    assert.ok(
+      resAlex.data.some((p) => p.id === primerMenorId),
+      'debe encontrar paciente por prefijo de segundo nombre Alex',
+    );
+
+    // Búsqueda por infijo 'xander' no debe coincidir
+    const resInfix = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: {
+        q: 'xander',
+        limite: 10,
+        orden: 'ASC',
+      },
+    });
+    assert.ok(
+      !resInfix.data.some((p) => p.id === primerMenorId),
+      'no debe coincidir por infijo xander',
+    );
+
     // Registrar otro menor con prefijo 'Mateo' para probar paginación de prefijo
     const resSegundoMateo = await registrar.ejecutar({
       contexto,

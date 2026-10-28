@@ -126,6 +126,7 @@ export const modelos = [
       nombres: texto(),
       apellidos: texto(),
       nombre_busqueda: texto(400),
+      claves_nombre: z.array(texto(100)).min(1).max(300).optional(),
       fecha_nacimiento: z.iso.date(),
       sexo: texto(40).optional(),
       grupo_sanguineo: texto(20).optional(),
