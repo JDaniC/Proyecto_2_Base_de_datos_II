@@ -588,6 +588,75 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
     const idsPagina = [p1.data[0]?.id, p2.data[0]?.id];
     assert.ok(idsPagina.includes(segundoMateoId));
     assert.ok(idsPagina.includes(tercerMateoId));
+
+    // Búsqueda por documento: comprobar que busca tanto CUI como PASAPORTE sin que uno oculte al otro
+    const numDocCompartido = '2999112230101';
+    const resMenorCui = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Diego Fernando',
+        apellidos: 'Reyes',
+        fecha_nacimiento: '2023-01-10',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'CUI', numero: numDocCompartido },
+        responsables: [
+          {
+            nombres: 'Fernando',
+            apellidos: 'Reyes',
+            telefono: '+502 4433 2211',
+            parentesco: 'PADRE',
+            es_principal: true,
+            autoriza_atencion: true,
+            documento: { tipo: 'CUI', numero: '4433221100101' },
+          },
+        ],
+      },
+    });
+
+    const resMenorPasaporte = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Santiago',
+        apellidos: 'Reyes',
+        fecha_nacimiento: '2023-02-15',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'PASAPORTE', numero: numDocCompartido },
+        responsables: [
+          {
+            nombres: 'Lorena',
+            apellidos: 'Reyes',
+            telefono: '+502 4433 2212',
+            parentesco: 'MADRE',
+            es_principal: true,
+            autoriza_atencion: true,
+            documento: { tipo: 'CUI', numero: '4433221200101' },
+          },
+        ],
+      },
+    });
+
+    const resBusqDocAmbos = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: {
+        q: numDocCompartido,
+        limite: 10,
+        orden: 'ASC',
+      },
+    });
+
+    assert.equal(
+      resBusqDocAmbos.data.length,
+      2,
+      'debe devolver tanto el paciente con CUI como el paciente con PASAPORTE para el mismo número',
+    );
+    const idsEncontrados = resBusqDocAmbos.data.map((p) => p.id);
+    assert.ok(idsEncontrados.includes(resMenorCui.respuesta.id));
+    assert.ok(idsEncontrados.includes(resMenorPasaporte.respuesta.id));
   });
 
   await t.test('7. Archivo de paciente: impide modificaciones posteriores', async () => {

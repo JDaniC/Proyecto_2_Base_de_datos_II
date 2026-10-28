@@ -233,37 +233,44 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
 
     try {
       // 1. Si el término parece documento exacto (CUI o PASAPORTE), verificar en reservas de identidad
-      let titularDocId: UUID | null = null;
+      const candidatosId = new Set<UUID>();
+
       try {
         const cuiNorm = normalizarIdentificacion('CUI', qRaw);
-        titularDocId = await this.titularIdentidad({
+        const titularCui = await this.titularIdentidad({
           tipo: 'CUI',
           numero: cuiNorm.slice('CUI:'.length),
         });
+        if (titularCui) candidatosId.add(titularCui);
       } catch { /* no es CUI */ }
 
-      if (!titularDocId) {
-        try {
-          const pasNorm = normalizarIdentificacion('PASAPORTE', qRaw);
-          titularDocId = await this.titularIdentidad({
-            tipo: 'PASAPORTE',
-            numero: pasNorm.slice('PASAPORTE:'.length),
-          });
-        } catch { /* no es PASAPORTE */ }
-      }
+      try {
+        const pasNorm = normalizarIdentificacion('PASAPORTE', qRaw);
+        const titularPas = await this.titularIdentidad({
+          tipo: 'PASAPORTE',
+          numero: pasNorm.slice('PASAPORTE:'.length),
+        });
+        if (titularPas) candidatosId.add(titularPas);
+      } catch { /* no es PASAPORTE */ }
 
-      if (titularDocId) {
-        const pac = await this.porId(titularDocId);
-        if (pac) {
-          const coincideEstado =
-            !criterios.estado ||
-            criterios.estado === 'TODOS' ||
-            pac.estado === criterios.estado;
-          if (coincideEstado) {
-            return Object.freeze({
-              elementos: Object.freeze([pac]),
-            });
+      if (candidatosId.size > 0) {
+        const pacientesDocs: Paciente[] = [];
+        for (const candId of candidatosId) {
+          const pac = await this.porId(candId);
+          if (pac) {
+            const coincideEstado =
+              !criterios.estado ||
+              criterios.estado === 'TODOS' ||
+              pac.estado === criterios.estado;
+            if (coincideEstado) {
+              pacientesDocs.push(pac);
+            }
           }
+        }
+        if (pacientesDocs.length > 0) {
+          return Object.freeze({
+            elementos: Object.freeze(pacientesDocs),
+          });
         }
       }
 
