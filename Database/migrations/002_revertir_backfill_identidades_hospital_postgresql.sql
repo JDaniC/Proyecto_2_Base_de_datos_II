@@ -46,6 +46,12 @@ BEGIN
   END IF;
 END $$;
 
+-- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía
+INSERT INTO usuario (id_usuario, id_publico, revision, nombre_usuario, auth_uid, proveedor_identidad, institucion_id, estado)
+SELECT 1, gen_random_uuid(), 1, 'sistema_migracion', 'bdii_migracion_sistema', 'FIREBASE', 'HOSPITAL_GENERAL', 'ACTIVO'
+WHERE NOT EXISTS (SELECT 1 FROM usuario)
+ON CONFLICT (id_usuario) DO NOTHING;
+
 -- Preservar punteros activos en la tabla revisiones para recuperación sin pérdida
 INSERT INTO revisiones (
   id_revision, tipo_recurso, recurso_id, version, id_usuario,
