@@ -46,32 +46,40 @@ export async function aplicarCambiosPacientesPostgresql(
           : null;
         const [primerNombre, segundoNombre] = dividirNombre(pac.nombres);
         const [primerApellido, segundoApellido] = dividirNombre(pac.apellidos);
-        const resPaciente = await executor.consultar<{ id_paciente: number | string }>(
-          `INSERT INTO paciente (
-            id_publico, revision, cui, clave_identidad_activa, primer_nombre, segundo_nombre,
-            primer_apellido, segundo_apellido, fecha_nacimiento, sexo,
-            tipo_sangre, telefono_principal, correo_principal, direccion,
-            fecha_registro
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-          RETURNING id_paciente`,
-          [
-            pac.id,
-            pac.version,
-            cui,
-            claveActiva,
-            primerNombre,
-            segundoNombre,
-            primerApellido,
-            segundoApellido,
-            pac.fechaNacimiento ?? null,
-            pac.sexo,
-            pac.grupoSanguineo ?? null,
-            pac.telefono ?? null,
-            pac.correo ?? null,
-            pac.direccion ?? null,
-            pac.fechaRegistro,
-          ],
-        );
+        let resPaciente;
+        try {
+          resPaciente = await executor.consultar<{ id_paciente: number | string }>(
+            `INSERT INTO paciente (
+              id_publico, revision, cui, clave_identidad_activa, primer_nombre, segundo_nombre,
+              primer_apellido, segundo_apellido, fecha_nacimiento, sexo,
+              tipo_sangre, telefono_principal, correo_principal, direccion,
+              fecha_registro
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING id_paciente`,
+            [
+              pac.id,
+              pac.version,
+              cui,
+              claveActiva,
+              primerNombre,
+              segundoNombre,
+              primerApellido,
+              segundoApellido,
+              pac.fechaNacimiento ?? null,
+              pac.sexo,
+              pac.grupoSanguineo ?? null,
+              pac.telefono ?? null,
+              pac.correo ?? null,
+              pac.direccion ?? null,
+              pac.fechaRegistro,
+            ],
+          );
+        } catch (error) {
+          if (esConflictoIdentidadPostgresql(error)) {
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'Ya existe un paciente registrado con esta identificación.');
+          }
+          throw error;
+        }
 
         const idPaciente = resPaciente.filas[0]?.id_paciente;
         if (idPaciente === undefined) {
@@ -158,39 +166,46 @@ export async function aplicarCambiosPacientesPostgresql(
           [primerApellido, segundoApellido] = dividirNombre(pac.apellidos);
         }
 
-        await executor.consultar(
-          `UPDATE paciente SET
-            revision = $1,
-            primer_nombre = $2,
-            segundo_nombre = $3,
-            primer_apellido = $4,
-            segundo_apellido = $5,
-            fecha_nacimiento = $6,
-            sexo = $7,
-            tipo_sangre = $8,
-            telefono_principal = $9,
-            correo_principal = $10,
-            direccion = $11,
-            cui = $12,
-            clave_identidad_activa = $13
-          WHERE id_paciente = $14`,
-          [
-            pac.version,
-            primerNombre,
-            segundoNombre,
-            primerApellido,
-            segundoApellido,
-            pac.fechaNacimiento ?? null,
-            pac.sexo,
-            pac.grupoSanguineo ?? null,
-            pac.telefono ?? null,
-            pac.correo ?? null,
-            pac.direccion ?? null,
-            cui,
-            claveActiva,
-            filaPrevia.id_paciente,
-          ],
-        );
+        try {
+          await executor.consultar(
+            `UPDATE paciente SET
+              revision = $1,
+              primer_nombre = $2,
+              segundo_nombre = $3,
+              primer_apellido = $4,
+              segundo_apellido = $5,
+              fecha_nacimiento = $6,
+              sexo = $7,
+              tipo_sangre = $8,
+              telefono_principal = $9,
+              correo_principal = $10,
+              direccion = $11,
+              cui = $12,
+              clave_identidad_activa = $13
+            WHERE id_paciente = $14`,
+            [
+              pac.version,
+              primerNombre,
+              segundoNombre,
+              primerApellido,
+              segundoApellido,
+              pac.fechaNacimiento ?? null,
+              pac.sexo,
+              pac.grupoSanguineo ?? null,
+              pac.telefono ?? null,
+              pac.correo ?? null,
+              pac.direccion ?? null,
+              cui,
+              claveActiva,
+              filaPrevia.id_paciente,
+            ],
+          );
+        } catch (error) {
+          if (esConflictoIdentidadPostgresql(error)) {
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'Ya existe un paciente registrado con esta identificación.');
+          }
+          throw error;
+        }
 
         const idPaciente = filaPrevia.id_paciente;
 
@@ -352,11 +367,18 @@ export async function aplicarCambiosPacientesPostgresql(
             [clave],
           );
         } else {
-          await executor.consultar(
-            `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
-            VALUES ($1, $2, $3, $4)`,
-            [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
-          );
+          try {
+            await executor.consultar(
+              `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
+              VALUES ($1, $2, $3, $4)`,
+              [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+            );
+          } catch (error) {
+            if (esConflictoIdentidadPostgresql(error)) {
+              throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+            }
+            throw error;
+          }
         }
       } else if (cambio.tipo === 'LIBERAR') {
         await executor.consultar(
@@ -411,4 +433,18 @@ export async function aplicarCambiosPacientesPostgresql(
       }
     }
   }
+}
+
+function esConflictoIdentidadPostgresql(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const err = error as Record<string, unknown>;
+  const codigo = typeof err.code === 'string' ? err.code : undefined;
+  if (codigo !== '23505') return false;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.detail ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return texto.includes('identidades_paciente') || texto.includes('cui');
 }

@@ -88,6 +88,11 @@ export function crearUnidadDeTrabajoSql<
             if (duradera !== null) return resolverRepeticion(duradera, comando);
             throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado por otro proceso.');
           }
+          if (esConflictoIdentidad(error)) {
+            const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
+            if (duradera !== null) return resolverRepeticion(duradera, comando);
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+          }
           if (esConflictoOperacion(error)) {
             const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
             if (duradera !== null) return resolverRepeticion(duradera, comando);
@@ -401,6 +406,20 @@ function esConflictoRevision(error: unknown): boolean {
     String(err.message ?? ''),
   ].join(' ').toLowerCase();
   return texto.includes('revisiones');
+}
+
+function esConflictoIdentidad(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const codigo = codigoSql(error);
+  if (codigo !== '23505' && codigo !== '1062' && codigo !== 'ER_DUP_ENTRY') return false;
+  const err = error as Record<string, unknown>;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.detail ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return texto.includes('identidades_paciente') || texto.includes('paciente_cui') || texto.includes('cui');
 }
 
 function esConflictoOperacion(error: unknown): boolean {

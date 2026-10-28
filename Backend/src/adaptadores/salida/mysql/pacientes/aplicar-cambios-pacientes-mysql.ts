@@ -142,11 +142,18 @@ export async function aplicarCambiosPacientesMysql(
             [clave],
           );
         } else {
-          await executor.consultar(
-            `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
-            VALUES (?, ?, ?, ?)`,
-            [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
-          );
+          try {
+            await executor.consultar(
+              `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
+              VALUES (?, ?, ?, ?)`,
+              [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+            );
+          } catch (error) {
+            if (esConflictoIdentidadMysql(error)) {
+              throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+            }
+            throw error;
+          }
         }
       } else if (cambio.tipo === 'LIBERAR') {
         await executor.consultar(
@@ -206,4 +213,17 @@ export async function aplicarCambiosPacientesMysql(
       }
     }
   }
+}
+
+function esConflictoIdentidadMysql(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const err = error as Record<string, unknown>;
+  const codigo = typeof err.code === 'string' ? err.code : undefined;
+  if (codigo !== '1062' && codigo !== 'ER_DUP_ENTRY') return false;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return texto.includes('identidades_paciente');
 }

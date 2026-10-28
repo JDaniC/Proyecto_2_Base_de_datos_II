@@ -46,11 +46,12 @@ BEGIN
   END IF;
 END $$;
 
--- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía
-INSERT INTO usuario (id_usuario, id_publico, revision, nombre_usuario, auth_uid, proveedor_identidad, institucion_id, estado)
-SELECT 1, gen_random_uuid(), 1, 'sistema_migracion', 'bdii_migracion_sistema', 'FIREBASE', 'HOSPITAL_GENERAL', 'ACTIVO'
+-- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía.
+-- Se omite id_usuario para que la secuencia identity asigne el identificador e incremente su valor.
+INSERT INTO usuario (id_publico, revision, nombre_usuario, auth_uid, proveedor_identidad, institucion_id, estado)
+SELECT gen_random_uuid(), 1, 'sistema_migracion', 'bdii_migracion_sistema', 'FIREBASE', 'HOSPITAL_GENERAL', 'ACTIVO'
 WHERE NOT EXISTS (SELECT 1 FROM usuario)
-ON CONFLICT (id_usuario) DO NOTHING;
+ON CONFLICT (auth_uid) DO NOTHING;
 
 -- Preservar punteros activos en la tabla revisiones para recuperación sin pérdida
 INSERT INTO revisiones (
@@ -62,7 +63,7 @@ SELECT
   'paciente_punteros_v3',
   p.id_publico,
   p.revision,
-  COALESCE((SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1), 1),
+  (SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1),
   CURRENT_TIMESTAMP,
   'RESPALDO_MIGRACION_002_REVERSION_HOSPITAL',
   jsonb_build_object(

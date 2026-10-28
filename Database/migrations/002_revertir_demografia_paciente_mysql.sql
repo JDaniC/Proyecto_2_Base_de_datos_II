@@ -24,10 +24,11 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
   END IF;
 
-  -- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía
+  -- Asegurar usuario administrativo para respaldos de auditoría si la tabla usuario está vacía.
+  -- Se omite id_usuario para que la secuencia auto_increment asigne el identificador e incremente su valor.
   IF NOT EXISTS (SELECT 1 FROM usuario) THEN
-    INSERT INTO usuario (id_usuario, id_publico, revision, auth_uid, proveedor_identidad, institucion_id, nombre_usuario, estado)
-    VALUES (1, UUID(), 1, 'bdii_migracion_sistema', 'FIREBASE', 'CLINICA_ODONTOLOGICA', 'sistema_migracion', 'ACTIVO')
+    INSERT INTO usuario (id_publico, revision, auth_uid, proveedor_identidad, institucion_id, nombre_usuario, estado)
+    VALUES (UUID(), 1, 'bdii_migracion_sistema', 'FIREBASE', 'CLINICA_ODONTOLOGICA', 'sistema_migracion', 'ACTIVO')
     ON DUPLICATE KEY UPDATE id_usuario = id_usuario;
   END IF;
 
@@ -41,7 +42,7 @@ BEGIN
     'paciente_demografia_v3',
     p.id_publico,
     p.revision,
-    COALESCE((SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1), 1),
+    (SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1),
     NOW(),
     'RESPALDO_MIGRACION_002_REVERSION_V3_A_V2',
     JSON_OBJECT(
