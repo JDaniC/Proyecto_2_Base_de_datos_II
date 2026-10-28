@@ -83,6 +83,11 @@ export function crearUnidadDeTrabajoSql<
         try {
           return await ejecutarIntento(dependencias, contexto, comando, planificar);
         } catch (error) {
+          if (esConflictoRevision(error)) {
+            const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
+            if (duradera !== null) return resolverRepeticion(duradera, comando);
+            throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado por otro proceso.');
+          }
           if (esConflictoOperacion(error)) {
             const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
             if (duradera !== null) return resolverRepeticion(duradera, comando);
@@ -382,6 +387,20 @@ function esDeadlock(error: unknown): boolean {
   const codigo = codigoSql(error);
   return codigo === '40P01' || codigo === '1213' || codigo === 'ER_LOCK_DEADLOCK' ||
     codigo === '40001' || codigo === '1205' || codigo === 'ER_LOCK_WAIT_TIMEOUT';
+}
+
+function esConflictoRevision(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const codigo = codigoSql(error);
+  if (codigo !== '23505' && codigo !== '1062' && codigo !== 'ER_DUP_ENTRY') return false;
+  const err = error as Record<string, unknown>;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.detail ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return texto.includes('revisiones');
 }
 
 function esConflictoOperacion(error: unknown): boolean {

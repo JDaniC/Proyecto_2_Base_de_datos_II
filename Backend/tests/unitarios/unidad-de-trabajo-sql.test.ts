@@ -116,6 +116,24 @@ test('UoW SQL: normaliza fallos de adquisición durante reconciliación a PERSIS
   );
 });
 
+test('UoW SQL: traduce conflicto de clave única en tabla revisiones a VERSION_DESACTUALIZADA', async () => {
+  const estado = crearPoolSimulado('ok');
+  await assert.rejects(
+    crearUnidadDeTrabajoSql({
+      dialecto: 'postgresql', pool: estado.pool,
+      crearLector: () => estado.lector,
+      aplicarCambios: async () => {
+        throw Object.assign(new Error('duplicate key value violates unique constraint "revisiones_tipo_recurso_recurso_id_version_key"'), {
+          code: '23505',
+          table: 'revisiones',
+          constraint: 'revisiones_tipo_recurso_recurso_id_version_key',
+        });
+      },
+    }).ejecutar(contexto, comando, async () => plan),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'VERSION_DESACTUALIZADA',
+  );
+});
+
 const contexto = crearContextoAutenticado(
   { uid: 'uid-sintetico', institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-25T18:00:00Z') },
   {

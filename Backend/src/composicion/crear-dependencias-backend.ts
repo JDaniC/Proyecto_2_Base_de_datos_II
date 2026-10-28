@@ -23,7 +23,7 @@ import {
 } from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
 import { crearRepositorioCuentaInstitucionalMongodb } from '../adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.js';
 import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
-import { parsearConfiguracionSql } from '../configuracion/conexiones-sql.js';
+import { parsearConfiguracionSql, ErrorConfiguracionSql, type ConfiguracionSql } from '../configuracion/conexiones-sql.js';
 import { parsearConfiguracionMongodb } from '../configuracion/conexiones-mongodb.js';
 import { parsearConfiguracionFirestore } from '../configuracion/conexiones-firestore.js';
 import { INSTITUCIONES_CANONICAS } from '../dominio/compartido/institucion.js';
@@ -68,8 +68,6 @@ export async function crearDependenciasBackend(
   }
   if (faltantes.length > 0) throw new ErrorConfiguracionBackend(faltantes);
 
-  const sql = parsearConfiguracionSql(variables);
-  const mongodb = parsearConfiguracionMongodb(variables);
   const firestoreConfig = parsearConfiguracionFirestore(variables);
   const projectIdAuth = (variables.FIREBASE_AUTH_PROJECT_ID ?? firestoreConfig.projectId).trim();
   if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectIdAuth) || projectIdAuth !== firestoreConfig.projectId) {
@@ -90,6 +88,17 @@ export async function crearDependenciasBackend(
       'FIRESTORE_PROJECT_ID', 'FIRESTORE_EMULATOR_HOST',
     ]);
   }
+
+  let sql: ConfiguracionSql;
+  try {
+    sql = parsearConfiguracionSql(variables);
+  } catch (error) {
+    if (error instanceof ErrorConfiguracionSql) {
+      throw new ErrorConfiguracionBackend(error.variables);
+    }
+    throw error;
+  }
+  const mongodb = parsearConfiguracionMongodb(variables);
 
   const cierres: Array<() => Promise<void>> = [];
   let hostAuthOriginal: string | undefined;

@@ -4,6 +4,7 @@ import type { ConfiguracionMysql } from '../adaptadores/salida/mysql/crear-pool-
 export interface ConfiguracionSql {
   readonly postgresql: ConfiguracionPostgresql;
   readonly mysql: ConfiguracionMysql;
+  readonly cursorSigningSecret: string;
 }
 
 /** Acepta únicamente las cuentas/base de aplicación definidas por el proyecto. */
@@ -16,10 +17,12 @@ export function parsearConfiguracionSql(
   const mysql = leerMotor(variables, 'MYSQL', {
     baseDatos: 'clinica_odontologica', usuario: 'clinica_app',
   });
-  if (variables.CURSOR_SIGNING_SECRET !== undefined && variables.CURSOR_SIGNING_SECRET.trim().length < 16) {
+  const secretoCursor = variables.CURSOR_SIGNING_SECRET?.trim();
+  if (!secretoCursor || secretoCursor.length < 16) {
     throw new ErrorConfiguracionSql(['CURSOR_SIGNING_SECRET']);
   }
-  return Object.freeze({ postgresql, mysql });
+  process.env.CURSOR_SIGNING_SECRET = secretoCursor;
+  return Object.freeze({ postgresql, mysql, cursorSigningSecret: secretoCursor });
 }
 
 function leerMotor<T extends { readonly baseDatos: string; readonly usuario: string }>(
