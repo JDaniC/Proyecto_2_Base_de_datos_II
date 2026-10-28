@@ -29,6 +29,8 @@ import {
   CrearPacienteDTO,
   ActualizarPacienteDTO,
   ExpedienteCompleto,
+  FiltrosHistorial,
+  PaginaHistorial,
   DiagnosticoHistorial,
   RecetaHistorial,
   RecetaMedicamentoItem,
@@ -124,7 +126,8 @@ export interface DashboardRepository {
 export interface PatientRepository {
   buscar(institucionId: InstitucionId, query: BuscarPacientesQuery): Promise<ResultadoPaginadoPacientes>;
   obtenerPorId(institucionId: InstitucionId, id: string): Promise<Paciente | null>;
-  obtenerExpedienteCompleto(institucionId: InstitucionId, id: string): Promise<ExpedienteCompleto | null>;
+  obtenerExpedienteCompleto(institucionId: InstitucionId, id: string, filtros?: FiltrosHistorial): Promise<ExpedienteCompleto | null>;
+  obtenerHistorial?(institucionId: InstitucionId, id: string, filtros: FiltrosHistorial): Promise<PaginaHistorial>;
   crear(institucionId: InstitucionId, dto: CrearPacienteDTO): Promise<Paciente>;
   actualizar(institucionId: InstitucionId, id: string, dto: ActualizarPacienteDTO): Promise<Paciente>;
   archivar(institucionId: InstitucionId, id: string, causa: CausaArchivo, motivo: string, versionEsperada?: number): Promise<Paciente>;

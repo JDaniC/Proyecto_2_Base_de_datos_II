@@ -19,7 +19,8 @@
     "test:integration:pacientes:mongodb": "node scripts/run-pacientes-mongodb-integration.mjs",
     "test:integration:pacientes:firestore": "node scripts/run-pacientes-firestore-integration.mjs",
     "provision:cuenta": "npm run build && node --env-file-if-exists=.env scripts/provisionar-cuenta.mjs",
-    "test:integration:historial": "node scripts/run-historial-integration.mjs"
+    "test:integration:historial": "node scripts/run-historial-integration.mjs",
+    "test:integration:pacientes:ui": "node scripts/run-historial-integration.mjs --pacientes-ui"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

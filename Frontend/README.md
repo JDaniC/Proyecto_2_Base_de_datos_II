@@ -4,7 +4,7 @@ Guía única del frontend vigente. Sustituye los documentos usados para construi
 
 ## Estado real
 
-React 19, TypeScript y Vite. El código usa repositorios simulados y datos sintéticos; el backend y la persistencia real en los cuatro motores siguen pendientes. La institución del prototipo procede de la sesión simulada. En la entrega deberá proceder de la identidad verificada por el servidor; la UI nunca elige un motor.
+React 19, TypeScript y Vite. En modo API están conectados sesión, alta, búsqueda, edición de pacientes y expediente/cronología paginados para las cuatro instituciones. El servidor verifica identidad y cuenta local y resuelve la institución. Las capacidades clínicas E03–E05 continúan según el plan; los simuladores solo se usan cuando se elige explícitamente ese modo.
 
 ## Ejecutar y comprobar
 
@@ -24,6 +24,22 @@ El servidor local usa el puerto 5173. `build` comprueba tipos y genera `dist/`, 
 El cliente HTTP (`Frontend/src/services/http`) se comunica con el servidor mediante la ruta canónica `/api/v1`. Durante el desarrollo local (`npm run dev` o `npm run preview` en el puerto 5173), Vite redirige automáticamente todas las peticiones bajo `/api` hacia el backend en `http://127.0.0.1:3000` (configurable mediante la variable `VITE_BACKEND_TARGET`). Adicionalmente, el servidor backend tiene CORS habilitado con soporte para las cabeceras `Authorization`, `X-Correlation-ID`, `Idempotency-Key` e `If-Match`, permitiendo también el consumo cross-origin directo si se define `VITE_API_BASE_URL=http://127.0.0.1:3000/api/v1`.
 
 Las pruebas seleccionadas comprueban el alcance vigente, fechas, mensajes y carga de pantallas. La suite histórica contiene expectativas de pantallas retiradas; no se usa su exclusión como prueba de que todo el producto está validado. Su reconciliación sigue en E06-P2-02 y DEC12 del plan.
+
+### Pacientes HTTP (E02-P1-03)
+
+Ejecutar con `VITE_SERVICE_MODE=api` y un backend configurado. Para ensayo aislado configurar `VITE_FIREBASE_AUTH_EMULATOR_URL`; para Firebase real usar su configuración de identidad. No hay selector de institución ni respaldo clínico en localStorage. Abrir pacientes no lista registros: requiere un término, con páginas por cursor y orden de registro. Los conflictos de documento ofrecen búsqueda para reutilizar el perfil; un conflicto de versión conserva la edición. Ante resultado incierto el formulario conserva datos y clave UUID y permite reintentar la misma solicitud.
+
+El perfil administrativo se obtiene sin solicitar historial clínico. Las cuentas con `historial.leer` reciben perfil e índice paginado de eventos; datos legados ausentes muestran «Sin dato». El índice mantiene referencias de versión para su detalle clínico futuro; no representa antecedentes, consultas o recetas no recibidos como registros vacíos confirmados. Editar demografía conserva los vínculos pediátricos. Para registrar hermanos se puede buscar otro menor, seleccionar su responsable y enviar su UUID/versión con un vínculo nuevo; los datos personales del adulto se conservan. Las operaciones especializadas pendientes rechazan explícitamente hasta integrar su adaptador.
+
+Comprobaciones reproducibles:
+
+```sh
+npm --prefix Frontend test -- src/test/http/ src/test/product-scope/ src/services/errors.test.ts src/services/dates.test.ts
+npm --prefix Frontend exec -- playwright install chromium
+npm --prefix Backend run test:integration:pacientes:ui
+```
+
+El recorrido requiere Docker, Java y Firebase CLI del entorno local ya descrito en Database. Prepara PostgreSQL, MySQL y MongoDB con proyecto, puertos, volúmenes y secretos aleatorios; Auth/Firestore usan proyecto `demo-*` y emuladores locales. No utiliza los volúmenes de desarrollo. Para Chrome instalado puede usarse `PLAYWRIGHT_CHANNEL=chrome`; `PLAYWRIGHT_PACKAGE` permite señalar el paquete Playwright del runtime de Codex. `PATIENTS_UI_RESULTS` guarda solo resultados saneados. La cronología usa fixtures explícitos del índice de lectura, sin acreditar escritores clínicos E03–E05.
 
 ## Flujos conservados
 
@@ -47,7 +63,7 @@ No se añade editor de permisos, selector de motor, agenda visible de laboratori
 - `src/mocks/`: adaptadores simulados; reemplazarlos en la frontera de composición según el plan.
 - `src/test/product-scope/`: regresiones del producto vigente y carga de pantallas.
 
-La API no debe confiar en actor, rol o institución enviados por formularios. El backend resolverá permisos y motor; los adaptadores HTTP reemplazarán la inyección simulada en ServiceContext. Ver [contratos](../plan/03_CONTRATOS_Y_FLUJOS.md).
+La API no confía en actor, rol o institución enviados por formularios. El backend resuelve permisos y motor; `ServiceContext` compone sesión y pacientes con el mismo cliente HTTP. Ver [contratos](../plan/03_CONTRATOS_Y_FLUJOS.md).
 
 ## Diseño implementado
 
@@ -65,7 +81,7 @@ Acceso y estructura común se cargan al inicio; las pantallas autenticadas se de
 
 En la compilación de limpieza del 24/10/2026, el JavaScript inicial total pasó de aproximadamente 1,18 MB a 535.540 bytes (aproximadamente 55 % menos), con 25 pantallas diferidas. El archivo mayor quedó en 297.819 bytes. Son medidas del bundle compilado, no tiempos de carga medidos en una red real.
 
-No afirmar que esta optimización implementa persistencia, idempotencia ni transacciones: esas garantías dependen del backend pendiente.
+La optimización de carga no acredita persistencia ni transacciones. La evidencia de integración de pacientes se conserva por separado en [E02-P1-03](../plan/evidencias/E02/E02-P1-03.md).
 
 ## Evidencia histórica y límites
 

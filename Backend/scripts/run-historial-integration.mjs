@@ -8,6 +8,8 @@ import {fileURLToPath} from 'node:url';
 import {randomBytes} from 'node:crypto';
 import {createServer} from 'node:net';
 const execFile=promisify(execFileCallback);
+// Comparte únicamente la preparación aislada; cada recorrido conserva sus propias aserciones.
+const pacientesUi = process.argv.includes('--pacientes-ui');
 const backend=resolve(fileURLToPath(new URL('..',import.meta.url))), root=resolve(backend,'..');
 const proyecto=`bdii-ca07-${randomBytes(5).toString('hex')}`;
 const temporal=await mkdtemp(join(tmpdir(),'bdii-ca07-')), secretos=join(temporal,'secrets');
@@ -63,7 +65,7 @@ try{
  conf.firestore.rules=join(root,'Database/firebase/firestore.rules');conf.firestore.indexes=indexesPath;
  for(const n of ['auth','firestore','hub','logging'])if(conf.emulators[n])conf.emulators[n].port=Number(await puerto());
  const config=join(temporal,'firebase.json');await writeFile(config,JSON.stringify(conf));
- console.log(await run('firebase',['emulators:exec','--only','firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/historial-documental-integration.mjs`],{cwd:backend}));
+ console.log(await run('firebase',['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/${pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`],{cwd:backend, timeout: pacientesUi ? 600000 : 300000}));
  const antes=await estadoSql();
  await migrarSql();
  const despues=await estadoSql();

@@ -31,9 +31,11 @@ describe('ServiceFactory y Flujos de Interfaz en Modo API (E01-P2-03)', () => {
     expect(services.mode).toBe('api');
     expect(services.authRepository).toBeDefined();
 
-    await expect(
-      services.patientRepository.buscar('HOSPITAL_GENERAL', { q: 'García' })
-    ).rejects.toThrowError(/503 PERSISTENCIA_NO_DISPONIBLE: Modo API activo sin adaptador HTTP configurado para patientRepository\.buscar/);
+    // Pacientes ya tiene adaptador E02; una caída de transporte conserva un error 503.
+    mockFetch.mockRejectedValueOnce(new TypeError('offline'));
+    await expect(services.patientRepository.buscar('HOSPITAL_GENERAL', { q: 'García' }))
+      .rejects.toMatchObject({ status: 503, codigo: '503 PERSISTENCIA_NO_DISPONIBLE' });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
 
     await expect(
       services.appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA', {

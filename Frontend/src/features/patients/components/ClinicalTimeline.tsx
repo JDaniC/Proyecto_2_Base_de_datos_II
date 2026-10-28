@@ -16,11 +16,18 @@ import { EmptyState } from '../../../design-system/components/EmptyState';
 
 export interface ClinicalTimelineProps {
   eventos: EventoHistorial[];
+  servidor?: {
+    orden: 'ASC' | 'DESC';
+    tipo?: TipoEventoHistorial;
+    cambiar: (orden: 'ASC' | 'DESC', tipo?: TipoEventoHistorial) => void;
+  };
 }
 
-export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) => {
-  const [orden, setOrden] = useState<'DESC' | 'ASC'>('DESC');
-  const [filtroTipo, setFiltroTipo] = useState<TipoEventoHistorial | 'TODOS'>('TODOS');
+export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos, servidor }) => {
+  const [ordenLocal, setOrden] = useState<'DESC' | 'ASC'>('DESC');
+  const [tipoLocal, setFiltroTipo] = useState<TipoEventoHistorial | 'TODOS'>('TODOS');
+  const orden = servidor?.orden ?? ordenLocal;
+  const filtroTipo = servidor?.tipo ?? (servidor ? 'TODOS' : tipoLocal);
 
   // Filtrado
   const eventosFiltrados = eventos.filter((ev) => {
@@ -29,7 +36,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
   });
 
   // Ordenamiento (DEC-03: selector explícito entre descendente clínico y ascendente canónico)
-  const eventosOrdenados = [...eventosFiltrados].sort((a, b) => {
+  const eventosOrdenados = servidor ? eventos : [...eventosFiltrados].sort((a, b) => {
     const timeA = new Date(a.fechaHora).getTime();
     const timeB = new Date(b.fechaHora).getTime();
     return orden === 'DESC' ? timeB - timeA : timeA - timeB;
@@ -90,7 +97,9 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)' }}>
             Filtrar evento:
           </span>
-          {(['TODOS', 'CONSULTA', 'RECETA', 'DIAGNOSTICO'] as const).map((tipo) => (
+          {servidor ? <select aria-label="Tipo de evento" value={filtroTipo} onChange={(e) => servidor.cambiar(orden, e.target.value === 'TODOS' ? undefined : e.target.value as TipoEventoHistorial)}>
+            {['TODOS', 'CONSULTA', 'DIAGNOSTICO', 'TRATAMIENTO', 'RECETA', 'ARCHIVO', 'REACTIVACION', 'HOSPITALIZACION', 'EXAMEN', 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB', 'VACUNA', 'CRECIMIENTO'].map((tipo) => <option key={tipo} value={tipo}>{tipo === 'TODOS' ? 'Todos' : getDisplayLabel(tipo)}</option>)}
+          </select> : (['TODOS', 'CONSULTA', 'RECETA', 'DIAGNOSTICO'] as const).map((tipo) => (
             <button
               key={tipo}
               type="button"
@@ -124,7 +133,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
             variant="secondary"
             size="sm"
             leftIcon={<ArrowUpDown size={14} />}
-            onClick={() => setOrden(orden === 'DESC' ? 'ASC' : 'DESC')}
+            onClick={() => servidor ? servidor.cambiar(orden === 'DESC' ? 'ASC' : 'DESC', servidor.tipo) : setOrden(orden === 'DESC' ? 'ASC' : 'DESC')}
             aria-label="Alternar orden cronológico"
           >
             {orden === 'DESC' ? 'Más recientes primero' : 'Cronológico desde apertura (ASC)'}
@@ -263,7 +272,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
                   </p>
 
                   {/* Firmante / Autor */}
-                  <div
+                  {evento.profesional && <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -275,7 +284,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos }) =
                     <span>Registrado por:</span>
                     <strong style={{ color: 'var(--color-strong)' }}>{evento.profesional}</strong>
                     <span>({evento.rolProfesional})</span>
-                  </div>
+                  </div>}
                 </div>
               );
             })}

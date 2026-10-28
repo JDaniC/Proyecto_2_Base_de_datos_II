@@ -152,6 +152,7 @@ export const NewOrderPage: React.FC = () => {
     }
 
     if (pruebasSeleccionadas.some(p => precios[p.id] === undefined || !Number.isFinite(Number(precios[p.id])) || Number(precios[p.id]) < 0)) { setError('Registra el precio acordado para cada prueba.'); return; }
+    if (pacienteSeleccionado.edadAnios === null) { setError('Completa la fecha de nacimiento del paciente antes de registrar la orden.'); return; }
     setGuardando(true);
     try {
       await laboratoryRepository.crearOrden(institucionId, {
