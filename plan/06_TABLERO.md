@@ -61,7 +61,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 |---|---|---|
 | E00 | HECHA | [Cierre y demostración](evidencias/E00/CIERRE.md); PR #20 integrado (`566e75c`); Codex sin hallazgos |
 | E01 | HECHA | [Cierre y demostración](evidencias/E01/CIERRE.md); PR #39 integrado; Codex sin hallazgos |
-| E02 | PENDIENTE | `plan/evidencias/E02/CIERRE.md` por crear al ejecutar |
+| E02 | EN_CURSO | JDaniC; rama `codex/cierre-e02-demostracion`; reserva en PR borrador `[PLAN] Cerrar fase E02 con demostración integrada`; [seguimiento](seguimiento/E02-CIERRE.md) |
 | E03 | PENDIENTE | `plan/evidencias/E03/CIERRE.md` por crear al ejecutar |
 | E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
 | E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
