@@ -3,7 +3,7 @@
 - **Fase y objetivo:** E02 — alta, búsqueda, edición y expediente de pacientes conectados a persistencia en los cuatro motores institucionales.
 - **Base integrada verificada:** `origin/develop` `4e50533e6d6c86a447d09fb384199dfa7581d772` antes de este PR documental.
 - **Fecha y participante:** 28/10/2026, America/Guatemala · JDaniC.
-- **Estado:** CERRADA tras este PR documental [#49 — Cerrar fase E02](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/49).
+- **Estado:** EN_REVISION en [#49 — Cerrar fase E02](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/49); se marca `HECHA` en el tablero tras verificar revisión automática e integración.
 - **Revisión automática:** sujeta a `contrato-pr` y `revision-codex` success sobre el SHA final antes del merge automático.
 - **Auditoría funcional:** [informe](auditoria-cierre-2026-10-28/INFORME.md), [inventario](auditoria-cierre-2026-10-28/inventario.csv) y [trazabilidad](auditoria-cierre-2026-10-28/trazabilidad.csv).
 

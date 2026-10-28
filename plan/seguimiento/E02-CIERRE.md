@@ -18,4 +18,4 @@ Auditoría funcional de fase: cero desviaciones confirmadas para sus criterios d
 
 ## Continuidad
 
-Próxima acción: comprobar `contrato-pr` y esperar revisión nativa de Codex sobre el SHA final del PR #49; resolver cada hallazgo y repetir verificaciones afectadas. Al integrarse PR #49 en `develop`, la puerta de cierre de E02 queda `HECHA` y desbloquea `E03-P1-01` en `python3 scripts/github/cola.py`. La suite global de Frontend conserva 5 fallos fuera de E02 en L13 y 10 pruebas U04/U05 obsoletas con sustitutos documentados; no se presentan como verdes.
+Próxima acción: comprobar `contrato-pr` y esperar revisión nativa de Codex sobre el SHA final del PR #49; resolver cada hallazgo y repetir verificaciones afectadas. Tras verificar revisión e integración en `develop`, registrar la puerta de cierre de E02 como `HECHA` en el tablero para desbloquear `E03-P1-01` en `python3 scripts/github/cola.py`. La suite global de Frontend conserva 5 fallos fuera de E02 en L13 y 10 pruebas U04/U05 obsoletas con sustitutos documentados; no se presentan como verdes.
