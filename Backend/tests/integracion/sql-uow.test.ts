@@ -91,13 +91,13 @@ async function verificarFlujos(
   assert.ok(idObjetivo !== undefined);
   const rolPermisos = JSON.stringify(['pacientes.administrar']);
   if (dialecto === 'postgresql') {
-    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', $1::jsonb)", [rolPermisos]);
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', $1::jsonb) ON CONFLICT (nombre) DO UPDATE SET permisos = EXCLUDED.permisos", [rolPermisos]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
       [idObjetivo, rolNombre],
     );
   } else {
-    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', ?)", [rolPermisos]);
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('MEDICO', ?) ON DUPLICATE KEY UPDATE permisos = VALUES(permisos)", [rolPermisos]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT ?, id_rol FROM rol WHERE nombre = ?',
       [idObjetivo, rolNombre],
@@ -126,13 +126,13 @@ async function verificarFlujos(
   assert.ok(idAdministrador !== undefined);
   const permisosAdministrador = JSON.stringify(['usuarios.administrar']);
   if (dialecto === 'postgresql') {
-    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', $1::jsonb)", [permisosAdministrador]);
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', $1::jsonb) ON CONFLICT (nombre) DO UPDATE SET permisos = EXCLUDED.permisos", [permisosAdministrador]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
       [idAdministrador, 'ADMIN_INSTITUCIONAL'],
     );
   } else {
-    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', ?)", [permisosAdministrador]);
+    await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ADMIN_INSTITUCIONAL', ?) ON DUPLICATE KEY UPDATE permisos = VALUES(permisos)", [permisosAdministrador]);
     await pool.consultar(
       'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT ?, id_rol FROM rol WHERE nombre = ?',
       [idAdministrador, 'ADMIN_INSTITUCIONAL'],

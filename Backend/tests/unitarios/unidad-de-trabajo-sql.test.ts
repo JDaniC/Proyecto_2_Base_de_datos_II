@@ -116,6 +116,59 @@ test('UoW SQL: normaliza fallos de adquisición durante reconciliación a PERSIS
   );
 });
 
+test('UoW SQL: traduce conflicto de clave única en tabla revisiones a VERSION_DESACTUALIZADA', async () => {
+  const estado = crearPoolSimulado('ok');
+  await assert.rejects(
+    crearUnidadDeTrabajoSql({
+      dialecto: 'postgresql', pool: estado.pool,
+      crearLector: () => estado.lector,
+      aplicarCambios: async () => {
+        throw Object.assign(new Error('duplicate key value violates unique constraint "revisiones_tipo_recurso_recurso_id_version_key"'), {
+          code: '23505',
+          table: 'revisiones',
+          constraint: 'revisiones_tipo_recurso_recurso_id_version_key',
+        });
+      },
+    }).ejecutar(contexto, comando, async () => plan),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'VERSION_DESACTUALIZADA',
+  );
+});
+
+test('UoW SQL: resuelve repetición cuando un conflicto concurrente de identidades encuentra la operación ganadora', async () => {
+  const estado = crearPoolSimulado('replay_identity_collision');
+  const resultado = await crearUnidadDeTrabajoSql({
+    dialecto: 'postgresql', pool: estado.pool,
+    crearLector: () => estado.lector,
+    aplicarCambios: async () => {
+      throw Object.assign(new Error('duplicate key value violates unique constraint "identidades_paciente_pkey"'), {
+        code: '23505',
+        table: 'identidades_paciente',
+        constraint: 'identidades_paciente_pkey',
+      });
+    },
+  }).ejecutar(contexto, comando, async () => plan);
+
+  assert.deepEqual(resultado, plan.resultado);
+});
+
+test('UoW SQL: traduce conflicto concurrente de identidades a PACIENTE_DUPLICADO cuando no existe operación durable', async () => {
+  const estado = crearPoolSimulado('ok');
+  await assert.rejects(
+    crearUnidadDeTrabajoSql({
+      dialecto: 'postgresql', pool: estado.pool,
+      crearLector: () => estado.lector,
+      aplicarCambios: async () => {
+        throw Object.assign(new Error('duplicate key value violates unique constraint "identidades_paciente_pkey"'), {
+          code: '23505',
+          table: 'identidades_paciente',
+          constraint: 'identidades_paciente_pkey',
+        });
+      },
+    }).ejecutar(contexto, comando, async () => plan),
+    (error: unknown) => error instanceof ErrorDominio && error.codigo === 'PACIENTE_DUPLICADO',
+  );
+});
+
 const contexto = crearContextoAutenticado(
   { uid: 'uid-sintetico', institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-25T18:00:00Z') },
   {
@@ -135,12 +188,12 @@ const plan: PlanConfirmacion<{ ok: boolean }> = {
   resultado: { httpStatus: 200, respuesta: { ok: true }, correlacionOriginal: contexto.correlacion },
 };
 
-function crearPoolSimulado(modo: 'acuse_perdido' | 'ack_epipe' | 'constraint_commit' | 'replay_permission_revoked' | 'ok') {
+function crearPoolSimulado(modo: 'acuse_perdido' | 'ack_epipe' | 'constraint_commit' | 'replay_permission_revoked' | 'replay_identity_collision' | 'ok') {
   let adquirida = false;
   let liberaciones = 0;
   let adquisiciones = 0;
   let commits = 0;
-  let operacionDurable: Record<string, unknown> | undefined = modo === 'replay_permission_revoked'
+  let operacionDurable: Record<string, unknown> | undefined = (modo === 'replay_permission_revoked' || modo === 'replay_identity_collision')
     ? { hash_entrada: comando.hashEntrada, codigo_respuesta: 200, respuesta: { respuesta: plan.resultado.respuesta, correlacionOriginal: contexto.correlacion } }
     : undefined;
   const cuentaActual = modo === 'replay_permission_revoked'

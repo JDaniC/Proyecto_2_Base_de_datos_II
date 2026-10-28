@@ -1,0 +1,1477 @@
+process.env.CURSOR_SIGNING_SECRET = process.env.CURSOR_SIGNING_SECRET || 'super_secret_cursor_signing_key_test_2026';
+
+import assert from 'node:assert/strict';
+import { createHash, randomUUID } from 'node:crypto';
+import { test } from 'node:test';
+import { crearContextoAutenticado } from '../../src/aplicacion/puertos/contexto-autenticado.js';
+import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
+import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
+import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
+import { versionPositiva } from '../../src/dominio/compartido/version.js';
+import { dependenciasComandoPorDefecto } from '../../src/adaptadores/salida/sistema/servicios-sistema.js';
+import { RegistrarPaciente } from '../../src/aplicacion/casos-uso/pacientes/registrar-paciente.js';
+import { ActualizarPaciente } from '../../src/aplicacion/casos-uso/pacientes/actualizar-paciente.js';
+import { ConsultarPaciente } from '../../src/aplicacion/casos-uso/pacientes/consultar-paciente.js';
+import { BuscarPacientes } from '../../src/aplicacion/casos-uso/pacientes/buscar-pacientes.js';
+import { crearPoolPostgresql } from '../../src/adaptadores/salida/postgresql/crear-pool-postgresql.js';
+import {
+  crearRepositorioPacientesPostgresql,
+  crearUnidadDeTrabajoPacientesPostgresql,
+} from '../../src/adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
+import { RepositorioPacientesPostgresql } from '../../src/adaptadores/salida/postgresql/pacientes/repositorio-pacientes-postgresql.js';
+import { crearPoolMysql } from '../../src/adaptadores/salida/mysql/crear-pool-mysql.js';
+import {
+  crearRepositorioPacientesMysql,
+  crearUnidadDeTrabajoPacientesMysql,
+} from '../../src/adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
+import { RepositorioPacientesMysql } from '../../src/adaptadores/salida/mysql/pacientes/repositorio-pacientes-mysql.js';
+import { crearConsultaHistorialSql } from '../../src/adaptadores/salida/sql/consulta-historial-sql.js';
+import { codificarCursorSql } from '../../src/adaptadores/salida/sql/cursor-paginacion-sql.js';
+import { crearRepositorioCuentaPostgresql } from '../../src/adaptadores/salida/postgresql/repositorio-cuenta-postgresql.js';
+import { crearRepositorioCuentaMysql } from '../../src/adaptadores/salida/mysql/repositorio-cuenta-mysql.js';
+import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
+
+const puertoPg = process.env.PG_TEST_PORT;
+const secretoPg = process.env.PG_TEST_SECRET_FILE;
+const puertoMysql = process.env.MYSQL_TEST_PORT;
+const secretoMysql = process.env.MYSQL_TEST_SECRET_FILE;
+
+test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y archivo en hospital_general', {
+  skip: !puertoPg || !secretoPg,
+}, async (t) => {
+  const pool = await crearPoolPostgresql({
+    host: '127.0.0.1',
+    puerto: Number(puertoPg),
+    baseDatos: 'hospital_general',
+    usuario: 'hospital_app',
+    archivoContrasena: secretoPg as string,
+  });
+  t.after(async () => pool.cerrar());
+
+  const uid = `medico-pg-${randomUUID()}`;
+  const cuentaId = randomUUID();
+  const nombre = `MEDICO_${randomUUID().slice(0, 8)}`;
+
+  await pool.consultar(
+    'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES ($1, $2, $3, $4, $5)',
+    [cuentaId, nombre, uid, 'HOSPITAL_GENERAL', 'ACTIVO'],
+  );
+  const profesional = await pool.consultar<{ id_personal: number | string }>(
+    "INSERT INTO personal_medico (primer_nombre, primer_apellido, estado) VALUES ('DR', 'HOSPITAL', 'ACTIVO') RETURNING id_personal",
+  );
+  await pool.consultar('UPDATE usuario SET id_personal = $1 WHERE auth_uid = $2', [profesional.filas[0]?.id_personal, uid]);
+
+  const rolPermisos = JSON.stringify(['pacientes.administrar', 'historial.archivar', 'historial.leer']);
+  await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('SECRETARIA', $1::jsonb) ON CONFLICT (nombre) DO UPDATE SET permisos = EXCLUDED.permisos", [rolPermisos]);
+  const resUsuario = await pool.consultar<{ id_usuario: number | string }>(
+    'SELECT id_usuario FROM usuario WHERE auth_uid = $1',
+    [uid],
+  );
+  const idUsuarioInterno = resUsuario.filas[0]?.id_usuario;
+  assert.ok(idUsuarioInterno !== undefined);
+
+  await pool.consultar(
+    'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT $1, id_rol FROM rol WHERE nombre = $2',
+    [idUsuarioInterno, 'SECRETARIA'],
+  );
+
+  const cuentaDb = await crearRepositorioCuentaPostgresql(pool).porUid(uid);
+  assert.ok(cuentaDb);
+
+  const contexto = crearContextoAutenticado(
+    { uid, institucion: 'HOSPITAL_GENERAL', emitidoEn: instanteUtc('2026-10-27T12:00:00Z') },
+    cuentaDb,
+    uuidPublico(randomUUID()),
+  );
+
+  const repoPg = new RepositorioPacientesPostgresql(pool);
+  const bundle: BundleInstitucional = Object.freeze({
+    institucion: 'HOSPITAL_GENERAL',
+    estadoPersistencia: 'DISPONIBLE',
+    pacientes: crearRepositorioPacientesPostgresql(pool),
+    uow: crearUnidadDeTrabajoPacientesPostgresql(pool),
+  });
+
+  const registrar = new RegistrarPaciente(dependenciasComandoPorDefecto);
+  const actualizar = new ActualizarPaciente(dependenciasComandoPorDefecto);
+  const consultar = new ConsultarPaciente();
+  const buscar = new BuscarPacientes();
+
+  // 1. Alta de paciente hospitalario con CUI y contacto de emergencia
+  const cuiValido = '2489123450101';
+  const idempotencyKey = uuidPublico(randomUUID());
+
+  const altaRes = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: idempotencyKey,
+    entrada: {
+      nombres: 'Carlos Alberto',
+      apellidos: 'Gómez Morales',
+      fecha_nacimiento: '1990-05-15',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiValido },
+      telefono: '50255551234',
+      correo: 'carlos.gomez@ejemplo.com',
+      direccion: 'Avenida Elena 12-34, Zona 1, Ciudad de Guatemala',
+      grupo_sanguineo: 'O+',
+      contacto_emergencia: {
+        nombres: 'María Antonieta',
+        apellidos: 'Morales López',
+        parentesco: 'MADRE',
+        telefono: '50255554321',
+      },
+    },
+  });
+
+  const pacienteCreado = altaRes.respuesta;
+  const pacienteId = uuidPublico(pacienteCreado.id);
+  assert.ok(pacienteId);
+  assert.equal(pacienteCreado.nombres, 'Carlos Alberto');
+  assert.equal(pacienteCreado.apellidos, 'Gómez Morales');
+  assert.equal(pacienteCreado.grupo_sanguineo, 'O+');
+  assert.equal(pacienteCreado.version, 1);
+  assert.equal(pacienteCreado.estado, 'ACTIVO');
+
+  // 2. Repetición idempotente
+  const repeticion = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: idempotencyKey,
+    entrada: {
+      nombres: 'Carlos Alberto',
+      apellidos: 'Gómez Morales',
+      fecha_nacimiento: '1990-05-15',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiValido },
+      telefono: '50255551234',
+      correo: 'carlos.gomez@ejemplo.com',
+      direccion: 'Avenida Elena 12-34, Zona 1, Ciudad de Guatemala',
+      grupo_sanguineo: 'O+',
+      contacto_emergencia: {
+        nombres: 'María Antonieta',
+        apellidos: 'Morales López',
+        parentesco: 'MADRE',
+        telefono: '50255554321',
+      },
+    },
+  });
+  assert.equal(repeticion.respuesta.id, pacienteId);
+  assert.equal(repeticion.correlacionOriginal, altaRes.correlacionOriginal);
+
+  // 3. Clave de idempotencia reutilizada con distinta carga útil
+  await assert.rejects(
+    () => registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: idempotencyKey,
+      entrada: {
+        nombres: 'Otro Nombre',
+        apellidos: 'Gómez Morales',
+        fecha_nacimiento: '1990-05-15',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'CUI', numero: cuiValido },
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'CLAVE_REUTILIZADA',
+  );
+
+  // 4. Conflicto de identidad duplicada (mismo CUI con otra clave)
+  await assert.rejects(
+    () => registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Hermano Gemelo',
+        apellidos: 'Gómez Morales',
+        fecha_nacimiento: '1990-05-15',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'CUI', numero: cuiValido },
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
+  );
+
+  // 5. Consultar por ID y por versión
+  const consultado = await consultar.ejecutar({ contexto, bundle, id: pacienteId });
+  assert.equal(consultado.id, pacienteId);
+  assert.equal(consultado.nombres, 'Carlos Alberto');
+  assert.equal(consultado.contacto_emergencia?.nombres, 'María Antonieta');
+  assert.equal(consultado.contacto_emergencia?.telefono, '50255554321');
+  assert.equal(Date.parse(consultado.fecha_registro), Date.parse(pacienteCreado.fecha_registro), 'la fecha_registro en PostgreSQL debe coincidir exactamente con el instante registrado');
+
+  const titular = await repoPg.titularIdentidad({ tipo: 'CUI', numero: cuiValido });
+  assert.equal(titular, pacienteId);
+
+  const version1 = await repoPg.porVersion(pacienteId, versionPositiva(1));
+  assert.ok(version1);
+  assert.equal(version1.version, 1);
+
+  // 6. Búsqueda por CUI exacto y por prefijo de nombre con acentos
+  const resBusquedaDoc = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: cuiValido, limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusquedaDoc.data.length, 1);
+  assert.equal(resBusquedaDoc.data[0]?.id, pacienteId);
+
+  // Registro de segundo paciente con el mismo apellido para verificar paginación con precisión de microsegundos
+  const cuiValido2 = '2489123450102';
+  const alta2 = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Ana Sofía',
+      apellidos: 'Gómez Castillo',
+      fecha_nacimiento: '1995-08-20',
+      sexo: 'FEMENINO',
+      identificacion: { tipo: 'CUI', numero: cuiValido2 },
+      telefono: '50255559988',
+    },
+  });
+  const paciente2Id = uuidPublico(alta2.respuesta.id);
+
+  // Escape de comodines SQL: búsqueda por '%' no debe coincidir con pacientes
+  const resBusquedaComodin = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '%', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusquedaComodin.data.length, 0, 'la búsqueda por % escapado no debe devolver registros');
+
+  // Búsqueda por prefijo sin acento "Gomez" debe encontrar ambos pacientes
+  const resBusquedaPrefijo = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Gomez', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resBusquedaPrefijo.data.some((p) => p.id === pacienteId));
+  assert.ok(resBusquedaPrefijo.data.some((p) => p.id === paciente2Id));
+
+  // Paginación con cursor y microsegundos: primera página con límite 1
+  const pag1 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Gomez', limite: 1, orden: 'ASC' },
+  });
+  assert.equal(pag1.data.length, 1);
+  assert.ok(pag1.meta.siguiente_cursor);
+
+  // Segunda página usando el cursor generado
+  const pag2 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: pag1.meta.siguiente_cursor },
+  });
+  assert.equal(pag2.data.length, 1);
+  assert.notEqual(pag2.data[0]?.id, pag1.data[0]?.id, 'la segunda página debe avanzar al siguiente paciente');
+
+  // Rechazo de cursor alterado / sin firma válida
+  await assert.rejects(
+    () => buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: pag1.meta.siguiente_cursor + '_corrupto' },
+    }),
+    (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
+  );
+
+  // Rechazo de cursor firmado con clave pública o fallback ajeno al secreto privado de despliegue
+  const cursorFirmadoConClaveInvalida = codificarCursorSql(
+    {
+      v: 1,
+      recurso: 'pacientes',
+      institucion: 'HOSPITAL_GENERAL',
+      q: 'gomez',
+      orden: 'ASC',
+      f: '2026-10-27 12:00:00.000000',
+      id: pacienteId,
+    },
+    'bdii_cursor_deterministic_salt_secret_v1', // clave ajena al secreto privado
+  );
+  await assert.rejects(
+    () => buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: cursorFirmadoConClaveInvalida },
+    }),
+    (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
+  );
+
+  // Probar reuso de reserva de identidad ya perteneciente al mismo paciente en PostgreSQL
+  const pasExtraPg = `PG${randomUUID().slice(0, 7).toUpperCase()}`;
+  const clavePasExtraPg = createHash('sha256').update(`PASAPORTE:${pasExtraPg}`).digest('hex');
+  await pool.consultar(
+    `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente, fecha_registro)
+     SELECT $1, 'PASAPORTE', $2, p.id_paciente, clock_timestamp()
+     FROM paciente p WHERE p.id_publico = $3`,
+    [clavePasExtraPg, pasExtraPg, paciente2Id],
+  );
+
+  const actIdentidadReusadaPg = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: paciente2Id,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      identificacion: { tipo: 'PASAPORTE', numero: pasExtraPg },
+    },
+  });
+  assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.tipo, 'PASAPORTE');
+  assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.numero, pasExtraPg);
+
+  // Retiro de identificación mediante PATCH identificacion: null en PostgreSQL con múltiples reservas previas
+  const actRetiroDocPg = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: paciente2Id,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      identificacion: null,
+    },
+  });
+  assert.equal(actRetiroDocPg.respuesta.identificacion, undefined, 'la respuesta del retiro en PostgreSQL debe omitir la identificación');
+
+  // En lecturas posteriores (porId y consultar), la identificación debe permanecer ausente (undefined)
+  // y NO debe exponer automáticamente otra reserva remanente (como el CUI previo)
+  const pac2SinDocTrasRetiro = await repoPg.porId(paciente2Id);
+  assert.equal(pac2SinDocTrasRetiro?.identificacion, undefined, 'GET porId en PostgreSQL tras retiro no debe exponer otra reserva remanente');
+
+  const consultado2TrasRetiro = await consultar.ejecutar({ contexto, bundle, id: paciente2Id });
+  assert.equal(consultado2TrasRetiro.identificacion, undefined, 'caso de uso consultar en PostgreSQL no debe exponer otra reserva remanente');
+
+  // 7. Actualización y concurrencia optimista
+  const modificado = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50259998877',
+      contacto_emergencia: {
+        nombres: 'María',
+        apellidos: 'Morales',
+        parentesco: 'MADRE',
+        telefono: '50259991122',
+      },
+    },
+  });
+  assert.equal(modificado.respuesta.version, 2);
+  assert.equal(modificado.respuesta.telefono, '50259998877');
+
+  // Intento de actualización con versión desactualizada (stale version 1)
+  await assert.rejects(
+    () => actualizar.ejecutar({
+      contexto,
+      bundle,
+      id: pacienteId,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      cambios: {
+        version_esperada: 1,
+        telefono: '50251110000',
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // 8. Validación de CUIs preexistentes en paciente.cui (sin identidades_paciente) y preservación de fecha_nacimiento NULL
+  const idLegacy = uuidPublico(randomUUID());
+  await pool.consultar(
+    `INSERT INTO paciente (
+      id_publico, revision, cui, primer_nombre, primer_apellido, fecha_nacimiento, sexo
+    ) VALUES ($1, 1, '2489-77777-0101', 'Directo', 'Legacy', NULL, 'MASCULINO')`,
+    [idLegacy],
+  );
+  const titularLegacy = await repoPg.titularIdentidad({ tipo: 'CUI', numero: '2489777770101' });
+  assert.equal(titularLegacy, idLegacy, 'titularIdentidad debe detectar CUIs preexistentes en paciente.cui');
+
+  const resBuscarLegacy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '2489-77777-0101', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBuscarLegacy.data.length, 1, 'buscar debe encontrar paciente por CUI formateado en paciente.cui');
+  assert.equal(resBuscarLegacy.data[0]?.id, idLegacy);
+
+  const resBuscarLegacyDigitos = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '2489777770101', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBuscarLegacyDigitos.data.length, 1, 'buscar debe encontrar paciente por CUI en dígitos en paciente.cui');
+  assert.equal(resBuscarLegacyDigitos.data[0]?.id, idLegacy);
+
+  // Actualizar solo el teléfono del paciente legacy sin fecha de nacimiento y verificar que se preserva NULL
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: idLegacy,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50255550000',
+    },
+  });
+  const resLegacyDb = await pool.consultar<{ fecha_nacimiento: unknown }>(
+    'SELECT fecha_nacimiento FROM paciente WHERE id_publico = $1',
+    [idLegacy],
+  );
+  assert.equal(resLegacyDb.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL debe preservarse tras actualizar');
+
+  // Intento de archivar paciente legado sin fila historial_clinico debe fallar y no avanzar la revisión del paciente
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-legacy-sin-historial',
+          instante: instanteUtc('2026-10-27T12:00:00Z'),
+          ids: { recurso_id: idLegacy },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: idLegacy,
+              versionAnterior: versionPositiva(2),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Paciente legado sin historial',
+                fecha: '2026-10-27T12:00:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'PERSISTENCIA_NO_DISPONIBLE');
+      return true;
+    },
+    'archivar un paciente sin historial_clinico debe fallar con PERSISTENCIA_NO_DISPONIBLE',
+  );
+
+  const resLegacyRev = await pool.consultar<{ revision: number | string }>(
+    'SELECT revision FROM paciente WHERE id_publico = $1',
+    [idLegacy],
+  );
+  assert.equal(Number(resLegacyRev.filas[0]?.revision), 2, 'la revisión del paciente no debe avanzar si falló el archivo');
+
+  await assert.rejects(
+    () => registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Intruso',
+        apellidos: 'Duplicado',
+        fecha_nacimiento: '1990-01-01',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'CUI', numero: '2489 77777 0101' },
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
+  );
+
+  // 9. Desduplicación determinista ante múltiples contactos de emergencia y preservación en actualizaciones
+  await pool.consultar(
+    `INSERT INTO contacto_emergencia (
+      id_publico, revision, id_paciente, primer_nombre,
+      segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+    ) SELECT $1, 1, p.id_paciente, 'Segundo', 'Contacto', 'Emergencia', 'Test', 'HERMANO', '50255551234'
+    FROM paciente p WHERE p.id_publico = $2`,
+    [uuidPublico(randomUUID()), pacienteId],
+  );
+
+  const resMultiCe = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Carlos', limite: 10, orden: 'ASC' },
+  });
+  const aparicionesCarlos = resMultiCe.data.filter((p) => p.id === pacienteId).length;
+  assert.equal(aparicionesCarlos, 1, 'el paciente debe figurar una sola vez a pesar de tener múltiples contactos de emergencia');
+
+  // Actualizar solo el teléfono del paciente y verificar que no se borran los otros contactos de emergencia
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      telefono: '50255558888',
+    },
+  });
+  const resContactos = await pool.consultar<{ cant: number | string }>(
+    `SELECT count(*) AS cant FROM contacto_emergencia ce
+     JOIN paciente p ON p.id_paciente = ce.id_paciente
+     WHERE p.id_publico = $1`,
+    [pacienteId],
+  );
+  assert.equal(Number(resContactos.filas[0]?.cant), 2, 'los múltiples contactos de emergencia deben preservarse');
+
+  // Retiro explícito de contacto_emergencia manteniendo el estado ausente sin borrar los contactos existentes
+  const regMultiCe = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Multi Contacto',
+      apellidos: 'Emergencia Test',
+      fecha_nacimiento: '1992-05-10',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: '2489123450999' },
+      contacto_emergencia: {
+        nombres: 'Primer Contacto',
+        apellidos: 'Emergencia Uno',
+        parentesco: 'PADRE',
+        telefono: '50255551111',
+      },
+    },
+  });
+  const pacMultiCeId = uuidPublico(regMultiCe.respuesta.id);
+
+  // Insertar un segundo contacto de emergencia
+  await pool.consultar(
+    `INSERT INTO contacto_emergencia (
+      id_publico, revision, id_paciente, primer_nombre,
+      segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+    ) SELECT $1, 1, p.id_paciente, 'Segundo', 'Contacto', 'Emergencia', 'Dos', 'HERMANO', '50255552222'
+    FROM paciente p WHERE p.id_publico = $2`,
+    [uuidPublico(randomUUID()), pacMultiCeId],
+  );
+
+  // Retirar explícitamente el contacto de emergencia (contacto_emergencia: null)
+  const resSinCe = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacMultiCeId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      contacto_emergencia: null,
+    },
+  });
+  assert.equal(resSinCe.respuesta.contacto_emergencia, undefined, 'el contacto de emergencia debe figurar ausente tras retiro');
+
+  // Lectura por ID y búsqueda deben preservar el estado ausente sin exponer el segundo contacto
+  const consultadoSinCe = await consultar.ejecutar({
+    contexto,
+    bundle,
+    id: pacMultiCeId,
+  });
+  assert.equal(consultadoSinCe.contacto_emergencia, undefined, 'porId no debe exponer el otro contacto remanente');
+
+  const busquedaSinCe = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Multi Contacto', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(busquedaSinCe.data[0]?.contacto_emergencia, undefined, 'buscar no debe exponer el contacto remanente');
+
+  // Los registros en la tabla contacto_emergencia deben seguir existiendo intactos
+  const resContactosTrasRetiro = await pool.consultar<{ cant: number | string }>(
+    `SELECT count(*) AS cant FROM contacto_emergencia ce
+     JOIN paciente p ON p.id_paciente = ce.id_paciente
+     WHERE p.id_publico = $1`,
+    [pacMultiCeId],
+  );
+  assert.equal(Number(resContactosTrasRetiro.filas[0]?.cant), 2, 'ningún contacto de emergencia debe ser eliminado físicamente');
+
+  // 10. Búsqueda por límites de palabra y diacríticos normalizados completos
+  const cuiGustavo = '2489123450103';
+  await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Gustavo Adolfo',
+      apellidos: 'Bécquer Ramírez',
+      fecha_nacimiento: '1985-02-17',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiGustavo },
+    },
+  });
+
+  const resWordBoundary = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Adol', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resWordBoundary.data.some((p) => p.nombres.includes('Gustavo')), 'debe encontrar por prefijo en límite de palabra Adol');
+
+  const resInfix = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'dolfo', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(!resInfix.data.some((p) => p.nombres.includes('Gustavo')), 'no debe coincidir por infijo dolfo');
+
+  const cuiFrancois = '2489123450104';
+  await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'François',
+      apellidos: 'Àlvaro Peña',
+      fecha_nacimiento: '1988-11-23',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: cuiFrancois },
+    },
+  });
+
+  const resFrancois = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'francois', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resFrancois.data.some((p) => p.nombres === 'François'), 'francois normalizado debe encontrar François');
+
+  const resAlvaro = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'alvaro', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resAlvaro.data.some((p) => p.nombres === 'François'), 'alvaro normalizado debe encontrar Àlvaro');
+
+  // 11. Archivo del paciente mediante UoW y control de versión compartida
+  // Intento con versión desactualizada (stale version 2 cuando paciente está en version 3)
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-stale',
+          instante: instanteUtc('2026-10-27T12:30:00Z'),
+          ids: { recurso_id: pacienteId },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: pacienteId,
+              versionAnterior: versionPositiva(2),
+              nuevoEstado: {
+                causa: 'TRASLADO',
+                motivo: 'Intento con versión stale',
+                fecha: '2026-10-27T12:30:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // Archivo correcto con versión vigente 3
+  await bundle.uow?.ejecutar(
+    contexto,
+    {
+      id: uuidPublico(randomUUID()),
+      caso: 'ARCHIVAR_PACIENTE',
+      claveIdempotencia: uuidPublico(randomUUID()),
+      hashEntrada: 'test-hash-archivo-pg',
+      instante: instanteUtc('2026-10-27T12:30:00Z'),
+      ids: { recurso_id: pacienteId },
+    },
+    async () => ({
+      tipo: 'CONFIRMAR',
+      resultado: {
+        httpStatus: 200,
+        respuesta: { estado: 'ARCHIVADO' },
+        correlacionOriginal: uuidPublico(randomUUID()),
+      },
+      revisiones: [],
+      cambios: [
+        {
+          agregado: 'historiales',
+          tipo: 'MODIFICAR',
+          recursoId: pacienteId,
+          versionAnterior: versionPositiva(3),
+          nuevoEstado: {
+            causa: 'TRASLADO',
+            motivo: 'Traslado a hospital departamental de Quetzaltenango',
+            fecha: '2026-10-27T12:30:00Z',
+            actorId: contexto.cuenta.id,
+          },
+        },
+      ],
+      auditoria: [
+        {
+          id: uuidPublico(randomUUID()),
+          actorId: contexto.cuenta.id,
+          caso: 'ARCHIVAR_PACIENTE',
+          recursoId: pacienteId,
+          fechaHora: instanteUtc('2026-10-27T12:30:00Z'),
+          correlacion: uuidPublico(randomUUID()),
+        },
+      ],
+    }),
+  );
+
+  const consultadoArchivado = await repoPg.porId(pacienteId);
+  assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
+  assert.equal(consultadoArchivado?.version, 4, 'el archivo debe avanzar la versión compartida del paciente a 4');
+  assert.equal(consultadoArchivado?.baja?.causa, 'TRASLADO');
+  assert.equal(Date.parse(consultadoArchivado?.baja?.fecha ?? ''), Date.parse('2026-10-27T12:30:00Z'), 'la fecha de baja debe conservarse en UTC');
+  assert.ok(consultadoArchivado?.baja?.motivo);
+
+  // Probar archivo bajo zona horaria local no UTC (America/Guatemala = UTC-6)
+  const tzAnterior = process.env.TZ;
+  try {
+    process.env.TZ = 'America/Guatemala';
+    const altaTz = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Prueba',
+        apellidos: 'Zona Horaria',
+        fecha_nacimiento: '1980-01-01',
+        sexo: 'MASCULINO',
+      },
+    });
+    const idArchTz = uuidPublico(altaTz.respuesta.id);
+    const instanteBaja = '2026-10-27T12:30:00Z';
+    await bundle.uow?.ejecutar(
+      contexto,
+      {
+        id: uuidPublico(randomUUID()),
+        caso: 'ARCHIVAR_PACIENTE',
+        claveIdempotencia: uuidPublico(randomUUID()),
+        hashEntrada: 'hash-tz-baja',
+        instante: instanteUtc(instanteBaja),
+        ids: { recurso_id: idArchTz },
+      },
+      async () => ({
+        tipo: 'CONFIRMAR',
+        resultado: {
+          httpStatus: 200,
+          respuesta: { estado: 'ARCHIVADO' },
+          correlacionOriginal: uuidPublico(randomUUID()),
+        },
+        revisiones: [],
+        cambios: [
+          {
+            agregado: 'historiales',
+            tipo: 'MODIFICAR',
+            recursoId: idArchTz,
+            versionAnterior: versionPositiva(1),
+            nuevoEstado: {
+              causa: 'FALLECIMIENTO',
+              motivo: 'Fallecimiento certificado',
+              fecha: instanteBaja,
+              actorId: contexto.cuenta.id,
+            },
+          },
+        ],
+        auditoria: [],
+      }),
+    );
+    const archConsultado = await repoPg.porId(idArchTz);
+    assert.equal(Date.parse(archConsultado?.baja?.fecha ?? ''), Date.parse(instanteBaja), 'la fecha_baja no debe alterarse por la zona horaria local del proceso');
+  } finally {
+    process.env.TZ = tzAnterior;
+  }
+
+  // 11. Historial de auditoría en PostgreSQL con paginación de precisión en microsegundos
+  const consultaHistorial = crearConsultaHistorialSql(pool, 'postgresql');
+  const paginaEventos = await consultaHistorial.eventos(pacienteId, { limite: 20, orden: 'ASC' });
+  assert.ok(paginaEventos.elementos.length >= 2, 'debe registrar eventos de auditoría para registro y modificaciones');
+
+  const pagEventos1 = await consultaHistorial.eventos(pacienteId, { limite: 1, orden: 'ASC' });
+  assert.equal(pagEventos1.elementos.length, 1);
+  assert.ok(pagEventos1.siguienteCursor, 'debe generar siguienteCursor con microsegundos');
+
+  const pagEventos2 = await consultaHistorial.eventos(pacienteId, {
+    limite: 1,
+    orden: 'ASC',
+    cursor: pagEventos1.siguienteCursor,
+  });
+  assert.equal(pagEventos2.elementos.length, 1);
+  assert.notEqual(
+    pagEventos2.elementos[0]?.id,
+    pagEventos1.elementos[0]?.id,
+    'la paginación de auditoría en PostgreSQL debe avanzar sin repetir el mismo evento',
+  );
+
+  // Validación de rechazo de cursor de auditoría corrupto o manipulado
+  await assert.rejects(
+    async () => {
+      await consultaHistorial.eventos(pacienteId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: 'cursor_completamente_invalido',
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría corrupto debe ser rechazado con SOLICITUD_INVALIDA',
+  );
+
+  // Validación de rechazo de cursor de auditoría perteneciente a otro paciente
+  const otroPacienteId = uuidPublico('00000000-0000-4000-8000-000000000099');
+  const cursorValido = pagEventos1.siguienteCursor!;
+  await assert.rejects(
+    async () => {
+      await consultaHistorial.eventos(otroPacienteId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: cursorValido,
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría emitido para un paciente no debe ser aceptado para otro paciente',
+  );
+});
+
+test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia optimista y archivo en clinica_odontologica', {
+  skip: !puertoMysql || !secretoMysql,
+}, async (t) => {
+  const pool = await crearPoolMysql({
+    host: '127.0.0.1',
+    puerto: Number(puertoMysql),
+    baseDatos: 'clinica_odontologica',
+    usuario: 'clinica_app',
+    archivoContrasena: secretoMysql as string,
+  });
+  t.after(async () => pool.cerrar());
+
+  const uid = `odontologo-my-${randomUUID()}`;
+  const cuentaId = randomUUID();
+  const nombre = `ODONTO_${randomUUID().slice(0, 8)}`;
+
+  await pool.consultar(
+    'INSERT INTO usuario (id_publico, nombre_usuario, auth_uid, institucion_id, estado) VALUES (?, ?, ?, ?, ?)',
+    [cuentaId, nombre, uid, 'CLINICA_ODONTOLOGICA', 'ACTIVO'],
+  );
+  const colegiado = `COL-${randomUUID().slice(0, 8)}`;
+  await pool.consultar(
+    "INSERT INTO odontologo (nombres, apellidos, colegiado) VALUES ('DRA', 'DENTAL', ?)",
+    [colegiado],
+  );
+  const profesional = await pool.consultar<{ id_odontologo: number | string }>(
+    'SELECT id_odontologo FROM odontologo WHERE colegiado = ?',
+    [colegiado],
+  );
+  await pool.consultar('UPDATE usuario SET id_odontologo = ? WHERE auth_uid = ?', [profesional.filas[0]?.id_odontologo, uid]);
+
+  const rolPermisos = JSON.stringify(['pacientes.administrar', 'historial.archivar', 'historial.leer']);
+  await pool.consultar("INSERT INTO rol (nombre, permisos) VALUES ('ODONTOLOGO', ?) ON DUPLICATE KEY UPDATE permisos = VALUES(permisos)", [rolPermisos]);
+  const resUsuario = await pool.consultar<{ id_usuario: number | string }>(
+    'SELECT id_usuario FROM usuario WHERE auth_uid = ?',
+    [uid],
+  );
+  const idUsuarioInterno = resUsuario.filas[0]?.id_usuario;
+  assert.ok(idUsuarioInterno !== undefined);
+
+  await pool.consultar(
+    'INSERT INTO usuario_rol (id_usuario, id_rol) SELECT ?, id_rol FROM rol WHERE nombre = ?',
+    [idUsuarioInterno, 'ODONTOLOGO'],
+  );
+
+  const cuentaDb = await crearRepositorioCuentaMysql(pool).porUid(uid);
+  assert.ok(cuentaDb);
+
+  const contexto = crearContextoAutenticado(
+    { uid, institucion: 'CLINICA_ODONTOLOGICA', emitidoEn: instanteUtc('2026-10-27T12:00:00Z') },
+    cuentaDb,
+    uuidPublico(randomUUID()),
+  );
+
+  const repoMysql = new RepositorioPacientesMysql(pool);
+  const bundle: BundleInstitucional = Object.freeze({
+    institucion: 'CLINICA_ODONTOLOGICA',
+    estadoPersistencia: 'DISPONIBLE',
+    pacientes: crearRepositorioPacientesMysql(pool),
+    uow: crearUnidadDeTrabajoPacientesMysql(pool),
+  });
+
+  const registrar = new RegistrarPaciente(dependenciasComandoPorDefecto);
+  const actualizar = new ActualizarPaciente(dependenciasComandoPorDefecto);
+  const consultar = new ConsultarPaciente();
+  const buscar = new BuscarPacientes();
+
+  // 1. Alta de paciente dental sin documento de identificación (con sexo y dirección demográfica)
+  const altaSinDoc = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Estela Beatriz',
+      apellidos: 'Ramírez Solís',
+      fecha_nacimiento: '1985-11-20',
+      sexo: 'FEMENINO',
+      telefono: '50244441111',
+      correo: 'estela.ramirez@ejemplo.com',
+      direccion: '5ta Avenida 12-45 Zona 1, Ciudad',
+    },
+  });
+
+  const pacienteSinDoc = altaSinDoc.respuesta;
+  const pacienteSinDocId = uuidPublico(pacienteSinDoc.id);
+  assert.ok(pacienteSinDocId);
+  assert.equal(pacienteSinDoc.identificacion, undefined);
+  assert.equal(pacienteSinDoc.estado, 'ACTIVO');
+  assert.equal(pacienteSinDoc.sexo, 'FEMENINO');
+  assert.equal(pacienteSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+  assert.ok(pacienteSinDoc.fecha_registro);
+  assert.notEqual(pacienteSinDoc.fecha_registro.slice(11, 19), '00:00:00', 'debe registrar instante UTC real y no inventar medianoche');
+
+  // Verificar en base de datos: NO debe existir registro en identidades_paciente
+  const resIdent = await pool.consultar(
+    'SELECT ip.clave FROM identidades_paciente ip JOIN paciente p ON ip.id_paciente = p.id_paciente WHERE p.id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(resIdent.filas.length, 0, 'paciente sin documento no debe tener fila en identidades_paciente');
+
+  // Verificar persistencia de sexo y dirección directamente en la tabla paciente de MySQL
+  const filaDbInicial = await pool.consultar<{ sexo: string; direccion: string }>(
+    'SELECT sexo, direccion FROM paciente WHERE id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(filaDbInicial.filas[0]?.sexo, 'FEMENINO');
+  assert.equal(filaDbInicial.filas[0]?.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+
+  // 2. Alta de paciente dental CON pasaporte
+  const pasaporteNum = `P${randomUUID().slice(0, 8).toUpperCase()}`;
+  const altaConDoc = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'John Michael',
+      apellidos: 'Smith',
+      fecha_nacimiento: '1978-03-12',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'PASAPORTE', numero: pasaporteNum },
+      telefono: '50244442222',
+    },
+  });
+
+  const pacienteConDoc = altaConDoc.respuesta;
+  const pacienteConDocId = uuidPublico(pacienteConDoc.id);
+  assert.equal(pacienteConDoc.identificacion?.tipo, 'PASAPORTE');
+
+  const titularPasaporte = await repoMysql.titularIdentidad({ tipo: 'PASAPORTE', numero: pasaporteNum });
+  assert.equal(titularPasaporte, pacienteConDocId);
+
+  // Conflicto de pasaporte duplicado
+  await assert.rejects(
+    () => registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Otro Turista',
+        apellidos: 'Smith',
+        fecha_nacimiento: '1980-01-01',
+        sexo: 'MASCULINO',
+        identificacion: { tipo: 'PASAPORTE', numero: pasaporteNum },
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'PACIENTE_DUPLICADO',
+  );
+
+  // Múltiples identidades para un mismo paciente dental: no debe duplicar filas ni paginación
+  const filaPacMy = await pool.consultar<{ id_paciente: number }>(
+    'SELECT id_paciente FROM paciente WHERE id_publico = ?',
+    [pacienteConDocId],
+  );
+  const idInternoPac = filaPacMy.filas[0]!.id_paciente;
+  const cuiExtra = '2999888880101';
+  const claveCuiExtra = createHash('sha256').update(`CUI:${cuiExtra}`).digest('hex');
+  await pool.consultar(
+    `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente, fecha_registro)
+     VALUES (?, 'CUI', ?, ?, NOW())`,
+    [claveCuiExtra, cuiExtra, idInternoPac],
+  );
+
+  // Verificar que porId devuelve exactamente una identidad determinista sin error
+  const pacMultiId = await repoMysql.porId(pacienteConDocId);
+  assert.ok(pacMultiId);
+  assert.equal(pacMultiId.id, pacienteConDocId);
+
+  // Búsqueda por nombre con límite 1 debe devolver exactamente 1 fila y no duplicar el paciente
+  const resBusqMultiNombre = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'John Michael', limite: 1, orden: 'ASC' },
+  });
+  assert.equal(resBusqMultiNombre.data.length, 1, 'búsqueda por nombre no debe duplicar paciente con múltiples identidades');
+  assert.equal(resBusqMultiNombre.data[0]?.id, pacienteConDocId);
+
+  // Búsqueda por documento 1 (PASAPORTE) y por documento 2 (CUI) deben localizar al paciente vía EXISTS
+  const resBusqDoc1 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: pasaporteNum, limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusqDoc1.data.length, 1, 'búsqueda debe encontrar paciente por su primer documento');
+  assert.equal(resBusqDoc1.data[0]?.id, pacienteConDocId);
+
+  const resBusqDoc2 = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: cuiExtra, limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusqDoc2.data.length, 1, 'búsqueda debe encontrar paciente por su segundo documento asociado');
+  assert.equal(resBusqDoc2.data[0]?.id, pacienteConDocId);
+
+  // Probar cambio de identificación activa a otro documento ya asociado al mismo paciente en MySQL
+  const actIdentidadReusadaMy = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteConDocId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      identificacion: { tipo: 'CUI', numero: cuiExtra },
+    },
+  });
+  assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.tipo, 'CUI');
+  assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.numero, cuiExtra);
+
+  // Retiro de identificación mediante PATCH identificacion: null con múltiples reservas previas en MySQL
+  const actRetiroDocMy = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteConDocId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 2,
+      identificacion: null,
+    },
+  });
+  assert.equal(actRetiroDocMy.respuesta.identificacion, undefined, 'la respuesta del retiro debe omitir la identificación');
+
+  // En lecturas posteriores (porId y consultar), la identificación debe permanecer ausente (undefined)
+  // y NO debe exponer automáticamente otra reserva remanente (como el pasaporte)
+  const pacSinDocTrasRetiro = await repoMysql.porId(pacienteConDocId);
+  assert.equal(pacSinDocTrasRetiro?.identificacion, undefined, 'GET porId tras retiro no debe exponer otra reserva remanente');
+
+  const consultadoTrasRetiro = await consultar.ejecutar({ contexto, bundle, id: pacienteConDocId });
+  assert.equal(consultadoTrasRetiro.identificacion, undefined, 'caso de uso consultar no debe exponer otra reserva remanente');
+
+  // Probar ciclos repetidos de reversión y restauración de respaldo demográfico sin violar tabla append-only
+  const sentenciaRespaldo = `
+    INSERT INTO revisiones (
+      id_revision, tipo_recurso, recurso_id, version, id_usuario,
+      fecha_hora, motivo, contenido_anterior
+    )
+    SELECT
+      UUID(),
+      'paciente_demografia_v3',
+      p.id_publico,
+      p.revision,
+      COALESCE((SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1), 1),
+      NOW(),
+      'RESPALDO_MIGRACION_002_REVERSION_V3_A_V2',
+      JSON_OBJECT(
+        'sexo', p.sexo,
+        'direccion', p.direccion,
+        'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f'),
+        'clave_identidad_activa', p.clave_identidad_activa
+      )
+    FROM paciente p
+    WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL OR p.clave_identidad_activa IS NOT NULL
+           OR EXISTS (SELECT 1 FROM identidades_paciente ip WHERE ip.id_paciente = p.id_paciente))
+      AND NOT EXISTS (
+        SELECT 1 FROM revisiones r
+        WHERE r.tipo_recurso = 'paciente_demografia_v3'
+          AND r.recurso_id = p.id_publico
+          AND r.version = p.revision
+      )
+  `;
+  // Ciclo 1 de respaldo
+  await pool.consultar(sentenciaRespaldo);
+  // Ciclo 2 de respaldo repetido sin cambios de versión: debe ejecutarse limpiamente sin disparar REGISTRO_APPEND_ONLY
+  await pool.consultar(sentenciaRespaldo);
+
+  // Restauración demográfica idempotente
+  await pool.consultar(`
+    UPDATE paciente p
+    JOIN (
+      SELECT
+        recurso_id,
+        contenido_anterior,
+        ROW_NUMBER() OVER (
+          PARTITION BY recurso_id
+          ORDER BY fecha_hora DESC, version DESC
+        ) AS rn
+      FROM revisiones
+      WHERE tipo_recurso = 'paciente_demografia_v3'
+    ) r ON r.rn = 1 AND r.recurso_id = p.id_publico
+    SET
+      p.sexo = COALESCE(p.sexo, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo')), 'null')),
+      p.direccion = COALESCE(p.direccion, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion')), 'null')),
+      p.fecha_registro = COALESCE(
+        STR_TO_DATE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), 'null'), '%Y-%m-%d %H:%i:%s.%f'),
+        p.fecha_registro
+      ),
+      p.clave_identidad_activa = COALESCE(
+        p.clave_identidad_activa,
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.clave_identidad_activa')), 'null')
+      )
+  `);
+
+  // Backfill de identidades para pacientes de primera migración preservando respaldos
+  await pool.consultar(`
+    UPDATE paciente p
+    JOIN (
+      SELECT id_paciente, clave,
+             ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn
+      FROM identidades_paciente
+    ) ip ON ip.id_paciente = p.id_paciente AND ip.rn = 1
+    LEFT JOIN (
+      SELECT DISTINCT recurso_id
+      FROM revisiones
+      WHERE tipo_recurso = 'paciente_demografia_v3'
+    ) r ON r.recurso_id = p.id_publico
+    SET p.clave_identidad_activa = ip.clave
+    WHERE p.clave_identidad_activa IS NULL AND r.recurso_id IS NULL
+  `);
+
+  // Verificar que pacienteConDoc (cuyo documento fue retirado y respaldado como NULL) preserva estado ausente
+  const filaConDocTrasRestore = await pool.consultar<{ sexo: string; direccion: string | null; clave_identidad_activa: string | null }>(
+    'SELECT sexo, direccion, clave_identidad_activa FROM paciente WHERE id_publico = ?',
+    [pacienteConDocId],
+  );
+  assert.equal(filaConDocTrasRestore.filas[0]?.sexo, 'MASCULINO');
+  assert.equal(filaConDocTrasRestore.filas[0]?.direccion, null, 'la dirección nula no debe restaurarse como string literal "null"');
+  assert.equal(filaConDocTrasRestore.filas[0]?.clave_identidad_activa, null, 'el documento retirado debe preservar su estado ausente');
+
+  // 3. Búsqueda y paginación en MySQL
+  const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });
+  assert.equal(consultadoSinDoc.id, pacienteSinDocId);
+  assert.equal(consultadoSinDoc.nombres, 'Estela Beatriz');
+  assert.equal(consultadoSinDoc.sexo, 'FEMENINO');
+  assert.equal(consultadoSinDoc.direccion, '5ta Avenida 12-45 Zona 1, Ciudad');
+  assert.equal(Date.parse(consultadoSinDoc.fecha_registro), Date.parse(pacienteSinDoc.fecha_registro));
+  assert.ok(consultadoSinDoc.fecha_registro.startsWith(pacienteSinDoc.fecha_registro.slice(0, -1)));
+
+  // Escape de comodines en MySQL: búsqueda por '%' no debe coincidir con pacientes
+  const resBusquedaComodinMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: '%', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(resBusquedaComodinMy.data.length, 0, 'la búsqueda por % en MySQL no debe coincidir con pacientes');
+
+  const resBusqueda = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Estela', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resBusqueda.data.some((p) => p.id === pacienteSinDocId));
+
+  // 4. Modificación y concurrencia optimista
+  const modificado = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteSinDocId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50244449999',
+      direccion: 'Nueva Dirección Modificada 7ma Calle 3-21',
+    },
+  });
+  assert.equal(modificado.respuesta.version, 2);
+  assert.equal(modificado.respuesta.telefono, '50244449999');
+  assert.equal(modificado.respuesta.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
+
+  const consultadoModificado = await repoMysql.porId(pacienteSinDocId);
+  assert.equal(consultadoModificado?.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
+
+  const filaDbModificada = await pool.consultar<{ direccion: string }>(
+    'SELECT direccion FROM paciente WHERE id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(filaDbModificada.filas[0]?.direccion, 'Nueva Dirección Modificada 7ma Calle 3-21');
+
+  await assert.rejects(
+    () => actualizar.ejecutar({
+      contexto,
+      bundle,
+      id: pacienteSinDocId,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      cambios: {
+        version_esperada: 1,
+        telefono: '50244440000',
+      },
+    }),
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // Verificación de búsqueda por límite de palabra y preservación de fecha_nacimiento NULL en MySQL
+  const idLegacyMy = uuidPublico(randomUUID());
+  await pool.consultar(
+    `INSERT INTO paciente (
+      id_publico, revision, nombres, apellidos, fecha_nacimiento, sexo, estado
+    ) VALUES (?, 1, 'Legacy Dental', 'Prueba', NULL, 'FEMENINO', 'ACTIVO')`,
+    [idLegacyMy],
+  );
+
+  await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: idLegacyMy,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      telefono: '50233334444',
+    },
+  });
+  const filaLegacyMy = await pool.consultar<{ fecha_nacimiento: unknown }>(
+    'SELECT fecha_nacimiento FROM paciente WHERE id_publico = ?',
+    [idLegacyMy],
+  );
+  assert.equal(filaLegacyMy.filas[0]?.fecha_nacimiento, null, 'fecha_nacimiento NULL en MySQL debe preservarse');
+
+  // Intento de archivar paciente legado dental sin fila historial_clinico debe fallar
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-legacy-mysql-sin-historial',
+          instante: instanteUtc('2026-10-27T12:00:00Z'),
+          ids: { recurso_id: idLegacyMy },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: idLegacyMy,
+              versionAnterior: versionPositiva(2),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Paciente legado dental sin historial',
+                fecha: '2026-10-27T12:00:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'PERSISTENCIA_NO_DISPONIBLE');
+      return true;
+    },
+    'archivar paciente dental sin historial_clinico debe fallar con PERSISTENCIA_NO_DISPONIBLE',
+  );
+
+  const filaLegacyRevMy = await pool.consultar<{ revision: number | string; estado: string }>(
+    'SELECT revision, estado FROM paciente WHERE id_publico = ?',
+    [idLegacyMy],
+  );
+  assert.equal(Number(filaLegacyRevMy.filas[0]?.revision), 2, 'la revisión en MySQL no debe avanzar si falló el archivo');
+  assert.equal(filaLegacyRevMy.filas[0]?.estado, 'ACTIVO', 'el paciente debe permanecer ACTIVO si falló el archivo');
+
+  const altaGustavoMy = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Gustavo Adolfo',
+      apellidos: 'Bécquer Sánchez',
+      fecha_nacimiento: '1982-03-12',
+      sexo: 'MASCULINO',
+    },
+  });
+  const idGustavoMy = altaGustavoMy.respuesta.id;
+
+  const resWordBoundaryMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Adol', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(resWordBoundaryMy.data.some((p) => p.id === idGustavoMy), 'búsqueda en MySQL por Adol debe encontrar Gustavo Adolfo');
+
+  const resInfixMy = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'dolfo', limite: 10, orden: 'ASC' },
+  });
+  assert.ok(!resInfixMy.data.some((p) => p.id === idGustavoMy), 'búsqueda en MySQL no debe coincidir por infijo dolfo');
+
+  // 5. Archivo del paciente dental mediante UoW con validación de versión compartida
+  // Intento de archivo con versión desactualizada 1
+  await assert.rejects(
+    async () => {
+      await bundle.uow?.ejecutar(
+        contexto,
+        {
+          id: uuidPublico(randomUUID()),
+          caso: 'ARCHIVAR_PACIENTE',
+          claveIdempotencia: uuidPublico(randomUUID()),
+          hashEntrada: 'test-hash-archivo-mysql-stale',
+          instante: instanteUtc('2026-10-27T12:30:00Z'),
+          ids: { recurso_id: pacienteSinDocId },
+        },
+        async () => ({
+          tipo: 'CONFIRMAR',
+          resultado: {
+            httpStatus: 200,
+            respuesta: { estado: 'ARCHIVADO' },
+            correlacionOriginal: uuidPublico(randomUUID()),
+          },
+          revisiones: [],
+          cambios: [
+            {
+              agregado: 'historiales',
+              tipo: 'MODIFICAR',
+              recursoId: pacienteSinDocId,
+              versionAnterior: versionPositiva(1),
+              nuevoEstado: {
+                causa: 'FALLECIMIENTO',
+                motivo: 'Intento con versión desactualizada',
+                fecha: '2026-10-27T12:30:00Z',
+                actorId: contexto.cuenta.id,
+              },
+            },
+          ],
+          auditoria: [],
+        }),
+      );
+    },
+    (err: ErrorDominio) => err.codigo === 'VERSION_DESACTUALIZADA',
+  );
+
+  // Archivo correcto con versión 2
+  await bundle.uow?.ejecutar(
+    contexto,
+    {
+      id: uuidPublico(randomUUID()),
+      caso: 'ARCHIVAR_PACIENTE',
+      claveIdempotencia: uuidPublico(randomUUID()),
+      hashEntrada: 'test-hash-archivo-mysql',
+      instante: instanteUtc('2026-10-27T12:30:00Z'),
+      ids: { recurso_id: pacienteSinDocId },
+    },
+    async () => ({
+      tipo: 'CONFIRMAR',
+      resultado: {
+        httpStatus: 200,
+        respuesta: { estado: 'ARCHIVADO' },
+        correlacionOriginal: uuidPublico(randomUUID()),
+      },
+      revisiones: [],
+      cambios: [
+        {
+          agregado: 'historiales',
+          tipo: 'MODIFICAR',
+          recursoId: pacienteSinDocId,
+          versionAnterior: versionPositiva(2),
+          nuevoEstado: {
+            causa: 'FALLECIMIENTO',
+            motivo: 'Certificado de defunción presentado por familiar',
+            fecha: '2026-10-27T12:30:00Z',
+            actorId: contexto.cuenta.id,
+          },
+        },
+      ],
+      auditoria: [
+        {
+          id: uuidPublico(randomUUID()),
+          actorId: contexto.cuenta.id,
+          caso: 'ARCHIVAR_PACIENTE',
+          recursoId: pacienteSinDocId,
+          fechaHora: instanteUtc('2026-10-27T12:30:00Z'),
+          correlacion: uuidPublico(randomUUID()),
+        },
+      ],
+    }),
+  );
+
+  const consultadoArchivado = await repoMysql.porId(pacienteSinDocId);
+  assert.equal(consultadoArchivado?.estado, 'ARCHIVADO');
+  assert.equal(consultadoArchivado?.version, 3, 'el archivo en MySQL debe avanzar la versión compartida a 3');
+  assert.equal(consultadoArchivado?.baja?.causa, 'FALLECIMIENTO');
+
+  // En MySQL el paciente debe figurar con estado 'INACTIVO' y el historial 'ARCHIVADO'
+  const resDb = await pool.consultar<{ estado: string; hist_estado: string }>(
+    'SELECT p.estado, h.estado AS hist_estado FROM paciente p JOIN historial_clinico h ON p.id_paciente = h.id_paciente WHERE p.id_publico = ?',
+    [pacienteSinDocId],
+  );
+  assert.equal(resDb.filas[0]?.estado, 'INACTIVO');
+  assert.equal(resDb.filas[0]?.hist_estado, 'ARCHIVADO');
+
+  // 6. Historial de auditoría en MySQL con paginación y validación HMAC de cursor
+  const consultaHistorialMy = crearConsultaHistorialSql(pool, 'mysql', 'CLINICA_ODONTOLOGICA');
+  const paginaEventosMy = await consultaHistorialMy.eventos(pacienteSinDocId, { limite: 20, orden: 'ASC' });
+  assert.ok(paginaEventosMy.elementos.length >= 1, 'debe registrar eventos de auditoría en MySQL');
+
+  await assert.rejects(
+    async () => {
+      await consultaHistorialMy.eventos(pacienteSinDocId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: 'cursor_manipulado_invalido',
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría corrupto en MySQL debe ser rechazado con SOLICITUD_INVALIDA',
+  );
+});

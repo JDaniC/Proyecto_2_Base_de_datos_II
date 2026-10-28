@@ -13,9 +13,17 @@ import { crearPoolMysql } from '../adaptadores/salida/mysql/crear-pool-mysql.js'
 import { crearClienteMongodb } from '../adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import { crearClienteFirestore } from '../adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaInstitucionalPostgresql, crearRepositorioCuentaInstitucionalMysql } from '../adaptadores/salida/identidad/repositorios-cuenta-sql.js';
+import {
+  crearRepositorioPacientesPostgresql,
+  crearUnidadDeTrabajoPacientesPostgresql,
+} from '../adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
+import {
+  crearRepositorioPacientesMysql,
+  crearUnidadDeTrabajoPacientesMysql,
+} from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
 import { crearBundlePacientesMongodb } from '../adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
 import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
-import { parsearConfiguracionSql } from '../configuracion/conexiones-sql.js';
+import { parsearConfiguracionSql, ErrorConfiguracionSql, type ConfiguracionSql } from '../configuracion/conexiones-sql.js';
 import { parsearConfiguracionMongodb } from '../configuracion/conexiones-mongodb.js';
 import { parsearConfiguracionFirestore } from '../configuracion/conexiones-firestore.js';
 import { INSTITUCIONES_CANONICAS } from '../dominio/compartido/institucion.js';
@@ -55,10 +63,11 @@ export async function crearDependenciasBackend(
       variables.FIREBASE_AUTH_PROJECT_ID.trim().length === 0) {
     faltantes.push('FIREBASE_AUTH_PROJECT_ID');
   }
+  if (variables.CURSOR_SIGNING_SECRET?.trim()) {
+    process.env.CURSOR_SIGNING_SECRET = variables.CURSOR_SIGNING_SECRET.trim();
+  }
   if (faltantes.length > 0) throw new ErrorConfiguracionBackend(faltantes);
 
-  const sql = parsearConfiguracionSql(variables);
-  const mongodb = parsearConfiguracionMongodb(variables);
   const firestoreConfig = parsearConfiguracionFirestore(variables);
   const projectIdAuth = (variables.FIREBASE_AUTH_PROJECT_ID ?? firestoreConfig.projectId).trim();
   if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectIdAuth) || projectIdAuth !== firestoreConfig.projectId) {
@@ -79,6 +88,17 @@ export async function crearDependenciasBackend(
       'FIRESTORE_PROJECT_ID', 'FIRESTORE_EMULATOR_HOST',
     ]);
   }
+
+  let sql: ConfiguracionSql;
+  try {
+    sql = parsearConfiguracionSql(variables);
+  } catch (error) {
+    if (error instanceof ErrorConfiguracionSql) {
+      throw new ErrorConfiguracionBackend(error.variables);
+    }
+    throw error;
+  }
+  const mongodb = parsearConfiguracionMongodb(variables);
 
   const cierres: Array<() => Promise<void>> = [];
   let hostAuthOriginal: string | undefined;
@@ -101,8 +121,16 @@ export async function crearDependenciasBackend(
     const auth: Auth = getAuth(appAuth);
 
     const repositorios: MapaRepositoriosInstitucion = {
-      HOSPITAL_GENERAL: { cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql) },
-      CLINICA_ODONTOLOGICA: { cuenta: crearRepositorioCuentaInstitucionalMysql(mysql) },
+      HOSPITAL_GENERAL: {
+        cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql),
+        pacientes: crearRepositorioPacientesPostgresql(postgresql),
+        uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
+      },
+      CLINICA_ODONTOLOGICA: {
+        cuenta: crearRepositorioCuentaInstitucionalMysql(mysql),
+        pacientes: crearRepositorioPacientesMysql(mysql),
+        uow: crearUnidadDeTrabajoPacientesMysql(mysql),
+      },
       LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),
       CENTRO_MEDICO_PEDIATRICO: { cuenta: crearRepositorioCuentaInstitucionalFirestore(firebase) },
     };

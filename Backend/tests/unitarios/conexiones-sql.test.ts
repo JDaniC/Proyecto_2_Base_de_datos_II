@@ -9,6 +9,7 @@ const base = {
   MYSQL_HOST: 'mysql',
   MYSQL_PORT: '3306',
   MYSQL_PASSWORD_FILE: '/run/secrets/mysql_app_password',
+  CURSOR_SIGNING_SECRET: 'secreto_super_seguro_para_pruebas_sql_2026',
 };
 
 test('conexiones SQL: fija bases y usuarios de aplicación y congela la configuración', () => {
@@ -44,6 +45,29 @@ test('conexiones SQL: valida todos los campos obligatorios sin mostrar valores',
       assert.ok(error instanceof ErrorConfiguracionSql);
       assert.deepEqual(error.variables, ['POSTGRES_PORT', 'POSTGRES_PASSWORD_FILE']);
       assert.equal(error.message.includes('secreto.invalid'), false);
+      return true;
+    },
+  );
+});
+
+test('conexiones SQL: exige CURSOR_SIGNING_SECRET con al menos 16 caracteres', () => {
+  const sinSecreto = { ...base };
+  delete (sinSecreto as Record<string, unknown>).CURSOR_SIGNING_SECRET;
+  assert.throws(
+    () => parsearConfiguracionSql(sinSecreto),
+    (error: unknown) => {
+      assert.ok(error instanceof ErrorConfiguracionSql);
+      assert.deepEqual(error.variables, ['CURSOR_SIGNING_SECRET']);
+      return true;
+    },
+  );
+
+  const secretoCorto = { ...base, CURSOR_SIGNING_SECRET: 'corto_15_carac_' };
+  assert.throws(
+    () => parsearConfiguracionSql(secretoCorto),
+    (error: unknown) => {
+      assert.ok(error instanceof ErrorConfiguracionSql);
+      assert.deepEqual(error.variables, ['CURSOR_SIGNING_SECRET']);
       return true;
     },
   );

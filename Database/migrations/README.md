@@ -80,3 +80,35 @@ Si se requiere restaurar una copia aislada desde el respaldo lógico:
 pg_restore --clean --if-exists -U postgres_admin -d hospital_general \
   .test-results/respaldo_hospital_general_pre_001.dump
 ```
+
+## `002_agregar_demografia_paciente_mysql.sql` (`v2` $\rightarrow$ `v3`, `E02-P1-02`)
+
+### Propósito
+
+Incorporar la persistencia de datos demográficos completos (`sexo`, `direccion`) y la marca temporal de alta con microsegundos (`fecha_registro DATETIME(6)`) en la tabla `paciente` de `clinica_odontologica`:
+
+- No destructiva: preserva todas las filas previas, historiales, citas y auditoría.
+- Al migrar a `v3`, restaura automáticamente datos demográficos y marcas temporales respaldadas en la tabla `revisiones` si la base proviene de una reversión previa.
+- Recalcula la huella limpia mediante `_huella_modelo(@bdii_huella)` tras eliminar los procedimientos temporales de migración, igualando exactamente el manifiesto de una instalación limpia `v3`.
+
+### Reversión y preservación sin pérdida (`002_revertir_demografia_paciente_mysql.sql`)
+
+- Antes de retirar las columnas `sexo`, `direccion` y `fecha_registro`, la reversión respalda de forma atómica en la tabla `revisiones` (`tipo_recurso = 'paciente_demografia_v3'`) los valores demográficos y marcas temporales de todos los pacientes afectados.
+- Elimina los procedimientos temporales antes de llamar a `_huella_modelo`, dejando el manifiesto (`version = 2`) y la huella idénticos al inicializador canónico `v2`.
+- Al volver a aplicar la migración `002`, los datos respaldados se restauran sin pérdida de información clínica ni temporal.
+
+## `002_backfill_identidades_hospital_postgresql.sql` (`E02-P1-02`)
+
+### Propósito
+
+Incorporar la persistencia de la clave de identidad activa (`clave_identidad_activa CHAR(64)`) y el identificador de contacto de emergencia activo (`id_contacto_emergencia_activo BIGINT`) en la tabla `paciente` de `hospital_general`:
+
+- No destructiva e idempotente: preserva todas las filas previas de pacientes, citas, historiales y auditoría.
+- Al migrar, restaura automáticamente los punteros de identidad activa y contacto de emergencia activo respaldados en `revisiones` (`tipo_recurso = 'paciente_punteros_v3'`) si la base proviene de una reversión previa, preservando tanto documentos asociados como estados explícitamente ausentes.
+- Para pacientes sin respaldo previo, realiza el backfill de identidades normalizadas y selecciona la identidad más reciente y el primer contacto de emergencia registrado.
+- Recalcula la huella limpia mediante `pg_temp.huella_hospital()` y actualiza el manifiesto en `modelo_database`, garantizando compatibilidad exacta con el inicializador canónico `Database/hospital_general_postgresql.sql`.
+
+### Reversión y preservación sin pérdida (`002_revertir_backfill_identidades_hospital_postgresql.sql`)
+
+- Antes de retirar las columnas `clave_identidad_activa` e `id_contacto_emergencia_activo`, la reversión respalda de forma atómica en la tabla `revisiones` (`tipo_recurso = 'paciente_punteros_v3'`) los punteros activos de todos los pacientes afectados (incluyendo estados explícitamente ausentes).
+- Recalcula la huella limpia en el manifiesto `modelo_database` y garantiza que una posterior re-aplicación de `002_backfill_identidades_hospital_postgresql.sql` recupere todos los punteros sin pérdida de datos clínicos ni desvinculación de reservas de identidad.

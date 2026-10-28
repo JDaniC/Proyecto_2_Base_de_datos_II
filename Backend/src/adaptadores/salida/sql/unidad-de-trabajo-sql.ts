@@ -83,6 +83,16 @@ export function crearUnidadDeTrabajoSql<
         try {
           return await ejecutarIntento(dependencias, contexto, comando, planificar);
         } catch (error) {
+          if (esConflictoRevision(error)) {
+            const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
+            if (duradera !== null) return resolverRepeticion(duradera, comando);
+            throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente ha sido modificado por otro proceso.');
+          }
+          if (esConflictoIdentidad(error)) {
+            const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
+            if (duradera !== null) return resolverRepeticion(duradera, comando);
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+          }
           if (esConflictoOperacion(error)) {
             const duradera = await leerOperacionPool<T>(dependencias, contexto, comando);
             if (duradera !== null) return resolverRepeticion(duradera, comando);
@@ -384,15 +394,50 @@ function esDeadlock(error: unknown): boolean {
     codigo === '40001' || codigo === '1205' || codigo === 'ER_LOCK_WAIT_TIMEOUT';
 }
 
+function esConflictoRevision(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const codigo = codigoSql(error);
+  if (codigo !== '23505' && codigo !== '1062' && codigo !== 'ER_DUP_ENTRY') return false;
+  const err = error as Record<string, unknown>;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.detail ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return texto.includes('revisiones');
+}
+
+function esConflictoIdentidad(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const codigo = codigoSql(error);
+  if (codigo !== '23505' && codigo !== '1062' && codigo !== 'ER_DUP_ENTRY') return false;
+  const err = error as Record<string, unknown>;
+  const texto = [
+    String(err.table ?? ''),
+    String(err.constraint ?? ''),
+    String(err.detail ?? ''),
+    String(err.message ?? ''),
+  ].join(' ').toLowerCase();
+  return (
+    texto.includes('identidades_paciente') ||
+    texto.includes('paciente_cui') ||
+    texto.includes('cui') ||
+    texto.includes('identidad')
+  );
+}
+
 function esConflictoOperacion(error: unknown): boolean {
   const codigo = codigoSql(error);
   return codigo === '23505' || codigo === '1062' || codigo === 'ER_DUP_ENTRY';
 }
 
 function codigoSql(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
-  const code = (error as { code?: unknown }).code;
-  return typeof code === 'string' ? code : undefined;
+  if (typeof error !== 'object' || error === null) return undefined;
+  const err = error as { code?: unknown; errno?: unknown };
+  if (typeof err.code === 'string') return err.code;
+  if (typeof err.errno === 'number' || typeof err.errno === 'string') return String(err.errno);
+  return undefined;
 }
 
 function traducirErrorSql(error: unknown): ErrorDominio | null {

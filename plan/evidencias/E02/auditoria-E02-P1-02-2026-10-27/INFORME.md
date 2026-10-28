@@ -1,0 +1,107 @@
+# Informe de Auditoría Funcional: Persistencia de Pacientes en PostgreSQL y MySQL (E02-P1-02)
+
+Fecha: 27/10/2026
+Alcance: `Backend/src/adaptadores/salida/postgresql/pacientes/`, `Backend/src/adaptadores/salida/mysql/pacientes/`, `Backend/src/adaptadores/salida/sql/`, `Database/`
+Responsable: JDaniC
+
+## 1. Resumen Ejecutivo
+Se auditó la implementación de los adaptadores de salida para la persistencia del agregado Paciente en los motores relacionales PostgreSQL (`hospital_general`) y MySQL (`clinica_odontologica`).
+Se verificó la trazabilidad completa desde los modelos relacionales y contratos del proyecto (`plan/03_CONTRATOS_Y_FLUJOS.md`, `plan/01_ALCANCE_Y_DECISIONES.md`, esquemas DDL v3/v2) hasta los adaptadores y pruebas de integración sobre contenedores Docker reales.
+
+Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas verificables).
+
+## 2. Requisitos y Criterios de Aceptación Verificados
+1. **Hospital General (PostgreSQL):**
+   - Alta atómica de paciente: `paciente`, `contacto_emergencia`, `historial_clinico` (`numero_historial` = `codigoLegible`) y reserva en `identidades_paciente`.
+   - Normalización y preservación de nombres: división segura de nombres largos sin truncamiento de palabras, y preservación íntegra de componentes de nombre existentes en actualizaciones que no modifican el nombre.
+   - Consulta por ID (`porId`) y por versión histórica (`porVersion`) desde `revisiones`.
+   - Titularidad de identidad (`titularIdentidad`): cubre tanto identidades reservadas en `identidades_paciente` como CUIs preexistentes en `paciente.cui`.
+   - Búsqueda (`buscar`): por CUI exacto, por clave SHA-256 de identidad y por prefijo de nombre insensible a diacríticos mediante `translate(LOWER(...), ...)`.
+   - Desduplicación determinista de contactos de emergencia (`DISTINCT ON (id_paciente)`) para evitar duplicación de filas en páginas y cursores.
+   - Paginación determinista por cursor opaco autenticado con HMAC y preservando microsegundos con `TO_CHAR(..., '...US"Z"')` y `$param::timestamp`.
+   - Escape de caracteres comodín (`%`, `_`) mediante `escaparLikeSql` y `ESCAPE '\\'`.
+   - Control de concurrencia optimista (`revision`): rechaza modificaciones concurrentes o desactualizadas con `VERSION_DESACTUALIZADA`.
+   - Archivo clínico: valida `versionAnterior` del paciente bajo bloqueo pesimista, avanza la versión compartida del paciente de forma atómica y actualiza `historial_clinico.estado_historial = 'ARCHIVADO'` con auditoría.
+
+2. **Clínica Odontológica (MySQL):**
+   - Persistencia completa de demografía: almacena y recupera `sexo`, `direccion` y la marca temporal real de registro (`fecha_registro DATETIME(6)`) en la tabla `paciente` (DDL v3 con migración explícita 002).
+   - Preservación del instante de registro: almacena la fecha/hora UTC con microsegundos (no medianoche), empleándola de forma consistente en lecturas y paginación determinista.
+   - Regla de identificación opcional (overlay dental): permite alta sin documento de identificación sin insertar claves vacías ni nulas en `identidades_paciente`.
+   - Alta con pasaporte: reserva clave SHA-256 en `identidades_paciente`.
+   - Prevención de duplicados: rechaza conflicto de pasaporte duplicado con `PACIENTE_DUPLICADO`.
+   - Búsqueda por prefijo con collation `utf8mb4_0900_ai_ci` y escape de comodines mediante `ESCAPE '\\\\'`.
+   - Control de concurrencia optimista y avance atómico de versión de paciente en archivo dental.
+   - Archivo dental: actualiza `historial_clinico.estado = 'ARCHIVADO'` y `paciente.estado = 'INACTIVO'`, validando y avanzando `revision`.
+
+3. **Garantías Transaccionales y de Unidad de Trabajo (UoW SQL):**
+   - Transacción atómica por comando con aislamiento serializable/snapshot según motor.
+   - Idempotencia durable: repetición idéntica devuelve la respuesta original conservando `correlacionOriginal`.
+   - Detección de clave reutilizada con carga útil distinta arrojando `CLAVE_REUTILIZADA`.
+   - Eventos de auditoría persistidos en tabla `auditoria` y consultables mediante `crearConsultaHistorialSql`.
+
+## 3. Resoluciones de Hallazgos de Revisión Automatizada (Codex)
+1. **Huella de esquema tras eliminación de rutinas temporales de migración:**
+   - En las migraciones de MySQL (`002_agregar_demografia_paciente_mysql.sql` y `002_revertir_...`), se eliminan los procedimientos `_migrar_v2_a_v3` y `_revertir_...` ANTES de invocar `_huella_modelo(@bdii_huella)`, asegurando que la huella guardada concuerde con el esquema limpio del inicializador v3.
+2. **Desduplicación de contactos de emergencia en PostgreSQL:**
+   - Se aplicó subconsulta `DISTINCT ON (id_paciente)` sobre `contacto_emergencia` e `identidades_paciente` en `SELECT_PACIENTE_BASE`, impidiendo que pacientes con múltiples contactos o identidades generen filas duplicadas o páginas infladas.
+3. **Persistencia del instante de registro dental en MySQL:**
+   - Se añadió `fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)` a `paciente` en MySQL (DDL v3 y migración 002), formateando en ISO UTC con microsegundos en mapper y ordenando/paginando sobre `p.fecha_registro`.
+4. **Validación y avance atómico de versión compartida en archivo:**
+   - Tanto en PostgreSQL como en MySQL, el comando de archivo valida `versionAnterior` bajo `SELECT ... FOR UPDATE` sobre la tabla `paciente` y avanza `paciente.revision = revision + 1` concurrentemente con la actualización del historial clínico.
+5. **Preservación de componentes de nombre en actualizaciones no relacionadas:**
+   - `dividirNombre` realiza una división no destructiva respetando palabras y, en actualizaciones `MODIFICAR`/`ACTUALIZAR`, compara el nombre combinado existente; si no ha cambiado, preserva exactamente los valores almacenados en `primer_nombre` y `segundo_nombre`.
+6. **Inclusión de CUIs preexistentes en comprobaciones de titularidad:**
+   - `titularIdentidad` consulta tanto `identidades_paciente.clave` como `paciente.cui` (normalizado numéricamente). Asimismo, se incorporó backfill de CUIs en el inicializador de `hospital_general` y la migración `002_backfill_identidades_hospital_postgresql.sql`.
+7. **Preservación de fecha de nacimiento desconocida (NULL) en mappers y actualizadores:**
+   - Mappers de PostgreSQL y MySQL no asignan fecha de presentación por defecto (`1900-01-01`) cuando `fecha_nacimiento` es NULL en la base de datos; la exponen como opcional/indefinida y los actualizadores persisten `NULL`, preservando datos clínicos legados.
+8. **Preservación de contactos de emergencia adicionales en actualizaciones:**
+   - Al actualizar un paciente en PostgreSQL, no se eliminan todos los contactos de emergencia (`DELETE WHERE id_paciente`). Se actualiza o inserta únicamente el contacto seleccionado si hubo cambios en él, conservando intactos todos los demás registros de contacto.
+9. **Persistencia explícita del instante de registro hospitalario:**
+   - El adaptador PostgreSQL persiste explícitamente `pac.fechaRegistro` en el INSERT de `paciente` (columna `fecha_registro`), garantizando coincidencia exacta entre el instante registrado en el comando y las posteriores lecturas.
+10. **Búsqueda en límites de palabra y normalización exhaustiva de diacríticos:**
+    - Se adaptaron los predicados de búsqueda en PostgreSQL y MySQL para coincidir por prefijo en límites de palabra (`LIKE prefix || '%' OR LIKE '% ' || prefix || '%'`), permitiendo buscar por segundos nombres o apellidos (p. ej. `Adol`) mientras se rechazan coincidencias infijas (p. ej. `dolfo`).
+    - En PostgreSQL, se implementó normalización exhaustiva de caracteres latinos (`translate(LOWER(...), ...)`) que incluye diacríticos completos (`ç`, `à`, etc.), alineándola con `normalizarNombreBusqueda`.
+11. **Preservación de microsegundos en cursores de historial de auditoría:**
+    - En `consulta-historial-sql.ts`, se ajustó la selección a microsegundos (`US` en PostgreSQL y `%f` en MySQL) y la comparación con `$param::timestamp` directo sin truncamiento a milisegundos en `Date`, garantizando que la paginación de eventos de auditoría no repita ni salte registros contiguos.
+12. **Preservación de datos demográficos en reversión y migración de MySQL (Migración 002):**
+    - Al revertir la migración 002 (`002_revertir_demografia_paciente_mysql.sql`), antes de descartar las columnas `sexo`, `direccion` y `fecha_registro`, se respaldan en la tabla `revisiones` bajo `tipo_recurso = 'paciente_demografia_v3'`. Al volver a aplicar `002_agregar_demografia_paciente_mysql.sql`, estos datos se restauran automáticamente mediante JOIN sobre `revisiones`.
+13. **Normalización de CUIs legados en búsqueda hospitalaria (PostgreSQL):**
+    - Se ajustó el predicado de búsqueda de CUI en PostgreSQL para evaluar `regexp_replace(COALESCE(p.cui, ''), '[^0-9]', '', 'g') = $param OR ip.clave = $param2`, permitiendo que las búsquedas por documento localicen pacientes existentes registrados con guiones o espacios en `paciente.cui`.
+14. **Invarianza de zona horaria en marcas temporales de baja (PostgreSQL y MySQL):**
+    - Al archivar pacientes, las fechas UTC suministradas se pasan directamente como string con casteo `$3::timestamp` en PostgreSQL y formato `'YYYY-MM-DD HH:MM:SS.ffffff'` en MySQL en lugar de instanciar `new Date()`, eliminando derivas causadas por la zona horaria local del proceso de Node.js (`process.env.TZ`).
+15. **Reducción determinista de identidades en MySQL y búsqueda exhaustiva con EXISTS:**
+    - En `repositorio-pacientes-mysql.ts`, se aplicó `ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn` en un derived table con `LEFT JOIN ... ON ip.rn = 1`, seleccionando exactamente una identidad por paciente y previniendo filas duplicadas o páginas fantasma en búsquedas y paginación.
+    - Asimismo, en MySQL y PostgreSQL la búsqueda por documento se desacopló de la proyección única mediante un predicado `EXISTS (SELECT 1 FROM identidades_paciente ip_busq WHERE ip_busq.id_paciente = p.id_paciente AND ...)`, permitiendo localizar al paciente por cualquiera de sus documentos asociados.
+16. **Compatibilidad con tabla append-only en reversión y migración 002 (MySQL):**
+    - En `002_revertir_demografia_paciente_mysql.sql`, se sustituyó `ON DUPLICATE KEY UPDATE` por la cláusula `WHERE NOT EXISTS (SELECT 1 FROM revisiones r WHERE ... AND r.version = p.revision)`, garantizando que múltiples ejecuciones de reversión para pacientes cuya versión no cambió preserven el respaldo inmutable existente sin disparar el trigger `tr_revisiones_update` (`REGISTRO_APPEND_ONLY`).
+    - En `002_agregar_demografia_paciente_mysql.sql`, se incorporó selección de la última revisión mediante `ROW_NUMBER() OVER (PARTITION BY recurso_id ORDER BY fecha_hora DESC, version DESC)` para restaurar el estado demográfico exacto tras ciclos repetidos.
+17. **Reutilización de reservas de identidad asociadas al mismo paciente:**
+    - Tanto en `aplicarCambiosPacientesMysql` como en `aplicarCambiosPacientesPostgresql`, al solicitar `RESERVAR` sobre una clave de identidad ya registrada, se comprueba si el `id_paciente` existente coincide con el del titular actual. Si ya pertenece al mismo paciente, se reutiliza actualizando su marca temporal para que figure como la identidad expuesta activa, evitando conflictos por clave primaria duplicada al conmutar entre documentos previamente registrados.
+18. **Preservación de valores SQL NULL en restauración demográfica (MySQL):**
+    - En `002_agregar_demografia_paciente_mysql.sql`, se envolvieron las extracciones JSON con `NULLIF(JSON_UNQUOTE(JSON_EXTRACT(...)), 'null')`, garantizando que campos nulos en JSON (p. ej. `direccion` nula cuando el paciente solo declaró sexo) se restauren como `NULL` en SQL y no como la cadena literal `'null'`.
+19. **Autenticación HMAC y validación estricta de cursores de auditoría:**
+    - En `consulta-historial-sql.ts`, se integraron `codificarCursorSql` y `decodificarCursorSql` con firma HMAC, vinculando el cursor a la institución, el recurso (`eventos_auditoria`), el `pacienteId` y el ordenamiento. Se eliminó la omisión silenciosa de errores para rechazar cursores corruptos, alterados o pertenecientes a otro paciente con `ErrorDominio('SOLICITUD_INVALIDA')`.
+20. **Exigencia de historial clínico coincidente antes de confirmar archivo (PostgreSQL y MySQL):**
+    - En `aplicarCambiosPacientesPostgresql`, se añadió `RETURNING id_historial` a la sentencia `UPDATE historial_clinico SET estado_historial = 'ARCHIVADO' ...` comprobando que afecte al menos una fila. En `aplicarCambiosPacientesMysql`, se consulta y bloquea `SELECT id_historial FROM historial_clinico WHERE id_paciente = ? FOR UPDATE`. Si el paciente no posee fila en `historial_clinico` (p. ej. paciente legado), la transacción falla de inmediato con `PERSISTENCIA_NO_DISPONIBLE`, evitando avanzar la revisión del paciente o dejarlo en estado activo tras un archivo reportado como exitoso.
+21. **Persistencia de `clave_identidad_activa` y preservación de estado ausente tras retiro de identificación:**
+    - Para pacientes con múltiples reservas históricas de identidad, retirar la identificación mediante PATCH con `identificacion: null` borraba solo la reserva activa actual. Para evitar que lecturas posteriores seleccionaran otra reserva remanente y expusieran un documento alterno, se añadió la columna `clave_identidad_activa CHAR(64) DEFAULT NULL` a la tabla `paciente` en ambos motores relacionales (esquemas DDL, migraciones 002 de MySQL y backfill de PostgreSQL), enlazando la proyección de lectura mediante `LEFT JOIN identidades_paciente ip ON p.clave_identidad_activa = ip.clave`. De esta manera, al retirar la identificación, `clave_identidad_activa` queda en NULL y las consultas subsecuentes (`porId`, `consultar`) retornan `identificacion: undefined` de forma determinista y conforme al contrato.
+22. **Recálculo de huella de esquema en manifiesto de migración 002 de PostgreSQL:**
+    - En `002_backfill_identidades_hospital_postgresql.sql` y su reversión, se incorporó la función temporal `pg_temp.huella_hospital()` y la actualización de `modelo_database SET huella = pg_temp.huella_hospital() WHERE id = 1`, garantizando que tras la adición de columnas el manifiesto concuerde exactamente con la huella esperada por el inicializador canónico `hospital_general_postgresql.sql`.
+23. **Inicialización y backfill de identidades activas en pacientes dentales de primera migración:**
+    - En `002_agregar_demografia_paciente_mysql.sql`, se incorporó una consulta de backfill que inicializa `clave_identidad_activa` para pacientes existentes que cuentan con reservas en `identidades_paciente` (ordenados por fecha más reciente), mientras preserva los estados explícitamente ausentes respaldados en `revisiones` mediante `002_revertir_demografia_paciente_mysql.sql`.
+24. **Persistencia de `id_contacto_emergencia_activo` y preservación de estado ausente tras retiro en PostgreSQL:**
+    - Se añadió la columna `id_contacto_emergencia_activo BIGINT DEFAULT NULL` a la tabla `paciente` en `hospital_general_postgresql.sql` y la migración `002_backfill_identidades_hospital_postgresql.sql`. En `SELECT_PACIENTE_BASE`, la selección se realiza mediante `LEFT JOIN contacto_emergencia ce ON p.id_contacto_emergencia_activo = ce.id_contacto`. Al retirar el contacto mediante PATCH con `contacto_emergencia: null`, se actualiza `id_contacto_emergencia_activo = NULL` sin eliminar físicamente los demás registros de contacto del paciente, preservando el estado ausente en lecturas subsecuentes sin exponer contactos remanentes.
+25. **Eliminación de backfills en inicializadores canónicos de esquemas:**
+    - Se retiraron las sentencias de backfill incondicional en `hospital_general_postgresql.sql` y `clinica_odontologica_mysql.sql`, restringiendo las inicializaciones de datos históricos a las migraciones explícitas y previniendo que re-ejecuciones de los inicializadores anulen retiros explícitos de documentos o contactos de emergencia.
+26. **Respaldo y restauración sin pérdida de punteros activos en reversión/migración de PostgreSQL:**
+    - En `002_revertir_backfill_identidades_hospital_postgresql.sql`, se respaldan `clave_identidad_activa` e `id_contacto_emergencia_activo` en `revisiones` (`tipo_recurso = 'paciente_punteros_v3'`) antes de eliminar las columnas; en `002_backfill_identidades_hospital_postgresql.sql`, se restauran dichos punteros garantizando que pasaportes y estados explícitamente ausentes sobrevivan a ciclos repetidos de reversión y migración sin pérdida de información clínica.
+
+## 4. Matriz de Resultados
+| Caso / Suite | Tipo | Motor | Estado |
+|---|---|---|---|
+| PostgreSQL: persistencia, búsqueda, concurrencia, archivo, microsegundos, CUI legacy, multi-contacto | Integración | PostgreSQL 18.6 | PASS |
+| MySQL: persistencia, demografía, fecha_registro, sin doc, concurrencia, archivo | Integración | MySQL 8.4.6 | PASS |
+| PostgreSQL: mapper, UoW, repetición idempotente | Integración | PostgreSQL 18.6 | PASS |
+| MySQL: mapper, UoW, repetición idempotente | Integración | MySQL 8.4.6 | PASS |
+| Suite unitaria y runtime (228 tests) | Unitario / Runtime | En memoria / HTTP | PASS |
+| Linter y verificación de arquitectura hexagonal | Estático | TypeScript / AST | PASS |

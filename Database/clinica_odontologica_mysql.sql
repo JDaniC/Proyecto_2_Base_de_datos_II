@@ -1,4 +1,4 @@
--- Base relacional de la Clínica Odontológica (MySQL 8.4+). Inicializador v2.
+-- Base relacional de la Clínica Odontológica (MySQL 8.4+). Inicializador v3.
 -- Para bases nuevas; los esquemas anteriores requieren una migracion explicita.
 -- Basada en las 14 entidades y atributos del modelo relacional del proyecto.
 
@@ -28,7 +28,7 @@ BEGIN
     UNION ALL SELECT CONCAT_WS(':','H',CONSTRAINT_NAME,CHECK_CLAUSE) FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE()
     UNION ALL SELECT CONCAT_WS(':','R',TABLE_NAME,CONSTRAINT_NAME,UPDATE_RULE,DELETE_RULE) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE()
     UNION ALL SELECT CONCAT_WS(':','T',TRIGGER_NAME,EVENT_MANIPULATION,EVENT_OBJECT_TABLE,ACTION_TIMING,ACTION_STATEMENT) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE()
-    UNION ALL SELECT CONCAT_WS(':','P',ROUTINE_NAME,ROUTINE_DEFINITION,SECURITY_TYPE) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA=DATABASE() AND ROUTINE_NAME NOT IN('_huella_modelo','_preparar_modelo')
+    UNION ALL SELECT CONCAT_WS(':','P',ROUTINE_NAME,ROUTINE_DEFINITION,SECURITY_TYPE) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA=DATABASE() AND ROUTINE_NAME NOT IN('_huella_modelo','_preparar_modelo','_migrar_v2_a_v3','_revertir_v3_a_v2')
     UNION ALL SELECT CONCAT_WS(':','E',TABLE_NAME,ENGINE,TABLE_COLLATION) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE'
   ) estructura;
   SET SESSION group_concat_max_len=limite_anterior;
@@ -43,7 +43,7 @@ BEGIN
   IF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='modelo_database') THEN
     SELECT version,huella INTO version_actual,huella_guardada FROM modelo_database WHERE id=1;
     CALL _huella_modelo(huella_actual);
-    IF version_actual IS NULL OR version_actual<>2 OR huella_guardada<>huella_actual THEN
+    IF version_actual IS NULL OR version_actual<>3 OR huella_guardada<>huella_actual THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
     END IF;
   ELSEIF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()) THEN
@@ -61,9 +61,13 @@ CREATE TABLE IF NOT EXISTS paciente (
     nombres VARCHAR(160) NOT NULL,
     apellidos VARCHAR(160) NOT NULL,
     fecha_nacimiento DATE,
+    sexo VARCHAR(30),
     telefono VARCHAR(30),
     correo VARCHAR(254),
+    direccion TEXT,
     estado VARCHAR(30) COLLATE utf8mb4_0900_bin NOT NULL DEFAULT 'ACTIVO',
+    fecha_registro DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    clave_identidad_activa CHAR(64) DEFAULT NULL,
     PRIMARY KEY (id_paciente),
     CONSTRAINT chk_paciente_estado CHECK (estado IN ('ACTIVO','INACTIVO')),
     CONSTRAINT chk_paciente_textos CHECK (LENGTH(TRIM(nombres))>0 AND LENGTH(TRIM(apellidos))>0 AND LENGTH(TRIM(estado))>0)
@@ -572,5 +576,5 @@ CREATE TABLE IF NOT EXISTS modelo_database (
  fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 CALL _huella_modelo(@bdii_huella);
-INSERT INTO modelo_database(id,version,huella) VALUES(1,2,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO modelo_database(id,version,huella) VALUES(1,3,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
 DO RELEASE_LOCK('bdii_clinica_inicializador_v2');
