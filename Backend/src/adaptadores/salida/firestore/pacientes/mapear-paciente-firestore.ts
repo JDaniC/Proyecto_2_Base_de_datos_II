@@ -33,6 +33,8 @@ export interface DocumentoPacienteFirestore {
   readonly sexo?: string;
   readonly grupo_sanguineo?: string;
   readonly direccion?: string;
+  readonly telefono?: string;
+  readonly correo?: string;
   readonly tipo_documento?: string;
   readonly numero_documento?: string;
   readonly estado: 'ACTIVO' | 'ARCHIVADO';
@@ -183,6 +185,8 @@ export function mapearPacienteFirestore(
     sexo: doc.sexo ?? null,
     ...(identificacion ? { identificacion } : {}),
     ...(doc.direccion ? { direccion: doc.direccion } : {}),
+    ...(doc.telefono ? { telefono: doc.telefono } : {}),
+    ...(doc.correo ? { correo: doc.correo } : {}),
     ...(doc.grupo_sanguineo ? { grupoSanguineo: doc.grupo_sanguineo } : {}),
     estado: doc.estado,
     version: versionPositiva(doc.revision),
@@ -211,6 +215,8 @@ export function mapearADocumentoPacienteFirestore(
     ...(paciente.sexo ? { sexo: paciente.sexo } : {}),
     ...(paciente.grupoSanguineo ? { grupo_sanguineo: paciente.grupoSanguineo } : {}),
     ...(paciente.direccion ? { direccion: paciente.direccion } : {}),
+    ...(paciente.telefono ? { telefono: paciente.telefono } : {}),
+    ...(paciente.correo ? { correo: paciente.correo } : {}),
     ...(paciente.identificacion
       ? {
           tipo_documento: paciente.identificacion.tipo,

@@ -8,6 +8,7 @@ import type {
   ResponsableDetalle,
 } from '../../../../dominio/clinica/paciente.js';
 import type { UUID } from '../../../../dominio/compartido/uuid.js';
+import { derivarClaveIdentificacion } from '../../../../dominio/compartido/normalizacion.js';
 import { claveUnica, validarDocumento } from '../validador-firestore.js';
 import { mapearADocumentoPacienteFirestore } from './mapear-paciente-firestore.js';
 
@@ -71,7 +72,11 @@ export async function aplicarCambiosPacientesFirestore(
     } else if (cambio.agregado === 'identidades') {
       const estado = cambio.nuevoEstado as { identificacion: Identificacion; titularId?: UUID };
       const titularId = estado.titularId ?? (cambio.recursoId as UUID);
-      const clave = claveUnica(estado.identificacion.tipo, estado.identificacion.numero);
+      const norm = derivarClaveIdentificacion(estado.identificacion.tipo, estado.identificacion.numero);
+      const idx = norm.indexOf(':');
+      const tipoNorm = idx > 0 ? norm.slice(0, idx) : estado.identificacion.tipo.trim().toUpperCase();
+      const numeroNorm = idx > 0 ? norm.slice(idx + 1) : estado.identificacion.numero.trim();
+      const clave = claveUnica(tipoNorm, numeroNorm);
 
       if (cambio.tipo === 'RESERVAR') {
         const esResponsable = cambios.some(
@@ -81,8 +86,8 @@ export async function aplicarCambiosPacientesFirestore(
         const ruta = `${coleccion}/${clave}`;
         const docIdentidad = {
           revision: 1,
-          tipo_documento: estado.identificacion.tipo,
-          numero_documento: estado.identificacion.numero,
+          tipo_documento: tipoNorm,
+          numero_documento: numeroNorm,
           recurso_id: titularId,
           fecha_registro: new Date(comando.instante),
         };

@@ -98,6 +98,8 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
         fecha_nacimiento: '2022-04-15',
         sexo: 'MASCULINO',
         direccion: 'Zona 11, Ciudad de Guatemala',
+        telefono: '+502 5555 4444',
+        correo: 'mateo.pediatria@example.com',
         responsables: [
           {
             nombres: 'Valeria',
@@ -138,6 +140,16 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
     assert.equal(docMenor.get('nombres'), 'Mateo Alejandro');
     assert.equal(docMenor.get('estado'), 'ACTIVO');
     assert.equal(docMenor.get('revision'), 1);
+    assert.equal(docMenor.get('telefono'), '+502 5555 4444');
+    assert.equal(docMenor.get('correo'), 'mateo.pediatria@example.com');
+
+    const pacConsultado = await consultar.ejecutar({
+      contexto,
+      bundle,
+      id: primerMenorId,
+    });
+    assert.equal(pacConsultado.telefono, '+502 5555 4444');
+    assert.equal(pacConsultado.correo, 'mateo.pediatria@example.com');
 
     const docResp = await cliente.firestore.doc(`responsables/${responsableCompartidoId}`).get();
     assert.equal(docResp.exists, true);
@@ -162,6 +174,8 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
         fecha_nacimiento: '2022-04-15',
         sexo: 'MASCULINO',
         direccion: 'Zona 11, Ciudad de Guatemala',
+        telefono: '+502 5555 4444',
+        correo: 'mateo.pediatria@example.com',
         responsables: [
           {
             nombres: 'Valeria',
@@ -350,7 +364,7 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
                 autoriza_atencion: true,
                 documento: {
                   tipo: 'CUI',
-                  numero: '2541893200101', // Mismo CUI ya reservado por Valeria
+                  numero: '2541-89320-0101', // Mismo CUI con guiones ya reservado por Valeria
                 },
               },
             ],
@@ -371,18 +385,23 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
         version_esperada: 1,
         nombres: 'Mateo Alexander',
         direccion: 'Zona 14, Ciudad de Guatemala',
+        telefono: null, // Eliminación explícita de teléfono
       },
     });
 
     assert.equal(resAct.httpStatus, 200);
     assert.equal(resAct.respuesta.nombres, 'Mateo Alexander');
     assert.equal(resAct.respuesta.direccion, 'Zona 14, Ciudad de Guatemala');
+    assert.equal(resAct.respuesta.telefono, undefined);
+    assert.equal(resAct.respuesta.correo, 'mateo.pediatria@example.com');
     assert.equal(resAct.respuesta.version, 2);
 
-    // Verificar que en Firestore la revisión es 2
+    // Verificar que en Firestore la revisión es 2 y telefono fue eliminado
     const docAct = await cliente.firestore.doc(`pacientes/${primerMenorId}`).get();
     assert.equal(docAct.get('revision'), 2);
     assert.equal(docAct.get('nombres'), 'Mateo Alexander');
+    assert.equal(docAct.get('telefono'), undefined);
+    assert.equal(docAct.get('correo'), 'mateo.pediatria@example.com');
 
     // 5b. Verificar consulta por versión
     const repoLectura = new RepositorioPacientesFirestore(cliente.firestore, cliente.firestore);
@@ -445,7 +464,7 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
     assert.equal(resLucia.data[0]?.nombres, 'Lucía Valentina');
 
     // Registrar otro menor con prefijo 'Mateo' para probar paginación de prefijo
-    await registrar.ejecutar({
+    const resSegundoMateo = await registrar.ejecutar({
       contexto,
       bundle,
       claveIdempotencia: uuidPublico(randomUUID()),
@@ -467,13 +486,39 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
         ],
       },
     });
+    const segundoMateoId = resSegundoMateo.respuesta.id;
 
-    // Paginación con límite 1
+    // Registrar tercer menor con el MISMO nombre completo para verificar desempate de cursor por ID
+    const resTercerMateo = await registrar.ejecutar({
+      contexto,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      entrada: {
+        nombres: 'Mateo Daniel',
+        apellidos: 'López Morales',
+        fecha_nacimiento: '2023-11-15',
+        sexo: 'MASCULINO',
+        responsables: [
+          {
+            nombres: 'Estela',
+            apellidos: 'Morales',
+            telefono: '+502 9988 5544',
+            parentesco: 'MADRE',
+            es_principal: true,
+            autoriza_atencion: true,
+            documento: { tipo: 'CUI', numero: '9988554430101' },
+          },
+        ],
+      },
+    });
+    const tercerMateoId = resTercerMateo.respuesta.id;
+
+    // Paginación con límite 1 buscando exactamente 'Mateo Daniel' (dos homónimos)
     const p1 = await buscar.ejecutar({
       contexto,
       bundle,
       entrada: {
-        q: 'Mateo',
+        q: 'Mateo Daniel',
         limite: 1,
         orden: 'ASC',
       },
@@ -486,7 +531,7 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
       contexto,
       bundle,
       entrada: {
-        q: 'Mateo',
+        q: 'Mateo Daniel',
         limite: 1,
         cursor: p1.meta.siguiente_cursor,
         orden: 'ASC',
@@ -495,6 +540,9 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
 
     assert.equal(p2.data.length, 1);
     assert.notEqual(p2.data[0]?.id, p1.data[0]?.id);
+    const idsPagina = [p1.data[0]?.id, p2.data[0]?.id];
+    assert.ok(idsPagina.includes(segundoMateoId));
+    assert.ok(idsPagina.includes(tercerMateoId));
   });
 
   await t.test('7. Archivo de paciente: impide modificaciones posteriores', async () => {

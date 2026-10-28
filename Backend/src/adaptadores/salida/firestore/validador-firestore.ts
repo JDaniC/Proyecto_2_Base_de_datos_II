@@ -130,6 +130,8 @@ export const modelos = [
       sexo: texto(40).optional(),
       grupo_sanguineo: texto(20).optional(),
       direccion: nota.optional(),
+      telefono: texto(40).optional(),
+      correo: texto(254).optional(),
       tipo_documento: texto(40).optional(),
       numero_documento: texto(80).optional(),
       estado: z.enum(['ACTIVO', 'ARCHIVADO']),

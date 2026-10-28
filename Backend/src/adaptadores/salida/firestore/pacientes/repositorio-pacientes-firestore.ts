@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
-import type {
-  Firestore,
-  Transaction,
-  DocumentReference,
-  DocumentSnapshot,
-  Query,
-  QuerySnapshot,
+import {
+  FieldPath,
+  type Firestore,
+  type Transaction,
+  type DocumentReference,
+  type DocumentSnapshot,
+  type Query,
+  type QuerySnapshot,
 } from 'firebase-admin/firestore';
 import type { Pagina } from '../../../../aplicacion/puertos/nucleo.js';
 import type {
@@ -18,6 +19,7 @@ import { uuidPublico } from '../../../../dominio/compartido/uuid.js';
 import type { Version } from '../../../../dominio/compartido/version.js';
 import { ErrorDominio, solicitudInvalida } from '../../../../dominio/compartido/error-dominio.js';
 import {
+  derivarClaveIdentificacion,
   normalizarIdentificacion,
   normalizarTextoBusqueda,
 } from '../../../../dominio/compartido/normalizacion.js';
@@ -131,7 +133,11 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
     try {
       let clave = '';
       try {
-        clave = claveUnica(identificacion.tipo, identificacion.numero);
+        const norm = derivarClaveIdentificacion(identificacion.tipo, identificacion.numero);
+        const idx = norm.indexOf(':');
+        const tipoNorm = idx > 0 ? norm.slice(0, idx) : identificacion.tipo.trim().toUpperCase();
+        const numNorm = idx > 0 ? norm.slice(idx + 1) : identificacion.numero.trim();
+        clave = claveUnica(tipoNorm, numNorm);
       } catch {
         return null;
       }
@@ -271,7 +277,8 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
       query = query
         .where('nombre_busqueda', '>=', qNorm)
         .where('nombre_busqueda', '<=', qNorm + '\uf8ff')
-        .orderBy('nombre_busqueda', direccion);
+        .orderBy('nombre_busqueda', direccion)
+        .orderBy(FieldPath.documentId(), direccion);
 
       // Descodificar cursor si está presente
       if (criterios.cursor !== undefined) {
@@ -292,7 +299,7 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
             throw new Error();
           }
 
-          query = query.startAfter(data.nombreBusqueda);
+          query = query.startAfter(data.nombreBusqueda, data.id);
         } catch {
           throw solicitudInvalida('El cursor no corresponde a esta búsqueda.', 'cursor');
         }
