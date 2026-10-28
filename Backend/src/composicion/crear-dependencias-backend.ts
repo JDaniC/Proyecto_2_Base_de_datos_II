@@ -63,6 +63,9 @@ export async function crearDependenciasBackend(
       variables.FIREBASE_AUTH_PROJECT_ID.trim().length === 0) {
     faltantes.push('FIREBASE_AUTH_PROJECT_ID');
   }
+  if (variables.CURSOR_SIGNING_SECRET?.trim()) {
+    process.env.CURSOR_SIGNING_SECRET = variables.CURSOR_SIGNING_SECRET.trim();
+  }
   if (faltantes.length > 0) throw new ErrorConfiguracionBackend(faltantes);
 
   const sql = parsearConfiguracionSql(variables);

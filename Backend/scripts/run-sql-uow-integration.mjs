@@ -34,6 +34,7 @@ try {
   entorno.PG_TEST_SECRET_FILE = join(secretos, 'postgres_app_password');
   entorno.MYSQL_TEST_PORT = entorno.MYSQL_PORT;
   entorno.MYSQL_TEST_SECRET_FILE = join(secretos, 'mysql_app_password');
+  entorno.CURSOR_SIGNING_SECRET = 'super_secret_cursor_signing_key_test_2026';
   await comando('npm', ['run', 'build:test'], { cwd: backend });
   const salidaPruebas = await comando(process.execPath, [
     '--test',

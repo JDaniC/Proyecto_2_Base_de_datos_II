@@ -1,7 +1,16 @@
 import { createHmac } from 'node:crypto';
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 
-const SECRETO_CURSOR = process.env.CURSOR_SIGNING_SECRET || 'bdii_cursor_deterministic_salt_secret_v1';
+export function obtenerSecretoCursor(): string {
+  const secreto = process.env.CURSOR_SIGNING_SECRET?.trim();
+  if (!secreto || secreto.length < 16) {
+    throw new ErrorDominio(
+      'PERSISTENCIA_NO_DISPONIBLE',
+      'CURSOR_SIGNING_SECRET es requerido para autenticar cursores de paginación y debe ser provisto por la configuración del entorno con al menos 16 caracteres.',
+    );
+  }
+  return secreto;
+}
 
 export type RecursoCursorSql = 'pacientes' | 'eventos_auditoria';
 
@@ -20,7 +29,8 @@ export function escaparLikeSql(texto: string): string {
   return texto.replace(/([\\%_])/g, '\\$1');
 }
 
-export function codificarCursorSql(datos: DatosCursorSql): string {
+export function codificarCursorSql(datos: DatosCursorSql, claveSecreta?: string): string {
+  const secreto = claveSecreta ?? obtenerSecretoCursor();
   const carga = {
     v: datos.v,
     recurso: datos.recurso,
@@ -32,7 +42,7 @@ export function codificarCursorSql(datos: DatosCursorSql): string {
     id: datos.id,
   };
   const payloadStr = JSON.stringify(carga);
-  const firma = createHmac('sha256', SECRETO_CURSOR).update(payloadStr).digest('base64url');
+  const firma = createHmac('sha256', secreto).update(payloadStr).digest('base64url');
   return Buffer.from(JSON.stringify({ c: payloadStr, s: firma }), 'utf8').toString('base64url');
 }
 
@@ -43,14 +53,16 @@ export function decodificarCursorSql(
   ordenEsperado: 'ASC' | 'DESC',
   estadoEsperado?: string,
   recursoEsperado: RecursoCursorSql = 'pacientes',
+  claveSecreta?: string,
 ): { fecha: string; id: string } {
+  const secreto = claveSecreta ?? obtenerSecretoCursor();
   try {
     const raw = Buffer.from(cursor, 'base64url').toString('utf8');
     const sobre = JSON.parse(raw) as { c?: unknown; s?: unknown };
     if (typeof sobre !== 'object' || sobre === null || typeof sobre.c !== 'string' || typeof sobre.s !== 'string') {
       throw solicitudInvalida('El cursor es inválido o está corrupto.', 'cursor');
     }
-    const firmaCalculada = createHmac('sha256', SECRETO_CURSOR).update(sobre.c).digest('base64url');
+    const firmaCalculada = createHmac('sha256', secreto).update(sobre.c).digest('base64url');
     if (sobre.s !== firmaCalculada) {
       throw solicitudInvalida('El cursor es inválido o está corrupto.', 'cursor');
     }

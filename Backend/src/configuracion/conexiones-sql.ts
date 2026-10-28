@@ -16,6 +16,9 @@ export function parsearConfiguracionSql(
   const mysql = leerMotor(variables, 'MYSQL', {
     baseDatos: 'clinica_odontologica', usuario: 'clinica_app',
   });
+  if (variables.CURSOR_SIGNING_SECRET !== undefined && variables.CURSOR_SIGNING_SECRET.trim().length < 16) {
+    throw new ErrorConfiguracionSql(['CURSOR_SIGNING_SECRET']);
+  }
   return Object.freeze({ postgresql, mysql });
 }
 

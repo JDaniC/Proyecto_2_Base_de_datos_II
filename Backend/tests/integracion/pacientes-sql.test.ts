@@ -1,3 +1,5 @@
+process.env.CURSOR_SIGNING_SECRET = process.env.CURSOR_SIGNING_SECRET || 'super_secret_cursor_signing_key_test_2026';
+
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -24,6 +26,7 @@ import {
 } from '../../src/adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
 import { RepositorioPacientesMysql } from '../../src/adaptadores/salida/mysql/pacientes/repositorio-pacientes-mysql.js';
 import { crearConsultaHistorialSql } from '../../src/adaptadores/salida/sql/consulta-historial-sql.js';
+import { codificarCursorSql } from '../../src/adaptadores/salida/sql/cursor-paginacion-sql.js';
 import { crearRepositorioCuentaPostgresql } from '../../src/adaptadores/salida/postgresql/repositorio-cuenta-postgresql.js';
 import { crearRepositorioCuentaMysql } from '../../src/adaptadores/salida/mysql/repositorio-cuenta-mysql.js';
 import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
@@ -272,6 +275,28 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
       contexto,
       bundle,
       entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: pag1.meta.siguiente_cursor + '_corrupto' },
+    }),
+    (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
+  );
+
+  // Rechazo de cursor firmado con clave pública o fallback ajeno al secreto privado de despliegue
+  const cursorFirmadoConClaveInvalida = codificarCursorSql(
+    {
+      v: 1,
+      recurso: 'pacientes',
+      institucion: 'HOSPITAL_GENERAL',
+      q: 'gomez',
+      orden: 'ASC',
+      f: '2026-10-27 12:00:00.000000',
+      id: pacienteId,
+    },
+    'bdii_cursor_deterministic_salt_secret_v1', // clave ajena al secreto privado
+  );
+  await assert.rejects(
+    () => buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: 'Gomez', limite: 1, orden: 'ASC', cursor: cursorFirmadoConClaveInvalida },
     }),
     (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
   );
