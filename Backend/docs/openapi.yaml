@@ -343,7 +343,7 @@ paths:
       x-permisos:
       - historial.leer
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -426,7 +426,7 @@ paths:
       x-permisos:
       - historial.leer
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path

@@ -1,3 +1,4 @@
+import { crearHistorialMongodb } from '../../historial/historial-mongodb.js';
 import type { ClientSession, Db } from 'mongodb';
 import type { BundleInstitucional } from '../../../../aplicacion/puertos/bundle-institucional.js';
 import type { RepositorioCuenta } from '../../../../aplicacion/puertos/repositorio-cuenta.js';
@@ -45,7 +46,7 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
     },
   });
   return Object.freeze({
-    institucion: 'LABORATORIO_CLINICO', estadoPersistencia: 'DISPONIBLE',
+    institucion: 'LABORATORIO_CLINICO', estadoPersistencia: 'DISPONIBLE', historial: crearHistorialMongodb(cliente.db),
     cuenta: crearRepositorioCuentaInstitucionalMongodb(cliente), pacientes: crearRepositorioPacientesMongodb(cliente.db), uow,
   });
 }

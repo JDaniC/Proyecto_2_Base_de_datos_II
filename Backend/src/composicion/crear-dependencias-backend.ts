@@ -1,3 +1,4 @@
+import { crearHistorialSql } from '../adaptadores/salida/historial/historial-sql.js';
 import { randomUUID } from 'node:crypto';
 import { applicationDefault, deleteApp, initializeApp, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
@@ -124,11 +125,13 @@ export async function crearDependenciasBackend(
       HOSPITAL_GENERAL: {
         cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql),
         pacientes: crearRepositorioPacientesPostgresql(postgresql),
+        historial: crearHistorialSql(postgresql, 'postgresql'),
         uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
       },
       CLINICA_ODONTOLOGICA: {
         cuenta: crearRepositorioCuentaInstitucionalMysql(mysql),
         pacientes: crearRepositorioPacientesMysql(mysql),
+        historial: crearHistorialSql(mysql, 'mysql'),
         uow: crearUnidadDeTrabajoPacientesMysql(mysql),
       },
       LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),

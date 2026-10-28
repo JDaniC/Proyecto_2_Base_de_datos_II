@@ -25,7 +25,7 @@
     const protegidas = new Set(['auditoria', 'operaciones', 'revisiones']);
     const colecciones = (await laboratorio.getCollectionInfos()).map((c) => c.name).sort();
     const privilegios = colecciones.map((collection) => ({ resource: { db: 'laboratorio_clinico', collection },
-      actions: protegidas.has(collection) ? ['find', 'insert'] : ['find', 'insert', 'update', 'remove'] }));
+      actions: collection === 'historial_modelo' ? ['find'] : (collection === 'historial_eventos' || protegidas.has(collection)) ? ['find', 'insert'] : ['find', 'insert', 'update', 'remove'] }));
     privilegios.push({ resource: { db: 'laboratorio_clinico', collection: '' }, actions: ['listCollections', 'listIndexes'] });
     const rol = await laboratorio.getRole('laboratorio_aplicacion', { showPrivileges: true });
     const canonico = (valores) => JSON.stringify(valores.map((p) => ({ resource: { db: p.resource.db, collection: p.resource.collection }, actions: [...p.actions].sort() }))
@@ -41,8 +41,8 @@
     }
     const aplicacion = new Mongo('mongodb://mongodb:27017/?directConnection=true');
     await aplicacion.getDB('laboratorio_clinico').auth('laboratorio_app', fs.readFileSync('/run/secrets/mongo_app_password', 'utf8').trim());
-    if ((await aplicacion.getDB('laboratorio_clinico').getCollectionInfos()).length !== 27) throw new Error('MODELO_INCOMPLETO');
-    print('PASS: replica set rs0, 27 colecciones y usuario de aplicacion preparados.');
+    if (![27,29].includes((await aplicacion.getDB('laboratorio_clinico').getCollectionInfos()).length)) throw new Error('MODELO_INCOMPLETO');
+    print(`PASS: replica set rs0, ${colecciones.length} colecciones y usuario de aplicacion preparados.`);
   } catch (error) {
     print(`BOOTSTRAP_MONGO_ERROR: ${error.codeName || error.message || 'DESCONOCIDO'}`);
     quit(1);

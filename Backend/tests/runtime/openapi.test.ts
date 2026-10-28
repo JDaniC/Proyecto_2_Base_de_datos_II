@@ -15,6 +15,8 @@ describe('contrato OpenAPI de arranque', () => {
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.get), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion/cierre']?.post), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/historial']?.get), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/expediente']?.get), 'IMPLEMENTED');
   });
 
   it('falla cerrado para YAML malformado o documento con otra versión', () => {

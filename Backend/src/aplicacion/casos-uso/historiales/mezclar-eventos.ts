@@ -66,7 +66,10 @@ export async function mezclarEventos<T extends EventoOrdenable>(parametros: {
     claveFecha(parametros.despues.fechaHora);
   }
   const { fuentes, limite, ...filtros } = parametros;
-  const paginas = await Promise.all(fuentes.map((fuente) => fuente.leer({ ...filtros, cantidad: limite + 1 })));
+  const resultados = await Promise.allSettled(fuentes.map((fuente) => fuente.leer({ ...filtros, cantidad: limite + 1 })));
+  const fallo = resultados.find((r) => r.status === 'rejected');
+  if (fallo?.status === 'rejected') throw fallo.reason;
+  const paginas = resultados.map((r) => r.status === 'fulfilled' ? r.value : []);
   const posiciones = paginas.map(() => 0);
   for (const pagina of paginas) {
     if (pagina.length > limite + 1) throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'La fuente excedió el límite de lectura.');

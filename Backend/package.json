@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Fundación HTTP hexagonal para Entrega II de Bases de Datos II.",
+  "description": "Fundaci\u00f3n HTTP hexagonal para Entrega II de Bases de Datos II.",
   "engines": {
     "node": ">=24.22.0 <25"
   },
@@ -18,7 +18,8 @@
     "test:integration:nosql": "node scripts/run-nosql-uow-integration.mjs",
     "test:integration:pacientes:mongodb": "node scripts/run-pacientes-mongodb-integration.mjs",
     "test:integration:pacientes:firestore": "node scripts/run-pacientes-firestore-integration.mjs",
-    "provision:cuenta": "npm run build && node --env-file-if-exists=.env scripts/provisionar-cuenta.mjs"
+    "provision:cuenta": "npm run build && node --env-file-if-exists=.env scripts/provisionar-cuenta.mjs",
+    "test:integration:historial": "node scripts/run-historial-integration.mjs"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",
