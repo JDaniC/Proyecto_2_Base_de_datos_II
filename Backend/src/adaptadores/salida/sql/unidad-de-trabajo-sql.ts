@@ -419,7 +419,12 @@ function esConflictoIdentidad(error: unknown): boolean {
     String(err.detail ?? ''),
     String(err.message ?? ''),
   ].join(' ').toLowerCase();
-  return texto.includes('identidades_paciente') || texto.includes('paciente_cui') || texto.includes('cui');
+  return (
+    texto.includes('identidades_paciente') ||
+    texto.includes('paciente_cui') ||
+    texto.includes('cui') ||
+    texto.includes('identidad')
+  );
 }
 
 function esConflictoOperacion(error: unknown): boolean {
@@ -428,9 +433,11 @@ function esConflictoOperacion(error: unknown): boolean {
 }
 
 function codigoSql(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
-  const code = (error as { code?: unknown }).code;
-  return typeof code === 'string' ? code : undefined;
+  if (typeof error !== 'object' || error === null) return undefined;
+  const err = error as { code?: unknown; errno?: unknown };
+  if (typeof err.code === 'string') return err.code;
+  if (typeof err.errno === 'number' || typeof err.errno === 'string') return String(err.errno);
+  return undefined;
 }
 
 function traducirErrorSql(error: unknown): ErrorDominio | null {
