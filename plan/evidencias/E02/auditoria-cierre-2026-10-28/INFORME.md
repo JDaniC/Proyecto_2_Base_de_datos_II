@@ -4,7 +4,7 @@
 
 Alcance: puerta de cierre de fase E02, no una nueva auditoría de cada callback ya cubierto por las auditorías individuales. Fuentes: `plan/entregas/E02_pacientes_historial/01_P1.md` y `02_P2.md` (criterios de cierre), `plan/03_CONTRATOS_Y_FLUJOS.md`, los seis informes `plan/evidencias/E02/E02-P*.md`, OpenAPI y evidencia del recorrido integrado.
 
-Resultado: **6/6 requisitos de salida PASS en la demostración, 0 FAIL, 0 BLOCKED**. Las seis tareas están HECHA e integradas según tablero y GitHub. El PR documental de cierre está EN_REVISION hasta recibir la revisión automática real y completar su integración.
+Resultado: **6/6 requisitos de salida PASS en la demostración, 0 FAIL, 0 BLOCKED**. Las seis tareas están HECHA e integradas según tablero y GitHub. El PR documental de cierre #49 se integró en `develop` (`c1a932a`) tras revisión automática de Codex sin hallazgos sobre `a09fb9f`.
 
 La prueba integrada fue ejecutada dos veces en esta sesión; el recorrido final se guardó en [recorrido.json](recorrido.json). Ambiente: PostgreSQL/MySQL/MongoDB en un proyecto Docker efímero, Firebase Auth/Firestore Emulator con proyecto `demo-*`, navegador Chromium y datos/cuentas sintéticos. La suite ejecutó 32 comprobaciones. La limpieza se limitó al proyecto aleatorio creado por el propio guion.
 
@@ -68,9 +68,9 @@ Resultados negativos observados y su clasificación: la suite completa de Fronte
 | Pruebas históricas U04/U05 (sustituidas; reconciliación E06) | 0 | 0 | 0 | 0 | 10 |
 | Suite completa Frontend, fuera de la puerta E02 | — | 5 | — | — | — |
 | Backend tests / lint y Frontend build | PASS | 0 | 0 | 0 | 0 |
-| Revisión nativa del PR #49 en SHA final | Pendiente | — | — | — | — |
+| Revisión nativa del PR #49 en SHA final (`a09fb9f`) | PASS | 0 | 0 | 0 | 0 |
 
-La fila de revisión automática se mantiene EN_REVISION hasta comprobar la respuesta real del bot y `contrato-pr` para el SHA final. El cierre solo se declara integrado después de esa verificación.
+La revisión automática de Codex sobre `a09fb9f` concluyó sin hallazgos (`has_any_findings: false`) y con `contrato-pr`/`revision-codex` en `SUCCESS`, integrándose el PR #49 en `develop` (`c1a932a`).
 
 ## 8. Riesgos residuales
 
