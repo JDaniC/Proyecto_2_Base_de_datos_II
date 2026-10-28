@@ -34,6 +34,8 @@ Leer [continuidad y cola compartida](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md); ejecu
 
 ## Cómo mantener este archivo
 
+Corte de persistencia MongoDB (27/10/2026, America/Guatemala): PR #42 integrado en develop (`56752b2`), con revisión nativa de Codex sin hallazgos sobre `9b8c543`. Backend incorpora pacientes/identidades reales del laboratorio, índices de búsqueda y migración 003 para volúmenes existentes. La evidencia nueva acredita MongoDB aislado, migración/recuperación, carreras y reinicio, no UI→API→BD completa ni los otros motores de E02. Estado oficial y dependencias: tablero; detalles: `plan/evidencias/E02/E02-P2-01.md`. El bundle requiere la preparación compatible; no aplicar inicializadores como sustituto de la migración.
+
 Actualizar al cambiar producto, bloqueos generales o estado de integración. Registrar fecha, fuente/commit/PR observado y próxima entrada. Evitar copiar estados por tarea o logs completos. No incorporar secretos ni depender de mensajes privados del chat.
 
 ## Documentación de interfaz
