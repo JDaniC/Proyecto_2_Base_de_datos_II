@@ -5,7 +5,7 @@ import type {
   UnidadDeTrabajo,
 } from '../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../aplicacion/puertos/contexto-autenticado.js';
-import type { ClientSession, Db, MongoClient } from 'mongodb';
+import type { ClientSession, Db, Long, MongoClient } from 'mongodb';
 
 export const INSTITUCION_LABORATORIO = 'LABORATORIO_CLINICO' as const;
 
@@ -93,7 +93,7 @@ export interface DocumentoRevisionMongo {
   readonly revision: number;
   readonly tipo_recurso: string;
   readonly recurso_id: string;
-  readonly version: number;
+  readonly version: number | Long;
   readonly actor_id: string;
   readonly fecha_hora: Date;
   readonly motivo: string;

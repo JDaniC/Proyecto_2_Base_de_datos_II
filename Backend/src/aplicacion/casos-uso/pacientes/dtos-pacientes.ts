@@ -93,8 +93,8 @@ export interface PacienteDto {
   readonly institucion: Institucion;
   readonly nombres: string;
   readonly apellidos: string;
-  readonly fecha_nacimiento: string;
-  readonly sexo: Sexo;
+  readonly fecha_nacimiento: string | null;
+  readonly sexo: string | null;
   readonly identificacion?: Identificacion;
   readonly telefono?: string;
   readonly correo?: string;

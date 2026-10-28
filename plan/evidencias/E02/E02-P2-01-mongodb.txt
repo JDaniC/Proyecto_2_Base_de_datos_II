@@ -1,0 +1,34 @@
+Preparando MongoDB aislado: bdii-e02-p2-01-7cad94edcf
+MongoDB: laboratorio_clinico; 27 colecciones, 27 nuevas, 65 indices secundarios verificados.
+No se cargaron datos ni cuentas. Las reglas entre documentos requieren el backend transaccional.
+PASS: replica set rs0, 27 colecciones y usuario de aplicacion preparados.
+ Container bdii-e02-p2-01-7cad94edcf-mongo-init-run-eb80ba536c5e Creating 
+ Container bdii-e02-p2-01-7cad94edcf-mongo-init-run-eb80ba536c5e Created 
+
+▶ E02-P2-01 MongoDB real: migración, pacientes, identidad, búsqueda, carreras y rollback
+  ✔ instalación nueva y migración existente: falla tardía, recuperación e idempotencia sin pérdida (4356.2897ms)
+  ✔ preflight rechaza duplicados normalizados antes de modificar una base existente (828.1628ms)
+  ✔ lectura legada conserva grupos largos, sexo previo, fecha desconocida y código; búsqueda exacta normalizada (13.8062ms)
+  ✔ alta, identidad posterior y retiro conservan UUID/código, apertura y revisiones (55.0745ms)
+  ✔ PATCH parcial conserva secundarios, IDs, cabecera y campos legados; retiro de identidad legada (18.426ms)
+  ✔ idempotencia concurrente sin documento: misma respuesta, un paciente y operación (85.8556ms)
+  ✔ cambiar solo el formato del documento conserva su reserva canónica y la representación capturada (34.2969ms)
+  ✔ carrera de identidad en sesiones distintas: un ganador, PACIENTE_DUPLICADO y sin huérfanos (64.6243ms)
+  ✔ versiones concurrentes: solo una edición gana; revisión anterior durable (67.5914ms)
+  ✔ fallo de esquema tardío revierte paciente, identidad, auditoría y operación; actualización también revierte revisión (45.9429ms)
+  ✔ búsqueda acentuada por prefijo de cualquier palabra, cursores ASC/DESC y filtros ligados (73.8739ms)
+  ✔ permiso actual y desactivación impiden comandos nuevos y replay (47.0292ms)
+  ✔ commit confirmado con acuse perdido se reconcilia sin duplicar (28.5968ms)
+  ✔ archivo conserva historia y rechaza edición; desconexión devuelve 503 (32.0207ms)
+  ✔ reinicio del contenedor conserva paciente, revisión y operación durable (1401.1936ms)
+  ✔ versiones BSON int64 conservan precisión y rechazan desbordamiento sin escrituras parciales (129.6942ms)
+✔ E02-P2-01 MongoDB real: migración, pacientes, identidad, búsqueda, carreras y rollback (7354.0153ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7682.9405
+
