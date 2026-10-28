@@ -81,3 +81,14 @@ Incorporar la persistencia de datos demográficos completos (`sexo`, `direccion`
 - Antes de retirar las columnas `sexo`, `direccion` y `fecha_registro`, la reversión respalda de forma atómica en la tabla `revisiones` (`tipo_recurso = 'paciente_demografia_v3'`) los valores demográficos y marcas temporales de todos los pacientes afectados.
 - Elimina los procedimientos temporales antes de llamar a `_huella_modelo`, dejando el manifiesto (`version = 2`) y la huella idénticos al inicializador canónico `v2`.
 - Al volver a aplicar la migración `002`, los datos respaldados se restauran sin pérdida de información clínica ni temporal.
+
+## `002_backfill_identidades_hospital_postgresql.sql` (`E02-P1-02`)
+
+### Propósito
+
+Incorporar la persistencia de la clave de identidad activa (`clave_identidad_activa CHAR(64)`) y el identificador de contacto de emergencia activo (`id_contacto_emergencia_activo BIGINT`) en la tabla `paciente` de `hospital_general`:
+
+- No destructiva e idempotente: preserva todas las filas previas de pacientes, citas, historiales y auditoría.
+- Realiza el backfill automático de identidades en `identidades_paciente` para pacientes existentes que cuenten con `cui` válido de 13 dígitos y vincula `clave_identidad_activa`.
+- Vincula `id_contacto_emergencia_activo` con el primer contacto de emergencia registrado para pacientes existentes.
+- Recalcula la huella limpia mediante `pg_temp.huella_hospital()` y actualiza el manifiesto en `modelo_database`, garantizando compatibilidad exacta con el inicializador canónico `Database/hospital_general_postgresql.sql`.

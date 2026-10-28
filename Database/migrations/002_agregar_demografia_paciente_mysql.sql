@@ -73,6 +73,22 @@ BEGIN
         NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.clave_identidad_activa')), 'null')
       );
   END IF;
+
+  -- Inicializar clave_identidad_activa para pacientes existentes durante la primera migración
+  -- seleccionando la identidad determinista más reciente si no provienen de un respaldo previo en revisiones.
+  UPDATE paciente p
+  JOIN (
+    SELECT id_paciente, clave,
+           ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn
+    FROM identidades_paciente
+  ) ip ON ip.id_paciente = p.id_paciente AND ip.rn = 1
+  LEFT JOIN (
+    SELECT DISTINCT recurso_id
+    FROM revisiones
+    WHERE tipo_recurso = 'paciente_demografia_v3'
+  ) r ON r.recurso_id = p.id_publico
+  SET p.clave_identidad_activa = ip.clave
+  WHERE p.clave_identidad_activa IS NULL AND r.recurso_id IS NULL;
 END$$
 DELIMITER ;
 

@@ -505,6 +505,74 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
   );
   assert.equal(Number(resContactos.filas[0]?.cant), 2, 'los múltiples contactos de emergencia deben preservarse');
 
+  // Retiro explícito de contacto_emergencia manteniendo el estado ausente sin borrar los contactos existentes
+  const regMultiCe = await registrar.ejecutar({
+    contexto,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      nombres: 'Multi Contacto',
+      apellidos: 'Emergencia Test',
+      fecha_nacimiento: '1992-05-10',
+      sexo: 'MASCULINO',
+      identificacion: { tipo: 'CUI', numero: '2489123450999' },
+      contacto_emergencia: {
+        nombres: 'Primer Contacto',
+        apellidos: 'Emergencia Uno',
+        parentesco: 'PADRE',
+        telefono: '50255551111',
+      },
+    },
+  });
+  const pacMultiCeId = uuidPublico(regMultiCe.respuesta.id);
+
+  // Insertar un segundo contacto de emergencia
+  await pool.consultar(
+    `INSERT INTO contacto_emergencia (
+      id_publico, revision, id_paciente, primer_nombre,
+      segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+    ) SELECT $1, 1, p.id_paciente, 'Segundo', 'Contacto', 'Emergencia', 'Dos', 'HERMANO', '50255552222'
+    FROM paciente p WHERE p.id_publico = $2`,
+    [uuidPublico(randomUUID()), pacMultiCeId],
+  );
+
+  // Retirar explícitamente el contacto de emergencia (contacto_emergencia: null)
+  const resSinCe = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacMultiCeId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      contacto_emergencia: null,
+    },
+  });
+  assert.equal(resSinCe.respuesta.contacto_emergencia, undefined, 'el contacto de emergencia debe figurar ausente tras retiro');
+
+  // Lectura por ID y búsqueda deben preservar el estado ausente sin exponer el segundo contacto
+  const consultadoSinCe = await consultar.ejecutar({
+    contexto,
+    bundle,
+    id: pacMultiCeId,
+  });
+  assert.equal(consultadoSinCe.contacto_emergencia, undefined, 'porId no debe exponer el otro contacto remanente');
+
+  const busquedaSinCe = await buscar.ejecutar({
+    contexto,
+    bundle,
+    entrada: { q: 'Multi Contacto', limite: 10, orden: 'ASC' },
+  });
+  assert.equal(busquedaSinCe.data[0]?.contacto_emergencia, undefined, 'buscar no debe exponer el contacto remanente');
+
+  // Los registros en la tabla contacto_emergencia deben seguir existiendo intactos
+  const resContactosTrasRetiro = await pool.consultar<{ cant: number | string }>(
+    `SELECT count(*) AS cant FROM contacto_emergencia ce
+     JOIN paciente p ON p.id_paciente = ce.id_paciente
+     WHERE p.id_publico = $1`,
+    [pacMultiCeId],
+  );
+  assert.equal(Number(resContactosTrasRetiro.filas[0]?.cant), 2, 'ningún contacto de emergencia debe ser eliminado físicamente');
+
   // 10. Búsqueda por límites de palabra y diacríticos normalizados completos
   const cuiGustavo = '2489123450103';
   await registrar.ejecutar({
@@ -1019,10 +1087,12 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
       JSON_OBJECT(
         'sexo', p.sexo,
         'direccion', p.direccion,
-        'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f')
+        'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f'),
+        'clave_identidad_activa', p.clave_identidad_activa
       )
     FROM paciente p
-    WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL)
+    WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL OR p.clave_identidad_activa IS NOT NULL
+           OR EXISTS (SELECT 1 FROM identidades_paciente ip WHERE ip.id_paciente = p.id_paciente))
       AND NOT EXISTS (
         SELECT 1 FROM revisiones r
         WHERE r.tipo_recurso = 'paciente_demografia_v3'
@@ -1055,16 +1125,38 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
       p.fecha_registro = COALESCE(
         STR_TO_DATE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), 'null'), '%Y-%m-%d %H:%i:%s.%f'),
         p.fecha_registro
+      ),
+      p.clave_identidad_activa = COALESCE(
+        p.clave_identidad_activa,
+        NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.clave_identidad_activa')), 'null')
       )
   `);
 
-  // Verificar que pacienteConDoc (cuyo sexo era MASCULINO y direccion NULL) no adquiere el string literal 'null'
-  const filaConDocTrasRestore = await pool.consultar<{ sexo: string; direccion: string | null }>(
-    'SELECT sexo, direccion FROM paciente WHERE id_publico = ?',
+  // Backfill de identidades para pacientes de primera migración preservando respaldos
+  await pool.consultar(`
+    UPDATE paciente p
+    JOIN (
+      SELECT id_paciente, clave,
+             ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn
+      FROM identidades_paciente
+    ) ip ON ip.id_paciente = p.id_paciente AND ip.rn = 1
+    LEFT JOIN (
+      SELECT DISTINCT recurso_id
+      FROM revisiones
+      WHERE tipo_recurso = 'paciente_demografia_v3'
+    ) r ON r.recurso_id = p.id_publico
+    SET p.clave_identidad_activa = ip.clave
+    WHERE p.clave_identidad_activa IS NULL AND r.recurso_id IS NULL
+  `);
+
+  // Verificar que pacienteConDoc (cuyo documento fue retirado y respaldado como NULL) preserva estado ausente
+  const filaConDocTrasRestore = await pool.consultar<{ sexo: string; direccion: string | null; clave_identidad_activa: string | null }>(
+    'SELECT sexo, direccion, clave_identidad_activa FROM paciente WHERE id_publico = ?',
     [pacienteConDocId],
   );
   assert.equal(filaConDocTrasRestore.filas[0]?.sexo, 'MASCULINO');
   assert.equal(filaConDocTrasRestore.filas[0]?.direccion, null, 'la dirección nula no debe restaurarse como string literal "null"');
+  assert.equal(filaConDocTrasRestore.filas[0]?.clave_identidad_activa, null, 'el documento retirado debe preservar su estado ausente');
 
   // 3. Búsqueda y paginación en MySQL
   const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });

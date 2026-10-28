@@ -57,22 +57,12 @@ const SELECT_PACIENTE_BASE = `
     ce.parentesco AS ce_parentesco,
     ce.telefono AS ce_telefono,
     p.clave_identidad_activa,
+    p.id_contacto_emergencia_activo,
     ip.tipo_documento,
     ip.numero_documento
   FROM paciente p
   LEFT JOIN historial_clinico h ON p.id_paciente = h.id_paciente
-  LEFT JOIN (
-    SELECT DISTINCT ON (id_paciente)
-      id_paciente,
-      primer_nombre,
-      segundo_nombre,
-      primer_apellido,
-      segundo_apellido,
-      parentesco,
-      telefono
-    FROM contacto_emergencia
-    ORDER BY id_paciente, id_contacto ASC
-  ) ce ON p.id_paciente = ce.id_paciente
+  LEFT JOIN contacto_emergencia ce ON p.id_contacto_emergencia_activo = ce.id_contacto
   LEFT JOIN identidades_paciente ip ON p.clave_identidad_activa = ip.clave
 `;
 

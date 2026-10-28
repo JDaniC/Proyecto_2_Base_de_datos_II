@@ -81,11 +81,12 @@ export async function aplicarCambiosPacientesPostgresql(
         if (pac.contactoEmergencia) {
           const [ceNom1, ceNom2] = dividirNombre(pac.contactoEmergencia.nombres);
           const [ceApe1, ceApe2] = dividirNombre(pac.contactoEmergencia.apellidos);
-          await executor.consultar(
+          const resCe = await executor.consultar<{ id_contacto: number | string }>(
             `INSERT INTO contacto_emergencia (
               id_publico, revision, id_paciente, primer_nombre,
               segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
-            ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)`,
+            ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id_contacto`,
             [
               uuidPublico(randomUUID()),
               idPaciente,
@@ -97,6 +98,13 @@ export async function aplicarCambiosPacientesPostgresql(
               pac.contactoEmergencia.telefono,
             ],
           );
+          const idCe = resCe.filas[0]?.id_contacto;
+          if (idCe !== undefined) {
+            await executor.consultar(
+              'UPDATE paciente SET id_contacto_emergencia_activo = $1 WHERE id_paciente = $2',
+              [idCe, idPaciente],
+            );
+          }
         }
 
         const historialId = comando.ids.historial_id ?? uuidPublico(randomUUID());
@@ -124,8 +132,9 @@ export async function aplicarCambiosPacientesPostgresql(
           segundo_nombre: string | null;
           primer_apellido: string;
           segundo_apellido: string | null;
+          id_contacto_emergencia_activo: number | string | null;
         }>(
-          `SELECT id_paciente, revision, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido
+          `SELECT id_paciente, revision, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, id_contacto_emergencia_activo
            FROM paciente WHERE id_publico = $1 FOR UPDATE`,
           [pac.id],
         );
@@ -185,8 +194,8 @@ export async function aplicarCambiosPacientesPostgresql(
 
         const idPaciente = filaPrevia.id_paciente;
 
-        // Recuperar el contacto de emergencia previo para actualizarlo sin tocar otros contactos
-        const resCePrevio = await executor.consultar<{
+        // Recuperar el contacto de emergencia activo actual si existe
+        let cePrevio: {
           id_contacto: number | string;
           primer_nombre: string;
           segundo_nombre: string | null;
@@ -194,13 +203,24 @@ export async function aplicarCambiosPacientesPostgresql(
           segundo_apellido: string | null;
           parentesco: string;
           telefono: string;
-        }>(
-          `SELECT id_contacto, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
-           FROM contacto_emergencia WHERE id_paciente = $1
-           ORDER BY id_contacto ASC LIMIT 1`,
-          [idPaciente],
-        );
-        const cePrevio = resCePrevio.filas[0];
+        } | null = null;
+
+        if (filaPrevia.id_contacto_emergencia_activo != null) {
+          const resCe = await executor.consultar<{
+            id_contacto: number | string;
+            primer_nombre: string;
+            segundo_nombre: string | null;
+            primer_apellido: string;
+            segundo_apellido: string | null;
+            parentesco: string;
+            telefono: string;
+          }>(
+            `SELECT id_contacto, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
+             FROM contacto_emergencia WHERE id_contacto = $1`,
+            [filaPrevia.id_contacto_emergencia_activo],
+          );
+          cePrevio = resCe.filas[0] ?? null;
+        }
 
         if (pac.contactoEmergencia) {
           const ceNomComb = cePrevio ? [cePrevio.primer_nombre, cePrevio.segundo_nombre].filter(Boolean).join(' ') : '';
@@ -252,11 +272,12 @@ export async function aplicarCambiosPacientesPostgresql(
                 ],
               );
             } else {
-              await executor.consultar(
+              const resCeNuevo = await executor.consultar<{ id_contacto: number | string }>(
                 `INSERT INTO contacto_emergencia (
                   id_publico, revision, id_paciente, primer_nombre,
                   segundo_nombre, primer_apellido, segundo_apellido, parentesco, telefono
-                ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)`,
+                ) VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING id_contacto`,
                 [
                   uuidPublico(randomUUID()),
                   idPaciente,
@@ -268,13 +289,21 @@ export async function aplicarCambiosPacientesPostgresql(
                   pac.contactoEmergencia.telefono,
                 ],
               );
+              const nuevoIdCe = resCeNuevo.filas[0]?.id_contacto;
+              if (nuevoIdCe !== undefined) {
+                await executor.consultar(
+                  'UPDATE paciente SET id_contacto_emergencia_activo = $1 WHERE id_paciente = $2',
+                  [nuevoIdCe, idPaciente],
+                );
+              }
             }
           }
-        } else if (cePrevio) {
-          // El paciente ya no tiene contacto de emergencia: eliminar únicamente el contacto seleccionado
+        } else if (filaPrevia.id_contacto_emergencia_activo != null) {
+          // El paciente ya no tiene contacto de emergencia (retirado con contacto_emergencia: null)
+          // Preservar estado ausente sin borrar los contactos existentes del paciente
           await executor.consultar(
-            'DELETE FROM contacto_emergencia WHERE id_contacto = $1',
-            [cePrevio.id_contacto],
+            'UPDATE paciente SET id_contacto_emergencia_activo = NULL WHERE id_paciente = $1',
+            [idPaciente],
           );
         }
       }

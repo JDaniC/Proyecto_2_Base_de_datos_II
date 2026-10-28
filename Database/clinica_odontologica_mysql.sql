@@ -350,6 +350,15 @@ CREATE TABLE IF NOT EXISTS identidades_paciente (
  UNIQUE(tipo_documento,numero_documento),
     CONSTRAINT chk_identidades_paciente_textos CHECK (LENGTH(TRIM(tipo_documento))>0 AND LENGTH(TRIM(numero_documento))>0)
 ) ENGINE=InnoDB;
+
+UPDATE paciente p
+JOIN (
+  SELECT id_paciente, clave,
+         ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn
+  FROM identidades_paciente
+) ip ON ip.id_paciente = p.id_paciente AND ip.rn = 1
+SET p.clave_identidad_activa = ip.clave
+WHERE p.clave_identidad_activa IS NULL;
 CREATE TABLE IF NOT EXISTS operaciones (
  id_operacion CHAR(36) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
  id_usuario BIGINT UNSIGNED NOT NULL,
