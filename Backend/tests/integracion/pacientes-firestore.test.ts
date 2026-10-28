@@ -657,6 +657,31 @@ test('E02-P2-02 Firestore: persistencia de menores, responsables, vínculos, bú
     const idsEncontrados = resBusqDocAmbos.data.map((p) => p.id);
     assert.ok(idsEncontrados.includes(resMenorCui.respuesta.id));
     assert.ok(idsEncontrados.includes(resMenorPasaporte.respuesta.id));
+
+    // Paginación de coincidencias documentales: respeta limite y cursor sin duplicar ni omitir
+    const docPag1 = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: { q: numDocCompartido, limite: 1, orden: 'ASC' },
+    });
+    assert.equal(docPag1.data.length, 1, 'la búsqueda documental debe respetar limite');
+    assert.ok(docPag1.meta.siguiente_cursor !== undefined, 'debe emitir cursor de continuación');
+    const docPag2 = await buscar.ejecutar({
+      contexto,
+      bundle,
+      entrada: {
+        q: numDocCompartido,
+        limite: 1,
+        orden: 'ASC',
+        cursor: docPag1.meta.siguiente_cursor,
+      },
+    });
+    assert.equal(docPag2.data.length, 1);
+    assert.equal(docPag2.meta.siguiente_cursor, undefined, 'la última página no emite cursor');
+    assert.deepEqual(
+      new Set([docPag1.data[0]!.id, docPag2.data[0]!.id]),
+      new Set([resMenorCui.respuesta.id, resMenorPasaporte.respuesta.id]),
+    );
   });
 
   await t.test('7. Archivo de paciente: impide modificaciones posteriores', async () => {

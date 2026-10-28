@@ -79,3 +79,35 @@ test('RepositorioPacientesFirestore: traduce fallos operativos a PERSISTENCIA_NO
     (err: unknown) => err instanceof ErrorDominio && err.codigo === 'SOLICITUD_INVALIDA',
   );
 });
+
+test('RepositorioPacientesFirestore: un fallo transitorio al leer reservas de identidad no se reporta como "no encontrado"', async () => {
+  // Las lecturas de documentos (reservas de identidad) fallan; las consultas por nombre responden vacías.
+  const firestoreParcial = {
+    doc() {
+      return {
+        async get() {
+          const err = new Error('Firestore stream disconnected');
+          Object.assign(err, { code: 14 }); // UNAVAILABLE
+          throw err;
+        },
+      };
+    },
+    collection() {
+      return {
+        where() { return this; },
+        orderBy() { return this; },
+        startAfter() { return this; },
+        limit() { return this; },
+        async get() {
+          return { docs: [] };
+        },
+      };
+    },
+  } as unknown as Firestore;
+  const repo = new RepositorioPacientesFirestore(firestoreParcial, firestoreParcial);
+
+  await assert.rejects(
+    async () => repo.buscar({ q: '2999112230101', orden: 'ASC', limite: 10 }),
+    (err: unknown) => err instanceof ErrorDominio && err.codigo === 'PERSISTENCIA_NO_DISPONIBLE',
+  );
+});

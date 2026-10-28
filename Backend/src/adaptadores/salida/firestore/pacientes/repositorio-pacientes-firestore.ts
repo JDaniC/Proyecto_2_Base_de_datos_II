@@ -231,45 +231,103 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
       throw solicitudInvalida('El término de búsqueda no contiene caracteres válidos.', 'q');
     }
 
+    // Descodificar cursor si está presente (compartido por búsqueda documental y por nombre)
+    let posicionCursor: { nombreBusqueda: string; id: string } | undefined;
+    if (criterios.cursor !== undefined) {
+      try {
+        if (criterios.cursor.length > 2048 || !/^[\w-]+$/.test(criterios.cursor)) {
+          throw new Error();
+        }
+        const data = JSON.parse(
+          Buffer.from(criterios.cursor, 'base64url').toString('utf8'),
+        ) as { v: number; scope: string; nombreBusqueda: string; id: string };
+
+        if (
+          data.v !== 1 ||
+          data.scope !== scopeCursor(criterios) ||
+          uuidPublico(data.id) !== data.id ||
+          typeof data.nombreBusqueda !== 'string'
+        ) {
+          throw new Error();
+        }
+        posicionCursor = { nombreBusqueda: data.nombreBusqueda, id: data.id };
+      } catch {
+        throw solicitudInvalida('El cursor no corresponde a esta búsqueda.', 'cursor');
+      }
+    }
+
+    // Normalizar posibles documentos; solo los fallos de validación se descartan aquí
+    const documentosPosibles: { tipo: 'CUI' | 'PASAPORTE'; numero: string }[] = [];
+    for (const tipo of ['CUI', 'PASAPORTE'] as const) {
+      let normalizado: string | undefined;
+      try {
+        normalizado = normalizarIdentificacion(tipo, qRaw);
+      } catch {
+        normalizado = undefined; // no es un documento válido de este tipo
+      }
+      if (normalizado) {
+        documentosPosibles.push({ tipo, numero: normalizado.slice(`${tipo}:`.length) });
+      }
+    }
+
+    const direccion = criterios.orden === 'ASC' ? 'asc' : 'desc';
+    const crearCursor = (nombreBusqueda: string, id: string): string =>
+      Buffer.from(
+        JSON.stringify({ v: 1, scope: scopeCursor(criterios), nombreBusqueda, id }),
+      ).toString('base64url');
+
     try {
-      // 1. Si el término parece documento exacto (CUI o PASAPORTE), verificar en reservas de identidad
+      // 1. Si el término parece documento exacto (CUI o PASAPORTE), verificar en reservas de identidad.
+      //    Los fallos de lectura se propagan como PERSISTENCIA_NO_DISPONIBLE.
       const candidatosId = new Set<UUID>();
-
-      try {
-        const cuiNorm = normalizarIdentificacion('CUI', qRaw);
-        const titularCui = await this.titularIdentidad({
-          tipo: 'CUI',
-          numero: cuiNorm.slice('CUI:'.length),
-        });
-        if (titularCui) candidatosId.add(titularCui);
-      } catch { /* no es CUI */ }
-
-      try {
-        const pasNorm = normalizarIdentificacion('PASAPORTE', qRaw);
-        const titularPas = await this.titularIdentidad({
-          tipo: 'PASAPORTE',
-          numero: pasNorm.slice('PASAPORTE:'.length),
-        });
-        if (titularPas) candidatosId.add(titularPas);
-      } catch { /* no es PASAPORTE */ }
+      for (const documento of documentosPosibles) {
+        const titular = await this.titularIdentidad(documento);
+        if (titular) candidatosId.add(titular);
+      }
 
       if (candidatosId.size > 0) {
-        const pacientesDocs: Paciente[] = [];
+        const coincidencias: { nombreBusqueda: string; id: string }[] = [];
         for (const candId of candidatosId) {
-          const pac = await this.porId(candId);
-          if (pac) {
-            const coincideEstado =
-              !criterios.estado ||
-              criterios.estado === 'TODOS' ||
-              pac.estado === criterios.estado;
-            if (coincideEstado) {
-              pacientesDocs.push(pac);
-            }
+          const snap = await this.obtenerDoc(this.firestore.doc(`pacientes/${candId}`));
+          if (!snap.exists) continue;
+          const datos = snap.data() as DocumentoPacienteFirestore;
+          const coincideEstado =
+            !criterios.estado ||
+            criterios.estado === 'TODOS' ||
+            datos.estado === criterios.estado;
+          if (coincideEstado) {
+            coincidencias.push({ nombreBusqueda: datos.nombre_busqueda, id: snap.id });
           }
         }
-        if (pacientesDocs.length > 0) {
+        if (coincidencias.length > 0) {
+          const comparar = (
+            a: { nombreBusqueda: string; id: string },
+            b: { nombreBusqueda: string; id: string },
+          ): number => {
+            const base =
+              a.nombreBusqueda < b.nombreBusqueda ? -1
+                : a.nombreBusqueda > b.nombreBusqueda ? 1
+                  : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+            return direccion === 'asc' ? base : -base;
+          };
+          coincidencias.sort(comparar);
+          const restantes = posicionCursor
+            ? coincidencias.filter((c) => comparar(c, posicionCursor!) > 0)
+            : coincidencias;
+          const pagina = restantes.slice(0, criterios.limite);
+          const elementos: Paciente[] = [];
+          for (const c of pagina) {
+            const pac = await this.porId(uuidPublico(c.id));
+            if (pac) elementos.push(pac);
+          }
+          const ultimo = pagina[pagina.length - 1];
+          const siguienteCursor =
+            restantes.length > criterios.limite && ultimo
+              ? crearCursor(ultimo.nombreBusqueda, ultimo.id)
+              : undefined;
           return Object.freeze({
-            elementos: Object.freeze(pacientesDocs),
+            elementos: Object.freeze(elementos),
+            ...(siguienteCursor ? { siguienteCursor } : {}),
           });
         }
       }
@@ -280,35 +338,13 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
         query = query.where('estado', '==', criterios.estado);
       }
 
-      const direccion = criterios.orden === 'ASC' ? 'asc' : 'desc';
       query = query
         .where('claves_nombre', 'array-contains', qNorm)
         .orderBy('nombre_busqueda', direccion)
         .orderBy(FieldPath.documentId(), direccion);
 
-      // Descodificar cursor si está presente
-      if (criterios.cursor !== undefined) {
-        try {
-          if (criterios.cursor.length > 2048 || !/^[\w-]+$/.test(criterios.cursor)) {
-            throw new Error();
-          }
-          const data = JSON.parse(
-            Buffer.from(criterios.cursor, 'base64url').toString('utf8'),
-          ) as { v: number; scope: string; nombreBusqueda: string; id: string };
-
-          if (
-            data.v !== 1 ||
-            data.scope !== scopeCursor(criterios) ||
-            uuidPublico(data.id) !== data.id ||
-            typeof data.nombreBusqueda !== 'string'
-          ) {
-            throw new Error();
-          }
-
-          query = query.startAfter(data.nombreBusqueda, data.id);
-        } catch {
-          throw solicitudInvalida('El cursor no corresponde a esta búsqueda.', 'cursor');
-        }
+      if (posicionCursor) {
+        query = query.startAfter(posicionCursor.nombreBusqueda, posicionCursor.id);
       }
 
       const snapDocs = await this.obtenerQuery(query.limit(criterios.limite + 1));
@@ -328,14 +364,7 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
       if (haySiguiente && docsPagina.length > 0) {
         const ultimoDoc = docsPagina[docsPagina.length - 1]!;
         const datosUltimo = ultimoDoc.data() as DocumentoPacienteFirestore;
-        siguienteCursor = Buffer.from(
-          JSON.stringify({
-            v: 1,
-            scope: scopeCursor(criterios),
-            nombreBusqueda: datosUltimo.nombre_busqueda,
-            id: ultimoDoc.id,
-          }),
-        ).toString('base64url');
+        siguienteCursor = crearCursor(datosUltimo.nombre_busqueda, ultimoDoc.id);
       }
 
       return Object.freeze({
