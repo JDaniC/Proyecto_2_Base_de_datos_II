@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -22,12 +22,17 @@ import { Button } from '../../design-system/components/Button';
 import { Badge } from '../../design-system/components/Badge';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { EmptyState } from '../../design-system/components/EmptyState';
+import { Alert } from '../../design-system/components/Alert';
+import { getErrorMessage } from '../../services/errors';
 
 export const PatientsListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { sesion } = useAuthSession();
-  const { patientRepository } = useServices();
+  const { patientRepository, mode } = useServices();
+  const esApi = mode === 'api';
+  const solicitud = useRef(0);
+  const [error, setError] = useState<string | null>(null);
 
   const [terminoBusqueda, setTerminoBusqueda] = useState(searchParams.get('q') || '');
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | 'TODOS'>(
@@ -36,7 +41,7 @@ export const PatientsListPage: React.FC = () => {
   const [filtroSexo, setFiltroSexo] = useState<SexoAdministrativo | 'TODOS'>(
     (searchParams.get('sexo') as SexoAdministrativo) || 'TODOS'
   );
-  const [orden, setOrden] = useState<'NOMBRE_ASC' | 'NOMBRE_DESC' | 'FECHA_REGISTRO'>('NOMBRE_ASC');
+  const [orden, setOrden] = useState<'NOMBRE_ASC' | 'NOMBRE_DESC' | 'FECHA_REGISTRO' | 'ASC' | 'DESC'>(esApi ? 'ASC' : 'NOMBRE_ASC');
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
   const [cursorActual, setCursorActual] = useState<string | undefined>(undefined);
@@ -45,33 +50,45 @@ export const PatientsListPage: React.FC = () => {
   const [cargando, setCargando] = useState(true);
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
+  const cuentaId = sesion?.cuentaId;
+  const puedeEditar = !esApi || Boolean(sesion?.permisos.includes('pacientes.administrar'));
 
   const cargarPacientes = useCallback(
     async (cursor?: string) => {
+      const actual = ++solicitud.current;
+      setError(null);
+      if (esApi && !cuentaId) { setResultado(null); setCargando(false); return; }
+      if (esApi && !terminoBusqueda.trim()) {
+        setResultado(null);
+        setCargando(false);
+        return;
+      }
       setCargando(true);
+      setResultado(null);
       try {
         const res = await patientRepository.buscar(institucionId, {
           q: terminoBusqueda,
           estado: filtroEstado,
-          sexo: filtroSexo,
+          sexo: esApi ? undefined : filtroSexo,
           orden,
           cursor,
           limite: 10
         });
-        setResultado(res);
+        if (actual === solicitud.current) setResultado(res);
       } catch (err) {
-        console.error('Error cargando pacientes:', err);
+        if (actual === solicitud.current) setError(getErrorMessage(err, 'No se pudo consultar pacientes. Intenta buscar de nuevo.'));
       } finally {
-        setCargando(false);
+        if (actual === solicitud.current) setCargando(false);
       }
     },
-    [institucionId, patientRepository, terminoBusqueda, filtroEstado, filtroSexo, orden]
+    [institucionId, cuentaId, patientRepository, terminoBusqueda, filtroEstado, filtroSexo, orden, esApi]
   );
 
   useEffect(() => {
     setCursorActual(undefined);
     setHistorialCursores([]);
     cargarPacientes(undefined);
+    return () => { solicitud.current++; };
   }, [cargarPacientes]);
 
   const handleBuscar = (e: React.FormEvent) => {
@@ -90,7 +107,7 @@ export const PatientsListPage: React.FC = () => {
     setTerminoBusqueda('');
     setFiltroEstado('TODOS');
     setFiltroSexo('TODOS');
-    setOrden('NOMBRE_ASC');
+    setOrden(esApi ? 'ASC' : 'NOMBRE_ASC');
     setSearchParams({});
     setCursorActual(undefined);
     setHistorialCursores([]);
@@ -115,7 +132,7 @@ export const PatientsListPage: React.FC = () => {
   };
 
   const totalFiltrosActivos =
-    (filtroEstado !== 'TODOS' ? 1 : 0) + (filtroSexo !== 'TODOS' ? 1 : 0) + (orden !== 'NOMBRE_ASC' ? 1 : 0);
+    (filtroEstado !== 'TODOS' ? 1 : 0) + (!esApi && filtroSexo !== 'TODOS' ? 1 : 0) + (orden !== (esApi ? 'ASC' : 'NOMBRE_ASC') ? 1 : 0);
 
   return (
     <div style={{ padding: '32px 32px 48px' }}>
@@ -164,7 +181,7 @@ export const PatientsListPage: React.FC = () => {
             >
               Pacientes del centro
             </h1>
-            {resultado && (
+            {resultado?.totalEncontrados !== undefined && (
               <Badge variant="neutral">
                 {resultado.totalEncontrados} {resultado.totalEncontrados === 1 ? 'paciente' : 'pacientes'}
               </Badge>
@@ -182,14 +199,14 @@ export const PatientsListPage: React.FC = () => {
           </p>
         </div>
 
-        <Button
+        {puedeEditar && <Button
           variant="primary"
           leftIcon={<UserPlus size={18} />}
           onClick={() => navigate('/pacientes/nuevo')}
           aria-label="Registrar nuevo paciente"
         >
           Nuevo paciente
-        </Button>
+        </Button>}
       </div>
 
       {/* Barra de Búsqueda y Botón de Filtros */}
@@ -222,6 +239,7 @@ export const PatientsListPage: React.FC = () => {
           />
           <input
             type="search"
+            maxLength={esApi ? 120 : undefined}
             value={terminoBusqueda}
             onChange={(e) => setTerminoBusqueda(e.target.value)}
             placeholder="Buscar paciente o expediente"
@@ -321,6 +339,7 @@ export const PatientsListPage: React.FC = () => {
             </select>
           </div>
 
+          {!esApi && <>
           <div>
             <label
               htmlFor="filtro-sexo"
@@ -355,6 +374,7 @@ export const PatientsListPage: React.FC = () => {
             </select>
           </div>
 
+          </>}
           <div>
             <label
               htmlFor="filtro-orden"
@@ -372,7 +392,7 @@ export const PatientsListPage: React.FC = () => {
               id="filtro-orden"
               value={orden}
               onChange={(e) =>
-                setOrden(e.target.value as 'NOMBRE_ASC' | 'NOMBRE_DESC' | 'FECHA_REGISTRO')
+                setOrden(e.target.value as typeof orden)
               }
               style={{
                 width: '100%',
@@ -384,9 +404,14 @@ export const PatientsListPage: React.FC = () => {
                 fontSize: '13px'
               }}
             >
-              <option value="NOMBRE_ASC">Nombre (A - Z)</option>
-              <option value="NOMBRE_DESC">Nombre (Z - A)</option>
-              <option value="FECHA_REGISTRO">Registro más reciente</option>
+              {esApi ? <>
+                <option value="ASC">Registro más antiguo primero</option>
+                <option value="DESC">Registro más reciente primero</option>
+              </> : <>
+                <option value="NOMBRE_ASC">Nombre (A - Z)</option>
+                <option value="NOMBRE_DESC">Nombre (Z - A)</option>
+                <option value="FECHA_REGISTRO">Registro más reciente</option>
+              </>}
             </select>
           </div>
 
@@ -399,7 +424,7 @@ export const PatientsListPage: React.FC = () => {
       )}
 
       {/* Contenedor Principal de la Tabla */}
-      {cargando ? (
+      {error ? <Alert variant="danger" title="No se pudo buscar">{error}<Button variant="secondary" onClick={() => cargarPacientes()}>Reintentar búsqueda</Button></Alert> : cargando ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <SkeletonLoader variant="rectangular" height="64px" />
           <SkeletonLoader variant="rectangular" height="64px" />
@@ -514,14 +539,14 @@ export const PatientsListPage: React.FC = () => {
                           gap: '8px'
                         }}
                       >
-                        <span>{paciente.edadAnios} años</span>
+                        <span>{paciente.edadAnios === null ? 'Sin dato de edad' : `${paciente.edadAnios} años`}</span>
                         <span>•</span>
                         <span>
                           {paciente.sexo === 'MASCULINO'
                             ? 'Masculino'
                             : paciente.sexo === 'FEMENINO'
                             ? 'Femenino'
-                            : 'Otro'}
+                            : paciente.sexo === 'OTRO' ? 'Otro' : paciente.sexoLegado || 'Sin dato'}
                         </span>
                       </div>
                     </td>
@@ -575,7 +600,7 @@ export const PatientsListPage: React.FC = () => {
                         >
                           Ver expediente
                         </Button>
-                        <Button
+                        {puedeEditar && <Button
                           variant="ghost"
                           size="sm"
                           leftIcon={<Edit2 size={15} />}
@@ -583,7 +608,7 @@ export const PatientsListPage: React.FC = () => {
                           aria-label={`Editar paciente ${paciente.nombreCompleto}`}
                         >
                           Editar
-                        </Button>
+                        </Button>}
                       </div>
                     </td>
                   </tr>
@@ -606,8 +631,7 @@ export const PatientsListPage: React.FC = () => {
             }}
           >
             <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-              Página {resultado.paginaActual} · Mostrando {resultado.items.length} de{' '}
-              {resultado.totalEncontrados} pacientes
+              Página {historialCursores.length + 1} · {resultado.items.length} pacientes en esta página
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -636,11 +660,11 @@ export const PatientsListPage: React.FC = () => {
         </div>
       ) : (
         <EmptyState
-          title="No se encontraron pacientes"
+          title={esApi && !terminoBusqueda.trim() ? 'Busca un paciente para comenzar' : 'No se encontraron pacientes'}
           description={
             terminoBusqueda
               ? `No hay expedientes clínicos que coincidan con «${terminoBusqueda}» bajo los filtros aplicados.`
-              : 'No hay pacientes registrados en este centro médico.'
+              : esApi ? 'Ingresa un nombre o identificación. La búsqueda se limita a los pacientes de tu institución.' : 'No hay pacientes registrados en este centro médico.'
           }
           actionText={terminoBusqueda ? 'Limpiar filtros' : 'Registrar paciente'}
           onAction={terminoBusqueda ? handleLimpiarFiltros : () => navigate('/pacientes/nuevo')}

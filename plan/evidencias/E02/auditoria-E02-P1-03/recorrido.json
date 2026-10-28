@@ -1,0 +1,160 @@
+{
+  "entorno": "PostgreSQL/MySQL/MongoDB aislados y emuladores Firebase Auth/Firestore; navegador real",
+  "casos": [
+    {
+      "caso": "respuesta perdida después del commit: reintento conserva cuerpo y clave",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "alta por React y lectura después de recargar; documento ausente",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "PATCH parcial/versionado retira correo y conserva responsables",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "conflicto real de versión conserva edición y no sobreescribe",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "documento duplicado: rechazo y reutilización desde búsqueda",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "búsqueda desde otra sesión autorizada",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "cronología persistida sintética: cursor, inversión global y filtro del servidor",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "alta por React y lectura después de recargar; documento ausente",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "PATCH parcial/versionado retira correo y conserva responsables",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "conflicto real de versión conserva edición y no sobreescribe",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "documento duplicado: rechazo y reutilización desde búsqueda",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "búsqueda desde otra sesión autorizada",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "cronología persistida sintética: cursor, inversión global y filtro del servidor",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "alta por React y lectura después de recargar; documento ausente",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "PATCH parcial/versionado retira correo y conserva responsables",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "conflicto real de versión conserva edición y no sobreescribe",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "documento duplicado: rechazo y reutilización desde búsqueda",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "búsqueda desde otra sesión autorizada",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "cronología persistida sintética: cursor, inversión global y filtro del servidor",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "alta por React y lectura después de recargar; documento ausente",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "PATCH parcial/versionado retira correo y conserva responsables",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "conflicto real de versión conserva edición y no sobreescribe",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "búsqueda desde otra sesión autorizada",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "cronología persistida sintética: cursor, inversión global y filtro del servidor",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "secretaría: perfil administrativo, sin llamada clínica; API deniega historial",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "identificador de otra institución: no encontrado",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "persistencia después de reiniciar backend",
+      "institucion": "HOSPITAL_GENERAL",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "persistencia después de reiniciar backend",
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "persistencia después de reiniciar backend",
+      "institucion": "LABORATORIO_CLINICO",
+      "resultado": "PASS"
+    },
+    {
+      "caso": "persistencia después de reiniciar backend",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    }
+  ],
+  "resumen": {
+    "PASS": 30,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

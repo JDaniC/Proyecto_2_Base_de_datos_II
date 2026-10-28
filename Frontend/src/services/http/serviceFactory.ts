@@ -18,6 +18,7 @@ import { HttpClient } from './httpClient';
 import { TokenProvider } from './types';
 import { TrialAuthProvider } from './authProvider';
 import { HttpAuthRepository } from './httpAuthRepository';
+import { createHttpPatientRepository } from './patients/httpPatientRepository';
 
 export interface HttpServiceFactoryOptions {
   baseUrl?: string;
@@ -70,7 +71,7 @@ export function createHttpServices(options: HttpServiceFactoryOptions = {}): Htt
         );
       },
     },
-    patientRepository: requireApiAdapter<PatientRepository>(undefined, 'patientRepository'),
+    patientRepository: createHttpPatientRepository(httpClient),
     appointmentRepository: requireApiAdapter<AppointmentRepository>(undefined, 'appointmentRepository'),
     consultationRepository: requireApiAdapter<ConsultationRepository>(undefined, 'consultationRepository'),
     userRepository: requireApiAdapter<UserRepository>(undefined, 'userRepository'),

@@ -40,8 +40,14 @@ import { PediatricGuardiansView } from './components/PediatricGuardiansView';
 import { PediatricGrowthView } from './components/PediatricGrowthView';
 import { PediatricHistoryAllergiesView } from './components/PediatricHistoryAllergiesView';
 import { PediatricVaccinesScheduleView } from './components/PediatricVaccinesScheduleView';
+import { HttpPatientRecord } from './HttpPatientRecord';
 
 export const PatientRecordPage: React.FC = () => {
+  const { mode } = useServices();
+  return mode === 'api' ? <HttpPatientRecord /> : <SimulatedPatientRecord />;
+};
+
+const SimulatedPatientRecord: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

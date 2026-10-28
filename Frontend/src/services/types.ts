@@ -370,7 +370,7 @@ export interface DashboardData {
 
 // --- Tipos de Pacientes (V04 Búsqueda y V05 Alta/Edición) ---
 
-export type TipoIdentificacion = 'CUI' | 'PASAPORTE' | 'SIN_DOCUMENTO_MENOR' | 'SIN_DOCUMENTO';
+export type TipoIdentificacion = 'CUI' | 'PASAPORTE' | 'SIN_DOCUMENTO_MENOR' | 'SIN_DOCUMENTO' | 'LEGADO';
 
 export type SexoAdministrativo = 'MASCULINO' | 'FEMENINO' | 'OTRO';
 
@@ -380,6 +380,8 @@ export type EstadoAlergias = 'SIN_VERIFICAR' | 'SIN_ALERGIAS_CONOCIDAS' | 'CON_A
 
 export interface ContactoEmergencia {
   nombre: string;
+  nombres?: string;
+  apellidos?: string;
   parentesco: string;
   telefono: string;
 }
@@ -387,6 +389,11 @@ export interface ContactoEmergencia {
 export interface ResponsablePediatrico {
   id: string;
   nombre: string;
+  nombres?: string;
+  apellidos?: string;
+  tipoDocumento?: 'CUI' | 'PASAPORTE';
+  version?: number;
+  versionVinculo?: number;
   parentesco: string;
   telefono: string;
   documento?: string;
@@ -402,9 +409,11 @@ export interface Paciente {
   apellidos: string;
   nombreCompleto: string;
   fechaNacimiento: string; // YYYY-MM-DD
-  edadAnios: number;
-  sexo: SexoAdministrativo;
+  edadAnios: number | null;
+  sexo: SexoAdministrativo | '';
+  sexoLegado?: string;
   tipoIdentificacion: TipoIdentificacion;
+  tipoIdentificacionLegado?: string;
   numeroIdentificacion: string;
   telefono: string;
   correo: string;
@@ -586,6 +595,9 @@ export interface RecetaHistorial {
 
 export type TipoEventoHistorial =
   | 'CONSULTA'
+  | 'TRATAMIENTO'
+  | 'RESULTADO_LAB'
+  | 'INFORME_LAB'
   | 'RECETA'
   | 'DIAGNOSTICO'
   | 'ARCHIVO'
@@ -605,6 +617,23 @@ export interface EventoHistorial {
   profesional: string;
   rolProfesional: string;
   recursoCodigo?: string;
+  recursoId?: string;
+  consultaId?: string;
+  versionConsulta?: number;
+}
+
+export interface FiltrosHistorial {
+  orden?: 'ASC' | 'DESC';
+  tipo?: TipoEventoHistorial;
+  cursor?: string;
+  limite?: number;
+  desde?: string;
+  hasta?: string;
+}
+
+export interface PaginaHistorial {
+  eventos: EventoHistorial[];
+  siguienteCursor?: string;
 }
 
 export interface TitularSeguro {
@@ -655,6 +684,9 @@ export interface ExpedienteCompleto {
   diagnosticos: DiagnosticoHistorial[];
   recetas: RecetaHistorial[];
   eventos: EventoHistorial[];
+  /** La API E02 entrega perfil e índice paginado, sin detalle clínico E03–E05. */
+  soloProyeccion?: boolean;
+  siguienteCursor?: string;
   polizas?: PolizaSeguroPaciente[];
   ordenesExamen?: OrdenExamenHospital[];
   procedimientos?: ProcedimientoHospitalarioItem[];
@@ -753,7 +785,7 @@ export interface BuscarPacientesQuery {
   q?: string;
   estado?: EstadoPaciente | 'TODOS';
   sexo?: SexoAdministrativo | 'TODOS';
-  orden?: 'NOMBRE_ASC' | 'NOMBRE_DESC' | 'FECHA_REGISTRO';
+  orden?: 'NOMBRE_ASC' | 'NOMBRE_DESC' | 'FECHA_REGISTRO' | 'ASC' | 'DESC';
   cursor?: string;
   limite?: number;
 }
@@ -765,7 +797,7 @@ export interface ResultadoPaginadoPacientes {
   anteriorCursor?: string;
   hayMas: boolean;
   paginaActual: number;
-  totalEncontrados: number;
+  totalEncontrados?: number;
 }
 
 export interface CrearPacienteDTO {

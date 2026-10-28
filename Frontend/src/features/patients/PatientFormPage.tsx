@@ -1,5 +1,5 @@
 import { getErrorMessage } from '../../services/errors';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -10,6 +10,10 @@ import {
   ResponsablePediatrico,
   PacienteDuplicadoException
 } from '../../services/types';
+import type { Paciente, ActualizarPacienteDTO } from '../../services/types';
+import { generarClaveIdempotencia } from '../../services/http/idempotency';
+import { HttpError } from '../../services/http/errors';
+import { toClinicDateTimeInput } from '../../services/dates';
 import { Button } from '../../design-system/components/Button';
 import { Input } from '../../design-system/components/Input';
 import { Select } from '../../design-system/components/Select';
@@ -20,10 +24,24 @@ import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 
 export const PatientFormPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
+  const { sesion } = useAuthSession();
+  if (!sesion) return null;
+  if (!sesion.permisos.includes('pacientes.administrar')) return <Alert variant="warning" title="Acceso restringido">Tu cuenta no permite administrar pacientes.</Alert>;
+  return <PatientForm key={`${sesion?.cuentaId}/${pacienteId ?? 'nuevo'}`} />;
+};
+
+const PatientForm: React.FC = () => {
+  const { pacienteId } = useParams<{ pacienteId: string }>();
   const isEditing = Boolean(pacienteId);
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { patientRepository } = useServices();
+  const { patientRepository, mode } = useServices();
+  const esApi = mode === 'api';
+  const original = useRef<Paciente | null>(null);
+  const envioActivo = useRef(false);
+  const intencion = useRef<{ firma: string; clave: string } | null>(null);
+  const [resultadoIncierto, setResultadoIncierto] = useState(false);
+  const [cargaFallida, setCargaFallida] = useState(false);
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
@@ -31,7 +49,7 @@ export const PatientFormPage: React.FC = () => {
   const [nombres, setNombres] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
-  const [sexo, setSexo] = useState<SexoAdministrativo>('MASCULINO');
+  const [sexo, setSexo] = useState<SexoAdministrativo | ''>('MASCULINO');
   const [tipoIdentificacion, setTipoIdentificacion] = useState<TipoIdentificacion>('CUI');
   const [numeroIdentificacion, setNumeroIdentificacion] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -39,17 +57,20 @@ export const PatientFormPage: React.FC = () => {
   const [direccion, setDireccion] = useState('');
   const [grupoSanguineo, setGrupoSanguineo] = useState('');
   const [responsablesExistentes, setResponsablesExistentes] = useState<ResponsablePediatrico[]>([]);
-  const documentoOpcional = institucionId === 'CLINICA_ODONTOLOGICA' || institucionId === 'CENTRO_PEDIATRICO';
+  const documentoOpcional = esApi || institucionId === 'CLINICA_ODONTOLOGICA' || institucionId === 'CENTRO_PEDIATRICO';
 
   // Hospital: Contacto de emergencia
   const [contactoNombre, setContactoNombre] = useState('');
+  const [contactoApellidos, setContactoApellidos] = useState('');
   const [contactoParentesco, setContactoParentesco] = useState('');
   const [contactoTelefono, setContactoTelefono] = useState('');
 
   // Pediatría: Responsable legal
   const [respNombre, setRespNombre] = useState('');
+  const [respApellidos, setRespApellidos] = useState('');
   const [respParentesco, setRespParentesco] = useState('Madre');
   const [respDocumento, setRespDocumento] = useState('');
+  const [respTipoDocumento, setRespTipoDocumento] = useState<'CUI' | 'PASAPORTE'>('CUI');
   const [respTelefono, setRespTelefono] = useState('');
   const [respEsPrincipal, setRespEsPrincipal] = useState(true);
   const [respAutoriza, setRespAutoriza] = useState(true);
@@ -74,11 +95,14 @@ export const PatientFormPage: React.FC = () => {
     (async () => {
       try {
         const paciente = await patientRepository.obtenerPorId(institucionId, pacienteId);
+        if (!mounted) return;
         if (!paciente) {
+          setCargaFallida(true);
           setErrorValidacion('El expediente solicitado no existe o no pertenece a esta institución.');
           return;
         }
         if (mounted) {
+          original.current = paciente;
           setNombres(paciente.nombres);
           setApellidos(paciente.apellidos);
           setFechaNacimiento(paciente.fechaNacimiento);
@@ -92,7 +116,8 @@ export const PatientFormPage: React.FC = () => {
           setResponsablesExistentes(paciente.responsables || []);
 
           if (paciente.contactoEmergencia) {
-            setContactoNombre(paciente.contactoEmergencia.nombre);
+            setContactoNombre(esApi ? paciente.contactoEmergencia.nombres || '' : paciente.contactoEmergencia.nombre);
+            setContactoApellidos(paciente.contactoEmergencia.apellidos || '');
             setContactoParentesco(paciente.contactoEmergencia.parentesco);
             setContactoTelefono(paciente.contactoEmergencia.telefono);
           }
@@ -108,7 +133,10 @@ export const PatientFormPage: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Error cargando paciente:', err);
+        if (mounted) {
+          setCargaFallida(true);
+          setErrorValidacion(getErrorMessage(err, 'No se pudo cargar el perfil. Recarga para reintentar.'));
+        }
       } finally {
         if (mounted) setCargandoInicial(false);
       }
@@ -117,10 +145,11 @@ export const PatientFormPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [institucionId, isEditing, pacienteId, patientRepository]);
+  }, [institucionId, isEditing, pacienteId, patientRepository, esApi]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (envioActivo.current || cargaFallida) return;
     setErrorValidacion(null);
     setErrorDuplicado(null);
 
@@ -130,31 +159,29 @@ export const PatientFormPage: React.FC = () => {
       return;
     }
 
-    if (!fechaNacimiento) {
+    if (!fechaNacimiento && (!isEditing || original.current?.fechaNacimiento)) {
       setErrorValidacion('La fecha de nacimiento es obligatoria.');
       return;
     }
 
-    const fechaNac = new Date(fechaNacimiento);
-    const hoy = new Date();
-    if (fechaNac > hoy) {
+    if (fechaNacimiento > toClinicDateTimeInput().slice(0, 10)) {
       setErrorValidacion('La fecha de nacimiento no puede ser futura.');
       return;
     }
 
-    if (!documentoOpcional && !numeroIdentificacion.trim()) {
+    if (!esApi && !documentoOpcional && !numeroIdentificacion.trim()) {
       setErrorValidacion('El número de identificación o código de menor es obligatorio.');
       return;
     }
 
-    if (!telefono.trim()) {
+    if (!esApi && !telefono.trim()) {
       setErrorValidacion('Debe ingresar un número telefónico de contacto.');
       return;
     }
 
     // Validación Pediatría: Responsable principal y autorización
-    if (institucionId === 'CENTRO_PEDIATRICO') {
-      if (!respNombre.trim()) {
+    if (institucionId === 'CENTRO_PEDIATRICO' && !(esApi && isEditing)) {
+      if (!respNombre.trim() || (esApi && (!respApellidos.trim() || !respDocumento.trim() || !respTelefono.trim()))) {
         setErrorValidacion('En Pediatría es obligatorio registrar los datos del responsable legal / tutor.');
         return;
       }
@@ -162,21 +189,30 @@ export const PatientFormPage: React.FC = () => {
         setErrorValidacion('Selecciona un responsable principal.');
         return;
       }
-      if (!respAutoriza) {
+      if (!esApi && !respAutoriza) {
         setErrorValidacion('Se requiere confirmación explícita de autorización de atención clínica por parte del tutor.');
         return;
       }
     }
 
+    if (!sexo && (!isEditing || original.current?.sexo)) {
+      setErrorValidacion('Selecciona el sexo administrativo.');
+      return;
+    }
+    if (esApi && institucionId === 'HOSPITAL_GENERAL' && (contactoNombre.trim() || contactoApellidos.trim() || contactoParentesco.trim() || contactoTelefono.trim()) && (!contactoNombre.trim() || !contactoApellidos.trim() || !contactoParentesco.trim() || !contactoTelefono.trim())) {
+      setErrorValidacion('Completa nombres, apellidos, parentesco y teléfono del contacto o retira todos sus campos.');
+      return;
+    }
+    envioActivo.current = true;
     setGuardando(true);
+    let confirmado = false;
 
     try {
-      const idempotencyKey = `idemp-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-
       const contactoEmergencia =
         institucionId === 'HOSPITAL_GENERAL' && contactoNombre.trim()
           ? {
-              nombre: contactoNombre.trim(),
+              nombre: esApi ? `${contactoNombre.trim()} ${contactoApellidos.trim()}` : contactoNombre.trim(),
+              ...(esApi ? { nombres: contactoNombre.trim(), apellidos: contactoApellidos.trim() } : {}),
               parentesco: contactoParentesco.trim() || 'Familiar',
               telefono: contactoTelefono.trim() || telefono.trim()
             }
@@ -188,6 +224,7 @@ export const PatientFormPage: React.FC = () => {
               {
                 id: responsablesExistentes.find(r => r.esPrincipal)?.id || `resp-${Date.now()}`,
                 nombre: respNombre.trim(),
+                ...(esApi ? { nombres: respNombre.trim(), apellidos: respApellidos.trim(), tipoDocumento: respTipoDocumento } : {}),
                 parentesco: respParentesco,
                 telefono: respTelefono.trim() || telefono.trim(),
                 documento: respDocumento.trim(),
@@ -201,46 +238,63 @@ export const PatientFormPage: React.FC = () => {
       const documento = numeroIdentificacion.trim() || '';
       const tipoDocumento = documento ? tipoIdentificacion : institucionId === 'CENTRO_PEDIATRICO' ? 'SIN_DOCUMENTO_MENOR' : 'SIN_DOCUMENTO';
 
+      const datos = { nombres: nombres.trim(), apellidos: apellidos.trim(), fechaNacimiento, sexo: sexo as SexoAdministrativo, tipoIdentificacion: tipoDocumento,
+        numeroIdentificacion: documento, grupoSanguineo: institucionId === 'HOSPITAL_GENERAL' ? grupoSanguineo : undefined,
+        telefono, correo, direccion, contactoEmergencia, responsables: esApi && isEditing ? undefined : responsables };
+      const cambios: Omit<ActualizarPacienteDTO, 'idempotencyKey'> = {};
+      if (esApi && isEditing && original.current) {
+        const previo = original.current;
+        cambios.versionEsperada = previo.version;
+        for (const campo of ['nombres', 'apellidos', 'fechaNacimiento', 'sexo', 'telefono', 'correo', 'direccion', 'grupoSanguineo'] as const) {
+          if (campo === 'grupoSanguineo' && institucionId !== 'HOSPITAL_GENERAL') continue;
+          if (datos[campo] !== (previo[campo] ?? (campo === 'grupoSanguineo' ? '' : undefined))) Object.assign(cambios, { [campo]: datos[campo] });
+        }
+        if (documento !== previo.numeroIdentificacion || (documento && tipoDocumento !== previo.tipoIdentificacion)) {
+          cambios.tipoIdentificacion = tipoDocumento;
+          cambios.numeroIdentificacion = documento;
+        }
+        const contactoCambio = (['nombres', 'apellidos', 'parentesco', 'telefono'] as const).some((c) => contactoEmergencia?.[c] !== previo.contactoEmergencia?.[c]);
+        if (institucionId === 'HOSPITAL_GENERAL' && contactoCambio) {
+          cambios.contactoEmergencia = contactoEmergencia ?? { nombre: '', parentesco: '', telefono: '' };
+        }
+        if (Object.keys(cambios).length === 1) {
+          setErrorValidacion('No hay cambios para guardar.');
+          return;
+        }
+      }
+      const comando = esApi && isEditing ? cambios : datos;
+      const firma = JSON.stringify(comando);
+      if (!intencion.current || intencion.current.firma !== firma) intencion.current = { firma, clave: generarClaveIdempotencia() };
+      const idempotencyKey = intencion.current.clave;
+
       if (isEditing && pacienteId) {
         await patientRepository.actualizar(institucionId, pacienteId, {
-          nombres,
-          apellidos,
-          fechaNacimiento,
-          sexo,
-          tipoIdentificacion: tipoDocumento,
-          numeroIdentificacion: documento,
-          grupoSanguineo: institucionId === 'HOSPITAL_GENERAL' ? grupoSanguineo : undefined,
-          telefono,
-          correo,
-          direccion,
-          contactoEmergencia,
-          responsables,
+          ...comando,
           idempotencyKey
         });
+        confirmado = true;
         setToastMensaje('Expediente actualizado exitosamente.');
+        navigate(`/pacientes/${pacienteId}`);
       } else {
         const nuevo = await patientRepository.crear(institucionId, {
-          nombres,
-          apellidos,
-          fechaNacimiento,
-          sexo,
-          tipoIdentificacion: tipoDocumento,
-          numeroIdentificacion: documento,
-          grupoSanguineo: institucionId === 'HOSPITAL_GENERAL' ? grupoSanguineo : undefined,
-          telefono,
-          correo,
-          direccion,
-          contactoEmergencia,
-          responsables,
+          ...datos,
           idempotencyKey
         });
+        confirmado = true;
         setToastMensaje(`Paciente registrado exitosamente con código ${nuevo.codigoLegible}.`);
+        navigate(`/pacientes/${nuevo.id}`);
       }
-
-      setTimeout(() => {
-        navigate('/pacientes');
-      }, 1200);
     } catch (err) {
+      if (err instanceof HttpError) {
+        setResultadoIncierto(err.esReintentable || err.status >= 500);
+        if (err.codigo.includes('PACIENTE_DUPLICADO')) {
+          setErrorValidacion('El documento ya está registrado. Busca el paciente existente para reutilizar su perfil.');
+        } else if (err.codigo.includes('VERSION_DESACTUALIZADA')) {
+          setErrorValidacion('Otra sesión modificó este perfil. Tus cambios siguen aquí; revisa el perfil actualizado antes de volver a editar.');
+        } else {
+          setErrorValidacion([getErrorMessage(err, 'No se pudo guardar.'), ...Object.values(err.campos ?? {})].join(' '));
+        }
+      } else
       if (err instanceof PacienteDuplicadoException) {
         setErrorDuplicado({
           id: err.pacienteExistenteId,
@@ -254,6 +308,7 @@ export const PatientFormPage: React.FC = () => {
         );
       }
     } finally {
+      if (!confirmado) envioActivo.current = false;
       setGuardando(false);
     }
   };
@@ -382,7 +437,14 @@ export const PatientFormPage: React.FC = () => {
         </div>
       )}
 
+      {esApi && errorValidacion?.includes('documento ya está registrado') && (
+        <Button variant="secondary" onClick={() => navigate(`/pacientes?q=${encodeURIComponent(numeroIdentificacion.trim())}`)}>Buscar paciente existente</Button>
+      )}
+      {resultadoIncierto && <Alert variant="warning" title="Resultado pendiente de confirmar">Conservamos los datos y la misma solicitud. Reintenta el envío para confirmar su resultado antes de cambiar los datos.</Alert>}
+      {cargaFallida && <Button onClick={() => window.location.reload()}>Recargar perfil</Button>}
+
       <form onSubmit={handleSubmit}>
+        <fieldset disabled={guardando || resultadoIncierto || cargaFallida} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {/* Panel 1: Datos Personales */}
         <Panel
           title="1. Datos de Identidad y Demográficos"
@@ -398,6 +460,7 @@ export const PatientFormPage: React.FC = () => {
           >
             <Input
               label="Nombres del paciente *"
+              maxLength={80}
               value={nombres}
               onChange={(e) => setNombres(e.target.value)}
               placeholder="Ej. Roberto Alexander"
@@ -405,6 +468,7 @@ export const PatientFormPage: React.FC = () => {
             />
             <Input
               label="Apellidos del paciente *"
+              maxLength={80}
               value={apellidos}
               onChange={(e) => setApellidos(e.target.value)}
               placeholder="Ej. Estrada Morales"
@@ -414,8 +478,9 @@ export const PatientFormPage: React.FC = () => {
               label="Fecha de nacimiento *"
               type="date"
               value={fechaNacimiento}
+              max={toClinicDateTimeInput().slice(0, 10)}
               onChange={(e) => setFechaNacimiento(e.target.value)}
-              required
+              required={!isEditing || Boolean(original.current?.fechaNacimiento)}
             />
             {institucionId === 'HOSPITAL_GENERAL' && <Select label="Grupo sanguíneo" value={grupoSanguineo} onChange={e => setGrupoSanguineo(e.target.value)} options={[{ value: '', label: 'No registrado' }, ...['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(value => ({ value, label: value }))]} />}
             <Select
@@ -423,6 +488,7 @@ export const PatientFormPage: React.FC = () => {
               value={sexo}
               onChange={(e) => setSexo(e.target.value as SexoAdministrativo)}
               options={[
+                ...(sexo === '' ? [{ value: '', label: original.current?.sexoLegado || 'Sin dato registrado' }] : []),
                 { value: 'MASCULINO', label: 'Masculino' },
                 { value: 'FEMENINO', label: 'Femenino' },
                 { value: 'OTRO', label: 'Otro / No especificado' }
@@ -447,29 +513,33 @@ export const PatientFormPage: React.FC = () => {
             <Select
               label="Tipo de documento *"
               value={tipoIdentificacion}
-              onChange={(e) => setTipoIdentificacion(e.target.value as TipoIdentificacion)}
+              onChange={(e) => { setTipoIdentificacion(e.target.value as TipoIdentificacion); if (esApi && e.target.value.startsWith('SIN_DOCUMENTO')) setNumeroIdentificacion(''); }}
               options={[
                 { value: 'CUI', label: 'CUI (DPI de Guatemala)' },
                 { value: 'PASAPORTE', label: 'Pasaporte extranjero' },
+                ...(tipoIdentificacion === 'LEGADO' ? [{ value: 'LEGADO', label: original.current?.tipoIdentificacionLegado || 'Documento legado' }] : []),
                 ...(documentoOpcional ? [{ value: institucionId === 'CENTRO_PEDIATRICO' ? 'SIN_DOCUMENTO_MENOR' : 'SIN_DOCUMENTO', label: 'Sin documento' }] : [])
               ]}
             />
             <Input
               label={documentoOpcional ? "Número de documento (opcional)" : "Número de documento / Identificación *"}
               value={numeroIdentificacion}
+              maxLength={tipoIdentificacion === 'CUI' ? 20 : 40}
               onChange={(e) => setNumeroIdentificacion(e.target.value)}
               placeholder="Ej. 9900-10101-0101"
               required={!documentoOpcional}
             />
             <Input
-              label="Teléfono principal de contacto *"
+              label={esApi ? 'Teléfono principal de contacto' : 'Teléfono principal de contacto *'}
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
               placeholder="Ej. 5555-0104"
-              required
+              maxLength={30}
+              required={!esApi}
             />
             <Input
               label="Correo electrónico"
+              maxLength={254}
               type="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
@@ -478,6 +548,7 @@ export const PatientFormPage: React.FC = () => {
             <div style={{ gridColumn: '1 / -1' }}>
               <Input
                 label="Dirección de residencia"
+                maxLength={500}
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
                 placeholder="Dirección completa de domicilio"
@@ -501,11 +572,12 @@ export const PatientFormPage: React.FC = () => {
               }}
             >
               <Input
-                label="Nombre completo del contacto"
+                label={esApi ? 'Nombres del contacto' : 'Nombre completo del contacto'}
                 value={contactoNombre}
                 onChange={(e) => setContactoNombre(e.target.value)}
                 placeholder="Ej. Marta Estrada"
               />
+              {esApi && <Input label="Apellidos del contacto" value={contactoApellidos} maxLength={80} onChange={(e) => setContactoApellidos(e.target.value)} />}
               <Input
                 label="Parentesco con el paciente"
                 value={contactoParentesco}
@@ -522,10 +594,10 @@ export const PatientFormPage: React.FC = () => {
           </Panel>
         )}
 
-        {institucionId === 'CENTRO_PEDIATRICO' && (
+        {institucionId === 'CENTRO_PEDIATRICO' && !(esApi && isEditing) && (
           <Panel
             title="3. Responsable Legal / Tutor Pediátrico"
-            subtitle="Obligatorio en pediatría: vínculo y autorización de atención"
+            subtitle="Responsable principal del menor; la autorización de atención se registra por separado"
             style={{ marginBottom: '20px' }}
           >
             <div
@@ -537,12 +609,13 @@ export const PatientFormPage: React.FC = () => {
               }}
             >
               <Input
-                label="Nombre completo del tutor/a *"
+                label={esApi ? 'Nombres del responsable *' : 'Nombre completo del tutor/a *'}
                 value={respNombre}
                 onChange={(e) => setRespNombre(e.target.value)}
                 placeholder="Ej. Andrea Arrecis"
                 required
               />
+              {esApi && <Input label="Apellidos del responsable *" value={respApellidos} maxLength={200} required onChange={(e) => setRespApellidos(e.target.value)} />}
               <Select
                 label="Parentesco *"
                 value={respParentesco}
@@ -555,14 +628,19 @@ export const PatientFormPage: React.FC = () => {
                 ]}
               />
               <Input
-                label="DPI / CUI del responsable"
+                label={esApi ? 'Documento del responsable *' : 'DPI / CUI del responsable'}
                 value={respDocumento}
+                required={esApi}
+                maxLength={respTipoDocumento === 'CUI' ? 20 : 40}
                 onChange={(e) => setRespDocumento(e.target.value)}
                 placeholder="Ej. 9900-40901-0101"
               />
+              {esApi && <Select label="Tipo de documento del responsable" value={respTipoDocumento} onChange={(e) => setRespTipoDocumento(e.target.value as 'CUI' | 'PASAPORTE')} options={[{ value: 'CUI', label: 'CUI' }, { value: 'PASAPORTE', label: 'Pasaporte' }]} />}
               <Input
                 label="Teléfono del tutor"
                 value={respTelefono}
+                required={esApi}
+                maxLength={30}
                 onChange={(e) => setRespTelefono(e.target.value)}
                 placeholder="Ej. 5555-9401"
               />
@@ -615,11 +693,13 @@ export const PatientFormPage: React.FC = () => {
                   onChange={(e) => setRespAutoriza(e.target.checked)}
                   style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }}
                 />
-                Autoriza expresamente procedimientos y consultas clínicas (autoriza_atencion = true)
+                Autoriza la atención clínica del menor
               </label>
             </div>
           </Panel>
         )}
+        {esApi && isEditing && institucionId === 'CENTRO_PEDIATRICO' && <Panel title="Responsables vinculados"><p>La edición del perfil conserva los vínculos y autorizaciones existentes.</p>{responsablesExistentes.map((r) => <p key={r.id}>{r.nombre} · {r.parentesco}{r.esPrincipal ? ' · Principal' : ''}</p>)}</Panel>}
+        </fieldset>
 
         {/* Botones de Acción */}
         <div
@@ -634,7 +714,7 @@ export const PatientFormPage: React.FC = () => {
             type="button"
             variant="secondary"
             onClick={() => navigate('/pacientes')}
-            disabled={guardando}
+            disabled={guardando || cargaFallida || Boolean(toastMensaje)}
           >
             Cancelar
           </Button>
@@ -642,7 +722,7 @@ export const PatientFormPage: React.FC = () => {
             type="submit"
             variant="primary"
             leftIcon={<Save size={18} />}
-            disabled={guardando}
+            disabled={guardando || cargaFallida || Boolean(toastMensaje)}
             aria-label={isEditing ? 'Guardar cambios de paciente' : 'Registrar paciente'}
           >
             {guardando
