@@ -113,11 +113,27 @@ export async function aplicarCambiosPacientesMysql(
           throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No se encontró el paciente para asociar la identidad.');
         }
 
-        await executor.consultar(
-          `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
-          VALUES (?, ?, ?, ?)`,
-          [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+        const resExistente = await executor.consultar<{ id_paciente: number | string }>(
+          'SELECT id_paciente FROM identidades_paciente WHERE clave = ?',
+          [clave],
         );
+        const idDuenoExistente = resExistente.filas[0]?.id_paciente;
+        if (idDuenoExistente !== undefined) {
+          if (String(idDuenoExistente) !== String(idPaciente)) {
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+          }
+          // Ya pertenece a este mismo paciente: reutilizar y actualizar marca temporal para que sea la identidad activa
+          await executor.consultar(
+            'UPDATE identidades_paciente SET fecha_registro = CURRENT_TIMESTAMP WHERE clave = ?',
+            [clave],
+          );
+        } else {
+          await executor.consultar(
+            `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
+            VALUES (?, ?, ?, ?)`,
+            [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+          );
+        }
       } else if (cambio.tipo === 'LIBERAR') {
         await executor.consultar(
           'DELETE FROM identidades_paciente WHERE clave = ?',

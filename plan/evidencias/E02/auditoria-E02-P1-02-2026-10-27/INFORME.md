@@ -72,6 +72,11 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
 15. **Reducción determinista de identidades en MySQL y búsqueda exhaustiva con EXISTS:**
     - En `repositorio-pacientes-mysql.ts`, se aplicó `ROW_NUMBER() OVER (PARTITION BY id_paciente ORDER BY fecha_registro DESC, clave ASC) AS rn` en un derived table con `LEFT JOIN ... ON ip.rn = 1`, seleccionando exactamente una identidad por paciente y previniendo filas duplicadas o páginas fantasma en búsquedas y paginación.
     - Asimismo, en MySQL y PostgreSQL la búsqueda por documento se desacopló de la proyección única mediante un predicado `EXISTS (SELECT 1 FROM identidades_paciente ip_busq WHERE ip_busq.id_paciente = p.id_paciente AND ...)`, permitiendo localizar al paciente por cualquiera de sus documentos asociados.
+16. **Compatibilidad con tabla append-only en reversión y migración 002 (MySQL):**
+    - En `002_revertir_demografia_paciente_mysql.sql`, se sustituyó `ON DUPLICATE KEY UPDATE` por la cláusula `WHERE NOT EXISTS (SELECT 1 FROM revisiones r WHERE ... AND r.version = p.revision)`, garantizando que múltiples ejecuciones de reversión para pacientes cuya versión no cambió preserven el respaldo inmutable existente sin disparar el trigger `tr_revisiones_update` (`REGISTRO_APPEND_ONLY`).
+    - En `002_agregar_demografia_paciente_mysql.sql`, se incorporó selección de la última revisión mediante `ROW_NUMBER() OVER (PARTITION BY recurso_id ORDER BY fecha_hora DESC, version DESC)` para restaurar el estado demográfico exacto tras ciclos repetidos.
+17. **Reutilización de reservas de identidad asociadas al mismo paciente:**
+    - Tanto en `aplicarCambiosPacientesMysql` como en `aplicarCambiosPacientesPostgresql`, al solicitar `RESERVAR` sobre una clave de identidad ya registrada, se comprueba si el `id_paciente` existente coincide con el del titular actual. Si ya pertenece al mismo paciente, se reutiliza actualizando su marca temporal para que figure como la identidad expuesta activa, evitando conflictos por clave primaria duplicada al conmutar entre documentos previamente registrados.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |

@@ -32,8 +32,13 @@ BEGIN
       'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f')
     )
   FROM paciente p
-  WHERE p.sexo IS NOT NULL OR p.direccion IS NOT NULL
-  ON DUPLICATE KEY UPDATE contenido_anterior = VALUES(contenido_anterior);
+  WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL)
+    AND NOT EXISTS (
+      SELECT 1 FROM revisiones r
+      WHERE r.tipo_recurso = 'paciente_demografia_v3'
+        AND r.recurso_id = p.id_publico
+        AND r.version = p.revision
+    );
 
   IF EXISTS (
     SELECT 1 FROM information_schema.COLUMNS 

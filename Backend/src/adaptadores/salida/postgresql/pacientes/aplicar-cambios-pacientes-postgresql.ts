@@ -295,11 +295,27 @@ export async function aplicarCambiosPacientesPostgresql(
           }
         }
 
-        await executor.consultar(
-          `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
-          VALUES ($1, $2, $3, $4)`,
-          [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+        const resExistente = await executor.consultar<{ id_paciente: number | string }>(
+          'SELECT id_paciente FROM identidades_paciente WHERE clave = $1',
+          [clave],
         );
+        const idDuenoExistente = resExistente.filas[0]?.id_paciente;
+        if (idDuenoExistente !== undefined) {
+          if (String(idDuenoExistente) !== String(idPaciente)) {
+            throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya pertenece a otro paciente.');
+          }
+          // Ya pertenece a este mismo paciente: reutilizar y actualizar marca temporal para que sea la identidad activa
+          await executor.consultar(
+            'UPDATE identidades_paciente SET fecha_registro = clock_timestamp() WHERE clave = $1',
+            [clave],
+          );
+        } else {
+          await executor.consultar(
+            `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
+            VALUES ($1, $2, $3, $4)`,
+            [clave, estado.identificacion.tipo, estado.identificacion.numero, idPaciente],
+          );
+        }
       } else if (cambio.tipo === 'LIBERAR') {
         await executor.consultar(
           'DELETE FROM identidades_paciente WHERE clave = $1',

@@ -276,6 +276,29 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     (err: ErrorDominio) => err.codigo === 'SOLICITUD_INVALIDA',
   );
 
+  // Probar reuso de reserva de identidad ya perteneciente al mismo paciente en PostgreSQL
+  const pasExtraPg = `PG${randomUUID().slice(0, 7).toUpperCase()}`;
+  const clavePasExtraPg = createHash('sha256').update(`PASAPORTE:${pasExtraPg}`).digest('hex');
+  await pool.consultar(
+    `INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente, fecha_registro)
+     SELECT $1, 'PASAPORTE', $2, p.id_paciente, clock_timestamp()
+     FROM paciente p WHERE p.id_publico = $3`,
+    [clavePasExtraPg, pasExtraPg, paciente2Id],
+  );
+
+  const actIdentidadReusadaPg = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: paciente2Id,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      identificacion: { tipo: 'PASAPORTE', numero: pasExtraPg },
+    },
+  });
+  assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.tipo, 'PASAPORTE');
+  assert.equal(actIdentidadReusadaPg.respuesta.identificacion?.numero, pasExtraPg);
+
   // 7. Actualización y concurrencia optimista
   const modificado = await actualizar.ejecutar({
     contexto,
@@ -833,6 +856,76 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   });
   assert.equal(resBusqDoc2.data.length, 1, 'búsqueda debe encontrar paciente por su segundo documento asociado');
   assert.equal(resBusqDoc2.data[0]?.id, pacienteConDocId);
+
+  // Probar cambio de identificación activa a otro documento ya asociado al mismo paciente en MySQL
+  const actIdentidadReusadaMy = await actualizar.ejecutar({
+    contexto,
+    bundle,
+    id: pacienteConDocId,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    cambios: {
+      version_esperada: 1,
+      identificacion: { tipo: 'CUI', numero: cuiExtra },
+    },
+  });
+  assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.tipo, 'CUI');
+  assert.equal(actIdentidadReusadaMy.respuesta.identificacion?.numero, cuiExtra);
+
+  // Probar ciclos repetidos de reversión y restauración de respaldo demográfico sin violar tabla append-only
+  const sentenciaRespaldo = `
+    INSERT INTO revisiones (
+      id_revision, tipo_recurso, recurso_id, version, id_usuario,
+      fecha_hora, motivo, contenido_anterior
+    )
+    SELECT
+      UUID(),
+      'paciente_demografia_v3',
+      p.id_publico,
+      p.revision,
+      COALESCE((SELECT id_usuario FROM usuario ORDER BY id_usuario ASC LIMIT 1), 1),
+      NOW(),
+      'RESPALDO_MIGRACION_002_REVERSION_V3_A_V2',
+      JSON_OBJECT(
+        'sexo', p.sexo,
+        'direccion', p.direccion,
+        'fecha_registro', DATE_FORMAT(p.fecha_registro, '%Y-%m-%d %H:%i:%s.%f')
+      )
+    FROM paciente p
+    WHERE (p.sexo IS NOT NULL OR p.direccion IS NOT NULL)
+      AND NOT EXISTS (
+        SELECT 1 FROM revisiones r
+        WHERE r.tipo_recurso = 'paciente_demografia_v3'
+          AND r.recurso_id = p.id_publico
+          AND r.version = p.revision
+      )
+  `;
+  // Ciclo 1 de respaldo
+  await pool.consultar(sentenciaRespaldo);
+  // Ciclo 2 de respaldo repetido sin cambios de versión: debe ejecutarse limpiamente sin disparar REGISTRO_APPEND_ONLY
+  await pool.consultar(sentenciaRespaldo);
+
+  // Restauración demográfica idempotente
+  await pool.consultar(`
+    UPDATE paciente p
+    JOIN (
+      SELECT
+        recurso_id,
+        contenido_anterior,
+        ROW_NUMBER() OVER (
+          PARTITION BY recurso_id
+          ORDER BY fecha_hora DESC, version DESC
+        ) AS rn
+      FROM revisiones
+      WHERE tipo_recurso = 'paciente_demografia_v3'
+    ) r ON r.rn = 1 AND r.recurso_id = p.id_publico
+    SET
+      p.sexo = COALESCE(p.sexo, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo'))),
+      p.direccion = COALESCE(p.direccion, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion'))),
+      p.fecha_registro = COALESCE(
+        STR_TO_DATE(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), '%Y-%m-%d %H:%i:%s.%f'),
+        p.fecha_registro
+      )
+  `);
 
   // 3. Búsqueda y paginación en MySQL
   const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });

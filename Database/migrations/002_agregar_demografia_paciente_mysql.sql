@@ -43,7 +43,17 @@ BEGIN
     SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'revisiones'
   ) THEN
     UPDATE paciente p
-    JOIN revisiones r ON r.tipo_recurso = 'paciente_demografia_v3' AND r.recurso_id = p.id_publico
+    JOIN (
+      SELECT
+        recurso_id,
+        contenido_anterior,
+        ROW_NUMBER() OVER (
+          PARTITION BY recurso_id
+          ORDER BY fecha_hora DESC, version DESC
+        ) AS rn
+      FROM revisiones
+      WHERE tipo_recurso = 'paciente_demografia_v3'
+    ) r ON r.rn = 1 AND r.recurso_id = p.id_publico
     SET
       p.sexo = COALESCE(p.sexo, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo'))),
       p.direccion = COALESCE(p.direccion, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion'))),
