@@ -640,30 +640,6 @@ CREATE TABLE IF NOT EXISTS identidades_paciente (
  UNIQUE(tipo_documento,numero_documento),
     CONSTRAINT chk_identidades_paciente_textos CHECK (LENGTH(TRIM(tipo_documento))>0 AND LENGTH(TRIM(numero_documento))>0)
 );
-
--- Backfill automático de identidades normalizadas para pacientes existentes con CUI
-INSERT INTO identidades_paciente (clave, tipo_documento, numero_documento, id_paciente)
-SELECT
-  encode(sha256(('CUI:' || regexp_replace(p.cui, '[^0-9]', '', 'g'))::bytea), 'hex'),
-  'CUI',
-  regexp_replace(p.cui, '[^0-9]', '', 'g'),
-  p.id_paciente
-FROM paciente p
-WHERE p.cui IS NOT NULL AND LENGTH(TRIM(regexp_replace(p.cui, '[^0-9]', '', 'g'))) = 13
-ON CONFLICT (clave) DO NOTHING;
-
-UPDATE paciente p
-SET clave_identidad_activa = encode(sha256(('CUI:' || regexp_replace(p.cui, '[^0-9]', '', 'g'))::bytea), 'hex')
-WHERE p.cui IS NOT NULL AND LENGTH(TRIM(regexp_replace(p.cui, '[^0-9]', '', 'g'))) = 13 AND p.clave_identidad_activa IS NULL;
-
-UPDATE paciente p
-SET id_contacto_emergencia_activo = ce.id_contacto
-FROM (
-  SELECT DISTINCT ON (id_paciente) id_paciente, id_contacto
-  FROM contacto_emergencia
-  ORDER BY id_paciente, id_contacto ASC
-) ce
-WHERE p.id_paciente = ce.id_paciente AND p.id_contacto_emergencia_activo IS NULL;
 CREATE TABLE IF NOT EXISTS operaciones (
  id_operacion UUID PRIMARY KEY,
  id_usuario BIGINT NOT NULL REFERENCES usuario(id_usuario),

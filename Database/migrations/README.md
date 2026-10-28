@@ -89,6 +89,11 @@ Incorporar la persistencia de datos demográficos completos (`sexo`, `direccion`
 Incorporar la persistencia de la clave de identidad activa (`clave_identidad_activa CHAR(64)`) y el identificador de contacto de emergencia activo (`id_contacto_emergencia_activo BIGINT`) en la tabla `paciente` de `hospital_general`:
 
 - No destructiva e idempotente: preserva todas las filas previas de pacientes, citas, historiales y auditoría.
-- Realiza el backfill automático de identidades en `identidades_paciente` para pacientes existentes que cuenten con `cui` válido de 13 dígitos y vincula `clave_identidad_activa`.
-- Vincula `id_contacto_emergencia_activo` con el primer contacto de emergencia registrado para pacientes existentes.
+- Al migrar, restaura automáticamente los punteros de identidad activa y contacto de emergencia activo respaldados en `revisiones` (`tipo_recurso = 'paciente_punteros_v3'`) si la base proviene de una reversión previa, preservando tanto documentos asociados como estados explícitamente ausentes.
+- Para pacientes sin respaldo previo, realiza el backfill de identidades normalizadas y selecciona la identidad más reciente y el primer contacto de emergencia registrado.
 - Recalcula la huella limpia mediante `pg_temp.huella_hospital()` y actualiza el manifiesto en `modelo_database`, garantizando compatibilidad exacta con el inicializador canónico `Database/hospital_general_postgresql.sql`.
+
+### Reversión y preservación sin pérdida (`002_revertir_backfill_identidades_hospital_postgresql.sql`)
+
+- Antes de retirar las columnas `clave_identidad_activa` e `id_contacto_emergencia_activo`, la reversión respalda de forma atómica en la tabla `revisiones` (`tipo_recurso = 'paciente_punteros_v3'`) los punteros activos de todos los pacientes afectados (incluyendo estados explícitamente ausentes).
+- Recalcula la huella limpia en el manifiesto `modelo_database` y garantiza que una posterior re-aplicación de `002_backfill_identidades_hospital_postgresql.sql` recupere todos los punteros sin pérdida de datos clínicos ni desvinculación de reservas de identidad.
