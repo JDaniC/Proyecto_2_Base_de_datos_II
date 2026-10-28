@@ -101,8 +101,8 @@ export function mapearFilaPacienteMysql(fila: FilaPacienteMysql): Paciente {
     institucion: 'CLINICA_ODONTOLOGICA',
     nombres: (fila.nombres ?? 'Sin nombre').trim(),
     apellidos: (fila.apellidos ?? 'Sin apellido').trim(),
-    ...(fechaNacimiento ? { fechaNacimiento } : {}),
-    sexo,
+    fechaNacimiento: fechaNacimiento ?? null,
+    sexo: sexo ?? null,
     ...(identificacion ? { identificacion } : {}),
     ...(fila.telefono && fila.telefono.trim().length > 0
       ? { telefono: fila.telefono.trim() }

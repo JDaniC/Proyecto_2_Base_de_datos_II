@@ -93,8 +93,8 @@ export interface PacienteDto {
   readonly institucion: Institucion;
   readonly nombres: string;
   readonly apellidos: string;
-  readonly fecha_nacimiento?: string;
-  readonly sexo: Sexo;
+  readonly fecha_nacimiento: string | null;
+  readonly sexo: string | null;
   readonly identificacion?: Identificacion;
   readonly telefono?: string;
   readonly correo?: string;
@@ -128,8 +128,8 @@ export function mapearPacienteDto(paciente: Paciente): PacienteDto {
     institucion: paciente.institucion,
     nombres: paciente.nombres,
     apellidos: paciente.apellidos,
-    ...(paciente.fechaNacimiento ? { fecha_nacimiento: paciente.fechaNacimiento } : {}),
-    sexo: paciente.sexo,
+    fecha_nacimiento: paciente.fechaNacimiento ?? null,
+    sexo: paciente.sexo ?? null,
     ...(paciente.identificacion ? { identificacion: paciente.identificacion } : {}),
     ...(paciente.telefono !== undefined ? { telefono: paciente.telefono } : {}),
     ...(paciente.correo !== undefined ? { correo: paciente.correo } : {}),

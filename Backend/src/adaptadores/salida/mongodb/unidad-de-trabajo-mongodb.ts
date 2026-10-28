@@ -13,6 +13,7 @@ import type { ContextoAutenticado } from '../../../aplicacion/puertos/contexto-a
 import { ErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico } from '../../../dominio/compartido/uuid.js';
 import type { ClientSession, Db, MongoError } from 'mongodb';
+import { Long } from 'mongodb';
 import {
   COLECCIONES_MONGODB,
   type DependenciasUnidadDeTrabajoMongodb,
@@ -99,6 +100,7 @@ export function crearUnidadDeTrabajoMongodb<
             return respuesta;
           }
 
+          await verificarCuentaVigente(contexto, lector);
           const plan = await planificar(lector);
           if (plan.tipo === 'REPETIR') {
             await verificarCuentaVigente(contexto, lector);
@@ -133,6 +135,10 @@ export function crearUnidadDeTrabajoMongodb<
               await revalidarCuentaDirecta(db, contexto);
               return resolverRepeticion(reconciliada, comando);
             }
+            const identidad = typeof error === 'object' && error !== null &&
+              (('keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'numero_documento' in error.keyPattern) ||
+                ('message' in error && typeof error.message === 'string' && error.message.includes('identidades_paciente')));
+            if (identidad) throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya está registrada.', ['identificacion']);
             throw new ErrorDominio('ESTADO_INVALIDO', 'El cambio entra en conflicto con datos ya existentes.');
           }
 
@@ -234,7 +240,7 @@ async function guardarRevisiones(
         revision: 1,
         tipo_recurso: revision.agregado,
         recurso_id: revision.recursoId,
-        version: revision.versionAnterior,
+        version: revision.versionAnterior > 2_147_483_647 ? Long.fromNumber(revision.versionAnterior) : revision.versionAnterior,
         actor_id: contexto.cuenta.id,
         fecha_hora: new Date(comando.instante),
         motivo: comando.caso,
@@ -320,7 +326,7 @@ function empaquetarRespuestaOperacion<T>(
   };
 }
 
-function desempaquetarRespuestaOperacion<T>(
+export function desempaquetarRespuestaOperacion<T>(
   respuesta: { data: Record<string, unknown>; meta: { correlacion: string } },
 ): T {
   if (respuesta.data && typeof respuesta.data === 'object' && respuesta.data.__respuestaPlana === true) {

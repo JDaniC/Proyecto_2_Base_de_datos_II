@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 25/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 27/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
@@ -19,7 +19,7 @@ Actualizado: 25/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E02-P1-01](entregas/E02_pacientes_historial/01_P1.md#e02-p1-01) | P1 | JDaniC | HECHA | Puerta de fase | [PR #40 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/40), squash merge `29300de`; Codex sin hallazgos ("Didn't find any major issues. More of your lovely PRs please"); 196 unitarias/runtime + 32 contractuales PASS (228 PASS); 12 rondas resueltas; [evidencia](evidencias/E02/E02-P1-01.md) y [auditoría](evidencias/E02/auditoria-E02-P1-01-2026-10-26/INFORME.md); 27/10/2026 |
 | [E02-P1-02](entregas/E02_pacientes_historial/01_P1.md#e02-p1-02) | P1 | JDaniC | EN_CURSO | E02-P1-01 | [PR #41 borrador](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/41); rama `codex/e02-p1-02-persistir-pacientes-sql`; 27/10/2026 |
 | [E02-P1-03](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) | P1 | — | PENDIENTE | E02-P1-02, E02-P2-01, E02-P2-02, E02-P2-03 | Sin ejecución registrada |
-| [E02-P2-01](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | P2 | — | PENDIENTE | E02-P1-01 | Sin ejecución registrada |
+| [E02-P2-01](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | P2 | Davidix888 | HECHA | E02-P1-01 | [PR #42 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/42), squash `56752b2`; Codex sin hallazgos sobre `9b8c543`, contrato-pr/revision-codex PASS; 17 resultados MongoDB real + 196 runtime/unitarias + 32 contractuales PASS; build/lint y build postintegración PASS; [evidencia](evidencias/E02/E02-P2-01.md), [seguimiento](seguimiento/E02-P2-01.md); 27/10/2026 |
 | [E02-P2-02](entregas/E02_pacientes_historial/02_P2.md#e02-p2-02) | P2 | — | PENDIENTE | E02-P1-01 | Sin ejecución registrada |
 | [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | P2 | — | PENDIENTE | E02-P1-02, E02-P2-01, E02-P2-02 | Sin ejecución registrada |
 | [E03-P1-01](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |

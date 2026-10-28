@@ -141,8 +141,8 @@ export function mapearFilaPacientePostgresql(fila: FilaPacientePostgresql): Paci
     institucion: 'HOSPITAL_GENERAL',
     nombres: nombres.length > 0 ? nombres : 'Sin nombre',
     apellidos: apellidos.length > 0 ? apellidos : 'Sin apellido',
-    ...(fechaNacimiento ? { fechaNacimiento } : {}),
-    sexo,
+    fechaNacimiento: fechaNacimiento ?? null,
+    sexo: sexo ?? null,
     ...(identificacion ? { identificacion } : {}),
     ...(fila.telefono_principal && fila.telefono_principal.trim().length > 0
       ? { telefono: fila.telefono_principal.trim() }

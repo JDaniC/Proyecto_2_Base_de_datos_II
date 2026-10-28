@@ -21,7 +21,7 @@ import {
   crearRepositorioPacientesMysql,
   crearUnidadDeTrabajoPacientesMysql,
 } from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
-import { crearRepositorioCuentaInstitucionalMongodb } from '../adaptadores/salida/identidad/repositorio-cuenta-mongodb-institucional.js';
+import { crearBundlePacientesMongodb } from '../adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
 import { crearRepositorioCuentaInstitucionalFirestore } from '../adaptadores/salida/identidad/repositorio-cuenta-firestore-institucional.js';
 import { parsearConfiguracionSql, ErrorConfiguracionSql, type ConfiguracionSql } from '../configuracion/conexiones-sql.js';
 import { parsearConfiguracionMongodb } from '../configuracion/conexiones-mongodb.js';
@@ -131,7 +131,7 @@ export async function crearDependenciasBackend(
         pacientes: crearRepositorioPacientesMysql(mysql),
         uow: crearUnidadDeTrabajoPacientesMysql(mysql),
       },
-      LABORATORIO_CLINICO: { cuenta: crearRepositorioCuentaInstitucionalMongodb(mongo) },
+      LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),
       CENTRO_MEDICO_PEDIATRICO: { cuenta: crearRepositorioCuentaInstitucionalFirestore(firebase) },
     };
     const cerrar = async (): Promise<void> => {

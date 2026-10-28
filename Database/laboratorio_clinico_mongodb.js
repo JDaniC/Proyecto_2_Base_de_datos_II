@@ -118,7 +118,9 @@
       esquema: raiz({
         codigo_paciente: texto(60), tipo_documento: texto(40), numero_documento: texto(80),
         primer_nombre: texto(80), segundo_nombre: texto(80), primer_apellido: texto(80), segundo_apellido: texto(80),
-        nombre_busqueda: texto(350), fecha_nacimiento: fecha, sexo_referencia: texto(40), direccion: nota,
+        nombre_busqueda: texto(350),
+        claves_nombre: { bsonType: 'array', minItems: 1, maxItems: 160, items: texto(350) },
+        numero_busqueda: texto(80), fecha_nacimiento: fecha, sexo_referencia: texto(40), direccion: nota,
         contactos: lista(contacto), fecha_registro: fecha, activo: booleano, historial: cabeceraHistorial,
       }, ['codigo_paciente', 'primer_nombre', 'primer_apellido', 'nombre_busqueda', 'contactos',
         'fecha_registro', 'activo', 'historial'], { anyOf: [
@@ -134,6 +136,8 @@
         unico('uq_paciente_historial', { 'historial.id_historial': 1 }),
         unico('uq_paciente_numero_historial', { 'historial.numero_historial': 1 }),
         ix('ix_paciente_nombre', { nombre_busqueda: 1, _id: 1 }), ix('ix_paciente_activo_nombre', { activo: 1, nombre_busqueda: 1, _id: 1 }),
+        ix('ix_paciente_prefijos', { claves_nombre: 1, fecha_registro: 1, _id: 1 }),
+        ix('ix_paciente_numero_busqueda', { numero_busqueda: 1, fecha_registro: 1, _id: 1 }),
       ],
     },
     {

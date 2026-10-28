@@ -73,8 +73,8 @@ export interface Paciente {
   readonly institucion: Institucion;
   readonly nombres: string;
   readonly apellidos: string;
-  readonly fechaNacimiento?: FechaCivil;
-  readonly sexo: Sexo;
+  readonly fechaNacimiento: FechaCivil | null;
+  readonly sexo: string | null;
   readonly identificacion?: Identificacion;
   readonly telefono?: string;
   readonly correo?: string;

@@ -1,4 +1,19 @@
-# Migraciones SQL explícitas (`Database/migrations`)
+# Migraciones explícitas (`Database/migrations`)
+
+## MongoDB: 003, búsqueda e identidades de pacientes (E02-P2-01)
+
+`003_pacientes_busqueda_mongodb.js` agrega al validador estricto las claves derivadas opcionales `claves_nombre` y `numero_busqueda`, dos índices y el backfill de reservas canónicas. Conserva UUID, revisiones, código, nombres originales, fechas, contactos secundarios, cabecera y campos institucionales. El inicializador nuevo incluye la extensión; no migra volúmenes existentes. No hay manifiesto MongoDB independiente: la compatibilidad se comprueba con el validador/índices del inicializador y el preflight del bundle.
+
+Detener escritores y obtener un respaldo administrativo antes de migrar una base existente. Usar la cuenta administrativa, nunca conceder `collMod` a la aplicación. En el montaje Docker local (credenciales en archivos; no imprimir valores):
+
+```sh
+docker compose cp Database/migrations/003_pacientes_busqueda_mongodb.js mongodb:/tmp/003-pacientes.js
+docker compose exec -T mongodb mongosh --norc --quiet --eval 'const fs=require("node:fs"); db.getSiblingDB("admin").auth("mongo_admin",fs.readFileSync("/run/secrets/mongo_admin_password","utf8").trim()); load("/tmp/003-pacientes.js");'
+```
+
+El preflight rechaza identidades normalizadas duplicadas, reservas incompatibles e índices con clave incorrecta. Después de `collMod` aplica claves/reservas en una transacción: un fallo revierte todo ese backfill. Reejecutar permite recuperar la etapa aditiva y completar índices sin duplicar reservas. La prueba aislada provoca un fallo tardío, retira solo su índice de fallo y demuestra recuperación. Un error no autoriza borrar pacientes, colecciones ni volúmenes.
+
+La reversión conserva la extensión y los datos; usar mantenimiento/una copia aislada si una versión antigua rechaza el validador ampliado. No eliminar campos para forzar la aceptación del inicializador anterior. Prueba reproducible nueva/existente: `npm --prefix Backend run test:integration:pacientes:mongodb`.
 
 Los inicializadores de motor (`Database/hospital_general_postgresql.sql` y `Database/clinica_odontologica_mysql.sql`) no migran automáticamente volúmenes previamente inicializados ni sobrescriben deriva de esquema (`RNF-037`). Cuando cambia una función, trigger o estructura después de la inicialización, se aplica una migración explícita con usuario administrativo.
 
