@@ -1,3 +1,6 @@
+import { ConsultarHistorial } from '../aplicacion/casos-uso/historiales/consultar-historial.js';
+import { CursorHistorialCifrado } from '../adaptadores/salida/historial/cursor-historial.js';
+import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
 import { DynamicModule, Module, type OnModuleDestroy } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-bundles-configurados.js';
@@ -47,7 +50,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [HealthController, SesionController, PacientesController] })
+@Module({ controllers: [HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -58,6 +61,7 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        { provide: ConsultarHistorial, useFactory: () => new ConsultarHistorial(new CursorHistorialCifrado()) },
         {
           provide: BUNDLES_INSTITUCIONALES,
           useValue: bundles,

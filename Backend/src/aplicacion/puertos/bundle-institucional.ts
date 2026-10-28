@@ -1,3 +1,4 @@
+import type { RepositorioHistorialLectura } from './historial.js';
 import type { Institucion } from '../../dominio/compartido/institucion.js';
 import type {
   RepositorioCuenta,
@@ -15,6 +16,7 @@ export interface BundleInstitucional {
   readonly profesionales?: RepositorioProfesional;
   readonly uow?: UnidadDeTrabajo;
   readonly pacientes?: RepositorioPacienteLectura;
+  readonly historial?: RepositorioHistorialLectura;
 }
 
 export type BundlesInstitucionales = readonly BundleInstitucional[];

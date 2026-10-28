@@ -1,3 +1,4 @@
+import type { RepositorioHistorialLectura } from '../aplicacion/puertos/historial.js';
 import type { Institucion } from '../dominio/compartido/institucion.js';
 import type {
   BundleInstitucional,
@@ -14,6 +15,7 @@ export interface RepositoriosInstitucion {
   readonly cuenta: RepositorioCuenta;
   readonly profesionales?: RepositorioProfesional;
   readonly pacientes?: RepositorioPacienteLectura;
+  readonly historial?: RepositorioHistorialLectura;
   readonly uow?: UnidadDeTrabajo;
 }
 
@@ -34,6 +36,7 @@ export function crearBundlesInstitucionales(
       ...(repos ? { cuenta: repos.cuenta } : {}),
       ...(repos?.profesionales ? { profesionales: repos.profesionales } : {}),
       ...(repos?.pacientes ? { pacientes: repos.pacientes } : {}),
+      ...(repos?.historial ? { historial: repos.historial } : {}),
       ...(repos?.uow ? { uow: repos.uow } : {}),
     });
   });

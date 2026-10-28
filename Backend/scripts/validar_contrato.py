@@ -85,7 +85,8 @@ def validate_artifacts():
                                         format_checker=FormatChecker())
         validator.validate(media['example'])
     for name, op in operations.items():
-        require(op['x-implementacion'] == 'NOT_IMPLEMENTED', 'No atribuir implementación a este contrato')
+        require(op['x-implementacion'] == ('IMPLEMENTED' if name in {'sesionEstablecer', 'sesionActual', 'sesionCerrar', 'pacienteHistorial', 'pacienteExpediente'} else 'NOT_IMPLEMENTED'),
+                'Estado de implementación inesperado: ' + name)
         require({'400', '401', '403', '404', '409', '413', '500', '503'} <= set(op['responses']),
                 'Errores incompletos: ' + name)
         if 'requestBody' in op:

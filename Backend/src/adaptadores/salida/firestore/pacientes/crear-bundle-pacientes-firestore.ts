@@ -1,3 +1,4 @@
+import { crearHistorialFirestore } from '../../historial/historial-firestore.js';
 import type { ClienteFirestore } from '../tipos-firestore.js';
 import { INSTITUCION_PEDIATRIA } from '../tipos-firestore.js';
 import type { LectorTransaccional, UnidadDeTrabajo } from '../../../../aplicacion/puertos/nucleo.js';
@@ -79,7 +80,7 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
 export function crearBundlePacientesFirestore(cliente: ClienteFirestore): BundleInstitucional & { cuenta: RepositorioCuenta } {
   return Object.freeze({
     institucion: 'CENTRO_MEDICO_PEDIATRICO',
-    estadoPersistencia: 'DISPONIBLE',
+    estadoPersistencia: 'DISPONIBLE', historial: crearHistorialFirestore(cliente.firestore),
     cuenta: crearRepositorioCuentaInstitucionalFirestore(cliente),
     pacientes: crearRepositorioPacientesFirestore(cliente),
     uow: crearUnidadDeTrabajoPacientesFirestore(cliente),

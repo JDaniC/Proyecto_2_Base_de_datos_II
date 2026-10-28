@@ -1,0 +1,74 @@
+{
+  "fecha": "2026-10-28",
+  "zona": "America/Guatemala",
+  "alcance": "E02-P2-03, lectura de expediente e historial; escritores E03-E05 fuera de este alcance",
+  "resultados": [
+    {
+      "comando": "npm test",
+      "entorno": "Backend local",
+      "estado": "PASS",
+      "runtime_unitarios": 218,
+      "arnes_contratos": 32
+    },
+    {
+      "comando": "npm run build",
+      "estado": "PASS"
+    },
+    {
+      "comando": "npm run lint",
+      "estado": "PASS",
+      "incluye": "arquitectura hexagonal"
+    },
+    {
+      "comando": "python Backend/scripts/validar_contrato.py",
+      "estado": "PASS",
+      "rutas": 22,
+      "operaciones": 26,
+      "esquemas": 99,
+      "fixtures": 230
+    },
+    {
+      "comando": "python -m unittest discover -s Backend/scripts -p test_*.py",
+      "estado": "PASS",
+      "pruebas": 8
+    },
+    {
+      "comando": "npm run test:integration:historial",
+      "estado": "PASS",
+      "pruebas": 24,
+      "omitidas": 0,
+      "entorno": "PostgreSQL y MySQL reales; MongoDB replica set real; emulador Firestore; proyecto/puertos/secretos exclusivos"
+    },
+    {
+      "comando": "Playwright MCP browser_evaluate sobre API local sintética",
+      "estado": "PASS",
+      "observado": {
+        "primera": 200,
+        "siguiente": 200,
+        "eventos_distintos": true,
+        "recepcion": 403,
+        "anonimo": 401,
+        "cursor_alterado": 400
+      }
+    },
+    {
+      "comando": "npm run test:integration:pacientes:firestore",
+      "estado": "PASS",
+      "pruebas": 8,
+      "entorno": "emulador Firestore/Auth aislado; regresión de responsables y pacientes"
+    }
+  ],
+  "limites": [
+    "La autoridad HTTP de las pruebas nuevas es sintética; se reutilizan guards de E01.",
+    "Los fixtures institucionales se insertan en la proyección real; no acreditan comandos clínicos futuros.",
+    "El emulador Firestore no exige índices cloud ni acredita IAM cloud; su error de índice se inyecta como fallo operativo.",
+    "No hay snapshot entre páginas; inserciones anteriores al corte requieren recarga."
+  ],
+  "revision_codex": "PENDIENTE sobre commit de implementación",
+  "migraciones": {
+    "postgresql": "PASS: fallo inyectado antes de COMMIT revierte extensión; reejecución preserva eventos",
+    "mysql": "PASS: DDL interrumpido se retoma; reejecución preserva eventos",
+    "mongodb": "PASS: legado bloqueado, eventos preservados e índice recuperado; bootstrap reejecutable",
+    "firestore": "PASS: legado bloqueado y originales preservados; reejecución sin pérdida"
+  }
+}

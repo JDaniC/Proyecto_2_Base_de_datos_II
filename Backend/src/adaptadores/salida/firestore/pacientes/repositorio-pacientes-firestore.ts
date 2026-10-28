@@ -80,9 +80,10 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
 
       // Cargar vínculos de responsables en subcolección pacientes/{id}/responsables
       const snapVinculos = await this.obtenerQuery(
-        this.firestore.collection(`pacientes/${idPublico}/responsables`),
+        this.firestore.collection(`pacientes/${idPublico}/responsables`).limit(101),
       );
 
+      if (snapVinculos.size > 100) throw indisponible('El perfil requiere una página de responsables compatible.');
       const listaResponsables: ResponsablePaciente[] = [];
       for (const docVinculo of snapVinculos.docs) {
         const datosVinculo = docVinculo.data() as DocumentoVinculoResponsableFirestore;
@@ -184,7 +185,7 @@ export class RepositorioPacientesFirestore implements RepositorioPacienteLectura
     try {
       const idPublico = uuidPublico(pacienteId);
       const snapVinculos = await this.obtenerQuery(
-        this.firestore.collection(`pacientes/${idPublico}/responsables`),
+        this.firestore.collection(`pacientes/${idPublico}/responsables`).limit(101),
       );
       const elementos: ResponsableDetalle[] = [];
       for (const docVinculo of snapVinculos.docs) {
