@@ -3,9 +3,11 @@ import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/err
 
 const SECRETO_CURSOR = process.env.CURSOR_SIGNING_SECRET || 'bdii_cursor_deterministic_salt_secret_v1';
 
+export type RecursoCursorSql = 'pacientes' | 'eventos_auditoria';
+
 export interface DatosCursorSql {
   readonly v: 1;
-  readonly recurso: 'pacientes';
+  readonly recurso: RecursoCursorSql;
   readonly institucion: string;
   readonly q: string;
   readonly orden: 'ASC' | 'DESC';
@@ -40,6 +42,7 @@ export function decodificarCursorSql(
   qEsperado: string,
   ordenEsperado: 'ASC' | 'DESC',
   estadoEsperado?: string,
+  recursoEsperado: RecursoCursorSql = 'pacientes',
 ): { fecha: string; id: string } {
   try {
     const raw = Buffer.from(cursor, 'base64url').toString('utf8');
@@ -54,7 +57,7 @@ export function decodificarCursorSql(
     const parsed = JSON.parse(sobre.c) as Partial<DatosCursorSql>;
     if (
       parsed.v !== 1 ||
-      parsed.recurso !== 'pacientes' ||
+      parsed.recurso !== recursoEsperado ||
       parsed.institucion !== institucionEsperada ||
       parsed.q !== qEsperado ||
       parsed.orden !== ordenEsperado ||

@@ -7,6 +7,7 @@ import type {
 import { instanteUtc } from '../../../dominio/compartido/instante-utc.js';
 import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
 import type { DialectoSql, EjecutorSql } from './tipos-sql.js';
+import { codificarCursorSql, decodificarCursorSql } from './cursor-paginacion-sql.js';
 
 interface FilaAuditoriaSql extends Record<string, unknown> {
   id_publico: string;
@@ -20,7 +21,10 @@ interface FilaAuditoriaSql extends Record<string, unknown> {
 export function crearConsultaHistorialSql(
   ejecutor: EjecutorSql,
   dialecto: DialectoSql,
+  institucion?: string,
 ): ConsultaHistorial<EventoAuditoria> {
+  const institucionResuelta = institucion ?? (dialecto === 'postgresql' ? 'HOSPITAL_GENERAL' : 'CLINICA_ODONTOLOGICA');
+
   return {
     async eventos(pacienteId: UUID, pagina: FiltrosPagina): Promise<Pagina<EventoAuditoria>> {
       const limite = pagina.limite ?? 20;
@@ -30,12 +34,16 @@ export function crearConsultaHistorialSql(
       let cursorFecha: string | null = null;
       let cursorId: string | null = null;
       if (pagina.cursor) {
-        try {
-          const raw = Buffer.from(pagina.cursor, 'base64url').toString('utf8');
-          const parsed = JSON.parse(raw) as { f: string; id: string };
-          cursorFecha = parsed.f;
-          cursorId = parsed.id;
-        } catch { /* ignorar cursor malformado */ }
+        const decoded = decodificarCursorSql(
+          pagina.cursor,
+          institucionResuelta,
+          pacienteId,
+          orden,
+          undefined,
+          'eventos_auditoria',
+        );
+        cursorFecha = decoded.fecha;
+        cursorId = decoded.id;
       }
 
       const p = dialecto === 'postgresql'
@@ -117,10 +125,15 @@ export function crearConsultaHistorialSql(
       let siguienteCursor: string | undefined;
       if (haySiguiente && filasRetorno.length > 0) {
         const ultima = filasRetorno[filasRetorno.length - 1]!;
-        siguienteCursor = Buffer.from(JSON.stringify({
+        siguienteCursor = codificarCursorSql({
+          v: 1,
+          recurso: 'eventos_auditoria',
+          institucion: institucionResuelta,
+          q: pacienteId,
+          orden,
           f: String(ultima.fecha_hora),
           id: String(ultima.id_publico),
-        })).toString('base64url');
+        });
       }
 
       return Object.freeze({

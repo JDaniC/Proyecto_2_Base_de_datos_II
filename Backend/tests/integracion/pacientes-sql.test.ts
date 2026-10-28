@@ -662,6 +662,42 @@ test('PostgreSQL: persistencia de pacientes, búsqueda, concurrencia optimista y
     pagEventos1.elementos[0]?.id,
     'la paginación de auditoría en PostgreSQL debe avanzar sin repetir el mismo evento',
   );
+
+  // Validación de rechazo de cursor de auditoría corrupto o manipulado
+  await assert.rejects(
+    async () => {
+      await consultaHistorial.eventos(pacienteId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: 'cursor_completamente_invalido',
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría corrupto debe ser rechazado con SOLICITUD_INVALIDA',
+  );
+
+  // Validación de rechazo de cursor de auditoría perteneciente a otro paciente
+  const otroPacienteId = uuidPublico('00000000-0000-4000-8000-000000000099');
+  const cursorValido = pagEventos1.siguienteCursor!;
+  await assert.rejects(
+    async () => {
+      await consultaHistorial.eventos(otroPacienteId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: cursorValido,
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría emitido para un paciente no debe ser aceptado para otro paciente',
+  );
 });
 
 test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia optimista y archivo en clinica_odontologica', {
@@ -919,13 +955,21 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
       WHERE tipo_recurso = 'paciente_demografia_v3'
     ) r ON r.rn = 1 AND r.recurso_id = p.id_publico
     SET
-      p.sexo = COALESCE(p.sexo, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo'))),
-      p.direccion = COALESCE(p.direccion, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion'))),
+      p.sexo = COALESCE(p.sexo, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo')), 'null')),
+      p.direccion = COALESCE(p.direccion, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion')), 'null')),
       p.fecha_registro = COALESCE(
-        STR_TO_DATE(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), '%Y-%m-%d %H:%i:%s.%f'),
+        STR_TO_DATE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), 'null'), '%Y-%m-%d %H:%i:%s.%f'),
         p.fecha_registro
       )
   `);
+
+  // Verificar que pacienteConDoc (cuyo sexo era MASCULINO y direccion NULL) no adquiere el string literal 'null'
+  const filaConDocTrasRestore = await pool.consultar<{ sexo: string; direccion: string | null }>(
+    'SELECT sexo, direccion FROM paciente WHERE id_publico = ?',
+    [pacienteConDocId],
+  );
+  assert.equal(filaConDocTrasRestore.filas[0]?.sexo, 'MASCULINO');
+  assert.equal(filaConDocTrasRestore.filas[0]?.direccion, null, 'la dirección nula no debe restaurarse como string literal "null"');
 
   // 3. Búsqueda y paginación en MySQL
   const consultadoSinDoc = await consultar.ejecutar({ contexto, bundle, id: pacienteSinDocId });
@@ -1143,4 +1187,25 @@ test('MySQL: persistencia de pacientes, paciente sin documento, concurrencia opt
   );
   assert.equal(resDb.filas[0]?.estado, 'INACTIVO');
   assert.equal(resDb.filas[0]?.hist_estado, 'ARCHIVADO');
+
+  // 6. Historial de auditoría en MySQL con paginación y validación HMAC de cursor
+  const consultaHistorialMy = crearConsultaHistorialSql(pool, 'mysql', 'CLINICA_ODONTOLOGICA');
+  const paginaEventosMy = await consultaHistorialMy.eventos(pacienteSinDocId, { limite: 20, orden: 'ASC' });
+  assert.ok(paginaEventosMy.elementos.length >= 1, 'debe registrar eventos de auditoría en MySQL');
+
+  await assert.rejects(
+    async () => {
+      await consultaHistorialMy.eventos(pacienteSinDocId, {
+        limite: 1,
+        orden: 'ASC',
+        cursor: 'cursor_manipulado_invalido',
+      });
+    },
+    (err: unknown) => {
+      assert.ok(err instanceof ErrorDominio);
+      assert.equal(err.codigo, 'SOLICITUD_INVALIDA');
+      return true;
+    },
+    'un cursor de auditoría corrupto en MySQL debe ser rechazado con SOLICITUD_INVALIDA',
+  );
 });

@@ -77,6 +77,10 @@ Estado global: **PASS** (100% de requisitos cubiertos con pruebas automatizadas 
     - En `002_agregar_demografia_paciente_mysql.sql`, se incorporó selección de la última revisión mediante `ROW_NUMBER() OVER (PARTITION BY recurso_id ORDER BY fecha_hora DESC, version DESC)` para restaurar el estado demográfico exacto tras ciclos repetidos.
 17. **Reutilización de reservas de identidad asociadas al mismo paciente:**
     - Tanto en `aplicarCambiosPacientesMysql` como en `aplicarCambiosPacientesPostgresql`, al solicitar `RESERVAR` sobre una clave de identidad ya registrada, se comprueba si el `id_paciente` existente coincide con el del titular actual. Si ya pertenece al mismo paciente, se reutiliza actualizando su marca temporal para que figure como la identidad expuesta activa, evitando conflictos por clave primaria duplicada al conmutar entre documentos previamente registrados.
+18. **Preservación de valores SQL NULL en restauración demográfica (MySQL):**
+    - En `002_agregar_demografia_paciente_mysql.sql`, se envolvieron las extracciones JSON con `NULLIF(JSON_UNQUOTE(JSON_EXTRACT(...)), 'null')`, garantizando que campos nulos en JSON (p. ej. `direccion` nula cuando el paciente solo declaró sexo) se restauren como `NULL` en SQL y no como la cadena literal `'null'`.
+19. **Autenticación HMAC y validación estricta de cursores de auditoría:**
+    - En `consulta-historial-sql.ts`, se integraron `codificarCursorSql` y `decodificarCursorSql` con firma HMAC, vinculando el cursor a la institución, el recurso (`eventos_auditoria`), el `pacienteId` y el ordenamiento. Se eliminó la omisión silenciosa de errores para rechazar cursores corruptos, alterados o pertenecientes a otro paciente con `ErrorDominio('SOLICITUD_INVALIDA')`.
 
 ## 4. Matriz de Resultados
 | Caso / Suite | Tipo | Motor | Estado |

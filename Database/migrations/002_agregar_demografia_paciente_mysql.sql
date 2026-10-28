@@ -55,10 +55,10 @@ BEGIN
       WHERE tipo_recurso = 'paciente_demografia_v3'
     ) r ON r.rn = 1 AND r.recurso_id = p.id_publico
     SET
-      p.sexo = COALESCE(p.sexo, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo'))),
-      p.direccion = COALESCE(p.direccion, JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion'))),
+      p.sexo = COALESCE(p.sexo, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.sexo')), 'null')),
+      p.direccion = COALESCE(p.direccion, NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.direccion')), 'null')),
       p.fecha_registro = COALESCE(
-        STR_TO_DATE(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), '%Y-%m-%d %H:%i:%s.%f'),
+        STR_TO_DATE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(r.contenido_anterior, '$.fecha_registro')), 'null'), '%Y-%m-%d %H:%i:%s.%f'),
         p.fecha_registro
       );
   END IF;

@@ -23,7 +23,7 @@ export function crearUnidadDeTrabajoPacientesMysql(pool: PoolSql): UnidadDeTraba
         identidades: {
           titular: (ident: { tipo: string; numero: string }) => repoPacientes.titularIdentidad(ident),
         },
-        historial: crearConsultaHistorialSql(executor, 'mysql'),
+        historial: crearConsultaHistorialSql(executor, 'mysql', 'CLINICA_ODONTOLOGICA'),
         citas: { porId: async () => null },
         consultas: { porId: async () => null, porVersion: async () => null },
         responsables: { porId: async () => null, porPaciente: async () => Object.freeze({ elementos: [] }) },

@@ -23,7 +23,7 @@ export function crearUnidadDeTrabajoPacientesPostgresql(pool: PoolSql): UnidadDe
         identidades: {
           titular: (ident: { tipo: string; numero: string }) => repoPacientes.titularIdentidad(ident),
         },
-        historial: crearConsultaHistorialSql(executor, 'postgresql'),
+        historial: crearConsultaHistorialSql(executor, 'postgresql', 'HOSPITAL_GENERAL'),
         citas: { porId: async () => null },
         consultas: { porId: async () => null, porVersion: async () => null },
         responsables: { porId: async () => null, porPaciente: async () => Object.freeze({ elementos: [] }) },
