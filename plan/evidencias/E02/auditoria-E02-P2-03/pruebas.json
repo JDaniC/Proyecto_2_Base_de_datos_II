@@ -64,11 +64,28 @@
     "El emulador Firestore no exige índices cloud ni acredita IAM cloud; su error de índice se inyecta como fallo operativo.",
     "No hay snapshot entre páginas; inserciones anteriores al corte requieren recarga."
   ],
-  "revision_codex": "PENDIENTE sobre commit de implementación",
+  "revision_codex": {
+    "estado": "completed",
+    "commit_sha": "f0a47508cc80cda863056e9ee9ef3cfa6345eef7",
+    "has_any_findings": false,
+    "has_unresolved_findings": false,
+    "comentario": "https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/45#issuecomment-6473895568",
+    "bot": "chatgpt-codex-connector[bot]",
+    "app_id": 1144995
+  },
   "migraciones": {
     "postgresql": "PASS: fallo inyectado antes de COMMIT revierte extensión; reejecución preserva eventos",
     "mysql": "PASS: DDL interrumpido se retoma; reejecución preserva eventos",
     "mongodb": "PASS: legado bloqueado, eventos preservados e índice recuperado; bootstrap reejecutable",
     "firestore": "PASS: legado bloqueado y originales preservados; reejecución sin pérdida"
+  },
+  "integracion": {
+    "pr": 45,
+    "estado": "MERGED",
+    "commit": "42172365b077131e6f0d170d31dcdc259e973b69",
+    "merged_at_utc": "2026-10-28T16:00:48Z",
+    "arbol_igual_al_revisado": true,
+    "contrato-pr": "SUCCESS",
+    "revision-codex": "SUCCESS"
   }
 }

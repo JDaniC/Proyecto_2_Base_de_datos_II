@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 27/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 28/10/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
@@ -21,7 +21,7 @@ Actualizado: 27/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E02-P1-03](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) | P1 | — | PENDIENTE | E02-P1-02, E02-P2-01, E02-P2-02, E02-P2-03 | Sin ejecución registrada |
 | [E02-P2-01](entregas/E02_pacientes_historial/02_P2.md#e02-p2-01) | P2 | Davidix888 | HECHA | E02-P1-01 | [PR #42 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/42), squash `56752b2`; Codex sin hallazgos sobre `9b8c543`, contrato-pr/revision-codex PASS; 17 resultados MongoDB real + 196 runtime/unitarias + 32 contractuales PASS; build/lint y build postintegración PASS; [evidencia](evidencias/E02/E02-P2-01.md), [seguimiento](seguimiento/E02-P2-01.md); 27/10/2026 |
 | [E02-P2-02](entregas/E02_pacientes_historial/02_P2.md#e02-p2-02) | P2 | JDaniC | HECHA | E02-P1-01 | [PR #44 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/44), squash `1a1d1f3`; Codex sin hallazgos sobre `7a0a14c`; 206 unitarias/runtime + 32 contractuales PASS, 8 integración emulador Firestore PASS; [evidencia](evidencias/E02/E02-P2-02.md), [seguimiento](seguimiento/E02-P2-02.md); 28/10/2026 |
-| [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | P2 | JDaniC | EN_REVISION | E02-P1-02, E02-P2-01, E02-P2-02 | Implementación y CA07 verificadas; PR #45 en revisión; [seguimiento](seguimiento/E02-P2-03.md); 28/10/2026 |
+| [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) | P2 | JDaniC | HECHA | E02-P1-02, E02-P2-01, E02-P2-02 | PR #45 integrado (`4217236`); Codex sin hallazgos sobre `f0a4750`; [seguimiento](seguimiento/E02-P2-03.md); 28/10/2026 |
 | [E03-P1-01](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
 | [E03-P1-02](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | P1 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
 | [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | P1 | — | PENDIENTE | E03-P1-02, E03-P2-01, E03-P2-02 | Sin ejecución registrada |
