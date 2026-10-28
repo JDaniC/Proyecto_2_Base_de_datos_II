@@ -3,14 +3,25 @@
 USE clinica_odontologica;
 SET @bdii_bloqueo = GET_LOCK('bdii_clinica_inicializador_v2', 30);
 
+-- Validar huella antes de crear procedimientos temporales de migración
+DROP PROCEDURE IF EXISTS _migrar_v2_a_v3;
+DROP PROCEDURE IF EXISTS _revertir_v3_a_v2;
+CALL _huella_modelo(@bdii_huella_actual);
+
 DELIMITER $$
-DROP PROCEDURE IF EXISTS _revertir_v3_a_v2$$
 CREATE PROCEDURE _revertir_v3_a_v2()
 BEGIN
   DECLARE version_actual INT;
-  SELECT version INTO version_actual FROM modelo_database WHERE id = 1;
+  DECLARE huella_guardada CHAR(64);
+  IF NOT EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'modelo_database') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ESQUEMA_SIN_MANIFIESTO_NO_MIGRABLE';
+  END IF;
+  SELECT version, huella INTO version_actual, huella_guardada FROM modelo_database WHERE id = 1;
   IF version_actual IS NULL OR version_actual <> 3 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'VERSION_MODELO_DESCONOCIDA';
+  END IF;
+  IF huella_guardada IS NULL OR huella_guardada <> @bdii_huella_actual THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
   END IF;
 
   -- Preservar valores demográficos en la tabla revisiones para recuperación sin pérdida
