@@ -97,6 +97,11 @@
       "resultado": "PASS"
     },
     {
+      "caso": "respuesta perdida después del commit: reintento conserva cuerpo y clave",
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "resultado": "PASS"
+    },
+    {
       "caso": "alta por React y lectura después de recargar; documento ausente",
       "institucion": "CENTRO_MEDICO_PEDIATRICO",
       "resultado": "PASS"
@@ -158,7 +163,7 @@
     }
   ],
   "resumen": {
-    "PASS": 31,
+    "PASS": 32,
     "FAIL": 0,
     "BLOCKED": 0
   }

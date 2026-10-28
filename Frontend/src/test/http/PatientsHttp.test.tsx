@@ -184,6 +184,18 @@ describe('Pacientes React con transporte HTTP controlado', () => {
     const patch = fetchMock.mock.calls.find(([, opts]) => opts.method === 'PATCH')!;
     expect(JSON.parse(patch[1].body)).toEqual({ version_esperada: 3, correo: null }); expect(screen.getByLabelText('Correo electrónico')).toBeEnabled();
   });
+  it('reintento pediátrico con adulto nuevo conserva UUID aunque transcurra el tiempo', async () => {
+    fetchMock.mockResolvedValue(fallo('PERSISTENCIA_NO_DISPONIBLE', 503));
+    const user = userEvent.setup(); mostrar('/pacientes/nuevo', sesion('CENTRO_PEDIATRICO'));
+    await user.type(await screen.findByLabelText(/Nombres del paciente/), 'Menor'); await user.type(screen.getByLabelText(/Apellidos del paciente/), 'Prueba'); fireEvent.change(screen.getByLabelText(/Fecha de nacimiento/), { target: { value: '2020-01-01' } });
+    await user.type(screen.getByLabelText(/Nombres del responsable/), 'Responsable'); await user.type(screen.getByLabelText(/Apellidos del responsable/), 'Prueba');
+    await user.type(screen.getByLabelText(/Documento del responsable/), '1234567890102'); await user.type(screen.getByLabelText(/Teléfono del tutor/), '55550000');
+    await user.click(screen.getByRole('button', { name: 'Registrar paciente' })); await screen.findByText('Resultado pendiente de confirmar');
+    await new Promise((r) => setTimeout(r, 5));
+    await user.click(screen.getByRole('button', { name: 'Registrar paciente' })); await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1][1].headers['Idempotency-Key']).toBe(fetchMock.mock.calls[0][1].headers['Idempotency-Key']);
+    expect(fetchMock.mock.calls[1][1].body).toBe(fetchMock.mock.calls[0][1].body);
+  });
   it('duplicado conserva datos y propone buscar al paciente existente', async () => {
     fetchMock.mockResolvedValue(fallo('PACIENTE_DUPLICADO', 409));
     const user = userEvent.setup(); mostrar('/pacientes/nuevo');

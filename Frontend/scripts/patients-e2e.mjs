@@ -38,7 +38,7 @@ export async function recorrerPacientes({ browser, url, cuentas, reiniciarBacken
         await page.getByLabel('Autoriza la atención clínica del menor').uncheck();
       }
       let perdida;
-      if (i === 0) {
+      if (i === 0 || i === 3) {
         await page.route('**/api/v1/pacientes', async (route) => {
           if (route.request().method() !== 'POST' || perdida) return route.continue();
           perdida = { body: route.request().postData(), key: route.request().headers()['idempotency-key'] };
@@ -46,10 +46,10 @@ export async function recorrerPacientes({ browser, url, cuentas, reiniciarBacken
           await route.abort('failed');
         });
       }
-      const creado = i === 0 ? null : page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/api/v1/pacientes'));
+      const creado = i === 0 || i === 3 ? null : page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/api/v1/pacientes'));
       await page.getByRole('button', { name: 'Registrar paciente' }).click();
       let confirmado;
-      if (i === 0) {
+      if (i === 0 || i === 3) {
         await page.getByText('Resultado pendiente de confirmar').waitFor();
         assert.equal(await page.getByLabel(/Nombres del paciente/).isDisabled(), true);
         const retry = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith('/api/v1/pacientes'));

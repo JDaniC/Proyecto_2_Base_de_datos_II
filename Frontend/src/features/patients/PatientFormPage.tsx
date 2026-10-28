@@ -13,6 +13,7 @@ import {
 import type { Paciente, ActualizarPacienteDTO } from '../../services/types';
 import { generarClaveIdempotencia } from '../../services/http/idempotency';
 import { HttpError } from '../../services/http/errors';
+import { mapearAlta, mapearCambio } from '../../services/http/patients/patientMapper';
 import { toClinicDateTimeInput } from '../../services/dates';
 import { Button } from '../../design-system/components/Button';
 import { Input } from '../../design-system/components/Input';
@@ -233,7 +234,7 @@ const PatientForm: React.FC = () => {
           : institucionId === 'CENTRO_PEDIATRICO' && respNombre.trim()
           ? [
               {
-                id: responsablesExistentes.find(r => r.esPrincipal)?.id || `resp-${Date.now()}`,
+                id: responsablesExistentes.find(r => r.esPrincipal)?.id || (esApi ? '' : `resp-${Date.now()}`),
                 nombre: respNombre.trim(),
                 ...(esApi ? { nombres: respNombre.trim(), apellidos: respApellidos.trim(), tipoDocumento: respTipoDocumento } : {}),
                 parentesco: respParentesco,
@@ -274,7 +275,8 @@ const PatientForm: React.FC = () => {
         }
       }
       const comando = esApi && isEditing ? cambios : datos;
-      const firma = JSON.stringify(comando);
+      // La intención HTTP no incluye IDs temporales ni metadatos de presentación.
+      const firma = JSON.stringify(esApi ? isEditing ? mapearCambio({ ...cambios, idempotencyKey: '' }) : mapearAlta({ ...datos, idempotencyKey: '' }) : comando);
       if (!intencion.current || intencion.current.firma !== firma) intencion.current = { firma, clave: generarClaveIdempotencia() };
       const idempotencyKey = intencion.current.clave;
 
