@@ -74,6 +74,16 @@
     "propuesta_inventario": "`GET /api/v1/pacientes/{id}/expediente?orden=ASC\\|DESC&cursor={c}&limite={n}`"
   },
   {
+    "metodo": "PatientRepository.obtenerHistorial",
+    "categoria": "SIN_USO_DIRECTO_UI",
+    "destino": "COMUN_V1",
+    "operationId": "pacienteHistorial",
+    "responsable": "E02-P2-03",
+    "regla": "Índice de eventos paginado por cursor opaco ligado a cuenta, institución, paciente y filtros; rango UTC [desde,hasta), límite 1-100 (20 por defecto) y permiso historial.leer vigente. No sustituye la proyección de expediente ni devuelve detalles clínicos embebidos.",
+    "fuente_ui": "Sin llamada directa desde pantallas: la cronología usa `obtenerExpedienteCompleto`. Cliente HTTP en `services/http/patients/httpPatientRepository.ts:35` y prueba en `test/http/PatientsHttp.test.tsx:106`.",
+    "propuesta_inventario": "`GET /api/v1/pacientes/{id}/historial?desde={desde}&hasta={hasta}&orden=ASC\\|DESC&cursor={c}&limite={n}`"
+  },
+  {
     "metodo": "PatientRepository.crear",
     "categoria": "VIGENTE_UI",
     "destino": "COMUN_V1",
