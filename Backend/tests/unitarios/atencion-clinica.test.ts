@@ -9,6 +9,7 @@ import { validarSignos, validarReceta, validarTamanoClinico } from '../../src/do
 import { intervaloCita } from '../../src/dominio/clinica/cita.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import { escenarioClinico, nuevoId, medicamento, ahora } from '../fixtures/clinica-comun.js';
+import { validarEventoHistorial } from '../../src/adaptadores/salida/historial/proyeccion-historial.js';
 const servicio = new AtencionClinica(dependenciasComandoPorDefecto);
 const agenda = new GestionarCitas(dependenciasComandoPorDefecto);
 const error = (codigo: string) => (e: unknown) => (e as { codigo: string }).codigo === codigo;
@@ -92,6 +93,24 @@ for (const institucion of INSTITUCIONES_CANONICAS) describe(`CA04/05/06 común �
   });
 });
 describe('Políticas institucionales y límites clínicos', () => {
+  it('limita títulos a 200 unidades UTF-16 sin alterar motivos ni componentes completos', async () => {
+    for (const motivo of ['M'.repeat(201), '😀'.repeat(1000)]) {
+      const s = escenarioClinico('HOSPITAL_GENERAL');
+      const entrada = { ...s.entrada, motivo,
+        diagnosticos: [{ ...s.entrada.diagnosticos[0]!, nombre: '😀'.repeat(200) }],
+        tratamientos: [{ ...s.entrada.tratamientos[0]!, descripcion: '😀'.repeat(200) }] };
+      const r = await servicio.ejecutar('completa', { contexto: s.contexto, bundle: s.bundle, claveIdempotencia: nuevoId(), entrada });
+      assert.equal(r.respuesta.motivo, motivo);
+      assert.equal(r.respuesta.diagnosticos[0]!.nombre, entrada.diagnosticos[0]!.nombre);
+      assert.equal(r.respuesta.tratamientos[0]!.descripcion, entrada.tratamientos[0]!.descripcion);
+      for (const cambio of s.eventos) {
+        const proyeccion = { ...(cambio.nuevoEstado as Record<string, unknown>) };
+        delete proyeccion.pacienteId; // Metadato de pertenencia del contenedor, no del DTO cerrado.
+        const evento = validarEventoHistorial(proyeccion, 'HOSPITAL_GENERAL');
+        assert.ok(evento.titulo.length <= 200); assert.ok(!/[\uD800-\uDFFF]/u.test(evento.titulo));
+      }
+    }
+  });
   it('dental exige cita propia, programada, versión y profesional coincidente', async () => {
     for (const cambio of ['sin', 'cancelada', 'ajena', 'profesional', 'version']) {
       const s = escenarioClinico('CLINICA_ODONTOLOGICA'); let entrada: object = s.entrada;

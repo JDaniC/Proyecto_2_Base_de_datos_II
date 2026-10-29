@@ -47,6 +47,17 @@ const camposAccion: Record<AccionConsulta, readonly string[]> = {
   receta: ['version_esperada', 'receta'], finalizar: ['version_esperada'],
 };
 
+/** Resumen de presentación; el contenido clínico completo permanece en su snapshot. */
+function tituloHistorial(texto: string): string {
+  if (texto.length <= 200) return texto;
+  let resumen = '';
+  for (const caracter of texto) {
+    if (resumen.length + caracter.length > 199) break;
+    resumen += caracter;
+  }
+  return `${resumen}…`;
+}
+
 /** Un solo plan/UoW para apertura, atención compuesta o incorporación de un componente. */
 export class AtencionClinica {
   constructor(private readonly deps: DependenciasClinicas) {}
@@ -192,7 +203,7 @@ export class AtencionClinica {
         ...(receta ? [{ id: comando.ids.evento_receta!, tipo: 'RECETA', recursoId: consulta.receta!.id, titulo: 'Receta emitida' }] : []),
       ];
       cambios.push(...eventos.map(e => ({ agregado: 'eventosHistorial', tipo: 'CREAR', recursoId: e.id, versionAnterior: null,
-        nuevoEstado: { ...e, pacienteId: paciente.id, consultaId: consulta.id, versionConsulta: consulta.version, fechaHora: comando.instante } })));
+        nuevoEstado: { ...e, titulo: tituloHistorial(e.titulo), pacienteId: paciente.id, consultaId: consulta.id, versionConsulta: consulta.version, fechaHora: comando.instante } })));
       return { tipo: 'CONFIRMAR', cambios,
         revisiones: anterior ? [{ id: comando.ids.revision!, agregado: 'consultas', recursoId: consulta.id,
           versionAnterior: anterior.version, snapshotAnterior: anterior }] : [],
