@@ -65,3 +65,15 @@ clínica. Estado oficial/dependencias en tablero; evidencia E03/E03-P1-01.md.
 
 
 Corte de clínica MongoDB (29/10/2026, America/Guatemala): PR #55 MERGED en develop (`5ad9561`), Codex nativo sin hallazgos sobre `ac01fef`, contrato-pr/revision-codex SUCCESS. Laboratorio incorpora atención común, receta histórica y versiones/proyección en una UoW real; 301 pruebas backend, 9 resultados clínicos MongoDB, 17 regresiones de pacientes y 102 comprobaciones físicas PASS. Migración explícita 005 y 004 son obligatorias también en instalaciones nuevas; no habilitar clínica con manifiesto MIGRANDO/RECONCILIAR. [Evidencia](evidencias/E03/E03-P2-01.md). No acredita UI ni los adaptadores clínicos de las otras instituciones; consultar cola y PR abiertos, incluido #54 reservado para SQL.
+
+
+Corte de clínica pediátrica (29/10/2026, America/Guatemala): PR #57 integrado
+en develop (`6dcdde0`), revisión nativa de Codex sin hallazgos sobre `31b41da`.
+Firestore incorpora clínica/agenda transaccional, autorización histórica,
+signos comunes y snapshots exactos por versión. Preparar M04 v2 y migraciones
+004/006 explícitas; legado sin procedencia conserva puerta RECONCILIAR.
+[Evidencia](evidencias/E03/E03-P2-02.md): 302 backend, 12 clínica +8 pacientes
+emulador y 82 modelo offline +99 emulador PASS; build postmerge PASS. No se
+acredita UI clínica ni cierre E03. SQL continúa reservado en PR #54, activo en
+otro chat por confirmación humana; conservar su checkout. La siguiente tarea
+dependiente requiere esa integración, según tablero y PR abiertos.

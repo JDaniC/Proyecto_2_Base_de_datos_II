@@ -83,8 +83,10 @@ requeridas. NOT_IMPLEMENTED: 0 en este adaptador. No se acredita corrección de
 consulta finalizada por HTTP (E03-P1-03), UI clínica (E03-P2-03), despliegue de
 índices/IAM remotos ni equivalencia integrada de cuatro motores.
 
-Revisión nativa de Codex e integración: pendientes al preparar este informe;
-solo se registrarán como completadas después de comprobar el SHA revisado.
+Cierre verificado: Codex completed sin hallazgos sobre `31b41da`, PR #57
+MERGED en develop (`6dcdde0`), controles SUCCESS, árbol integrado idéntico y
+build postmerge PASS. Las secciones siguientes conservan las iteraciones de
+auditoría y revisión anteriores al cierre.
 
 
 ## Segunda pasada tras publicación 98682e5
