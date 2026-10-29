@@ -26,7 +26,7 @@ Actualizado: 28/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E03-P1-02](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | P1 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
 | [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | P1 | — | PENDIENTE | E03-P1-02, E03-P2-01, E03-P2-02 | Sin ejecución registrada |
 | [E03-P2-01](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | P2 | JDaniC | HECHA | E03-P1-01 | [PR #55 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/55), squash `5ad9561`; Codex sin hallazgos sobre `ac01fef`; contrato-pr/revision-codex SUCCESS; 301 backend, 9 integración clínica, 17 pacientes y 102 modelo PASS; build postmerge PASS; [evidencia](evidencias/E03/E03-P2-01.md); 29/10/2026 |
-| [E03-P2-02](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | P2 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
+| [E03-P2-02](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | P2 | JDaniC | EN_CURSO | E03-P1-01 | Reservada; rama `codex/e03-p2-02-clinica-pediatrica`; seguimiento E03-P2-02; 29/10/2026 |
 | [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) | P2 | — | PENDIENTE | E03-P1-03 | Sin ejecución registrada |
 | [E04-P1-01](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
 | [E04-P1-02](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
