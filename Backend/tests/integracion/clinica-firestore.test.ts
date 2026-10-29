@@ -14,6 +14,7 @@ import { uuidPublico } from '../../src/dominio/compartido/uuid.js';
 import { instanteUtc } from '../../src/dominio/compartido/instante-utc.js';
 import { versionPositiva } from '../../src/dominio/compartido/version.js';
 import { medicamento } from '../fixtures/clinica-comun.js';
+import type { Consulta } from '../../src/dominio/clinica/consulta.js';
 import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
 const id = () => uuidPublico(randomUUID());
 const host = process.env.FIRESTORE_EMULATOR_HOST;
@@ -83,7 +84,8 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.deepEqual(await bundle.clinica!.consultas.porVersion(consultaId,versionPositiva(3)),r.respuesta);
     await assert.rejects(atencion.ejecutar('tratamiento',{contexto,bundle,id:consultaId,claveIdempotencia:id(),entrada:{version_esperada:4,tratamiento:tratamientos[0]}}),{codigo:'ESTADO_INVALIDO'});
   });
-  await t.test('fallo después de datos y antes de auditoría revierte la transacción entera',async()=>{
+  await t.test('fallos antes de receta y antes de auditoría revierten la transacción entera',async()=>{
+    for (const punto of ['receta','auditoria']) {
     const antes = await Promise.all(['consultas','operaciones','auditoria','historial_eventos'].map(async c=>(await db.collection(c).get()).size));
     const versionAntes = (await bundle.pacientes!.porId(pacienteId))!.version;
     const original = bundle.uow!;
@@ -91,12 +93,20 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
       return original.ejecutar(ctx,comando, async lector => {
         const plan = await planificar(lector);
         // Fallo real de validación al guardar auditoría, después de aplicar los datos.
-        return plan.tipo === 'CONFIRMAR' ? {...plan,auditoria:plan.auditoria.map(a=>({...a,caso:''}))} : plan;
+        if (plan.tipo !== 'CONFIRMAR') return plan;
+        if (punto === 'auditoria') return {...plan,auditoria:plan.auditoria.map(a=>({...a,caso:''}))};
+        return {...plan,cambios:plan.cambios.map(cambio=>{
+          if (cambio.agregado !== 'consultas') return cambio;
+          const c = cambio.nuevoEstado as Consulta;
+          // Fallo físico de receta: texto requerido inválido, sin alterar el DTO aceptado.
+          return {...cambio,nuevoEstado:{...c,receta:{...c.receta!,medicamentos:c.receta!.medicamentos.map(m=>({...m,concentracion:''}))}} as typeof cambio.nuevoEstado};
+        })};
       });
     }}};
     await assert.rejects(atencion.ejecutar('completa',{contexto,bundle:roto,claveIdempotencia:id(),entrada:await entrada()}));
     assert.deepEqual(await Promise.all(['consultas','operaciones','auditoria','historial_eventos'].map(async c=>(await db.collection(c).get()).size)),antes);
     assert.equal((await bundle.pacientes!.porId(pacienteId))!.version,versionAntes);
+    }
   });
   await t.test('dos atenciones compiten por revisión de paciente: una sola confirma',async()=>{
     const e = await entrada(); const resultados = await Promise.allSettled([1,2].map(()=>atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:id(),entrada:e})));

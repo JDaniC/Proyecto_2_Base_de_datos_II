@@ -85,3 +85,13 @@ consulta finalizada por HTTP (E03-P1-03), UI clínica (E03-P2-03), despliegue de
 
 Revisión nativa de Codex e integración: pendientes al preparar este informe;
 solo se registrarán como completadas después de comprobar el SHA revisado.
+
+
+## Segunda pasada tras publicación 98682e5
+
+Se amplió el caso de rollback del emulador con fallo de persistencia de receta
+(concentración inválida inyectada después del plan aceptado), además del fallo
+de auditoría. En ambos se comparan tamaños de consultas/operaciones/auditoría/
+eventos y revisión del paciente, sin cambios. Este ajuste añade evidencia CA05;
+no cambia implementación ni contrato. Se ejecuta y audita antes del siguiente
+commit, y se requiere revisión nativa sobre el nuevo SHA.
