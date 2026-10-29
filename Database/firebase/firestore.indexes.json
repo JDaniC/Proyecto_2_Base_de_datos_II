@@ -1,5 +1,9 @@
 {
   "indexes": [
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "pediatra_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "DESCENDING" }
+    ] },
     { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
       { "fieldPath": "cita_id", "order": "ASCENDING" },
       { "fieldPath": "estado", "order": "ASCENDING" }

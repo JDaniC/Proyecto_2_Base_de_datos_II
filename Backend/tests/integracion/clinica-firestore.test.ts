@@ -128,7 +128,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await agenda.ejecutar('cancelar',{contexto,bundle,id:segunda.id,claveIdempotencia:id(),entrada:{version_esperada:2,motivo:'Cancelación sintética'}});
     const cancelada = await lectura.porId(contexto,bundle,segunda.id); assert.equal(cancelada.motivo_cancelacion,'Cancelación sintética');
     await assert.rejects(atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:id(),entrada:{...await entrada(),cita_id:segunda.id,version_cita:3}}),{codigo:'REFERENCIA_INCOMPATIBLE'});
-    const filtrada = await lectura.listar(contexto,bundle,{fecha_desde:'2026-10-30',fecha_hasta:'2026-10-31',estado:'CANCELADA',q:'Otra',orden:'DESC'}); assert.equal(filtrada.elementos.length,1); assert.equal(filtrada.elementos[0]!.id,segunda.id);
+    const filtrada = await lectura.listar(contexto,bundle,{fecha_desde:'2026-10-30',fecha_hasta:'2026-10-31',estado:'CANCELADA',q:'Otra',orden:'DESC',profesional_id:profesional}); assert.equal(filtrada.elementos.length,1); assert.equal(filtrada.elementos[0]!.id,segunda.id);
     const pagina = await lectura.listar(contexto,bundle,{fecha_desde:'2026-10-30',fecha_hasta:'2026-10-31',limite:'1'}); assert.equal(pagina.elementos.length,1); assert.ok(pagina.siguienteCursor);
     const otra = await lectura.listar(contexto,bundle,{fecha_desde:'2026-10-30',fecha_hasta:'2026-10-31',limite:'1',cursor:pagina.siguienteCursor}); assert.equal(otra.elementos[0]!.id,segunda.id);
     await assert.rejects(lectura.listar({...contexto,cuenta:{...contexto.cuenta,id:id()}},bundle,{fecha_desde:'2026-10-30',fecha_hasta:'2026-10-31',limite:'1',cursor:pagina.siguienteCursor}),{codigo:'SOLICITUD_INVALIDA'});
@@ -137,10 +137,16 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     const segundo = (await new RegistrarPaciente(deps).ejecutar({contexto,bundle,claveIdempotencia:id(),entrada:{nombres:'Otro',apellidos:'Menor',fecha_nacimiento:'2021-01-01',sexo:'MASCULINO',responsables:[{responsable_id:responsableId,version_responsable:1,parentesco:'MADRE',es_principal:true,autoriza_atencion:true}]}})).respuesta;
     const agenda = new GestionarCitas(deps);
     const e = {profesional_id:profesional,fecha:'2026-10-31',hora_inicio:'11:00',duracion_minutos:30,motivo:'Reserva concurrente'};
-    const resultados = await Promise.allSettled([pacienteId,uuidPublico(segundo.id)].map(async pid=>agenda.ejecutar('crear',{contexto,bundle,claveIdempotencia:id(),entrada:{...e,paciente_id:pid,version_paciente:(await bundle.pacientes!.porId(pid))!.version}})));
-    assert.equal(resultados.filter(r=>r.status === 'fulfilled').length,1);
-    const perdedor = resultados.find(r=>r.status === 'rejected') as PromiseRejectedResult;
-    assert.ok(['CITA_SOLAPADA','PERSISTENCIA_NO_DISPONIBLE'].includes(perdedor.reason.codigo));
+    const parametros = await Promise.all([pacienteId,uuidPublico(segundo.id)].map(async pid=>({contexto,bundle,claveIdempotencia:id(),entrada:{...e,paciente_id:pid,version_paciente:(await bundle.pacientes!.porId(pid))!.version}})));
+    const resultados = await Promise.allSettled(parametros.map(p=>agenda.ejecutar('crear',p)));
+    const confirmadas = resultados.filter(r=>r.status === 'fulfilled').length;
+    assert.ok(confirmadas <= 1);
+    for (const r of resultados) if (r.status === 'rejected') assert.ok(['CITA_SOLAPADA','PERSISTENCIA_NO_DISPONIBLE'].includes(r.reason.codigo));
+    if (confirmadas === 0) {
+      // Ambos pueden agotar reintentos por contención: recuperar las mismas intenciones sin inventar éxito.
+      await agenda.ejecutar('crear',parametros[0]!);
+      await assert.rejects(agenda.ejecutar('crear',parametros[1]!),{codigo:'CITA_SOLAPADA'});
+    }
     const reservas = await new ConsultarCitas().listar(contexto,bundle,{fecha_desde:'2026-10-31',fecha_hasta:'2026-11-01'}); assert.equal(reservas.elementos.length,1);
   });
   await t.test('migración existente preserva respaldo, reanuda por UUID y bloquea legado sin procedencia',async()=>{

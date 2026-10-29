@@ -95,3 +95,33 @@ de auditoría. En ambos se comparan tamaños de consultas/operaciones/auditoría
 eventos y revisión del paciente, sin cambios. Este ajuste añade evidencia CA05;
 no cambia implementación ni contrato. Se ejecuta y audita antes del siguiente
 commit, y se requiere revisión nativa sobre el nuevo SHA.
+
+## Hallazgo de Codex sobre be31a87 y nueva auditoría
+
+CF01, DIVERGENTE/MEDIUM, confirmado estáticamente: `citas.listar` combina
+`pediatra_id ==` con rango/orden DESC por `fecha_hora`; el manifiesto solo
+incluía ASC. Una ejecución en emulador no detecta un índice remoto faltante.
+La [documentación oficial de índices](https://firebase.google.com/docs/firestore/query-data/index-overview#queries_supported_by_manual_indexes)
+exige la dirección adicional para esa consulta. No se realizó prueba contra
+proyecto remoto compartido.
+
+Corrección: índice `citas(pediatra_id ASCENDING, fecha_hora DESCENDING)`,
+manifiesto objetivo/huella regenerados y aserción explícita de los dos campos
+y direcciones en la suite del modelo; hay doce índices compuestos. El caso de
+agenda añade profesional_id+DESC a los filtros probados. Se repite clínica,
+modelo offline/emulador, backend, lint y build antes de publicar.
+
+La nueva ejecución de contención mostró que dos reservas pueden agotar
+reintentos antes de que alguna confirme. El contrato permite 503 tras tres
+intentos. El test conserva las dos claves/DTO, exige como máximo un commit
+concurrente y recupera ambas mismas intenciones cuando ambas recibieron 503:
+una confirma y la otra devuelve CITA_SOLAPADA; la lectura acredita exactamente
+una cita. No se transforma 503 en éxito ni se omite la conservación de datos.
+La evidencia ya no depende de que el emulador elija un ganador antes del plazo.
+
+
+Resultado de la pasada CF01 antes de commit: 12 clínica emulador, 82 modelo
+offline y 99 modelo emulador PASS; 270+32 backend PASS; lint/build PASS;
+diff-check PASS. Estado CF01 corregido con prueba de configuración; pendiente
+validación nativa del nuevo SHA. No se atribuye al emulador la comprobación de
+los requisitos de índices de un servicio remoto.
