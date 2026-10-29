@@ -153,8 +153,11 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     const otro = crearClienteFirestore({emulatorHost:host!,projectId:`demo-legado-${process.pid}`,databaseId:'(default)',institucionalId:'CENTRO_MEDICO_PEDIATRICO'});
     try {
       await inicializador.inicializarFirestore(otro.firestore);
-      await otro.firestore.doc('configuracion/modelo').update({version_esquema:1,hash_modelo:'d5f341030fb4740264245a67dc39f04298b0e263f2b6ef28086f38f529562a29'});
       await otro.firestore.doc('historial_configuracion/modelo').set({version:1,estado:'LISTO'});
+      await otro.firestore.doc('configuracion/modelo').update({version_esquema:2,hash_modelo:'d5f341030fb4740264245a67dc39f04298b0e263f2b6ef28086f38f529562a29'});
+      await assert.rejects(migracion.prepararClinicaFirestore(otro.firestore),/MANIFIESTO_CLINICO_INCOMPATIBLE/);
+      assert.equal((await otro.firestore.doc('clinica_configuracion/modelo').get()).exists,false);
+      await otro.firestore.doc('configuracion/modelo').update({version_esquema:1});
       const primera = (await db.collection('consultas').limit(1).get()).docs[0]!;
       const {snapshot_v1,signos_vitales,...legado} = primera.data();
       assert.ok(snapshot_v1); assert.ok(signos_vitales);

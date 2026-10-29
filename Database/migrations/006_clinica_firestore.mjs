@@ -7,8 +7,9 @@ export async function prepararClinicaFirestore(db, {despuesDePagina} = {}) {
   const plan = await obtenerPlan(); const ref = db.doc('clinica_configuracion/modelo');
   await db.runTransaction(async t => {
     const [previo, historial, modelo] = await Promise.all([t.get(ref),t.get(db.doc('historial_configuracion/modelo')),t.get(db.doc('configuracion/modelo'))]);
-    if (!modelo.exists || ![HUELLA_ANTERIOR,plan.hash_modelo].includes(modelo.get('hash_modelo')) ||
-      ![1,2].includes(modelo.get('version_esquema'))) throw new Error('MANIFIESTO_CLINICO_INCOMPATIBLE');
+    const origenV1 = modelo.get('version_esquema') === 1 && modelo.get('hash_modelo') === HUELLA_ANTERIOR;
+    const objetivoV2 = modelo.get('version_esquema') === 2 && modelo.get('hash_modelo') === plan.hash_modelo;
+    if (!modelo.exists || !(origenV1 || objetivoV2)) throw new Error('MANIFIESTO_CLINICO_INCOMPATIBLE');
     if (historial.get('version') !== 1 || historial.get('estado') !== 'LISTO') throw new Error('REQUIERE_MIGRACION_004_RECONCILIADA');
     if (previo.exists) {
       if (previo.get('version') !== 1 || previo.get('contrato') !== CONTRATO_CLINICA_FIRESTORE || previo.get('huella') !== plan.hash_modelo) throw new Error('MANIFIESTO_CLINICO_INCOMPATIBLE');

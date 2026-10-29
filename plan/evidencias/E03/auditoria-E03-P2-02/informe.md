@@ -125,3 +125,16 @@ offline y 99 modelo emulador PASS; 270+32 backend PASS; lint/build PASS;
 diff-check PASS. Estado CF01 corregido con prueba de configuración; pendiente
 validación nativa del nuevo SHA. No se atribuye al emulador la comprobación de
 los requisitos de índices de un servicio remoto.
+
+
+## CF02 · Pareja versión/huella del migrador
+
+Segunda pasada de requisitos §4: la condición inicial comprobaba versión y
+huella como dos listas independientes. El análisis de esa condición admitía
+v2 con huella v1, combinación no documentada como origen válido. Se sustituyó
+por dos parejas explícitas (v1+huella origen, v2+huella objetivo). La prueba
+nueva presenta v2+huella origen y exige error de manifiesto y ausencia de
+configuración clínica creada; después restaura la pareja origen conocida y
+comprueba interrupción/reanudación como antes. 12 pruebas clínicas PASS, lint
+y diff-check PASS antes del commit. Es una corrección de precondición de la
+migración, sin cambio del esquema ni del contrato HTTP.
