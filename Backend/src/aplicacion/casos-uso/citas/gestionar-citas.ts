@@ -48,19 +48,22 @@ export class GestionarCitas {
       if (!paciente || paciente.institucion !== p.bundle.institucion) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Paciente no encontrado.');
       if (accion !== 'cancelar') validarOperacionHistorial(paciente.estado, 'NUEVA_ATENCION');
       if (accion === 'crear') exigirVersion(paciente.version, e.version_paciente);
-      const profesional = await clinica.profesionales.porId(profesionalId ?? anterior!.profesional_id);
-      if (!profesional || !profesional.activo) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'Profesional no disponible.');
-      const rol = { HOSPITAL_GENERAL: 'MEDICO', CLINICA_ODONTOLOGICA: 'ODONTOLOGO', CENTRO_MEDICO_PEDIATRICO: 'PEDIATRA', LABORATORIO_CLINICO: '' }[p.bundle.institucion];
-      if (profesional.rol !== rol) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'Profesional incompatible.');
+      const profesionalAsignadoId = profesionalId ?? anterior!.profesional_id;
+      if (accion !== 'cancelar') {
+        const profesional = await clinica.profesionales.porId(profesionalAsignadoId);
+        if (!profesional || !profesional.activo) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'Profesional no disponible.');
+        const rol = { HOSPITAL_GENERAL: 'MEDICO', CLINICA_ODONTOLOGICA: 'ODONTOLOGO', CENTRO_MEDICO_PEDIATRICO: 'PEDIATRA', LABORATORIO_CLINICO: '' }[p.bundle.institucion];
+        if (profesional.rol !== rol) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'Profesional incompatible.');
+      }
       const duracion = e.duracion_minutos ?? anterior?.duracion_minutos;
       if (accion === 'reprogramar' && duracion == null) throw new ErrorDominio('ESTADO_INVALIDO', 'Capturar duración de la cita legada.');
       const intervalo = accion === 'cancelar' ? {} : intervaloCita(e.fecha, e.hora_inicio, duracion);
       if (accion !== 'cancelar') {
         const horario = intervalo as ReturnType<typeof intervaloCita>;
-        const solapadas = await clinica.citas.solapamientos(profesional.id, horario.fecha, horario.hora_inicio, horario.hora_fin);
+        const solapadas = await clinica.citas.solapamientos(profesionalAsignadoId, horario.fecha, horario.hora_inicio, horario.hora_fin);
         if (solapadas.some(c => c.id !== anterior?.id && c.estado !== 'CANCELADA')) throw new ErrorDominio('CITA_SOLAPADA', 'El intervalo no está disponible.');
       }
-      const cita: Cita = { ...(anterior ?? { id: comando.ids.cita!, paciente_id: paciente.id, profesional_id: profesional.id,
+      const cita: Cita = { ...(anterior ?? { id: comando.ids.cita!, paciente_id: paciente.id, profesional_id: profesionalAsignadoId,
         fecha: '', hora_inicio: '', hora_fin: null, duracion_minutos: null, motivo, fecha_creacion: comando.instante,
         ...(consultorio ? { consultorio } : {}) }), ...intervalo,
         version: anterior ? siguienteVersion(anterior.version) : versionPositiva(1),

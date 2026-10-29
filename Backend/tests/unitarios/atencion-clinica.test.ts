@@ -93,6 +93,21 @@ for (const institucion of INSTITUCIONES_CANONICAS) describe(`CA04/05/06 común �
   });
 });
 describe('Políticas institucionales y límites clínicos', () => {
+  it('secretaría puede cancelar cita de profesional inactivo; no crear ni reprogramar', async () => {
+    const s = escenarioClinico('HOSPITAL_GENERAL');
+    s.profesional = { ...s.profesional, activo: false };
+    s.cuenta = { ...s.cuenta, roles: ['SECRETARIA'], permisos: ['citas.administrar'] };
+    const p = { contexto: s.contexto, bundle: s.bundle, claveIdempotencia: nuevoId(), id: s.cita.id };
+    await assert.rejects(agenda.ejecutar('reprogramar', { ...p,
+      entrada: { version_esperada: 1, fecha: '2026-10-29', hora_inicio: '11:00', motivo: 'Cambio' } }), error('REFERENCIA_INCOMPATIBLE'));
+    await assert.rejects(agenda.ejecutar('crear', { ...p, entrada: {
+      paciente_id: s.paciente.id, version_paciente: 1, profesional_id: s.profesional.id,
+      fecha: '2026-10-29', hora_inicio: '11:00', duracion_minutos: 30, motivo: 'Control' } }), error('REFERENCIA_INCOMPATIBLE'));
+    const cancelada = await agenda.ejecutar('cancelar', { ...p, entrada: { version_esperada: 1, motivo: 'Profesional no disponible' } });
+    assert.equal(cancelada.respuesta.estado, 'CANCELADA');
+    assert.equal(cancelada.respuesta.motivo_cancelacion, 'Profesional no disponible');
+    assert.equal(s.auditoria.length, 1); assert.equal(s.revisiones.length, 1);
+  });
   it('limita títulos a 200 unidades UTF-16 sin alterar motivos ni componentes completos', async () => {
     for (const motivo of ['M'.repeat(201), '😀'.repeat(1000)]) {
       const s = escenarioClinico('HOSPITAL_GENERAL');
