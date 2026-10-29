@@ -51,3 +51,14 @@ Corte de lectura de historial (28/10/2026, America/Guatemala): PR #45 integrado 
 
 
 Corte de integración React de pacientes y cierre E02 (28/10/2026, America/Guatemala): PR #47 MERGED en develop (`41082c9`), revisión nativa Codex sin hallazgos sobre `bfbc38a`; cierre individual PR #48 (`4e50533`). Alta/búsqueda/PATCH/perfil administrativo y expediente paginado usan HTTP; 99 pruebas frontend y 32 comprobaciones con navegador y cuatro motores aislados/emulados PASS, con recarga, responsables compartidos, reintentos y reinicio del backend. [Evidencia](evidencias/E02/E02-P1-03.md). Los eventos del recorrido son fixtures del índice de lectura, sin acreditar escritores clínicos E03–E05. La demostración conjunta y auditoría de cierre de fase E02 están en `plan/evidencias/E02/CIERRE.md` y `plan/evidencias/E02/auditoria-cierre-2026-10-28/`; el cierre se integró mediante PR #49 (`c1a932a`), con revisión nativa de Codex sin hallazgos sobre `a09fb9f` y `contrato-pr`/`revision-codex` success, habilitando la puerta de entrada a la fase E03 (`E03-P1-01`).
+
+
+Corte E03-P1-01 (28/10/2026, America/Guatemala): PR #51 integrado en develop
+(`896972b`), implementación por Davidix888 con Codex tras traspaso autorizado de
+JDaniC comunicado por el usuario. Revisión nativa limpia sobre `9763450` después de
+dos correcciones con regresión. Backend incorpora dominio/casos comunes de atención,
+recetas y agenda y sus endpoints; 268 runtime/unitarias +32 contractuales PASS,
+lint/build y build postintegración PASS. Las pruebas clínicas usan UoW e identidad
+sintéticas: adaptadores clínicos físicos y sus migraciones se implementan en
+E03-P1-02/E03-P2-01/E03-P2-02; producción falla con 503 mientras falte la extensión
+clínica. Estado oficial/dependencias en tablero; evidencia E03/E03-P1-01.md.
