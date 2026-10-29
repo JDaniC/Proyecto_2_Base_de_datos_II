@@ -21,6 +21,7 @@
     "provision:cuenta": "npm run build && node --env-file-if-exists=.env scripts/provisionar-cuenta.mjs",
     "test:integration:historial": "node scripts/run-historial-integration.mjs",
     "test:integration:pacientes:ui": "node scripts/run-historial-integration.mjs --pacientes-ui",
+    "test:integration:clinica:firestore": "node scripts/run-clinica-firestore-integration.mjs",
     "test:integration:clinica:mongodb": "node scripts/run-clinica-mongodb-integration.mjs"
   },
   "dependencies": {

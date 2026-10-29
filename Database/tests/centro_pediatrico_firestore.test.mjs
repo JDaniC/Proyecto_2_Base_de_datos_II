@@ -84,10 +84,10 @@ test('calculo de tamano considera UTF-8 y nombre del documento', () => {
   assert.ok(tamanoDocumento('pruebas/uno', { valor: 'ñ' }) > tamanoDocumento('pruebas/uno', { valor: 'n' }));
   assert.ok(tamanoDocumento('pruebas/documento-largo', { valor: 1 }) > tamanoDocumento('pruebas/uno', { valor: 1 }));
 });
-test('plan offline incluye 22 rutas, 15 colecciones raiz, 10 indices y cuatro roles', async () => {
+test('plan offline incluye 23 rutas, 15 colecciones raiz, 11 indices y cuatro roles', async () => {
   const plan = await obtenerPlan();
-  assert.equal(plan.rutas.length, 22); assert.equal(plan.colecciones_raiz.length, 15);
-  assert.equal(plan.indices_compuestos, 10); assert.equal(plan.roles.length, 4);
+  assert.equal(plan.rutas.length, 23); assert.equal(plan.colecciones_raiz.length, 15);
+  assert.equal(plan.indices_compuestos, 11); assert.equal(plan.roles.length, 4);
 });
 test('destino exige proyecto explicito y demo local coherente', () => {
   rechazo(() => validarDestino(undefined));

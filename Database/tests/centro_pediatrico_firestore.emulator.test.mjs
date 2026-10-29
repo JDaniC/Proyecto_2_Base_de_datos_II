@@ -155,5 +155,7 @@ test('una base con datos sin manifiesto se rechaza sin cambios', async () => {
 test('configuracion declarativa contiene huella e indices previstos', async () => {
   const plan = await obtenerPlan();
   assert.equal((await conexion.firestore.doc('configuracion/modelo').get()).data().hash_modelo, plan.hash_modelo);
-  assert.equal(plan.indices_compuestos, 10);
+  assert.equal(plan.indices_compuestos, 11);
+  const indices = JSON.parse(await readFile(new URL('../firebase/firestore.indexes.json',import.meta.url),'utf8'));
+  assert.ok(indices.indexes.some(i=>i.collectionGroup === 'consultas' && i.fields.map(f=>f.fieldPath).join(',') === 'cita_id,estado'));
 });

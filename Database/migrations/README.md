@@ -147,3 +147,42 @@ Aplicar 004 y 005 también en instalaciones nuevas antes de habilitar clínica.
 Mientras id 5 esté MIGRANDO/RECONCILIAR o ausente, lecturas/comandos clínicos
 responden 503; pacientes conserva su disponibilidad independiente. La marca
 MIGRANDO se escribe solo después de terminar el preflight y antes de collMod.
+
+## 006 · Clínica pediátrica Firestore (E03-P2-02)
+
+`006_clinica_firestore.mjs` exporta `prepararClinicaFirestore(db)`. El operador
+entrega un cliente administrativo al destino explícito, después de detener
+escritores y realizar respaldo externo verificable. Ejecutar también en una
+instalación nueva, después del inicializador M04 v2 y migración 004. No se
+llama automáticamente desde el servidor ni desde el inicializador.
+
+La versión anterior aceptada es M04 v1 con huella
+`d5f341030fb4740264245a67dc39f04298b0e263f2b6ef28086f38f529562a29`;
+la objetivo es el plan M04 v2 de `obtenerPlan()`. Otra huella falla cerrada.
+La migración conserva copia íntegra del manifiesto y de cada consulta en
+`clinica_migracion_006_respaldo`, avanza cursor por UUID en
+`clinica_configuracion/modelo` y puede reanudarse tras interrupción.
+Nunca sobrescribe el respaldo previo. No elimina consultas, componentes,
+auditoría, operaciones, revisiones ni cuentas.
+
+El backfill copia exclusivamente mediciones ya presentes en
+`control_crecimiento` a `signos_vitales`, sin inventar fecha de toma. Conserva
+el control original. El nuevo snapshot clínico cerrado conserva los metadatos
+comunes, fechas, autorización y profesional históricos; las escrituras nuevas
+crean también `consultas/{id}/snapshots_v1/{version}` por clave exacta.
+No se reconstruye clínica histórica desde perfiles actuales. Una consulta
+legada sin snapshot verificable deja la puerta `RECONCILIAR`; no se cambia
+manualmente a LISTO para eludir esa condición.
+
+Publicar los índices del archivo `firebase/firestore.indexes.json`, incluido
+cita+estado de consultas. El emulador no acredita despliegue de índices ni IAM
+remoto. El adaptador verifica versión/huella del manifiesto y estado LISTO de
+004/006 en cada lectura clínica transaccional. La agenda serializa reservas
+por pediatra con `agenda_revisiones/{id}`; conserva duración desconocida del
+legado y bloquea nuevas reservas sobre intervalos indeterminados.
+
+Recuperación: reejecutar la misma función con escritores detenidos. Conservar
+los respaldos y documentos ampliados; una versión anterior que no soporte el
+nuevo esquema requiere mantenimiento y restauración en copia aislada, nunca
+borrado de campos/volúmenes. Evidencia nueva/existente/interrupción:
+`npm run test:integration:clinica:firestore` en Backend.

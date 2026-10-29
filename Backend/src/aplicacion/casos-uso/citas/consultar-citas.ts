@@ -35,6 +35,7 @@ export class ConsultarCitas {
       ...(q.profesional_id === undefined ? {} : { profesional_id: uuidPublico(q.profesional_id) }),
       ...(q.estado === undefined ? {} : { estado: q.estado as Cita['estado'] }),
       ...(q.q === undefined ? {} : { q: textoClinico(q.q, 'q', 120) }) },
-    { limite, orden: q.orden ?? 'ASC', ...(q.cursor === undefined ? {} : { cursor: q.cursor as string }) });
+    { limite, orden: q.orden ?? 'ASC', ...(q.cursor === undefined ? {} : { cursor: q.cursor as string }) },
+    JSON.stringify([contexto.cuenta.id, contexto.cuenta.institucion, [...contexto.cuenta.permisos].sort()]));
   }
 }

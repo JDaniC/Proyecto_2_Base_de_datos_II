@@ -3,7 +3,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
 export const INSTITUCION = 'CENTRO_MEDICO_PEDIATRICO' as const;
-export const VERSION_MODELO = 1;
+export const VERSION_MODELO = 2;
 export const MAX_DOCUMENTO = 256 * 1024;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const HASH_RE = /^[a-f0-9]{64}$/;
@@ -86,6 +86,25 @@ const crecimiento = objeto({
   temperatura_c: z.number().finite().optional(),
   frecuencia_cardiaca: z.number().positive().optional(),
 }).refine((v) => Object.keys(v).length > 0, 'Medicion vacia.');
+
+// Snapshot clínico cerrado: conserva metadatos y signos comunes sin consultar perfiles actuales.
+const profesionalHistoricoV1 = objeto({ id, nombre: texto(), rol: z.literal('PEDIATRA'), colegiado: texto(60), entidad_colegiacion: texto() });
+const instanteV1 = z.iso.datetime();
+const medicamentoV1 = objeto({ id, nombre: texto(), presentacion: texto(), concentracion: texto(), dosis: texto(), frecuencia: texto(), duracion: texto(), via: texto(100), indicaciones: texto(500) });
+const componenteV1 = { id, fecha_registro: instanteV1, registrado_por: profesionalHistoricoV1 };
+const signosV1 = objeto({ peso_kg: z.number().min(0.1).max(500).nullable().optional(), talla_cm: z.number().min(10).max(300).nullable().optional(),
+  temperatura_c: z.number().min(20).max(50).nullable().optional(), presion_sistolica: z.number().int().min(10).max(300).nullable().optional(),
+  presion_diastolica: z.number().int().min(10).max(200).nullable().optional(), frecuencia_cardiaca_lpm: z.number().int().min(10).max(300).nullable().optional(),
+  frecuencia_respiratoria_rpm: z.number().int().min(1).max(150).nullable().optional(), saturacion_oxigeno_pct: z.number().min(0).max(100).nullable().optional(),
+  perimetro_cefalico_cm: z.number().min(10).max(100).nullable().optional() });
+const snapshotClinicoV1 = objeto({ id, paciente_id: id, cita_id: id.optional(), fecha_hora: instanteV1, profesional: profesionalHistoricoV1,
+  estado: z.enum(['ABIERTA','FINALIZADA']), version: revision, motivo: texto(2000), sintomas: z.string().max(4000), observaciones: z.string().max(4000).optional(),
+  signos_vitales: signosV1, responsable_id: id,
+  autorizacion: objeto({ responsable_id: id, version_vinculo: revision, autorizaba: z.literal(true), identificacion_historica: objeto({tipo: texto(40),numero: texto(80)}), nombre_historico: texto(), fecha_hora: instanteV1 }),
+  diagnosticos: lista(objeto({ ...componenteV1, codigo_cie: texto(20), nombre: texto(), es_principal: z.boolean(), observacion: z.string().max(2000).optional() })),
+  tratamientos: lista(objeto({ ...componenteV1, descripcion: texto(), indicaciones: texto(2000) })),
+  receta: objeto({ id, codigo_legible: texto(100), version: revision, estado: z.literal('EMITIDA'), fecha_emision: instanteV1,
+    prescriptor: profesionalHistoricoV1, medicamentos: lista(medicamentoV1,1), observaciones: z.string().max(2000).optional() }).optional() });
 
 const dosis = objeto({
   dosis_id: id,
@@ -208,6 +227,8 @@ export const modelos = [
       paciente_id: id,
       pediatra_id: id,
       fecha_hora: fecha,
+      fecha: z.iso.date().optional(), hora_inicio: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), hora_fin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+      duracion_minutos: z.number().int().min(5).max(480).optional(), consultorio: texto(100).optional(),
       motivo: nota,
       estado: z.enum(['PROGRAMADA', 'ATENDIDA', 'CANCELADA']),
       fecha_creacion: fecha,
@@ -236,7 +257,7 @@ export const modelos = [
         fecha,
         autoriza_atencion: z.literal(true),
       }),
-      control_crecimiento: crecimiento.optional(),
+      signos_vitales: signosV1.extend({fecha_hora_medicion: fecha.optional()}).optional(), snapshot_v1: snapshotClinicoV1.optional(), control_crecimiento: crecimiento.optional(),
       diagnosticos: lista(diagnostico),
       tratamientos: lista(tratamiento),
       receta: receta.optional(),
@@ -253,6 +274,7 @@ export const modelos = [
     }),
   },
   { ruta: 'consultas/{consultaId}/versiones/{versionId}', esquema: versionHistorica },
+  { ruta: 'citas/{citaId}/versiones/{versionId}', esquema: versionHistorica },
   {
     ruta: 'vacunas/{vacunaId}',
     esquema: raiz({
