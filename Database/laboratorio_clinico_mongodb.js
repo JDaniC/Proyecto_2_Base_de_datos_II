@@ -85,10 +85,19 @@
     { required: ['valor_numerico'], not: { required: ['valor_texto'] } },
     { required: ['valor_texto'], not: { required: ['valor_numerico'] } },
   ] });
-  const diagnostico = objeto({
+  const profesionalHistorico = objeto({ id, nombre: texto(), rol: estados('MEDICO_LABORATORIO'),
+    colegiado: texto(60), entidad_colegiacion: texto() }, ['id','nombre','rol','colegiado','entidad_colegiacion']);
+  const metadatosComponente = { fecha_registro: fecha, registrado_por: profesionalHistorico };
+  const signosVitales = objeto({ fecha_hora_medicion: fecha,
+    ...Object.fromEntries(Object.entries({ peso_kg: [0.1,500,0.001], talla_cm: [10,300,0.01], temperatura_c: [20,50,0.1],
+      presion_sistolica: [10,300,1], presion_diastolica: [10,200,1], frecuencia_cardiaca_lpm: [10,300,1],
+      frecuencia_respiratoria_rpm: [1,150,1], saturacion_oxigeno_pct: [0,100,0.01] }).map(([campo,[min,max,escala]]) =>
+      [campo, { anyOf: [{ bsonType: 'null' }, { ...numero, minimum: min, maximum: max, multipleOf: escala }] }]))
+  }, ['fecha_hora_medicion']);
+  const diagnostico = objeto({ ...metadatosComponente,
     diagnostico_id: id, codigo: texto(60), nombre: texto(), descripcion: nota, es_principal: booleano, observaciones: nota,
   }, ['diagnostico_id', 'codigo', 'nombre', 'es_principal']);
-  const tratamiento = objeto({
+  const tratamiento = objeto({ ...metadatosComponente,
     tratamiento_id: id, nombre: texto(), descripcion: nota, fecha_inicio: fecha, fecha_fin: fecha,
     indicaciones: nota, observaciones: nota, diagnostico_ids: lista(id, 0, true),
   }, ['tratamiento_id', 'nombre']);
@@ -97,6 +106,7 @@
     frecuencia: texto(), duracion: texto(), via: texto(100), indicaciones: nota,
   }, ['medicamento_id', 'nombre', 'presentacion', 'concentracion', 'dosis', 'frecuencia', 'duracion', 'via', 'indicaciones']);
   const receta = objeto({
+    codigo_legible: texto(60), entidad_colegiacion_historica: texto(),
     receta_id: id, version: entero(1), estado: estados('EMITIDA', 'ANULADA'), fecha_emision: fecha,
     prescriptor_id: id, prescriptor_nombre_historico: texto(), colegiado_historico: texto(60),
     medicamentos: lista(medicamento, 1), indicaciones_generales: nota,
@@ -402,6 +412,7 @@
       esquema: raiz({
         paciente_id: id, historial_id: id, cita_id: id, solicitante_medico_id: id, registrado_por_id: id,
         fecha_hora: fecha, motivo: nota, sintomas: nota, observaciones: nota,
+        profesional_historico: profesionalHistorico, signos_vitales: signosVitales,
         estado: estados('ABIERTA', 'FINALIZADA'), diagnosticos: lista(diagnostico), tratamientos: lista(tratamiento), receta,
       }, ['paciente_id', 'historial_id', 'solicitante_medico_id', 'registrado_por_id', 'fecha_hora',
         'motivo', 'estado', 'diagnosticos', 'tratamientos']),
@@ -475,6 +486,12 @@
       { $expr: { $lte: [{ $bsonSize: '$$ROOT' }, 256 * 1024] } },
       ...(definicion.reglas || []),
     ] };
+  }
+
+  // Solo expone el contrato para migradores y verificadores; no escribe estructura ni datos.
+  if (globalThis.MONGO_LAB_DEFINICIONES_SOLAMENTE === true) {
+    globalThis.MONGO_LAB_DEFINICIONES = definiciones;
+    return;
   }
 
   // Preflight de TODAS las colecciones antes de crear la primera.

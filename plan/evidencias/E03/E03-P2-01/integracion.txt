@@ -1,0 +1,139 @@
+
+> proyecto-2-bases-datos-ii-backend@1.0.0 test:integration:clinica:mongodb
+> node scripts/run-clinica-mongodb-integration.mjs
+
+Preparando MongoDB aislado: bdii-e03-p2-01-292b34c70a
+MongoDB: laboratorio_clinico; 27 colecciones, 27 nuevas, 65 indices secundarios verificados.
+No se cargaron datos ni cuentas. Las reglas entre documentos requieren el backend transaccional.
+PASS: replica set rs0, 27 colecciones y usuario de aplicacion preparados.
+ Container bdii-e03-p2-01-292b34c70a-mongo-init-run-acfcfe30e47e Creating 
+ Container bdii-e03-p2-01-292b34c70a-mongo-init-run-acfcfe30e47e Created 
+
+▶ E03-P2-01 MongoDB real: CA04/05, migración, versiones, límites y rollback
+  ✔ instalación nueva: mapeo físico, snapshot exacto, historial y replay sin duplicados (100.447459ms)
+  ✔ reintentos concurrentes de la misma intención producen un solo éxito durable (59.182917ms)
+  ✔ adiciones, segunda receta, versiones antiguas y conflicto concurrente (162.494084ms)
+  ✔ analista, médico inactivo/institucional y agenda rechazan sin escritura (25.04675ms)
+  ✔ archivo, referencias ajenas, 100 elementos/256 KiB y precisión se rechazan sin parcialidad (33.342666ms)
+  ✔ fallo de auditoría y de receta revierte consulta/revisión/paciente/eventos/operación (59.11775ms)
+  ✔ validador físico mantiene M01–M09, precisión, cierre de objetos y límites (13.516458ms)
+  ✔ migración existente: preflight, fallo tardío, reanudación y conservación de documentos/índices (287.805792ms)
+✔ E03-P2-01 MongoDB real: CA04/05, migración, versiones, límites y rollback (880.011291ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1029.084417
+
+MongoDB: laboratorio_clinico_test_1793303398839_274; 27 colecciones, 27 nuevas, 65 indices secundarios verificados.
+No se cargaron datos ni cuentas. Las reglas entre documentos requieren el backend transaccional.
+PASS 27 colecciones con validacion estricta e indices
+PASS documento valido en pacientes
+PASS rechazo de campo requerido ausente en pacientes
+PASS documento valido en solicitantes
+PASS rechazo de campo requerido ausente en solicitantes
+PASS documento valido en tipos_muestra
+PASS rechazo de campo requerido ausente en tipos_muestra
+PASS documento valido en metodos
+PASS rechazo de campo requerido ausente en metodos
+PASS documento valido en pruebas
+PASS rechazo de campo requerido ausente en pruebas
+PASS documento valido en ordenes
+PASS rechazo de campo requerido ausente en ordenes
+PASS documento valido en muestras
+PASS rechazo de campo requerido ausente en muestras
+PASS documento valido en eventos_muestra
+PASS rechazo de campo requerido ausente en eventos_muestra
+PASS documento valido en resultados
+PASS rechazo de campo requerido ausente en resultados
+PASS documento valido en informes
+PASS rechazo de campo requerido ausente en informes
+PASS documento valido en equipos
+PASS rechazo de campo requerido ausente en equipos
+PASS documento valido en proveedores
+PASS rechazo de campo requerido ausente en proveedores
+PASS documento valido en reactivos
+PASS rechazo de campo requerido ausente en reactivos
+PASS documento valido en lotes_reactivo
+PASS rechazo de campo requerido ausente en lotes_reactivo
+PASS documento valido en movimientos_reactivo
+PASS rechazo de campo requerido ausente en movimientos_reactivo
+PASS documento valido en controles_calidad
+PASS rechazo de campo requerido ausente en controles_calidad
+PASS documento valido en personal
+PASS rechazo de campo requerido ausente en personal
+PASS documento valido en usuarios
+PASS rechazo de campo requerido ausente en usuarios
+PASS documento valido en roles
+PASS rechazo de campo requerido ausente en roles
+PASS documento valido en auditoria
+PASS rechazo de campo requerido ausente en auditoria
+PASS documento valido en facturas
+PASS rechazo de campo requerido ausente en facturas
+PASS documento valido en pagos
+PASS rechazo de campo requerido ausente en pagos
+PASS documento valido en citas
+PASS rechazo de campo requerido ausente en citas
+PASS documento valido en consultas_clinicas
+PASS rechazo de campo requerido ausente en consultas_clinicas
+PASS documento valido en operaciones
+PASS rechazo de campo requerido ausente en operaciones
+PASS documento valido en identidades_paciente
+PASS rechazo de campo requerido ausente en identidades_paciente
+PASS documento valido en revisiones
+PASS rechazo de campo requerido ausente en revisiones
+MongoDB: laboratorio_clinico_test_1793303398839_274; 27 colecciones, 0 nuevas, 65 indices secundarios verificados.
+No se cargaron datos ni cuentas. Las reglas entre documentos requieren el backend transaccional.
+PASS segunda ejecucion conserva documentos y definiciones
+PASS unicidad de negocio en pacientes
+PASS unicidad de negocio en metodos
+PASS unicidad de negocio en pruebas
+PASS unicidad de negocio en muestras
+PASS unicidad de negocio en resultados
+PASS unicidad de negocio en informes
+PASS unicidad de negocio en usuarios
+PASS unicidad de negocio en facturas
+PASS unicidad de negocio en pagos
+PASS unicidad de negocio en operaciones
+PASS unicidad de negocio en identidades_paciente
+PASS unicidad de negocio en consultas_clinicas
+PASS unicidad de negocio en revisiones
+PASS UUID invalido
+PASS identificacion incompleta
+PASS historial archivado sin baja
+PASS estado y activo incoherentes
+PASS contrasena local prohibida
+PASS pago cero
+PASS dinero Double prohibido
+PASS moneda invalida
+PASS cantidad negativa
+PASS estado fuera del catalogo
+PASS items con identificador repetido y distinto contenido
+PASS mas de 100 contactos
+PASS muestra rechazada sin motivo
+PASS rectificacion sin valores previos
+PASS resultado validado sin actor y fecha
+PASS resultado con valor numerico y textual simultaneos
+PASS version corregida sin enlace al original
+PASS informe emitido sin archivo/versiones
+PASS factura emitida sin actor y fecha
+PASS anulacion de pago sin reversion
+PASS diagnosticos sin principal
+PASS campo ajeno en receta
+PASS limite BSON de 256 KiB
+PASS resultado validado con actor y fecha aceptado
+PASS resultado textual de otra estructura aceptado
+PASS informe emitido con metadatos completos aceptado
+PASS historial archivado con causa aceptado
+PASS inmutabilidad historica requiere backend y no se atribuye al validador
+PASS identificaciones ausentes no compiten en indice parcial
+PASS consulta sin cita opcional no compite con otras sin cita
+PASS rollback multi-documento ante error de validacion
+PASS preflight rechaza esquema ajeno antes de crear otras colecciones
+PASS preflight no reemplaza un indice incompatible
+RESULTADO: 102 comprobaciones PASS. Datos sinteticos; sin backend ni base compartida.
+true
+

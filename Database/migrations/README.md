@@ -122,3 +122,28 @@ La extensión es una proyección transaccional de lectura: cada fila/documento c
 La migración no inventa fechas/autores/versiones de registros clínicos legados. Si encuentra consultas, órdenes, vacunas, hospitalizaciones o historiales archivados previos, registra `RECONCILIAR`; la lectura devuelve 503 hasta que el operador reconstruya todos sus eventos desde procedencia verificable y snapshots exactos. El operador conserva respaldo y originales, contrasta inventario por paciente/tipo/recurso, fechas y vínculos de versión, y solo entonces cambia el manifiesto a LISTO. Si falta procedencia verificable, conservar RECONCILIAR. El alta demográfica sin clínica no requiere backfill de eventos. El contrato AF03 exige esta puerta para legado sin versión.
 
 Recuperación: SQL PostgreSQL revierte la migración completa ante fallo; MySQL/documentales usan cambios aditivos reejecutables. Reaplicar no modifica eventos ni reinicia un manifiesto existente (incluido RECONCILIAR). Revertir el servidor conserva la extensión; no borrar filas/documentos ni volúmenes. Para reparar índices o completar una interrupción, reaplicar la preparación con administración. Esta migración no habilita escritores clínicos E03 ni recursos especializados E04/E05 por sí misma.
+
+### 005 — clínica MongoDB (E03-P2-01)
+
+`005_clinica_mongodb.mjs` exporta `migrarClinicaMongodb(dbAdmin)` para un operador
+con escritores detenidos y respaldo verificado. Ejecutar primero 004 y reconciliar
+su legado. Los manifiestos `esquemas/005_consultas_mongodb_v1.json` y `v2.json`
+fijan validadores e índices conocidos. Rechaza deriva y documentos incompatibles
+antes de modificar estructura; conserva índices adicionales, UUID y documentos.
+El inicializador nuevo entrega v2, pero no migra un volumen existente.
+
+Añade signos vitales cerrados con fecha de toma, profesional histórico, metadatos
+de diagnóstico/tratamiento y código/entidad de prescriptor de receta. No rellena
+historia desde perfiles actuales. Legado sin procedencia queda RECONCILIAR.
+La revisión usa el índice único existente `(tipo_recurso,recurso_id,version)`.
+
+Si falla después de collMod, reejecutar: reconoce v1 o v2 y completa el manifiesto
+id 5 en historial_modelo. El rollback de código nunca elimina campos nuevos:
+conservar el respaldo posterior y modo mantenimiento, restaurar solo una copia
+para diagnóstico. `npm run test:integration:clinica:mongodb` desde Backend prueba
+instalación nueva/existente, recuperación y atomicidad en réplica aislada.
+
+Aplicar 004 y 005 también en instalaciones nuevas antes de habilitar clínica.
+Mientras id 5 esté MIGRANDO/RECONCILIAR o ausente, lecturas/comandos clínicos
+responden 503; pacientes conserva su disponibilidad independiente. La marca
+MIGRANDO se escribe solo después de terminar el preflight y antes de collMod.
