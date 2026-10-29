@@ -147,3 +147,47 @@ Cada tipo es una fuente con un índice `(paciente,tipo,fecha UTC de 9 decimales,
 Los escritores clínicos E03 y especializados E04/E05 deben insertar la proyección validada por `validarEventoHistorial` junto con datos, revisión, auditoría y operación en una única UoW del mismo motor. Esta entrega prepara y verifica lectores con fixtures persistidos de todos los tipos institucionales; no habilita comandos clínicos futuros. Los eventos no incluyen notas, archivos/URI, payloads internos ni diagnósticos completos: el detalle se consulta por recurso/versiones autorizadas según el contrato.
 
 Reproducir CA07 y migraciones en cuatro destinos locales nuevos: `npm run test:integration:historial`. El runner crea puertos, credenciales y proyecto Compose aleatorios; usa proyecto Firestore demo y limpia solamente sus propios recursos. Las pruebas HTTP usan autoridad sintética explícita; las pruebas de persistencia usan conexiones reales PostgreSQL/MySQL/Mongo y emulador Firestore, sin atribuirles cobertura de IAM cloud.
+
+
+## E03-P1-01: atención común y agenda (28/10/2026)
+
+Implementados dominio puro, planificación de consulta ABIERTA/compuesta FINALIZADA,
+incorporación de diagnóstico/tratamiento, emisión única de receta y finalización;
+creación, reprogramación PATCH y cancelación de citas; GET de consulta por versión
+exacta y GET/listado de citas. Las correcciones y sus listados de revisiones se
+implementan en E03-P1-03 y no se presentan como disponibles aquí.
+
+El nuevo puerto `PuertosClinicos` se expone como `bundle.clinica` para lecturas y
+`lector.clinica` dentro de la UoW. SQL, MongoDB y Firestore deben construir ese lector
+con la MISMA conexión/sesión/transacción; no capturar repositorios externos a la
+transacción. Hasta E03-P1-02/P2-01/P2-02, los bundles de producción carecen de esa
+extensión y las rutas clínicas responden 503. No hay fallback a memoria. La marca
+histórica NOT_IMPLEMENTED de OpenAPI para esas rutas sigue describiendo la entrega
+con persistencia; este apartado precisa la capa común implementada.
+
+Contrato del plan para adaptadores de E03:
+- `consultas/GUARDAR`: snapshot `Consulta` y versión anterior (null solo al abrir).
+- `citas/GUARDAR`: snapshot `Cita`, revisión condicionada; una cita admite una consulta.
+- `pacientes/AVANZAR_REVISION`: paciente conservado con versión +1; serializa archivo,
+  agenda y autorizaciones. No reemplazar otros campos físicos ni contactos/vínculos.
+- `eventosHistorial/CREAR`: evento con pacienteId, consultaId, versionConsulta,
+  fechaHora, recursoId, título y UUID fijado antes del callback.
+- `revisiones` de consultas: snapshot exacto anterior por UUID/versión.
+- `revisiones` de citas: snapshotAnterior contiene anterior, actual, motivo_cambio,
+  actor_id y fecha_hora; mantener el motivo de atención original.
+- Aplicar todo, operación durable y auditoría en un solo commit; una excepción debe
+  revertir también el avance del paciente y la cita. Para disponibilidad de agenda,
+  el adaptador debe reservar/serializar intervalos, además de consultar solapamientos.
+
+Responsable autorizante se lee por pareja paciente/responsable y versión del vínculo;
+principal no concede autorización. Laboratorio exige tipo INDIVIDUAL y rol médico
+vigente, nunca analista o solicitante institucional. Prescriptor y componentes tienen
+snapshots y fechas propios. La proyección HTTP omite la autorización completa y los
+metadatos internos del profesional actual.
+
+Pruebas reproducibles: `npm test`, `npm run lint`, `npm run build` en Backend.
+`tests/fixtures/clinica-comun.ts` aporta UoW sintética aislada con fallos inyectados y
+callback repetido; `tests/unitarios/atencion-clinica.test.ts` parametriza CA04/05/06
+para cuatro políticas. Adaptadores posteriores deben ejecutar los mismos escenarios
+contra sus motores y agregar carreras entre conexiones reales. HTTP usa transporte
+local real con identidad/persistencia sintéticas; no acredita persistencia clínica.

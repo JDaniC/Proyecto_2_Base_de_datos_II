@@ -1,3 +1,9 @@
+import { AtencionClinica } from '../aplicacion/casos-uso/consultas/atencion-clinica.js';
+import { ConsultarConsulta } from '../aplicacion/casos-uso/consultas/consultar-consulta.js';
+import { GestionarCitas } from '../aplicacion/casos-uso/citas/gestionar-citas.js';
+import { ConsultarCitas } from '../aplicacion/casos-uso/citas/consultar-citas.js';
+import { ConsultasController } from '../adaptadores/entrada/http/consultas/consultas.controller.js';
+import { CitasController } from '../adaptadores/entrada/http/citas/citas.controller.js';
 import { ConsultarHistorial } from '../aplicacion/casos-uso/historiales/consultar-historial.js';
 import { CursorHistorialCifrado } from '../adaptadores/salida/historial/cursor-historial.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
@@ -50,7 +56,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [ConsultasController, CitasController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -61,6 +67,10 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        { provide: AtencionClinica, useFactory: () => new AtencionClinica(dependenciasComandoPorDefecto) },
+        { provide: GestionarCitas, useFactory: () => new GestionarCitas(dependenciasComandoPorDefecto) },
+        { provide: ConsultarCitas, useFactory: () => new ConsultarCitas() },
+        { provide: ConsultarConsulta, useFactory: () => new ConsultarConsulta() },
         { provide: ConsultarHistorial, useFactory: () => new ConsultarHistorial(new CursorHistorialCifrado()) },
         {
           provide: BUNDLES_INSTITUCIONALES,
