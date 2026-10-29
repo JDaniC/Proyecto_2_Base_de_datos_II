@@ -25,7 +25,7 @@ export interface PuertosClinicos {
   };
   readonly citas: {
     porId(id: UUID): Promise<Cita | null>;
-    listar(filtros: FiltrosCitas, pagina: FiltrosPagina): Promise<Pagina<Cita>>;
+    listar(filtros: FiltrosCitas, pagina: FiltrosPagina, ambitoCursor?: string): Promise<Pagina<Cita>>;
     /** El adaptador serializa/reserva intervalos concurrentes en la UoW. */
     solapamientos(profesional: UUID, fecha: string, inicio: string, fin: string): Promise<readonly Cita[]>;
   };
