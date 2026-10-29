@@ -62,3 +62,6 @@ lint/build y build postintegración PASS. Las pruebas clínicas usan UoW e ident
 sintéticas: adaptadores clínicos físicos y sus migraciones se implementan en
 E03-P1-02/E03-P2-01/E03-P2-02; producción falla con 503 mientras falte la extensión
 clínica. Estado oficial/dependencias en tablero; evidencia E03/E03-P1-01.md.
+
+
+Corte de clínica MongoDB (29/10/2026, America/Guatemala): PR #55 MERGED en develop (`5ad9561`), Codex nativo sin hallazgos sobre `ac01fef`, contrato-pr/revision-codex SUCCESS. Laboratorio incorpora atención común, receta histórica y versiones/proyección en una UoW real; 301 pruebas backend, 9 resultados clínicos MongoDB, 17 regresiones de pacientes y 102 comprobaciones físicas PASS. Migración explícita 005 y 004 son obligatorias también en instalaciones nuevas; no habilitar clínica con manifiesto MIGRANDO/RECONCILIAR. [Evidencia](evidencias/E03/E03-P2-01.md). No acredita UI ni los adaptadores clínicos de las otras instituciones; consultar cola y PR abiertos, incluido #54 reservado para SQL.
