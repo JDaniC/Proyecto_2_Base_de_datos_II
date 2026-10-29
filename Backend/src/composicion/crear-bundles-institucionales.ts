@@ -10,8 +10,10 @@ import type {
 } from '../aplicacion/puertos/repositorio-cuenta.js';
 import type { RepositorioPacienteLectura } from '../aplicacion/puertos/repositorio-paciente.js';
 import type { UnidadDeTrabajo } from '../aplicacion/puertos/nucleo.js';
+import type { PuertosClinicos } from '../aplicacion/puertos/clinica.js';
 
 export interface RepositoriosInstitucion {
+  readonly clinica?: PuertosClinicos;
   readonly cuenta: RepositorioCuenta;
   readonly profesionales?: RepositorioProfesional;
   readonly pacientes?: RepositorioPacienteLectura;
@@ -38,6 +40,7 @@ export function crearBundlesInstitucionales(
       ...(repos?.pacientes ? { pacientes: repos.pacientes } : {}),
       ...(repos?.historial ? { historial: repos.historial } : {}),
       ...(repos?.uow ? { uow: repos.uow } : {}),
+      ...(repos?.clinica ? { clinica: repos.clinica } : {}),
     });
   });
 

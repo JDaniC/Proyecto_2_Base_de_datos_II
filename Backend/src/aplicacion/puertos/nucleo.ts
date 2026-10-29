@@ -2,6 +2,7 @@ import type { InstanteUTC } from '../../dominio/compartido/instante-utc.js';
 import type { ContextoAutenticado } from './contexto-autenticado.js';
 import type { UUID } from '../../dominio/compartido/uuid.js';
 import type { Version } from '../../dominio/compartido/version.js';
+import type { PuertosClinicos } from './clinica.js';
 
 export interface Reloj { ahora(): InstanteUTC; }
 export interface GeneradorIds { nuevo(): UUID; }
@@ -72,6 +73,7 @@ export interface LectorTransaccional<
   TProfesional = unknown,
   TEvento = unknown,
 > {
+  readonly clinica?: PuertosClinicos;
   readonly cuentas: RepositorioCuenta<TCuenta>;
   readonly pacientes: RepositorioPaciente<TPaciente>;
   readonly citas: RepositorioCita<TCita>;

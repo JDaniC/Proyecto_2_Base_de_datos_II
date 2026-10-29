@@ -6,10 +6,12 @@ import type {
 } from './repositorio-cuenta.js';
 import type { RepositorioPacienteLectura } from './repositorio-paciente.js';
 import type { UnidadDeTrabajo } from './nucleo.js';
+import type { PuertosClinicos } from './clinica.js';
 
 export type EstadoPersistenciaInicial = 'NO_CONFIGURADA' | 'DISPONIBLE';
 
 export interface BundleInstitucional {
+  readonly clinica?: PuertosClinicos;
   readonly institucion: Institucion;
   readonly estadoPersistencia: EstadoPersistenciaInicial;
   readonly cuenta?: RepositorioCuenta;
