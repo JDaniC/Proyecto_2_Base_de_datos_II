@@ -25,7 +25,7 @@ Actualizado: 28/10/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E03-P1-01](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01) | P1 | Davidix888 | HECHA | Puerta de fase | [PR #51 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/51), squash `896972b`; traspaso autorizado JDaniC → Davidix888; implementación y pruebas por Davidix888 con Codex; revisión nativa sin hallazgos sobre `9763450`; contrato-pr/revision-codex PASS; 268 runtime/unitarias +32 contractuales PASS, lint/build y build postmerge PASS; [evidencia](evidencias/E03/E03-P1-01.md); 28/10/2026 |
 | [E03-P1-02](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-02) | P1 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
 | [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) | P1 | — | PENDIENTE | E03-P1-02, E03-P2-01, E03-P2-02 | Sin ejecución registrada |
-| [E03-P2-01](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | P2 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
+| [E03-P2-01](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-01) | P2 | JDaniC | EN_REVISION | E03-P1-01 | [PR #55](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/55); clínica MongoDB y migración 005; [evidencia](evidencias/E03/E03-P2-01.md); revisión/integración pendientes; 29/10/2026 |
 | [E03-P2-02](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-02) | P2 | — | PENDIENTE | E03-P1-01 | Sin ejecución registrada |
 | [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) | P2 | — | PENDIENTE | E03-P1-03 | Sin ejecución registrada |
 | [E04-P1-01](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
