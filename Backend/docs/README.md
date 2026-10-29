@@ -4,7 +4,7 @@ Este directorio define el contrato canónico. El esqueleto ejecutable de E01-P1-
 
 - [`openapi.yaml`](openapi.yaml): fuente canónica OpenAPI 3.1.0; 22 rutas bajo `/api/v1`, DTO cerrados, políticas, respuestas y errores.
 - [`puertos-v1.ts`](puertos-v1.ts): firmas de diseño compilables, puras, sin framework/SDK/motor. E01-P1-02 las materializa con tipos de dominio; no importar este documento desde producción.
-- [`mapa-ui-v1.json`](mapa-ui-v1.json): los 117 métodos de presentación, incluidos los 96 activos, clasificados como `COMUN_V1`, `EXTENSION_PENDIENTE` o `EXCLUIDO`. Las propuestas históricas de rutas se conservan como fuente, nunca como autorización para implementarlas.
+- [`mapa-ui-v1.json`](mapa-ui-v1.json): los 118 métodos de presentación, incluidos los 96 activos, clasificados como `COMUN_V1`, `EXTENSION_PENDIENTE` o `EXCLUIDO`. Las propuestas históricas de rutas se conservan como fuente, nunca como autorización para implementarlas.
 - [`fixtures/contrato-v1.json`](fixtures/contrato-v1.json): solicitudes/respuestas sintéticas y rechazos de esquema reutilizables por ambos integrantes.
 - [Contrato de flujos](../../plan/03_CONTRATOS_Y_FLUJOS.md): semántica que complementa los esquemas (concurrencia, idempotencia, permisos, paginación y extensiones).
 
@@ -70,7 +70,7 @@ npm --prefix Frontend ci
 Frontend/node_modules/.bin/tsc --strict --noEmit --target ES2022 Backend/docs/puertos-v1.ts Backend/docs/fixtures/puertos-v1.test-d.ts
 ```
 
-El validador usa OpenAPI Spec Validator 0.7.2, jsonschema 4.23.0 con comprobación de `format` activada y PyYAML 6.0.2. Valida referencias locales, estructuras OpenAPI, esquemas JSON Schema 2020-12, fixtures válidos e inválidos, ejemplos de error, cobertura de cada request y correspondencia de los 117 métodos con `contracts.ts`/exclusiones vigentes. La instalación descarga dependencias; la validación funciona sin API, credenciales, motores ni red.
+El validador usa OpenAPI Spec Validator 0.7.2, jsonschema 4.23.0 con comprobación de `format` activada y PyYAML 6.0.2. Valida referencias locales, estructuras OpenAPI, esquemas JSON Schema 2020-12, fixtures válidos e inválidos, ejemplos de error, cobertura de cada request y correspondencia de los 118 métodos con `contracts.ts`/exclusiones vigentes. La instalación descarga dependencias; la validación funciona sin API, credenciales, motores ni red.
 
 Los fixtures con `valid: false` deben ser rechazados por el esquema. Los de cuatro instituciones comparten el mismo DTO y añaden overlays para cita dental y autorización pediátrica. Ningún fixture acredita token real, pertenencia, permisos efectivos, autorización del responsable, transacciones, rollback o reglas concurrentes: son pruebas de integración futuras. El esquema `Dinero` es una convención para extensiones; no publica todavía facturación.
 

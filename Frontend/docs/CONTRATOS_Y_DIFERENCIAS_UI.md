@@ -8,14 +8,14 @@
 
 ## 1. Resumen ejecutivo del inventario
 
-Se recorrieron los **12 repositorios** y **117 métodos** declarados exactamente en `Frontend/src/services/contracts.ts`, contrastando cada firma con sus invocaciones reales en `Frontend/src/app/` y `Frontend/src/features/`.
+Se recorrieron los **12 repositorios** y **118 métodos** declarados exactamente en `Frontend/src/services/contracts.ts`, contrastando cada firma con sus invocaciones reales en `Frontend/src/app/` y `Frontend/src/features/`.
 
 | Categoría | Total métodos | Descripción y tratamiento |
 | --- | ---: | --- |
 | `VIGENTE_UI` | **96** | Invocados activamente desde vistas, contextos o modales de la interfaz actual (`Frontend/src/app/` y `Frontend/src/features/`). Se mapean 1:1 en la Sección 6 al contrato HTTP `/api/v1` para `E00-P1-03`. |
-| `SIN_USO_DIRECTO_UI` | **11** | Métodos presentes en `contracts.ts` sin llamada directa desde componentes React actuales porque su lectura está absorbida por un agregado padre (`obtenerExpedienteCompleto`, `listarOrdenes`, `obtenerFacturas`), se invocan solo en pruebas (`obtenerFacturaPorOrden` en `ProductScope.test.tsx:56`), o la vista usa aún una constante local que debe conectarse al repositorio (`obtenerProcedimientosOdontologicos` en `NewConsultationWizardPage.tsx`). Se detallan en la Sección 5. |
+| `SIN_USO_DIRECTO_UI` | **12** | Métodos presentes en `contracts.ts` sin llamada directa desde componentes React actuales porque su lectura está absorbida por un agregado padre (`obtenerExpedienteCompleto`, `obtenerHistorial`, `listarOrdenes`, `obtenerFacturas`), se invocan solo en pruebas (`obtenerFacturaPorOrden` en `ProductScope.test.tsx:56`, `obtenerHistorial` en `PatientsHttp.test.tsx:106`), o la vista usa aún una constante local que debe conectarse al repositorio (`obtenerProcedimientosOdontologicos` en `NewConsultationWizardPage.tsx`). Se detallan en la Sección 5. |
 | `EXCLUIDO_ALCANCE_O_SOLO_MOCK` | **10** | Métodos fuera del alcance funcional de la Entrega II (`DEC11`) o exclusivos de simulación local (selector demo, editor de matriz de permisos, CRUD de médicos, alta de catálogo dental desde UI, cambio manual de estado de cama, escritura directa de auditoría desde cliente y dashboard de métricas simuladas). Registrados en `EXCLUDED_CONTRACT_METHODS` (`Frontend/src/app/productScope.ts`) y marcados con `@deprecated` en `Frontend/src/services/contracts.ts`. Se detallan en la Sección 4. |
-| **Total** | **117** | **12 interfaces de repositorio en `ServiceContainer` (`Frontend/src/app/ServiceContext.tsx`)** |
+| **Total** | **118** | **12 interfaces de repositorio en `ServiceContainer` (`Frontend/src/app/ServiceContext.tsx`)** |
 
 ### Desglose numérico por repositorio en `Frontend/src/services/contracts.ts`
 
@@ -23,7 +23,7 @@ Se recorrieron los **12 repositorios** y **117 métodos** declarados exactamente
 | --- | --- | ---: | ---: | ---: | ---: |
 | `AuthRepository` | `authRepository` | 4 | 3 | 0 | 1 |
 | `DashboardRepository` | `dashboardRepository` | 1 | 0 | 0 | 1 |
-| `PatientRepository` | `patientRepository` | 23 | 21 | 2 | 0 |
+| `PatientRepository` | `patientRepository` | 24 | 21 | 3 | 0 |
 | `AppointmentRepository` | `appointmentRepository` | 5 | 5 | 0 | 0 |
 | `ConsultationRepository` | `consultationRepository` | 4 | 4 | 0 | 0 |
 | `UserRepository` | `userRepository` | 6 | 3 | 0 | 3 |
@@ -33,7 +33,7 @@ Se recorrieron los **12 repositorios** y **117 métodos** declarados exactamente
 | `HospitalizationRepository` | `hospitalizationRepository` | 11 | 9 | 1 | 1 |
 | `HospitalExamRepository` | `examRepository` | 9 | 6 | 3 | 0 |
 | `LaboratoryRepository` | `laboratoryRepository` | 31 | 28 | 3 | 0 |
-| **Total** | — | **117** | **96** | **11** | **10** |
+| **Total** | — | **118** | **96** | **12** | **10** |
 
 ---
 
@@ -184,7 +184,7 @@ Registrados en `EXCLUDED_CONTRACT_METHODS` (`Frontend/src/app/productScope.ts`) 
 
 ---
 
-## 5. Métodos sin invocación directa en vistas (`SIN_USO_DIRECTO_UI` — 11 métodos)
+## 5. Métodos sin invocación directa en vistas (`SIN_USO_DIRECTO_UI` — 12 métodos)
 
 | # | Interfaz y método exacto en `contracts.ts` | Llamadores actuales | Motivo y resolución para `E00-P1-03` / `E02`–`E05` |
 | ---: | --- | --- | --- |
@@ -199,6 +199,7 @@ Registrados en `EXCLUDED_CONTRACT_METHODS` (`Frontend/src/app/productScope.ts`) 
 | 9 | `LaboratoryRepository.obtenerResultadoPorId(institucionId, resultadoId)` | Ninguno | `ResultsCapturePage.tsx`, `ResultsValidationPage.tsx` y `LabReportPage.tsx` consultan `laboratoryRepository.obtenerResultadosPorOrden` (`E05-P1-02`). |
 | 10 | `LaboratoryRepository.obtenerFacturaPorId(institucionId, facturaId)` | Ninguno | `BillingPaymentsPage.tsx:77` consulta `laboratoryRepository.obtenerFacturas`. Cubierto por `GET /api/v1/laboratorio/facturas/{id}` (`E05-P1-03`). |
 | 11 | `LaboratoryRepository.obtenerFacturaPorOrden(institucionId, ordenId)` | `test/product-scope/ProductScope.test.tsx:56` | Usado en pruebas de alcance para verificar el cobro generado al crear la orden; en HTTP se resuelve vía `GET /api/v1/laboratorio/facturas?ordenId={id}` (`E05-P1-03`). |
+| 12 | `PatientRepository.obtenerHistorial(institucionId, id, filtros)` | `services/http/patients/httpPatientRepository.ts:35`; prueba en `test/http/PatientsHttp.test.tsx:106` | Índice de eventos paginado por cursor. `PatientRecordPage.tsx` usa `obtenerExpedienteCompleto` para la cronología; en HTTP corresponde a `GET /api/v1/pacientes/{id}/historial` (`pacienteHistorial`, `E02-P2-03`). |
 
 ---
 
@@ -375,7 +376,7 @@ Para evitar confusiones en `E00-P1-03` y `E04`, se deja constancia explícita de
 
 ## 8. Cierre contractual v1 (E00-P1-03, 25/10/2026)
 
-El [mapa de los 117 métodos](../../Backend/docs/mapa-ui-v1.json) determina el destino vigente: 20 métodos comunes con `operationId`, 87 extensiones pendientes y 10 exclusiones. Las 96 acciones UI conservadas están incluidas. Las tareas citadas en el mapa sustituyen referencias de ejecución antiguas de las tablas; P1/P2 no son dueños. Las extensiones conservan su propuesta histórica, pero no cuentan como endpoints especificados/implementados.
+El [mapa de los 118 métodos](../../Backend/docs/mapa-ui-v1.json) determina el destino vigente: 21 métodos comunes con `operationId`, 87 extensiones pendientes y 10 exclusiones. Las 96 acciones UI conservadas están incluidas. Las tareas citadas en el mapa sustituyen referencias de ejecución antiguas de las tablas; P1/P2 no son dueños. Las extensiones conservan su propuesta histórica, pero no cuentan como endpoints especificados/implementados.
 
 - Sesión: Firebase SDK obtiene token; `POST /sesion`, `GET /sesion`, `POST /sesion/cierre`. Verificación de revocación obligatoria. El selector demo/credenciales no viaja a API.
 - Diagnósticos y recetas del expediente: el usuario debe seleccionar consulta ABIERTA y cargar su UUID/versión. Las firmas actuales sin consulta se ampliarán en E03; jamás inferir la última consulta. Los comandos devuelven la consulta actualizada; el mapper extrae su componente para la vista actual.
