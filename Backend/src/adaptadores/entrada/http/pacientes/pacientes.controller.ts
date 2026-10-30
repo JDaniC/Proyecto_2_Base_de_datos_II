@@ -1,3 +1,4 @@
+import { CambiarEstadoHistorial } from '../../../../aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import {
   Body,
   Controller,
@@ -35,12 +36,33 @@ import { solicitudInvalida } from '../../../../dominio/compartido/error-dominio.
 @Controller('pacientes')
 export class PacientesController {
   constructor(
+    private readonly estadoHistorial: CambiarEstadoHistorial,
     private readonly registrarPaciente: RegistrarPaciente,
     private readonly actualizarPaciente: ActualizarPaciente,
     private readonly consultarPaciente: ConsultarPaciente,
     private readonly buscarPacientes: BuscarPacientes,
   ) {}
 
+  @Post(':id/archivo')
+  @HttpCode(200)
+  @RequiereAcceso({permisos: ['historial.archivar'], capacidad: 'PACIENTES'})
+  async archivar(@Contexto() contexto: ContextoAutenticado, @Bundle() bundle: BundleInstitucional,
+    @Headers('idempotency-key') clave: string, @Body() entrada: unknown, @Param('id') id: string,
+    @Res({passthrough: true}) res: Response) {
+    const r = await this.estadoHistorial.ejecutar('archivar', {contexto, bundle, entrada, id: uuidPublico(id), claveIdempotencia: uuidPublico(clave)});
+    res.status(r.httpStatus);
+    return {data: r.respuesta, meta: {correlacion: r.correlacionOriginal}};
+  }
+  @Post(':id/reactivacion')
+  @HttpCode(200)
+  @RequiereAcceso({permisos: ['historial.archivar'], capacidad: 'PACIENTES'})
+  async reactivar(@Contexto() contexto: ContextoAutenticado, @Bundle() bundle: BundleInstitucional,
+    @Headers('idempotency-key') clave: string, @Body() entrada: unknown, @Param('id') id: string,
+    @Res({passthrough: true}) res: Response) {
+    const r = await this.estadoHistorial.ejecutar('reactivar', {contexto, bundle, entrada, id: uuidPublico(id), claveIdempotencia: uuidPublico(clave)});
+    res.status(r.httpStatus);
+    return {data: r.respuesta, meta: {correlacion: r.correlacionOriginal}};
+  }
   @Post()
   @HttpCode(201)
   @RequiereAcceso({

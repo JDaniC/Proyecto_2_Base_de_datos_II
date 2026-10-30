@@ -1,3 +1,4 @@
+import { serializarJCS } from '../../../dominio/compartido/json-canonico.js';
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
 import { versionPositiva, type Version } from '../../../dominio/compartido/version.js';
@@ -12,7 +13,7 @@ import { crearContextoAutenticado, type ContextoAutenticado, type CuentaAutoriza
 import type { CambioPlanificado, GeneradorIds, HashIntencion, LectorTransaccional, Reloj, ResultadoDurable } from '../../puertos/nucleo.js';
 import { prepararComandoEstable } from '../../servicios/preparar-comando-estable.js';
 
-export type AccionConsulta = 'abrir' | 'completa' | 'diagnostico' | 'tratamiento' | 'receta' | 'finalizar';
+export type AccionConsulta = 'abrir' | 'completa' | 'diagnostico' | 'tratamiento' | 'receta' | 'finalizar' | 'corregir';
 export interface DependenciasClinicas { readonly reloj: Reloj; readonly ids: GeneradorIds; readonly hash: HashIntencion; }
 export interface ParametrosClinicos {
   readonly contexto: ContextoAutenticado; readonly bundle: BundleInstitucional;
@@ -36,11 +37,13 @@ export async function contextoVigente(lector: LectorTransaccional, contexto: Con
   return crearContextoAutenticado(contexto.identidad, cuenta, contexto.correlacion);
 }
 const permisos: Record<AccionConsulta, readonly Permiso[]> = {
+  corregir: ['consultas.registrar', 'diagnosticos.registrar', 'tratamientos.registrar'],
   abrir: ['consultas.registrar'], completa: ['consultas.registrar', 'diagnosticos.registrar', 'tratamientos.registrar'],
   diagnostico: ['diagnosticos.registrar'], tratamiento: ['tratamientos.registrar'], receta: ['recetas.emitir'], finalizar: ['consultas.registrar'],
 };
 const camposApertura = ['paciente_id', 'version_paciente', 'cita_id', 'version_cita', 'responsable_id', 'version_vinculo', 'motivo', 'sintomas', 'signos_vitales'];
 const camposAccion: Record<AccionConsulta, readonly string[]> = {
+  corregir: ['version_esperada', 'motivo_correccion', 'contenido'],
   abrir: camposApertura,
   completa: [...camposApertura, 'observaciones', 'diagnosticos', 'tratamientos', 'receta'],
   diagnostico: ['version_esperada', 'diagnostico'], tratamiento: ['version_esperada', 'tratamiento'],
@@ -64,7 +67,11 @@ export class AtencionClinica {
 
   async ejecutar(accion: AccionConsulta, p: ParametrosClinicos): Promise<ResultadoDurable<Consulta>> {
     if (p.contexto.cuenta.institucion !== p.bundle.institucion) throw new ErrorDominio('SIN_PERMISO', 'Ámbito incompatible.');
-    const entrada = objetoCerrado(p.entrada, camposAccion[accion]);
+    const envoltura = objetoCerrado(p.entrada, camposAccion[accion]);
+    const correccion = accion === 'corregir';
+    const razon = correccion ? textoClinico(envoltura.motivo_correccion, 'motivo_correccion', 1000) : undefined;
+    const entrada = correccion ? {...objetoCerrado(envoltura.contenido,
+      ['motivo', 'sintomas', 'observaciones', 'signos_vitales', 'diagnosticos', 'tratamientos', 'receta']), version_esperada: envoltura.version_esperada} : envoltura;
     const nueva = accion === 'abrir' || accion === 'completa';
     const institucion = p.bundle.institucion;
     permisos[accion].forEach(permiso => validarPermiso(p.contexto.cuenta, permiso));
@@ -84,31 +91,31 @@ export class AtencionClinica {
       if (institucion !== 'CENTRO_MEDICO_PEDIATRICO' && responsableId) throw solicitudInvalida('Responsable solo aplica a pediatría.');
       if (institucion === 'CENTRO_MEDICO_PEDIATRICO' && !responsableId) throw solicitudInvalida('Se requiere responsable autorizante.');
     }
-    const motivo = nueva ? textoClinico(entrada.motivo, 'motivo', 2000) : undefined;
-    const sintomas = nueva ? textoClinico(entrada.sintomas, 'sintomas', 4000, true) : undefined;
-    const signos = nueva ? validarSignos(entrada.signos_vitales, institucion) : undefined;
+    const motivo = nueva || correccion ? textoClinico(entrada.motivo, 'motivo', 2000) : undefined;
+    const sintomas = nueva || correccion ? textoClinico(entrada.sintomas, 'sintomas', 4000, true) : undefined;
+    const signos = nueva || correccion ? validarSignos(entrada.signos_vitales, institucion) : undefined;
     const observaciones = entrada.observaciones === undefined ? undefined : textoClinico(entrada.observaciones, 'observaciones', 4000, true);
-    const diagnosticos = accion === 'completa' ? listaClinica(entrada.diagnosticos, 'diagnosticos').map(d => validarDiagnostico(d, institucion)) :
+    const diagnosticos = accion === 'completa' || correccion ? listaClinica(entrada.diagnosticos, 'diagnosticos').map(d => validarDiagnostico(d, institucion)) :
       accion === 'diagnostico' ? [validarDiagnostico(entrada.diagnostico, institucion)] : [];
-    const tratamientos = accion === 'completa' ? listaClinica(entrada.tratamientos, 'tratamientos').map(t => validarTratamiento(t, institucion)) :
+    const tratamientos = accion === 'completa' || correccion ? listaClinica(entrada.tratamientos, 'tratamientos').map(t => validarTratamiento(t, institucion, correccion)) :
       accion === 'tratamiento' ? [validarTratamiento(entrada.tratamiento, institucion)] : [];
     if (accion === 'completa') validarPrincipal(diagnosticos);
     const receta = entrada.receta === undefined ? undefined : validarReceta(entrada.receta);
     if (accion === 'receta' && !receta) throw solicitudInvalida('La receta es obligatoria.');
-    if (receta) validarPermiso(p.contexto.cuenta, 'recetas.emitir');
+    if (receta && !correccion) validarPermiso(p.contexto.cuenta, 'recetas.emitir');
     validarTamanoClinico(entrada);
     const nombres = ['consulta', 'auditoria', 'revision', 'evento_consulta', 'receta', 'evento_receta'];
     diagnosticos.forEach((_, i) => nombres.push(`diagnostico_${i}`, `evento_diagnostico_${i}`));
     tratamientos.forEach((_, i) => nombres.push(`tratamiento_${i}`, `evento_tratamiento_${i}`));
     receta?.medicamentos.forEach((_, i) => nombres.push(`medicamento_${i}`));
     const comando = await prepararComandoEstable(p.claveIdempotencia, `consulta.${accion}`,
-      { ...(id ? { id } : {}), entrada }, nombres, this.deps);
+      { ...(id ? { id } : {}), entrada: envoltura }, nombres, this.deps);
     if (!p.bundle.uow) throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'La unidad de trabajo no está habilitada.');
 
     return p.bundle.uow.ejecutar(p.contexto, comando, async lector => {
       const contexto = await contextoVigente(lector, p.contexto);
       permisos[accion].forEach(permiso => validarPermiso(contexto.cuenta, permiso));
-      if (receta) validarPermiso(contexto.cuenta, 'recetas.emitir');
+      if (receta && !correccion) validarPermiso(contexto.cuenta, 'recetas.emitir');
       const clinica = exigirClinica(lector);
       const profesionalId = contexto.cuenta.profesional?.id;
       const profesional = profesionalId ? await clinica.profesionales.porId(profesionalId) : null;
@@ -134,7 +141,7 @@ export class AtencionClinica {
       if (anterior) {
         if (anterior.profesional.id !== profesional.id) throw new ErrorDominio('SIN_PERMISO', 'La consulta corresponde a otro profesional.');
         exigirVersion(anterior.version, entrada.version_esperada);
-        if (anterior.estado !== 'ABIERTA') throw new ErrorDominio('ESTADO_INVALIDO', 'La consulta debe estar abierta.');
+        if (anterior.estado !== (correccion ? 'FINALIZADA' : 'ABIERTA')) throw new ErrorDominio('ESTADO_INVALIDO', 'La consulta debe estar abierta.');
       }
       const paciente = await clinica.pacientes.porId(pacienteId ?? anterior!.paciente_id);
       if (!paciente || paciente.institucion !== institucion) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Paciente no encontrado.');
@@ -144,7 +151,7 @@ export class AtencionClinica {
       }
       const cambios: CambioPlanificado[] = [];
       const citaConsulta = citaId ?? anterior?.cita_id;
-      if (citaConsulta) {
+      if (citaConsulta && !correccion) {
         const cita = await clinica.citas.porId(citaConsulta);
         if (!cita || cita.paciente_id !== paciente.id) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Cita no encontrada.');
         if (cita.profesional_id !== profesional.id || (nueva ? cita.estado !== 'PROGRAMADA' : cita.estado !== 'EN_CURSO')) {
@@ -169,19 +176,28 @@ export class AtencionClinica {
       const consultaId = anterior?.id ?? comando.ids.consulta!;
       const nuevosDiagnosticos = diagnosticos.map((d, i) => ({ ...d, id: comando.ids[`diagnostico_${i}`]!, fecha_registro: comando.instante, registrado_por: historico }));
       const nuevosTratamientos = tratamientos.map((t, i) => ({ ...t, id: comando.ids[`tratamiento_${i}`]!, fecha_registro: comando.instante, registrado_por: historico }));
-      if (receta && anterior?.receta) throw new ErrorDominio('RECETA_EXISTENTE', 'La consulta ya tiene una receta ordinaria.');
+      if (receta && anterior?.receta && !correccion) throw new ErrorDominio('RECETA_EXISTENTE', 'La consulta ya tiene una receta ordinaria.');
       const emitir = (r: RecetaEntrada): RecetaEmitida => ({ ...r, id: comando.ids.receta!, codigo_legible: `REC-${comando.ids.receta!}`,
         version: versionPositiva(1), estado: 'EMITIDA', fecha_emision: comando.instante, prescriptor: historico,
         medicamentos: r.medicamentos.map((m, i) => ({ ...m, id: comando.ids[`medicamento_${i}`]! })) });
-      const consulta: Consulta = { ...(anterior ?? { id: consultaId, paciente_id: paciente.id, fecha_hora: comando.instante,
+      const recetaAnteriorEntrada = anterior?.receta ? {medicamentos: anterior.receta.medicamentos.map(({id: _id, ...m}) => m),
+        ...(anterior.receta.observaciones === undefined ? {} : {observaciones: anterior.receta.observaciones})} : undefined;
+      const recetaCambiada = correccion && serializarJCS(receta ?? null) !== serializarJCS(recetaAnteriorEntrada ?? null);
+      if (recetaCambiada) validarPermiso(contexto.cuenta, 'recetas.emitir');
+      const base = anterior ? {...anterior} : undefined;
+      if (correccion && base) { delete (base as {receta?: RecetaEmitida}).receta; delete (base as {observaciones?: string}).observaciones; }
+      const recetaCorregida = correccion && !recetaCambiada ? anterior?.receta : receta ? emitir(receta) : undefined;
+      if (recetaCambiada && recetaCorregida && anterior?.receta) Object.assign(recetaCorregida, {id: anterior.receta.id, codigo_legible: anterior.receta.codigo_legible, version: siguienteVersion(anterior.receta.version), fecha_emision: anterior.receta.fecha_emision, prescriptor: anterior.receta.prescriptor});
+      const consulta: Consulta = { ...(base ?? { id: consultaId, paciente_id: paciente.id, fecha_hora: comando.instante,
         profesional: historico, motivo: motivo!, sintomas: sintomas!, signos_vitales: signos!,
         ...(citaId ? { cita_id: citaId } : {}), ...(observaciones === undefined ? {} : { observaciones }),
         ...(autorizacion ? { autorizacion, responsable_id: responsableId! } : {}) }),
-        estado: accion === 'completa' || accion === 'finalizar' ? 'FINALIZADA' : 'ABIERTA',
+        ...(correccion ? {motivo: motivo!, sintomas: sintomas!, signos_vitales: signos!, ...(observaciones === undefined ? {} : {observaciones})} : {}),
+        estado: accion === 'completa' || correccion || accion === 'finalizar' ? 'FINALIZADA' : 'ABIERTA',
         version: anterior ? siguienteVersion(anterior.version) : versionPositiva(1),
-        diagnosticos: [...(anterior?.diagnosticos ?? []), ...nuevosDiagnosticos],
-        tratamientos: [...(anterior?.tratamientos ?? []), ...nuevosTratamientos],
-        ...(receta ? { receta: emitir(receta) } : {}) };
+        diagnosticos: [...(correccion ? [] : anterior?.diagnosticos ?? []), ...nuevosDiagnosticos],
+        tratamientos: [...(correccion ? [] : anterior?.tratamientos ?? []), ...nuevosTratamientos],
+        ...(recetaCorregida ? { receta: recetaCorregida } : {}) };
       validarPrincipal(consulta.diagnosticos);
       listaClinica(consulta.diagnosticos, 'diagnosticos'); listaClinica(consulta.tratamientos, 'tratamientos');
       if (institucion === 'CLINICA_ODONTOLOGICA') {
@@ -197,18 +213,18 @@ export class AtencionClinica {
       cambios.push({ agregado: 'pacientes', tipo: 'AVANZAR_REVISION', recursoId: paciente.id,
         versionAnterior: paciente.version, nuevoEstado: { ...paciente, version: siguienteVersion(paciente.version) } });
       const eventos = [
-        ...(nueva || accion === 'finalizar' ? [{ id: comando.ids.evento_consulta!, tipo: 'CONSULTA', recursoId: consulta.id, titulo: consulta.motivo }] : []),
+        ...(nueva || correccion || accion === 'finalizar' ? [{ id: comando.ids.evento_consulta!, tipo: 'CONSULTA', recursoId: consulta.id, titulo: consulta.motivo }] : []),
         ...nuevosDiagnosticos.map((d, i) => ({ id: comando.ids[`evento_diagnostico_${i}`]!, tipo: 'DIAGNOSTICO', recursoId: d.id, titulo: d.nombre })),
         ...nuevosTratamientos.map((t, i) => ({ id: comando.ids[`evento_tratamiento_${i}`]!, tipo: 'TRATAMIENTO', recursoId: t.id, titulo: t.descripcion })),
-        ...(receta ? [{ id: comando.ids.evento_receta!, tipo: 'RECETA', recursoId: consulta.receta!.id, titulo: 'Receta emitida' }] : []),
+        ...(receta && (!correccion || recetaCambiada) ? [{ id: comando.ids.evento_receta!, tipo: 'RECETA', recursoId: consulta.receta!.id, titulo: 'Receta emitida' }] : []),
       ];
       cambios.push(...eventos.map(e => ({ agregado: 'eventosHistorial', tipo: 'CREAR', recursoId: e.id, versionAnterior: null,
         nuevoEstado: { ...e, titulo: tituloHistorial(e.titulo), pacienteId: paciente.id, consultaId: consulta.id, versionConsulta: consulta.version, fechaHora: comando.instante } })));
       return { tipo: 'CONFIRMAR', cambios,
-        revisiones: anterior ? [{ id: comando.ids.revision!, agregado: 'consultas', recursoId: consulta.id,
+        revisiones: anterior ? [{ id: comando.ids.revision!, agregado: 'consultas', recursoId: consulta.id, ...(razon ? {motivo: razon} : {}),
           versionAnterior: anterior.version, snapshotAnterior: anterior }] : [],
         auditoria: [{ id: comando.ids.auditoria!, actorId: contexto.cuenta.id, caso: comando.caso, recursoId: consulta.id,
-          fechaHora: comando.instante, correlacion: contexto.correlacion }],
+          fechaHora: comando.instante, correlacion: contexto.correlacion, ...(razon ? {motivo: razon} : {}) }],
         resultado: { httpStatus: nueva ? 201 : 200, respuesta: consulta, correlacionOriginal: contexto.correlacion } };
     });
   }

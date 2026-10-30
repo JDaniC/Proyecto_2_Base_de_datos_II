@@ -71,6 +71,16 @@ export class ConsultasController {
     res.status(r.httpStatus);
     return { data: proyectarConsulta(r.respuesta), meta: { correlacion: r.correlacionOriginal } };
   }
+  @Post(':id/correcciones')
+  @HttpCode(200)
+  @RequiereAcceso({permisos: ['consultas.registrar', 'diagnosticos.registrar', 'tratamientos.registrar'], capacidad: 'CONSULTAS'})
+  async corregir(@Contexto() contexto: ContextoAutenticado, @Bundle() bundle: BundleInstitucional,
+    @Headers('idempotency-key') clave: string, @Body() entrada: unknown,
+    @Res({passthrough: true}) res: Response, @Param('id') id: string) {
+    const r = await this.atencion.ejecutar('corregir', {contexto, bundle, entrada, id: uuidPublico(id), claveIdempotencia: uuidPublico(clave)});
+    res.status(r.httpStatus);
+    return {data: proyectarConsulta(r.respuesta), meta: {correlacion: r.correlacionOriginal}};
+  }
   @Get(':id')
   @RequiereAcceso({ permisos: ['historial.leer'], capacidad: 'CONSULTAS' })
   async obtener(@Contexto() contexto: ContextoAutenticado, @Bundle() bundle: BundleInstitucional,

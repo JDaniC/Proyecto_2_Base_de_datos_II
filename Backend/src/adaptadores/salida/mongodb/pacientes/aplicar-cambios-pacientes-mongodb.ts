@@ -1,3 +1,5 @@
+import { validarEventoHistorial } from '../../historial/proyeccion-historial.js';
+import { normalizarInstante } from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import type { ClientSession, Db, UpdateFilter } from 'mongodb';
 import { Long } from 'mongodb';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
@@ -13,6 +15,26 @@ export async function aplicarCambiosPacientesMongodb(
   db: Db, session: ClientSession, contexto: ContextoAutenticado, comando: ComandoEstable,
   cambios: readonly CambioPlanificado[], originales: ReadonlyMap<string, DocumentoPacienteMongo>,
 ): Promise<void> {
+  if (comando.caso === 'historial.archivar' && contexto.cuenta.institucion === 'LABORATORIO_CLINICO') {
+    for (const cambio of cambios) {
+      if (cambio.agregado === 'eventosHistorial') {
+        const {pacienteId, ...entrada} = cambio.nuevoEstado as Record<string, unknown>;
+        const evento = validarEventoHistorial(entrada, 'LABORATORIO_CLINICO');
+        await db.collection<{_id: string} & Record<string, unknown>>('historial_eventos').insertOne({_id: evento.id,
+          paciente_id: pacienteId, tipo: evento.tipo, fecha_hora: normalizarInstante(evento.fechaHora), contenido: evento}, {session});
+        continue;
+      }
+      const actual = cambio.nuevoEstado as Paciente;
+      const original = originales.get(cambio.recursoId);
+      if (cambio.agregado !== 'estadoHistorial' || cambio.tipo !== 'archivar' || !actual.baja ||
+          !original || Number(original.revision) !== cambio.versionAnterior || actual.version !== Number(cambio.versionAnterior) + 1) throw invalido();
+      const r = await db.collection<DocumentoPacienteMongo>('pacientes').updateOne({_id: actual.id, revision: original.revision},
+        {$set: {revision: actual.version, activo: false, 'historial.estado': 'ARCHIVADO',
+          'historial.baja': {causa: actual.baja.causa, motivo: actual.baja.motivo, fecha: new Date(actual.baja.fecha), actor_id: actual.baja.actorId}}}, {session});
+      if (r.matchedCount !== 1) throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El paciente cambió.');
+    }
+    return;
+  }
   if (contexto.cuenta.institucion !== 'LABORATORIO_CLINICO' ||
       !['paciente.registrar', 'paciente.actualizar'].includes(comando.caso)) throw invalido();
   const aperturas = cambios.filter((c) => c.agregado === 'historiales' && c.tipo === 'APERTURA');

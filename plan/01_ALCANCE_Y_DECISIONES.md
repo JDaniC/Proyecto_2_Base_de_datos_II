@@ -123,3 +123,16 @@ Permisos de [diseño §4](../Agente/DISENO_PROYECTO.md). Roles y permisos viven 
 ¹ Excepto laboratorio. ² Provisión controlada fuera de laboratorio. ³ Visor solo laboratorio/pediatría. Análisis y validación son permisos distintos; la demo puede asignarlos a cuentas diferentes. Administrar usuarios no concede acceso clínico. `historial.archivar` solo administrador; la reactivación pediátrica usa el mismo permiso con motivo.
 
 Recepción de laboratorio (E00-P1-03, 25/10/2026): `ordenes.administrar` cubre registro/consulta administrativa de órdenes y `muestras.administrar` su cadena de custodia. Se asignan solo a SECRETARIA y ADMIN_INSTITUCIONAL de laboratorio, sin otorgar análisis, validación ni prescripción. Contrato y límites: [plan/03 §7](03_CONTRATOS_Y_FLUJOS.md#7-congelación-del-contrato-común-v1--e00-p1-03). Es una decisión del proyecto que resuelve la brecha de DEC13, no una instrucción docente. Los tipos/guards UI y backend se implementan al conectar E01/E05.
+
+### DEC18 · Correcciones SQL, E03-P1-03 (29/10/2026)
+
+El contrato de corrección reemplaza el agregado clínico completo y M05/M07
+protegen las emisiones originales. Se conserva su historia física y se añade un
+snapshot canónico vigente en la consulta SQL, con revisión/puntero atómicos,
+en vez de eliminar componentes emitidos o sobrescribir su pasado. No se alteran
+las referencias M01–M09. Los lectores de aplicación usan porId/porVersion;
+las consultas físicas de componentes son históricas. Fuente, límites y efecto en
+el comparativo: Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md. Verificación:
+corrección/retirada de receta y lectura de versiones anteriores en cuatro
+motores, migración explícita 007 para instalaciones existentes. Es una decisión
+del proyecto, no retroalimentación docente.

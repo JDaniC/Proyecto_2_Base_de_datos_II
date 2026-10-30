@@ -1,3 +1,4 @@
+import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash, randomUUID} from 'node:crypto';
@@ -44,7 +45,7 @@ test('E03-P2-01 MongoDB real: CA04/05, migración, versiones, límites y rollbac
     const rolId = id(); const actorId = id(); const proId = id(); const uid = `sintetico-${id()}`;
     let r = await doc('roles').findOne({nombre: rol});
     if (!r) {await doc('roles').insertOne({_id: rolId, revision: 1, nombre: rol,
-      permisos: rol === 'MEDICO_LABORATORIO' ? ['historial.leer','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir'] : rol === 'SECRETARIA' ? ['pacientes.administrar'] : ['historial.leer','resultados.analizar']}); r = {_id: rolId};}
+      permisos: rol === 'MEDICO_LABORATORIO' ? ['historial.archivar','historial.leer','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir'] : rol === 'SECRETARIA' ? ['pacientes.administrar'] : ['historial.leer','resultados.analizar']}); r = {_id: rolId};}
     await doc('solicitantes').insertOne({_id: proId, revision: 1, nombre_completo: 'Profesional Sintético', tipo, activo,
       ...(tipo === 'MEDICO' ? {numero_colegiado: proId, entidad_colegiacion: 'Entidad sintética'} : {})});
     await doc('usuarios').insertOne({_id: actorId, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: 'LABORATORIO_CLINICO',
@@ -206,4 +207,29 @@ test('E03-P2-01 MongoDB real: CA04/05, migración, versiones, límites y rollbac
     await otra.command({collMod:'consultas_clinicas',validator: {$jsonSchema:{bsonType:'object'}}});
     await assert.rejects(migrarClinicaMongodb(otra),/MODELO_CLINICO_DESCONOCIDO/);
   });
+  await t.test('archivo, corrección, retiro de receta e historia anteriores en Mongo real', async () => {
+    const p = await paciente();
+    const original = await ejecutar('completa', entrada(p));
+    const estado = new CambiarEstadoHistorial(deps);
+    const archivado = await estado.ejecutar('archivar', {contexto: medico, bundle, id: uuidPublico(p.id), claveIdempotencia: id(),
+      entrada: {version_esperada: 2, causa: 'TRASLADO', motivo: 'Caso sintético'}});
+    assert.equal((await bundle.pacientes!.porId(uuidPublico(p.id)))?.estado, 'ARCHIVADO');
+    await assert.rejects(ejecutar('completa', {...entrada(p), version_paciente: archivado.respuesta.version}), fallo('ESTADO_INVALIDO'));
+    const corregida = await ejecutar('corregir', {version_esperada: 1, motivo_correccion: 'Corrección sintética', contenido: {
+      motivo: 'Corregido', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: []}}, id(), medico, original.respuesta.id);
+    assert.equal(corregida.respuesta.version, 2);
+    assert.deepEqual(await bundle.clinica!.consultas.porId(original.respuesta.id), corregida.respuesta);
+    assert.deepEqual(await bundle.clinica!.consultas.porVersion(original.respuesta.id, original.respuesta.version), original.respuesta);
+  });
+
+  await t.test('archivo compite con nueva atención sobre una única revisión Mongo', async () => {
+    const p = await paciente(); const estado = new CambiarEstadoHistorial(deps);
+    const r = await Promise.allSettled([
+      estado.ejecutar('archivar', {contexto: medico, bundle, id: uuidPublico(p.id), claveIdempotencia: id(), entrada: {version_esperada: 1, causa: 'TRASLADO', motivo: 'Carrera sintética'}}),
+      ejecutar('completa', entrada(p)),
+    ]);
+    assert.equal(r.filter(x => x.status === 'fulfilled').length, 1);
+    assert.equal((await bundle.pacientes!.porId(uuidPublico(p.id)))?.version, 2);
+  });
+
 });
