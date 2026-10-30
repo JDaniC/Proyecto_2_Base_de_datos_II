@@ -83,3 +83,11 @@ dependiente requiere esa integración, según tablero y PR abiertos.
 GitHub/develop `801f787` incorpora E03-P1-01 (#51/#53), E03-P2-01 (#55/#56) y E03-P2-02 (#57/#58). E03-P1-02 mantiene reserva activa de JDaniC en PR #54 borrador; falta integrar SQL, archivo, conexión UI y cierre de E03. El tablero registra 21/48 tareas HECHA (43,75 % por conteo, no cobertura de requisitos).
 
 La copia raíz estaba en una rama antigua. Sus cambios clínicos pendientes se preservaron en un stash identificado como `Respaldo previo a sincronizar tablero 2026-10-29 E03-P1-01`; no aplicar sobre develop sin comparar con #51. No se descartó código. Las ramas permanentes son main/develop; la tarea SQL conserva su rama y worktree activos.
+
+Corte E03-P1-03 (29/10/2026): PR #61 integrado en develop `d2fda3c`, revisión nativa
+sin hallazgos sobre `7b2d7db`. Backend habilita archivo, reactivación pediátrica y
+corrección histórica/versiones en cuatro motores. SQL requiere actualización
+explícita 007 a v5; leer DEC18 para el snapshot canónico vigente y la historia
+física inmutable. 311 backend, 6 integración SQL, 11 Mongo real y 14 emulador
+Firestore PASS; modelos SQL nueva/existente PASS. React clínico corresponde a
+E03-P2-03; módulos especializados y cierre E03 conservan su alcance pendiente.
