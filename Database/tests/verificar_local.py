@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import shlex
 import socket
@@ -158,16 +159,23 @@ class Verificacion:
             self.registrar('PostgreSQL', 'rechazo no destructivo de esquema anterior')
             self.ejecutar([base/'createdb', '-h', '127.0.0.1', '-p', str(port), 'bdii_test_migracion'])
             migrada = [str(x) if x != 'bdii_test_regresion' else 'bdii_test_migracion' for x in cli]
-            reversion = (DB/'migrations/001_revertir_archivo_historiales_postgresql.sql').read_text()
-            migracion = (DB/'migrations/001_corregir_archivo_historiales_postgresql.sql').read_text()
+            migracion = (DB/'migrations/005_clinica_sql_postgresql.sql').read_text()
             self.ejecutar(migrada, esquema)
-            self.ejecutar(migrada, reversion, nombre='postgres_migracion_estado_v2')
+            # Simula el modelo v3 quitando una extensión aditiva de v4 y recalculando el manifiesto.
+            funcion = re.search(r"CREATE OR REPLACE FUNCTION pg_temp\.huella_hospital\(\) RETURNS text LANGUAGE sql AS \$\$(.*?)\$\$;", esquema, re.S)
+            assert funcion is not None
+            huella = 'CREATE OR REPLACE FUNCTION pg_temp.huella_hospital() RETURNS text LANGUAGE sql AS $$' + funcion.group(1) + '$$;'
+            self.ejecutar(migrada, 'SET search_path TO hospital_general, public;\n' +
+                          'ALTER TABLE hospital_general.consulta DROP COLUMN profesional_historico;\n' + huella +
+                          'UPDATE hospital_general.modelo_database SET version=3, huella=pg_temp.huella_hospital() WHERE id=1;',
+                          nombre='postgres_migracion_estado_v3')
             fallo_init = self.ejecutar(migrada, esquema, esperado=1, nombre='postgres_migracion_rechazo_init')
             assert 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' in fallo_init.stderr
-            self.ejecutar(migrada, migracion, nombre='postgres_migracion_v2_v3')
+            self.ejecutar(migrada, migracion, nombre='postgres_migracion_v3_v4')
+            self.ejecutar(migrada, 'SELECT profesional_historico FROM hospital_general.consulta LIMIT 0;', nombre='postgres_migracion_columna')
             self.ejecutar(migrada, esquema, nombre='postgres_migracion_reejecucion')
             self.ejecutar(migrada, (DB/'tests/regresiones_archivo_postgresql.sql').read_text(), nombre='postgres_migracion_regresiones_archivo')
-            self.registrar('PostgreSQL', 'migracion explicita v2 -> v3 compatible con inicializador')
+            self.registrar('PostgreSQL', 'migracion explicita v3 -> v4 compatible con inicializador')
         finally:
             self.ejecutar([base/'pg_ctl', '-D', data, 'stop', '-m', 'fast'])
 
@@ -237,6 +245,20 @@ class Verificacion:
             fallo = sql(esquema, esperado=1, nombre='mysql_esquema_anterior')
             assert 'ESQUEMA_ANTERIOR_SIN_MANIFIESTO' in fallo.stderr
             self.registrar('MySQL', 'rechazo de esquema anterior')
+            sql('DROP DATABASE clinica_odontologica; CREATE DATABASE clinica_odontologica;')
+            sql(esquema, nombre='mysql_migracion_esquema')
+            # Simula el modelo v3 retirando una tabla aditiva de v4 y recalculando el manifiesto.
+            sql('''USE clinica_odontologica;
+            DROP TABLE signos_vitales_consulta;
+            CALL _huella_modelo(@bdii_huella_v3);
+            UPDATE modelo_database SET version=3, huella=@bdii_huella_v3 WHERE id=1;''',
+                nombre='mysql_migracion_estado_v3')
+            fallo_init = sql(esquema, esperado=1, nombre='mysql_migracion_rechazo_init')
+            assert 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' in fallo_init.stderr
+            sql((DB/'migrations/005_clinica_sql_mysql.sql').read_text(), nombre='mysql_migracion_v3_v4')
+            sql('SELECT 1 FROM clinica_odontologica.signos_vitales_consulta LIMIT 0;', nombre='mysql_migracion_tabla')
+            sql(esquema, nombre='mysql_migracion_reejecucion')
+            self.registrar('MySQL', 'migracion explicita v3 -> v4 compatible con inicializador')
         finally:
             proceso.terminate()
             proceso.wait(timeout=30)

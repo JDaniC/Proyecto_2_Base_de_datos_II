@@ -186,3 +186,18 @@ los respaldos y documentos ampliados; una versión anterior que no soporte el
 nuevo esquema requiere mantenimiento y restauración en copia aislada, nunca
 borrado de campos/volúmenes. Evidencia nueva/existente/interrupción:
 `npm run test:integration:clinica:firestore` en Backend.
+
+## E03-P1-02 · Clínica SQL (modelo v4)
+
+Aplicar `005_clinica_sql_postgresql.sql` en hospital_general y
+`005_clinica_sql_mysql.sql` en clinica_odontologica con la cuenta administradora,
+tanto después de preparar instalaciones nuevas como al actualizar el modelo v3.
+La proyección de lectura 004 conserva su propio manifiesto y debe estar preparada.
+Los inicializadores v4 rechazan volúmenes v3: no sustituyen la migración.
+
+Respaldar el volumen antes de actualizar y detener escrituras durante el cambio.
+PostgreSQL realiza el cambio en una transacción. MySQL confirma DDL por separado:
+si se interrumpe, conservar el volumen y restaurar el respaldo previo antes de
+reintentar; no borrar datos para recuperar compatibilidad. El legado sin autor o
+profesional histórico verificable requiere reconciliación y se rechaza como
+persistencia no disponible; no se inventan identidades ni fechas históricas.

@@ -12,7 +12,7 @@ export function obtenerSecretoCursor(): string {
   return secreto;
 }
 
-export type RecursoCursorSql = 'pacientes' | 'eventos_auditoria';
+export type RecursoCursorSql = 'pacientes' | 'eventos_auditoria' | 'citas';
 
 export interface DatosCursorSql {
   readonly v: 1;

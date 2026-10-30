@@ -30,6 +30,23 @@ try {
   await comando('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '240', 'postgres', 'mysql'], {
     cwd: root, env: entorno, timeout: 300_000,
   });
+  // Simula una cuenta previa sin permisos sobre la tabla añadida en v4.
+  await comando('docker', [...compose, 'exec', '-T', 'mysql', 'sh', '-c',
+    `MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot -e "REVOKE SELECT, INSERT, UPDATE, DELETE ON clinica_odontologica.signos_vitales_consulta FROM 'clinica_app'@'%'"`],
+    { cwd: root, env: entorno });
+  for (const [servicio, archivo] of [
+    ['postgres', '004_historial_postgresql.sql'],
+    ['postgres', '005_clinica_sql_postgresql.sql'],
+    ['mysql', '004_historial_mysql.sql'],
+    ['mysql', '005_clinica_sql_mysql.sql'],
+  ]) {
+    const destino = `${servicio}:/tmp/${archivo}`;
+    await comando('docker', [...compose, 'cp', join(root, 'Database/migrations', archivo), destino], { cwd: root, env: entorno });
+    const aplicar = servicio === 'postgres'
+      ? ['psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres_admin', '-d', 'hospital_general', '-f', `/tmp/${archivo}`]
+      : ['sh', '-c', `MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot < /tmp/${archivo}`];
+    await comando('docker', [...compose, 'exec', '-T', servicio, ...aplicar], { cwd: root, env: entorno, timeout: 120_000 });
+  }
   entorno.PG_TEST_PORT = entorno.POSTGRES_PORT;
   entorno.PG_TEST_SECRET_FILE = join(secretos, 'postgres_app_password');
   entorno.MYSQL_TEST_PORT = entorno.MYSQL_PORT;
@@ -41,6 +58,7 @@ try {
     '--test-concurrency=1',
     'dist-test/tests/integracion/sql-uow.test.js',
     'dist-test/tests/integracion/pacientes-sql.test.js',
+    'dist-test/tests/integracion/clinica-sql.test.js',
   ], { cwd: backend, env: entorno });
   process.stdout.write(`${salidaPruebas}\n`);
 } finally {

@@ -15,10 +15,12 @@ import { crearClienteMongodb } from '../adaptadores/salida/mongodb/crear-cliente
 import { crearClienteFirestore } from '../adaptadores/salida/firestore/crear-cliente-firestore.js';
 import { crearRepositorioCuentaInstitucionalPostgresql, crearRepositorioCuentaInstitucionalMysql } from '../adaptadores/salida/identidad/repositorios-cuenta-sql.js';
 import {
+  crearClinicaPostgresql,
   crearRepositorioPacientesPostgresql,
   crearUnidadDeTrabajoPacientesPostgresql,
 } from '../adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
 import {
+  crearClinicaMysql,
   crearRepositorioPacientesMysql,
   crearUnidadDeTrabajoPacientesMysql,
 } from '../adaptadores/salida/mysql/pacientes/crear-bundle-pacientes-mysql.js';
@@ -126,12 +128,14 @@ export async function crearDependenciasBackend(
         cuenta: crearRepositorioCuentaInstitucionalPostgresql(postgresql),
         pacientes: crearRepositorioPacientesPostgresql(postgresql),
         historial: crearHistorialSql(postgresql, 'postgresql'),
+        clinica: crearClinicaPostgresql(postgresql),
         uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
       },
       CLINICA_ODONTOLOGICA: {
         cuenta: crearRepositorioCuentaInstitucionalMysql(mysql),
         pacientes: crearRepositorioPacientesMysql(mysql),
         historial: crearHistorialSql(mysql, 'mysql'),
+        clinica: crearClinicaMysql(mysql),
         uow: crearUnidadDeTrabajoPacientesMysql(mysql),
       },
       LABORATORIO_CLINICO: await crearBundlePacientesMongodb(mongo),
