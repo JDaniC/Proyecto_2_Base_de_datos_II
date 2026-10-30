@@ -1,4 +1,4 @@
--- Base relacional de la Clínica Odontológica (MySQL 8.4+). Inicializador v3.
+-- Base relacional de la Clínica Odontológica (MySQL 8.4+). Inicializador v4.
 -- Para bases nuevas; los esquemas anteriores requieren una migracion explicita.
 -- Basada en las 14 entidades y atributos del modelo relacional del proyecto.
 
@@ -43,7 +43,7 @@ BEGIN
   IF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='modelo_database') THEN
     SELECT version,huella INTO version_actual,huella_guardada FROM modelo_database WHERE id=1;
     CALL _huella_modelo(huella_actual);
-    IF version_actual IS NULL OR version_actual<>3 OR huella_guardada<>huella_actual THEN
+    IF version_actual IS NULL OR version_actual<>4 OR huella_guardada<>huella_actual THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
     END IF;
   ELSEIF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()) THEN
@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS odontologo (
     nombres VARCHAR(160) NOT NULL,
     apellidos VARCHAR(160) NOT NULL,
     colegiado VARCHAR(50) NOT NULL,
+    entidad_colegiacion VARCHAR(150),
     telefono VARCHAR(30),
     correo VARCHAR(254),
     PRIMARY KEY (id_odontologo),
@@ -152,9 +153,13 @@ CREATE TABLE IF NOT EXISTS cita (
     id_cita BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     id_paciente BIGINT UNSIGNED NOT NULL,
     id_odontologo BIGINT UNSIGNED NOT NULL,
-    id_secretaria BIGINT UNSIGNED NOT NULL,
+    id_secretaria BIGINT UNSIGNED,
     fecha_hora DATETIME NOT NULL,
+    hora_fin TIME,
+    duracion_minutos SMALLINT,
+    consultorio VARCHAR(100),
     motivo TEXT NOT NULL,
+    motivo_cancelacion TEXT,
     estado VARCHAR(30) COLLATE utf8mb4_0900_bin NOT NULL DEFAULT 'PROGRAMADA',
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id_cita),
@@ -167,6 +172,7 @@ CREATE TABLE IF NOT EXISTS cita (
     INDEX ix_cita_paciente_fecha (id_paciente, fecha_hora),
     INDEX ix_cita_odontologo_fecha (id_odontologo, fecha_hora),
     CONSTRAINT chk_cita_estado CHECK (estado IN ('PROGRAMADA','ATENDIDA','CANCELADA')),
+    CONSTRAINT chk_cita_duracion CHECK (duracion_minutos IS NULL OR duracion_minutos BETWEEN 5 AND 480),
     CONSTRAINT chk_cita_textos CHECK (LENGTH(TRIM(motivo))>0 AND LENGTH(TRIM(estado))>0)
 ) ENGINE=InnoDB;
 
@@ -217,7 +223,10 @@ CREATE TABLE IF NOT EXISTS consulta_odontologica (
     id_odontologo BIGINT UNSIGNED NOT NULL,
     fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     motivo TEXT NOT NULL,
+    sintomas TEXT,
     observaciones TEXT,
+    profesional_historico JSON,
+    campos_signos JSON CONSTRAINT chk_consulta_campos_signos CHECK (campos_signos IS NULL OR JSON_SCHEMA_VALID('{"type":"array","items":{"type":"string","enum":["peso_kg","talla_cm","temperatura_c","presion_sistolica","presion_diastolica","frecuencia_cardiaca_lpm","frecuencia_respiratoria_rpm","saturacion_oxigeno_pct"]},"uniqueItems":true,"maxItems":8}', campos_signos)),
     estado VARCHAR(30) COLLATE utf8mb4_0900_bin NOT NULL DEFAULT 'ABIERTA',
     PRIMARY KEY (id_consulta),
     CONSTRAINT uq_consulta_cita UNIQUE (id_cita),
@@ -230,6 +239,35 @@ CREATE TABLE IF NOT EXISTS consulta_odontologica (
     INDEX ix_consulta_historial_fecha (id_historial, fecha_hora),
     CONSTRAINT chk_consulta_odontologica_estado CHECK (estado IN ('ABIERTA','FINALIZADA')),
     CONSTRAINT chk_consulta_odontologica_textos CHECK (LENGTH(TRIM(motivo))>0 AND LENGTH(TRIM(estado))>0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS signos_vitales_consulta (
+    id_publico CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT (UUID()) UNIQUE,
+    revision BIGINT UNSIGNED NOT NULL DEFAULT 1 CHECK (revision > 0),
+    id_signos_vitales BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id_consulta BIGINT UNSIGNED NOT NULL,
+    fecha_hora_medicion DATETIME NOT NULL,
+    peso_kg DECIMAL(7,3),
+    talla_cm DECIMAL(6,2),
+    temperatura_c DECIMAL(4,1),
+    presion_sistolica SMALLINT,
+    presion_diastolica SMALLINT,
+    frecuencia_cardiaca_lpm SMALLINT,
+    frecuencia_respiratoria_rpm SMALLINT,
+    saturacion_oxigeno_pct DECIMAL(5,2),
+    PRIMARY KEY (id_signos_vitales),
+    CONSTRAINT uq_signos_consulta UNIQUE (id_consulta),
+    CONSTRAINT fk_signos_consulta FOREIGN KEY (id_consulta)
+      REFERENCES consulta_odontologica (id_consulta),
+    CONSTRAINT chk_signos_peso CHECK (peso_kg IS NULL OR peso_kg >= 0),
+    CONSTRAINT chk_signos_talla CHECK (talla_cm IS NULL OR talla_cm >= 0),
+    CONSTRAINT chk_signos_saturacion CHECK (saturacion_oxigeno_pct IS NULL OR saturacion_oxigeno_pct BETWEEN 0 AND 100),
+    CONSTRAINT chk_signos_rangos CHECK (
+      (temperatura_c IS NULL OR temperatura_c BETWEEN 20 AND 50) AND
+      (presion_sistolica IS NULL OR presion_sistolica BETWEEN 10 AND 300) AND
+      (presion_diastolica IS NULL OR presion_diastolica BETWEEN 10 AND 200) AND
+      (frecuencia_cardiaca_lpm IS NULL OR frecuencia_cardiaca_lpm BETWEEN 10 AND 300) AND
+      (frecuencia_respiratoria_rpm IS NULL OR frecuencia_respiratoria_rpm BETWEEN 1 AND 150))
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS diagnostico (
@@ -253,7 +291,10 @@ CREATE TABLE IF NOT EXISTS consulta_diagnostico (
     principal_consulta BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN es_principal=1 THEN id_consulta ELSE NULL END) STORED,
     CONSTRAINT uq_consulta_principal UNIQUE (principal_consulta),
     CONSTRAINT chk_principal_booleano CHECK (es_principal IN (0,1)),
+    nombre_historico VARCHAR(200),
     observaciones TEXT,
+    fecha_registro DATETIME(3),
+    autor_historico JSON,
     PRIMARY KEY (id_consulta, id_diagnostico),
     CONSTRAINT fk_consulta_diagnostico_consulta FOREIGN KEY (id_consulta)
       REFERENCES consulta_odontologica (id_consulta),
@@ -280,6 +321,9 @@ CREATE TABLE IF NOT EXISTS consulta_tratamiento (
     fecha_inicio DATE,
     fecha_fin DATE,
     observaciones TEXT,
+    nombre_historico VARCHAR(200),
+    fecha_registro DATETIME(3),
+    autor_historico JSON,
     PRIMARY KEY (id_consulta, id_tratamiento),
     CONSTRAINT fk_consulta_tratamiento_consulta FOREIGN KEY (id_consulta)
       REFERENCES consulta_odontologica (id_consulta),
@@ -576,5 +620,5 @@ CREATE TABLE IF NOT EXISTS modelo_database (
  fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 CALL _huella_modelo(@bdii_huella);
-INSERT INTO modelo_database(id,version,huella) VALUES(1,3,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO modelo_database(id,version,huella) VALUES(1,4,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
 DO RELEASE_LOCK('bdii_clinica_inicializador_v2');

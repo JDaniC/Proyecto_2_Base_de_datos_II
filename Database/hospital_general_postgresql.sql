@@ -1,4 +1,4 @@
--- Base relacional del Hospital General (PostgreSQL 15+). Inicializador v3.
+-- Base relacional del Hospital General (PostgreSQL 15+). Inicializador v4.
 -- Base nueva: no es una migracion de esquemas antiguos. Ejecutar con ON_ERROR_STOP=1.
 -- Basada en las 46 entidades y atributos del modelo relacional del proyecto.
 -- Ejecutar conectado a la base de datos PostgreSQL de destino.
@@ -26,7 +26,7 @@ DECLARE version_actual integer; huella_actual text;
 BEGIN
  IF to_regclass('hospital_general.modelo_database') IS NOT NULL THEN
    SELECT version,huella INTO version_actual,huella_actual FROM modelo_database WHERE id=1;
-   IF version_actual IS DISTINCT FROM 3 OR huella_actual IS DISTINCT FROM pg_temp.huella_hospital() THEN
+   IF version_actual IS DISTINCT FROM 4 OR huella_actual IS DISTINCT FROM pg_temp.huella_hospital() THEN
      RAISE EXCEPTION 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
    END IF;
  ELSIF EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='hospital_general' AND c.relkind IN('r','p','v','m')) THEN
@@ -164,9 +164,14 @@ CREATE TABLE IF NOT EXISTS cita (
     fecha_hora_inicio TIMESTAMP NOT NULL,
     fecha_hora_fin TIMESTAMP,
     motivo_solicitud TEXT NOT NULL,
+    duracion_minutos SMALLINT,
+    consultorio VARCHAR(100),
+    motivo_cancelacion TEXT,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado_cita VARCHAR(30) NOT NULL DEFAULT 'PROGRAMADA' CHECK (estado_cita IN ('PROGRAMADA','ATENDIDA','CANCELADA')),
     observaciones TEXT,
     CHECK (fecha_hora_fin IS NULL OR fecha_hora_fin >= fecha_hora_inicio),
+    CHECK (duracion_minutos IS NULL OR duracion_minutos BETWEEN 5 AND 480),
     CONSTRAINT chk_cita_textos CHECK (LENGTH(TRIM(motivo_solicitud))>0 AND LENGTH(TRIM(estado_cita))>0)
 );
 
@@ -182,6 +187,8 @@ CREATE TABLE IF NOT EXISTS consulta (
     sintomas TEXT,
     observaciones TEXT,
     notas_medicas TEXT,
+    profesional_historico JSONB,
+    campos_signos JSONB CONSTRAINT chk_consulta_campos_signos CHECK (campos_signos IS NULL OR (jsonb_typeof(campos_signos)='array' AND campos_signos <@ '["peso_kg", "talla_cm", "temperatura_c", "presion_sistolica", "presion_diastolica", "frecuencia_cardiaca_lpm", "frecuencia_respiratoria_rpm", "saturacion_oxigeno_pct"]'::jsonb AND jsonb_array_length(campos_signos)<=8)),
     estado VARCHAR(30) NOT NULL DEFAULT 'ABIERTA' CHECK (estado IN ('ABIERTA','FINALIZADA')),
     CONSTRAINT chk_consulta_textos CHECK (LENGTH(TRIM(motivo_consulta))>0 AND LENGTH(TRIM(estado))>0)
 );
@@ -227,6 +234,10 @@ CREATE TABLE IF NOT EXISTS diagnostico (
     tipo VARCHAR(50),
     es_principal BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_diagnostico DATE NOT NULL DEFAULT CURRENT_DATE,
+    nombre_historico VARCHAR(200),
+    observacion TEXT,
+    fecha_registro TIMESTAMP,
+    autor_historico JSONB,
     estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVO' CHECK (estado IN ('ACTIVO','INACTIVO')),
     CONSTRAINT chk_diagnostico_textos CHECK (LENGTH(TRIM(estado))>0)
 );
@@ -240,6 +251,8 @@ CREATE TABLE IF NOT EXISTS tratamiento (
     fecha_inicio DATE,
     fecha_fin DATE,
     indicaciones TEXT,
+    fecha_registro TIMESTAMP,
+    autor_historico JSONB,
     estado VARCHAR(30) NOT NULL DEFAULT 'ACTIVO' CHECK (estado IN ('ACTIVO','FINALIZADO','ANULADO')),
     CHECK (fecha_fin IS NULL OR fecha_inicio IS NULL OR fecha_fin >= fecha_inicio),
     CONSTRAINT chk_tratamiento_textos CHECK (LENGTH(TRIM(descripcion))>0 AND LENGTH(TRIM(estado))>0)
@@ -622,6 +635,7 @@ CREATE TABLE IF NOT EXISTS paciente_poliza (
 
 -- Índices para las relaciones y consultas habituales del expediente.
 CREATE INDEX IF NOT EXISTS ix_cita_paciente_fecha ON cita (id_paciente, fecha_hora_inicio);
+CREATE INDEX IF NOT EXISTS ix_cita_personal_fecha ON cita (id_personal_programado, fecha_hora_inicio);
 CREATE INDEX IF NOT EXISTS ix_consulta_historial_fecha ON consulta (id_historial, fecha_hora);
 CREATE INDEX IF NOT EXISTS ix_diagnostico_consulta ON diagnostico (id_consulta);
 CREATE INDEX IF NOT EXISTS ix_resultado_detalle_orden ON resultado_examen (id_detalle_orden, fecha_resultado);
@@ -853,6 +867,6 @@ CREATE TABLE IF NOT EXISTS modelo_database (
  id smallint PRIMARY KEY CHECK(id=1), version integer NOT NULL CHECK(version>0), huella text NOT NULL,
  fecha_creacion timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-INSERT INTO modelo_database(id,version,huella) VALUES(1,3,pg_temp.huella_hospital())
+INSERT INTO modelo_database(id,version,huella) VALUES(1,4,pg_temp.huella_hospital())
  ON CONFLICT(id) DO NOTHING;
 COMMIT;
