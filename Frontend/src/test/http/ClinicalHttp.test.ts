@@ -53,8 +53,10 @@ describe('E03 transporte clínico', () => {
   });
   it('agenda traduce el día inclusivo al rango civil HTTP y no trunca páginas', async () => {
     const fetch=vi.fn().mockResolvedValue(response(200,[]));vi.stubGlobal('fetch',fetch);
-    await createHttpServices().appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA',{fechaDesde:'2026-10-30',fechaHasta:'2026-10-30'});
+    await createHttpServices().appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA',{fechaDesde:'2026-10-30',fechaHasta:'2026-10-30',profesionalId:'TODOS',estado:'TODOS'});
     expect(fetch.mock.calls[0][0]).toContain('fecha_hasta=2026-10-31');
+    expect(fetch.mock.calls[0][0]).not.toContain('profesional_id=');
+    expect(fetch.mock.calls[0][0]).not.toContain('estado=');
   });
   it('archivo conserva versión, motivo y clave en reintento sin respuesta', async () => {
     const fetch = vi.fn().mockRejectedValue(new TypeError('offline')); vi.stubGlobal('fetch',fetch);

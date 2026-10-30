@@ -12,7 +12,7 @@ export function createHttpAppointmentRepository(http: HttpClient): AppointmentRe
       // La agenda de presentación usa fin inclusivo; el contrato HTTP usa [desde,hasta).
       const [year, month, day] = q.fechaHasta.split('-').map(Number);
       const hasta = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
-      const r = await http.get<CitaDto[]>('/citas', {query: {fecha_desde: q.fechaDesde, fecha_hasta: hasta, profesional_id: q.profesionalId, estado: q.estado === 'TODOS' ? undefined : q.estado, q: q.q, limite: 100}});
+      const r = await http.get<CitaDto[]>('/citas', {query: {fecha_desde: q.fechaDesde, fecha_hasta: hasta, profesional_id: q.profesionalId === 'TODOS' ? undefined : q.profesionalId, estado: q.estado === 'TODOS' ? undefined : q.estado, q: q.q, limite: 100}});
       if (r.meta.siguiente_cursor) throw new HttpError({status: 400, codigo: 'RANGO_AMPLIO', mensaje: 'Reduce el rango de fechas para mostrar todas las citas.'});
       return r.data.map(c => mapear(c,i));
     },
