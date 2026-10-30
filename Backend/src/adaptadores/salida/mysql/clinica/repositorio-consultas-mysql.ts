@@ -115,7 +115,7 @@ export class RepositorioConsultasMysql implements PuertoConsultas {
          FROM consulta_diagnostico cd
          JOIN diagnostico d ON d.id_diagnostico = cd.id_diagnostico
          JOIN consulta_odontologica co ON co.id_consulta = cd.id_consulta
-        WHERE co.id_publico = ? ORDER BY cd.id_diagnostico`,
+        WHERE co.id_publico = ? ORDER BY cd.orden_registro, cd.id_diagnostico`,
       [id],
     );
     return resultado.filas;
@@ -129,7 +129,7 @@ export class RepositorioConsultasMysql implements PuertoConsultas {
          FROM consulta_tratamiento ct
          JOIN tratamiento t ON t.id_tratamiento = ct.id_tratamiento
          JOIN consulta_odontologica co ON co.id_consulta = ct.id_consulta
-        WHERE co.id_publico = ? ORDER BY ct.id_tratamiento`,
+        WHERE co.id_publico = ? ORDER BY ct.orden_registro, ct.id_tratamiento`,
       [id],
     );
     return resultado.filas;

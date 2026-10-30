@@ -126,6 +126,9 @@ BEGIN
         (frecuencia_respiratoria_rpm IS NULL OR frecuencia_respiratoria_rpm BETWEEN 1 AND 150))
     ) ENGINE=InnoDB;
   END IF;
+ALTER TABLE cita MODIFY fecha_creacion DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+IF NOT EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consulta_diagnostico' AND COLUMN_NAME='orden_registro') THEN ALTER TABLE consulta_diagnostico ADD COLUMN orden_registro INT UNSIGNED; END IF;
+IF NOT EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consulta_tratamiento' AND COLUMN_NAME='orden_registro') THEN ALTER TABLE consulta_tratamiento ADD COLUMN orden_registro INT UNSIGNED; END IF;
   ALTER TABLE consulta_diagnostico MODIFY fecha_registro DATETIME(3);
   ALTER TABLE consulta_tratamiento MODIFY fecha_registro DATETIME(3);
 ALTER TABLE medicamento MODIFY nombre_generico VARCHAR(200) NOT NULL;

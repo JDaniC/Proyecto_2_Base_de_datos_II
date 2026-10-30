@@ -185,6 +185,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
   assert.equal(cita.httpStatus, 201);
   assert.equal(cita.respuesta.estado, 'PROGRAMADA');
   assert.equal(cita.respuesta.consultorio, consultorio);
+  assert.deepEqual(await clinica.citas.porId(cita.respuesta.id), cita.respuesta);
   assert.equal((await pacientes.porId(uuidPublico(pacienteId)))?.version, 2);
 
   // 2) Atención compuesta: consulta finalizada, signos, diagnósticos, tratamientos y receta.

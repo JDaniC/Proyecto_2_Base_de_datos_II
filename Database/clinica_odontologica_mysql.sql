@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS cita (
     motivo TEXT NOT NULL,
     motivo_cancelacion TEXT,
     estado VARCHAR(30) COLLATE utf8mb4_0900_bin NOT NULL DEFAULT 'PROGRAMADA',
-    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_creacion DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     PRIMARY KEY (id_cita),
     CONSTRAINT fk_cita_paciente FOREIGN KEY (id_paciente)
       REFERENCES paciente (id_paciente),
@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS diagnostico (
 
 CREATE TABLE IF NOT EXISTS consulta_diagnostico (
     id_publico CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT (UUID()) UNIQUE,
+    orden_registro INT UNSIGNED,
     revision BIGINT UNSIGNED NOT NULL DEFAULT 1 CHECK (revision > 0),
     id_consulta BIGINT UNSIGNED NOT NULL,
     id_diagnostico BIGINT UNSIGNED NOT NULL,
@@ -315,6 +316,7 @@ CREATE TABLE IF NOT EXISTS tratamiento (
 
 CREATE TABLE IF NOT EXISTS consulta_tratamiento (
     id_publico CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT (UUID()) UNIQUE,
+    orden_registro INT UNSIGNED,
     revision BIGINT UNSIGNED NOT NULL DEFAULT 1 CHECK (revision > 0),
     id_consulta BIGINT UNSIGNED NOT NULL,
     id_tratamiento BIGINT UNSIGNED NOT NULL,

@@ -280,6 +280,7 @@ async function guardarDiagnosticos(executor: EjecutorSql, idConsulta: number, co
       [diagnostico.id, idConsulta, idCatalogo, diagnostico.es_principal ? 1 : 0, diagnostico.nombre,
         diagnostico.observacion ?? null, fechaDb(diagnostico.fecha_registro), JSON.stringify(diagnostico.registrado_por)],
     );
+    await executor.consultar('UPDATE consulta_diagnostico SET orden_registro = ? WHERE id_publico = ?', [consulta.diagnosticos.indexOf(diagnostico), diagnostico.id]);
   }
 }
 
@@ -297,6 +298,7 @@ async function guardarTratamientos(executor: EjecutorSql, idConsulta: number, co
       [tratamiento.id, idConsulta, idCatalogo, tratamiento.fecha_registro.slice(0, 10), tratamiento.indicaciones,
         tratamiento.descripcion, fechaDb(tratamiento.fecha_registro), JSON.stringify(tratamiento.registrado_por)],
     );
+    await executor.consultar('UPDATE consulta_tratamiento SET orden_registro = ? WHERE id_publico = ?', [consulta.tratamientos.indexOf(tratamiento), tratamiento.id]);
   }
 }
 
