@@ -1,3 +1,4 @@
+import { serializarJCS } from '../../../dominio/compartido/json-canonico.js';
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
 import { versionPositiva, type Version } from '../../../dominio/compartido/version.js';
@@ -181,7 +182,7 @@ export class AtencionClinica {
         medicamentos: r.medicamentos.map((m, i) => ({ ...m, id: comando.ids[`medicamento_${i}`]! })) });
       const recetaAnteriorEntrada = anterior?.receta ? {medicamentos: anterior.receta.medicamentos.map(({id: _id, ...m}) => m),
         ...(anterior.receta.observaciones === undefined ? {} : {observaciones: anterior.receta.observaciones})} : undefined;
-      const recetaCambiada = correccion && JSON.stringify(receta ?? null) !== JSON.stringify(recetaAnteriorEntrada ?? null);
+      const recetaCambiada = correccion && serializarJCS(receta ?? null) !== serializarJCS(recetaAnteriorEntrada ?? null);
       if (recetaCambiada) validarPermiso(contexto.cuenta, 'recetas.emitir');
       const base = anterior ? {...anterior} : undefined;
       if (correccion && base) { delete (base as {receta?: RecetaEmitida}).receta; delete (base as {observaciones?: string}).observaciones; }

@@ -38,3 +38,17 @@ for (const institucion of INSTITUCIONES_CANONICAS) test(`${institucion}: archivo
     assert.equal(r.respuesta.baja?.causa, 'FALLECIMIENTO');
   }
 });
+
+test('una receta semánticamente idéntica conserva versión sin permiso de emisión aunque JSON cambie orden', async () => {
+  const e = escenarioClinico('HOSPITAL_GENERAL');
+  const creada = await clinica.ejecutar('completa', {...e, claveIdempotencia: nuevoId(), entrada: e.entrada});
+  const receta = creada.respuesta.receta!;
+  const reordenada = {...creada.respuesta, receta: {...receta, medicamentos: receta.medicamentos.map(m => Object.fromEntries(Object.entries(m).reverse()) as typeof m)}};
+  e.consultas.set(creada.respuesta.id, reordenada);
+  e.cuenta = {...e.cuenta, permisos: e.cuenta.permisos.filter(p => p !== 'recetas.emitir')};
+  const contexto = crearContextoAutenticado(e.contexto.identidad, e.cuenta, e.contexto.correlacion);
+  const corregida = await clinica.ejecutar('corregir', {...e, contexto, id: creada.respuesta.id, claveIdempotencia: nuevoId(), entrada: {
+    version_esperada: 1, motivo_correccion: 'Solo cambia motivo', contenido: {motivo: 'Motivo corregido', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: [], receta: e.entrada.receta}}});
+  assert.equal(corregida.respuesta.receta?.version, 1);
+  assert.deepEqual(corregida.respuesta.receta, reordenada.receta);
+});
