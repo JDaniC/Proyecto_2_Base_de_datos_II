@@ -128,6 +128,13 @@ BEGIN
   END IF;
   ALTER TABLE consulta_diagnostico MODIFY fecha_registro DATETIME(3);
   ALTER TABLE consulta_tratamiento MODIFY fecha_registro DATETIME(3);
+ALTER TABLE medicamento MODIFY nombre_generico VARCHAR(200) NOT NULL;
+ALTER TABLE medicamento MODIFY presentacion VARCHAR(200);
+ALTER TABLE medicamento MODIFY concentracion VARCHAR(200);
+ALTER TABLE detalle_receta MODIFY dosis VARCHAR(200) NOT NULL;
+ALTER TABLE detalle_receta MODIFY frecuencia VARCHAR(200) NOT NULL;
+ALTER TABLE detalle_receta MODIFY duracion VARCHAR(200);
+ALTER TABLE consulta_odontologica MODIFY fecha_hora DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
 END$$
 DELIMITER ;
 

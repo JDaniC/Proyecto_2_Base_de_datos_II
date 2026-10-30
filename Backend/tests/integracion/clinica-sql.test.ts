@@ -172,8 +172,8 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     ? { descripcion: 'Reposo relativo', indicaciones: 'Hidratación y control en 48 horas' }
     : { descripcion: 'Profilaxis dental', indicaciones: 'Cepillado tres veces al día' };
   const receta = { observaciones: 'Sin alergias conocidas', medicamentos: [{
-    nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', dosis: '1 tableta',
-    frecuencia: 'Cada 8 horas', duracion: '3 días', via: 'Oral', indicaciones: 'Después de alimentos',
+    nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', dosis: 'D'.repeat(200),
+    frecuencia: 'F'.repeat(200), duracion: 'T'.repeat(200), via: 'Oral', indicaciones: 'Después de alimentos',
   }] };
 
   // 1) Agenda real: crea cita y avanza la revisión del paciente.
@@ -201,6 +201,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
 
   const leida = await clinica.consultas.porId(completa.respuesta.id);
   assert.ok(leida);
+  assert.equal(new Date(leida.fecha_hora).getTime(), new Date(completa.respuesta.fecha_hora).getTime());
   assert.equal(leida?.estado, 'FINALIZADA');
   assert.equal(leida?.motivo, 'Dolor faríngeo');
   assert.deepEqual(leida?.signos_vitales, signos);

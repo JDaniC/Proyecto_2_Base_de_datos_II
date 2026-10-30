@@ -65,5 +65,8 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS ix_cita_personal_fecha ON hospital_general.cita (id_personal_programado, fecha_hora_inicio);
 
+ALTER TABLE medicamento ALTER COLUMN presentacion TYPE VARCHAR(200);
+ALTER TABLE detalle_receta ALTER COLUMN frecuencia TYPE VARCHAR(200);
+ALTER TABLE medicamento ALTER COLUMN nombre TYPE VARCHAR(200);
 UPDATE hospital_general.modelo_database SET version=4, huella=pg_temp.huella_hospital() WHERE id=1;
 COMMIT;
