@@ -29,7 +29,11 @@ Las pruebas seleccionadas comprueban el alcance vigente, fechas, mensajes y carg
 
 Ejecutar con `VITE_SERVICE_MODE=api` y un backend configurado. Para ensayo aislado configurar `VITE_FIREBASE_AUTH_EMULATOR_URL`; para Firebase real usar su configuración de identidad. No hay selector de institución ni respaldo clínico en localStorage. Abrir pacientes no lista registros: requiere un término, con páginas por cursor y orden de registro. Los conflictos de documento ofrecen búsqueda para reutilizar el perfil; un conflicto de versión conserva la edición. Ante resultado incierto el formulario conserva datos y clave UUID y permite reintentar la misma solicitud.
 
-El perfil administrativo se obtiene sin solicitar historial clínico. Las cuentas con `historial.leer` reciben perfil e índice paginado de eventos; datos legados ausentes muestran «Sin dato». El índice mantiene referencias de versión para su detalle clínico futuro; no representa antecedentes, consultas o recetas no recibidos como registros vacíos confirmados. Editar demografía conserva los vínculos pediátricos. Para registrar hermanos se puede buscar otro menor, seleccionar su responsable y enviar su UUID/versión con un vínculo nuevo; los datos personales del adulto se conservan. Las operaciones especializadas pendientes rechazan explícitamente hasta integrar su adaptador.
+El perfil administrativo se obtiene sin solicitar historial clínico. Las cuentas con `historial.leer` reciben perfil e índice paginado de eventos; datos legados ausentes muestran «Sin dato». El índice enlaza la atención y su detalle clínico versionado; no representa antecedentes, consultas o recetas no recibidos como registros vacíos confirmados. Editar demografía conserva los vínculos pediátricos. Para registrar hermanos se puede buscar otro menor, seleccionar su responsable y enviar su UUID/versión con un vínculo nuevo; los datos personales del adulto se conservan. Las operaciones especializadas pendientes rechazan explícitamente hasta integrar su adaptador.
+
+La ficha HTTP permite registrar atención completa y archivar con versión/motivo; pediatría permite reactivar. El asistente envía las versiones observadas del paciente, cita y vínculo autorizante. La cita dental se vincula por su identificador y se verifica en servidor. El detalle permite corregir el agregado y consultar versiones anteriores. La autoridad del profesional proviene de la cuenta verificada; los adaptadores omiten los nombres/autores de presentación. Ante respuesta incierta, los campos de la atención/corrección se bloquean y el reintento conserva clave y contenido. Cambiar de cuenta desmonta los formularios.
+
+El adaptador de agenda ofrece lectura para vincular citas existentes. En modo API se deshabilita el selector de profesionales hasta cargar opciones reales; una caída muestra error y reintento. Su alta/reprogramación/cancelación y los módulos especializados conservan rechazo explícito hasta su integración; no se acreditan por el recorrido clínico.
 
 Comprobaciones reproducibles:
 
@@ -37,9 +41,10 @@ Comprobaciones reproducibles:
 npm --prefix Frontend test -- src/test/http/ src/test/product-scope/ src/services/errors.test.ts src/services/dates.test.ts
 npm --prefix Frontend exec -- playwright install chromium
 npm --prefix Backend run test:integration:pacientes:ui
+node Backend/scripts/run-historial-integration.mjs --clinica-ui
 ```
 
-El recorrido requiere Docker, Java y Firebase CLI del entorno local ya descrito en Database. Prepara PostgreSQL, MySQL y MongoDB con proyecto, puertos, volúmenes y secretos aleatorios; Auth/Firestore usan proyecto `demo-*` y emuladores locales. No utiliza los volúmenes de desarrollo. Para Chrome instalado puede usarse `PLAYWRIGHT_CHANNEL=chrome`; `PLAYWRIGHT_PACKAGE` permite señalar el paquete Playwright del runtime de Codex. `PATIENTS_UI_RESULTS` guarda solo resultados saneados. La cronología usa fixtures explícitos del índice de lectura, sin acreditar escritores clínicos E03–E05.
+El recorrido requiere Docker, Java y Firebase CLI del entorno local ya descrito en Database. Prepara PostgreSQL, MySQL y MongoDB con proyecto, puertos, volúmenes y secretos aleatorios; Auth/Firestore usan proyecto `demo-*` y emuladores locales. No utiliza los volúmenes de desarrollo. Para Chrome instalado puede usarse `PLAYWRIGHT_CHANNEL=chrome`; `PLAYWRIGHT_PACKAGE` permite señalar el paquete Playwright del runtime de Codex. `PATIENTS_UI_RESULTS` guarda solo resultados saneados. El recorrido de pacientes E02 usa fixtures explícitos del índice de lectura. El recorrido `--clinica-ui` usa escritores clínicos reales, tres motores aislados y emulador Firestore; `CLINICA_UI_EVIDENCE` guarda sus resultados saneados. Los errores HTTP controlados de interfaz se distinguen de la persistencia real.
 
 ## Flujos conservados
 

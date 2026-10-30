@@ -37,12 +37,13 @@ describe('ServiceFactory y Flujos de Interfaz en Modo API (E01-P2-03)', () => {
       .rejects.toMatchObject({ status: 503, codigo: '503 PERSISTENCIA_NO_DISPONIBLE' });
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
+    mockFetch.mockRejectedValueOnce(new TypeError('offline'));
     await expect(
       services.appointmentRepository.obtenerCitas('CLINICA_ODONTOLOGICA', {
         fechaDesde: '2026-10-26',
         fechaHasta: '2026-10-26',
       })
-    ).rejects.toThrowError(/503 PERSISTENCIA_NO_DISPONIBLE: Modo API activo sin adaptador HTTP configurado para appointmentRepository\.obtenerCitas/);
+    ).rejects.toMatchObject({status: 503});
   });
 
   it('LoginPage inicia sesión correctamente con cuenta pediátrica y navega a sesion-activa', async () => {

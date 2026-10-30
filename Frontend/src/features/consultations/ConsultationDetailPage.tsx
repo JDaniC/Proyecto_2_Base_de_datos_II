@@ -26,7 +26,7 @@ export const ConsultationDetailPage: React.FC = () => {
   const { pacienteId, consultaId } = useParams<{ pacienteId: string; consultaId: string }>();
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { consultationRepository, patientRepository } = useServices();
+  const { consultationRepository, patientRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
@@ -38,6 +38,8 @@ export const ConsultationDetailPage: React.FC = () => {
   // Modales
   const [showImprimirReceta, setShowImprimirReceta] = useState(false);
   const [showModificarConsulta, setShowModificarConsulta] = useState(false);
+  const [versionVista, setVersionVista] = useState<number | undefined>();
+  const [versionActual, setVersionActual] = useState(1);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   // Procedimientos H07
@@ -90,7 +92,7 @@ export const ConsultationDetailPage: React.FC = () => {
       try {
         const [pacData, conData] = await Promise.all([
           patientRepository.obtenerPorId(institucionId, pacienteId),
-          consultationRepository.obtenerPorId(institucionId, pacienteId, consultaId)
+          consultationRepository.obtenerPorId(institucionId, pacienteId, consultaId, versionVista)
         ]);
 
         if (!isMounted) return;
@@ -107,6 +109,7 @@ export const ConsultationDetailPage: React.FC = () => {
           }
           setPaciente(pacData);
           setConsulta(conData);
+          if (versionVista === undefined) setVersionActual(conData.version ?? conData.revision);
         }
       } catch (err: any) {
         if (isMounted) {
@@ -121,10 +124,11 @@ export const ConsultationDetailPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [institucionId, pacienteId, consultaId, consultationRepository, patientRepository]);
+  }, [institucionId, pacienteId, consultaId, versionVista, consultationRepository, patientRepository]);
 
   const handleConsultaActualizada = (actualizada: DetalleConsultaCompleta) => {
     setConsulta(actualizada);
+    setVersionActual(actualizada.version ?? actualizada.revision);
     setMensajeExito(`Consulta clínica actualizada con éxito a versión v${actualizada.revision}.`);
     setTimeout(() => setMensajeExito(null), 6000);
   };
@@ -287,14 +291,14 @@ export const ConsultationDetailPage: React.FC = () => {
                 Imprimir Receta Médica
               </Button>
             )}
-            <Button
+            {versionVista === undefined && sesion?.permisos.includes('consultas.registrar') && <Button
               variant="secondary"
               size="sm"
               onClick={() => setShowModificarConsulta(true)}
             >
               <Edit3 size={15} style={{ marginRight: '6px' }} />
               Corregir o Actualizar Consulta
-            </Button>
+            </Button>}
           </div>
         </div>
 
@@ -798,7 +802,7 @@ export const ConsultationDetailPage: React.FC = () => {
       </Panel>
 
       {/* Procedimientos Clínicos Realizados (H07) */}
-      {institucionId === 'HOSPITAL_GENERAL' && (
+      {mode !== 'api' && institucionId === 'HOSPITAL_GENERAL' && (
       <Panel
         title="Procedimientos Clínicos Realizados"
         subtitle="Intervenciones, exploraciones diagnósticas o procedimientos menores ambulatorios"
@@ -962,8 +966,12 @@ export const ConsultationDetailPage: React.FC = () => {
       {/* Historial de Revisiones Auditadas (CA10) */}
       <Panel
         title="Historial de Modificaciones y Revisiones Versionadas"
-        subtitle="Cambios registrados con su autor, fecha y motivo."
+        subtitle="Consulta las versiones conservadas de esta atención."
       >
+        <label>Versión de la atención <select aria-label="Versión de la atención" value={versionVista ?? ''} onChange={e => setVersionVista(e.target.value ? Number(e.target.value) : undefined)}>
+          <option value="">Actual (v{versionActual})</option>
+          {Array.from({length: Math.max(0, versionActual - 1)}, (_, i) => <option key={i+1} value={i+1}>v{i+1}</option>)}
+        </select></label>
         {consulta.historialRevisiones && consulta.historialRevisiones.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {consulta.historialRevisiones.map((rev, index) => (
@@ -1030,7 +1038,7 @@ export const ConsultationDetailPage: React.FC = () => {
               fontSize: '13px'
             }}
           >
-            Esta consulta no ha recibido rectificaciones posteriores; se conserva en su versión inicial (v1).
+            {versionActual > 1 ? 'Selecciona una versión para consultar su contenido histórico.' : 'Se conserva la versión inicial (v1).'}
           </div>
         )}
       </Panel>

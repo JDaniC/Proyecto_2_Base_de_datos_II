@@ -1,3 +1,4 @@
+import { ArchivePatientModal } from './components/ArchivePatientModal';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useServices } from '../../app/ServiceContext';
@@ -24,6 +25,7 @@ const PatientRecord: React.FC = () => {
   const { sesion } = useAuthSession();
   const { patientRepository } = useServices();
   const navigate = useNavigate();
+  const [archivoAbierto, setArchivoAbierto] = useState(false);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
   const [filtros, setFiltros] = useState<FiltrosHistorial>({ orden: 'ASC', limite: 20 });
@@ -62,8 +64,13 @@ const PatientRecord: React.FC = () => {
       : <>
         <header style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', margin: '24px 0' }}>
           <div style={{ minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere' }}><h1>{paciente.nombreCompleto}</h1><p>{paciente.codigoLegible} · <Badge variant={paciente.estado === 'ACTIVO' ? 'success' : 'neutral'}>{paciente.estado === 'ACTIVO' ? 'Expediente activo' : 'Expediente archivado'}</Badge></p></div>
+          {sesion?.permisos.includes('consultas.registrar') && paciente.estado === 'ACTIVO' && <Button onClick={() => navigate(`/pacientes/${paciente.id}/consultas/nueva`)}>Registrar atención</Button>}
+          {sesion?.permisos.includes('historial.archivar') && (paciente.estado === 'ACTIVO' || sesion.institucionId === 'CENTRO_PEDIATRICO') && <Button variant="secondary" onClick={() => setArchivoAbierto(true)}>{paciente.estado === 'ACTIVO' ? 'Archivar expediente' : 'Reactivar expediente'}</Button>}
           {puedeEditar && <Button variant="secondary" onClick={() => navigate(`/pacientes/${paciente.id}/editar`)}>Editar datos del paciente</Button>}
         </header>
+        {archivoAbierto && sesion && <ArchivePatientModal isOpen onClose={() => setArchivoAbierto(false)} paciente={paciente}
+          onConfirmArchivar={async (causa, motivo) => { await patientRepository.archivar(sesion.institucionId, paciente.id, causa, motivo, paciente.version); setReintento(n => n + 1); }}
+          onConfirmReactivar={async (motivo, correccion) => { await patientRepository.reactivar(sesion.institucionId, paciente.id, motivo, correccion, paciente.version); setReintento(n => n + 1); }} />}
         <Panel title="Datos del paciente" style={{ marginBottom: '24px' }}>
           <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {[

@@ -1,3 +1,4 @@
+import { stableCommandKeys } from '../stableCommand';
 import type { PatientRepository } from '../../contracts';
 import type { ActualizarPacienteDTO, BuscarPacientesQuery, CrearPacienteDTO, FiltrosHistorial, InstitucionId } from '../../types';
 import { HttpClient } from '../httpClient';
@@ -7,7 +8,16 @@ import { mapearAlta, mapearCambio, mapearEvento, mapearPaciente } from './patien
 
 export function createHttpPatientRepository(http: HttpClient): PatientRepository {
   const path = (id: string) => `/pacientes/${encodeURIComponent(id)}`;
+  const key = stableCommandKeys();
   const methods = {
+    async archivar(_i: InstitucionId, id: string, causa: string, motivo: string, versionEsperada?: number) {
+      const body = {causa, motivo, version_esperada: versionEsperada};
+      return mapearPaciente((await http.post<PacienteDto>(`${path(id)}/archivo`, body, {idempotencyKey: key(`${id}/archivo`, body)})).data);
+    },
+    async reactivar(_i: InstitucionId, id: string, motivo: string, correccionFallecimiento?: boolean, versionEsperada?: number) {
+      const body = {motivo, correccion_fallecimiento: correccionFallecimiento, version_esperada: versionEsperada};
+      return mapearPaciente((await http.post<PacienteDto>(`${path(id)}/reactivacion`, body, {idempotencyKey: key(`${id}/reactivacion`, body)})).data);
+    },
     async buscar(_institucion: InstitucionId, q: BuscarPacientesQuery) {
       if (!q.q?.trim()) return { items: [], hayMas: false, paginaActual: 1 };
       if (q.sexo && q.sexo !== 'TODOS') throw new HttpError({ status: 400, codigo: '400 SOLICITUD_INVALIDA', mensaje: 'La búsqueda no admite filtro por sexo.' });

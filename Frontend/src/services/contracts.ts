@@ -184,7 +184,8 @@ export interface ConsultationRepository {
   obtenerPorId(
     institucionId: InstitucionId,
     pacienteId: string,
-    consultaId: string
+    consultaId: string,
+    version?: number
   ): Promise<DetalleConsultaCompleta | null>;
   actualizarConsultaFinalizada(
     institucionId: InstitucionId,

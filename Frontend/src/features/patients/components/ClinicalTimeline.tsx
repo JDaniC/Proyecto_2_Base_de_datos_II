@@ -1,4 +1,5 @@
 import { getDisplayLabel } from '../../../services/displayLabels';
+import { Link, useParams } from 'react-router-dom';
 import React, { useState } from 'react';
 import {
   FileText,
@@ -24,6 +25,7 @@ export interface ClinicalTimelineProps {
 }
 
 export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos, servidor }) => {
+  const { pacienteId } = useParams();
   const [ordenLocal, setOrden] = useState<'DESC' | 'ASC'>('DESC');
   const [tipoLocal, setFiltroTipo] = useState<TipoEventoHistorial | 'TODOS'>('TODOS');
   const orden = servidor?.orden ?? ordenLocal;
@@ -233,6 +235,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos, ser
                       <span style={{ display: 'inline-flex' }}>{getIconoEvento(evento.tipoEvento)}</span>
                       <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-strong)' }}>
                         {evento.titulo}
+                        {pacienteId && evento.consultaId && <Link style={{marginLeft: 12}} to={`/pacientes/${pacienteId}/consultas/${evento.consultaId}`}>Ver atención</Link>}
                       </span>
                       <Badge variant={getBadgeVariante(evento.tipoEvento)}>
                         {getDisplayLabel(evento.tipoEvento)}

@@ -1,3 +1,5 @@
+import { getErrorMessage } from '../../services/errors';
+import { Alert } from '../../design-system/components/Alert';
 import { MetricStrip } from '../../design-system/components/MetricStrip';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -45,10 +47,10 @@ const DIAS_SEMANA_BASE = [
 export const AppointmentsCalendarPage: React.FC = () => {
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { appointmentRepository } = useServices();
+  const { appointmentRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const profesionales = PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const profesionales = mode === 'api' ? [] : PROFESIONALES_DISPONIBLES[institucionId] || [];
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('2026-10-19');
   const [vistaModo, setVistaModo] = useState<'DIARIA' | 'SEMANAL'>('DIARIA');
@@ -57,6 +59,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoCita | 'TODOS'>('TODOS');
 
   const [citas, setCitas] = useState<CitaAgenda[]>([]);
+  const [errorCitas, setErrorCitas] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [citaSeleccionada, setCitaSeleccionada] = useState<CitaAgenda | null>(null);
 
@@ -69,6 +72,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
   const cargarCitas = useCallback(() => {
     let cancelado = false;
     setCargando(true);
+    setErrorCitas(null);
     const fechaDesde = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-19';
     const fechaHasta = vistaModo === 'DIARIA' ? fechaSeleccionada : '2026-10-24';
 
@@ -88,7 +92,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
       })
       .catch((err) => {
         if (!cancelado) {
-          console.error('Error cargando citas de agenda:', err);
+          setErrorCitas(getErrorMessage(err, 'No se pudo cargar la agenda.'));
           setCargando(false);
         }
       });
@@ -242,6 +246,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <Button
           variant="primary"
           leftIcon={<CalendarPlus size={18} />}
+          disabled={mode === 'api'}
           onClick={() => setIsCrearModalOpen(true)}
           aria-label={
             institucionId === 'CLINICA_ODONTOLOGICA'
@@ -474,6 +479,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <div className="inline-filter">
           <User size={16} style={{ color: 'var(--color-text-secondary)' }} />
           <select
+            disabled={mode === 'api'}
             value={profesionalFiltro}
             onChange={(e) => setProfesionalFiltro(e.target.value)}
             aria-label="Filtrar por profesional"
@@ -520,7 +526,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
       </div>
 
       {/* Contenedor de Citas: Vista Diaria vs Vista Semanal */}
-      {cargando ? (
+      {errorCitas ? <Alert variant="danger" title="No se pudo cargar la agenda">{errorCitas}<Button onClick={cargarCitas}>Reintentar</Button></Alert> : cargando ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <SkeletonLoader variant="rectangular" height="72px" />
           <SkeletonLoader variant="rectangular" height="72px" />
@@ -934,6 +940,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                     <Button
                       variant="secondary"
                       size="sm"
+                      disabled={mode === 'api'}
                       leftIcon={<RefreshCw size={14} />}
                       onClick={() => {
                         setCitaParaReprogramar(citaSeleccionada);
@@ -945,6 +952,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                     <Button
                       variant="danger"
                       size="sm"
+                      disabled={mode === 'api'}
                       leftIcon={<XCircle size={14} />}
                       onClick={() => {
                         setCitaParaCancelar(citaSeleccionada);

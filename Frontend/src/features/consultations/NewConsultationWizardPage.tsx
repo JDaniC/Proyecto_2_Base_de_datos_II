@@ -1,3 +1,5 @@
+import { HttpError } from '../../services/http/errors';
+import { generarClaveIdempotencia } from '../../services/http/idempotency';
 import { getErrorMessage } from '../../services/errors';
 import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useState, useEffect, useRef } from 'react';
@@ -76,7 +78,8 @@ const TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA = [
 
 export const NewConsultationWizardPage: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [citaSeleccionada, setCitaSeleccionada] = useState('');
   const citaIdParam = searchParams.get('citaId');
 
   const navigate = useNavigate();
@@ -145,7 +148,9 @@ export const NewConsultationWizardPage: React.FC = () => {
     codigo: string;
     mensaje: string;
   } | null>(null);
+  const [pendienteConfirmar, setPendienteConfirmar] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const intention = useRef<{fingerprint: string; key: string} | null>(null);
 
   // Cargar datos del paciente y de la cita vinculada
   useEffect(() => {
@@ -153,6 +158,8 @@ export const NewConsultationWizardPage: React.FC = () => {
 
     let active = true;
     setCargandoInicial(true);
+    setErrorBloqueanteCita(null);
+    setCitaVinculada(null);
 
     Promise.all([
       patientRepository.obtenerPorId(institucionId, pacienteId),
@@ -200,7 +207,7 @@ export const NewConsultationWizardPage: React.FC = () => {
       })
       .catch((err) => {
         if (!active) return;
-        console.error('Error cargando paciente para consulta:', err);
+        setErrorValidacion(getErrorMessage(err, 'No se pudieron cargar los datos de la atención.'));
         setCargandoInicial(false);
       });
 
@@ -259,6 +266,8 @@ export const NewConsultationWizardPage: React.FC = () => {
   // Handlers para tratamientos
   const agregarTratamiento = () => {
     if (!nuevoTratamientoDesc.trim()) return;
+    if (!nuevoTratamientoIndic.trim()) { setErrorValidacion('Describe las indicaciones del tratamiento.'); return; }
+    setErrorValidacion(null);
     setTratamientos([
       ...tratamientos,
       {
@@ -322,6 +331,7 @@ export const NewConsultationWizardPage: React.FC = () => {
         setErrorValidacion('El motivo de la consulta es obligatorio (mínimo 4 caracteres).');
         return;
       }
+      if (institucionId === 'CLINICA_ODONTOLOGICA' && !citaVinculada) { setErrorValidacion('Selecciona la cita dental antes de continuar.'); return; }
       if (institucionId === 'CENTRO_PEDIATRICO' && !paciente?.responsables?.some(r => r.id === responsableAutorizaId && r.autorizaAtencion)) {
         setErrorValidacion('En Pediatría es obligatorio seleccionar el responsable que autoriza la atención.');
         return;
@@ -353,7 +363,7 @@ export const NewConsultationWizardPage: React.FC = () => {
         setErrorValidacion('Ha indicado emitir receta pero no ha agregado ningún medicamento a la prescripción.');
         return;
       }
-      if (emitirReceta && medicamentos.some(m => !m.nombre.trim() || !m.presentacion.trim() || !m.dosis.trim() || !m.frecuencia.trim() || !m.duracion.trim() || !m.via.trim() || (institucionId === 'CENTRO_PEDIATRICO' && !m.concentracion.trim()))) { setErrorValidacion('Completa los datos de cada medicamento antes de continuar.'); return; }
+      if (emitirReceta && medicamentos.some(m => !m.nombre.trim() || !m.presentacion.trim() || !m.dosis.trim() || !m.frecuencia.trim() || !m.duracion.trim() || !m.via.trim() || !m.concentracion.trim() || !m.indicaciones.trim())) { setErrorValidacion('Completa los datos de cada medicamento antes de continuar.'); return; }
       setPaso(5);
       return;
     }
@@ -361,7 +371,7 @@ export const NewConsultationWizardPage: React.FC = () => {
 
   // Envío final
   const handleConfirmarConsulta = async () => {
-    if (!pacienteId) return;
+    if (!pacienteId || guardando || !sesion) return;
     setErrorValidacion(null);
     setGuardando(true);
 
@@ -379,6 +389,9 @@ export const NewConsultationWizardPage: React.FC = () => {
 
     const payload: RegistroConsultaCompletaDTO = {
       pacienteId,
+      versionPaciente: paciente?.version,
+      versionCita: citaVinculada?.version,
+      versionVinculo: paciente?.responsables?.find(r => r.id === responsableAutorizaId)?.versionVinculo,
       citaId: citaVinculada?.id,
       responsableId: responsableAutorizaId || undefined,
       motivo: motivo.trim(),
@@ -393,12 +406,16 @@ export const NewConsultationWizardPage: React.FC = () => {
             observaciones: observacionesReceta.trim()
           }
         : undefined,
-      idempotencyKey: `con-${pacienteId}-${Date.now()}`
+      idempotencyKey: ''
     };
 
+    const fingerprint = JSON.stringify(payload);
+    if (intention.current?.fingerprint !== fingerprint) intention.current = {fingerprint, key: generarClaveIdempotencia()};
+    payload.idempotencyKey = intention.current.key;
+
     const profesional = {
-      nombre: sesion?.nombre || 'Dra. Elena Morales',
-      rol: sesion?.rolEtiqueta || 'Médico Especialista'
+      nombre: sesion.nombre,
+      rol: sesion.rolEtiqueta
     };
 
     try {
@@ -407,6 +424,7 @@ export const NewConsultationWizardPage: React.FC = () => {
       navigate(`/pacientes/${pacienteId}?tab=consultas`);
     } catch (err: any) {
       setGuardando(false);
+      setPendienteConfirmar(err instanceof HttpError && err.status === 503);
       setErrorValidacion(getErrorMessage(err, 'Error al registrar la consulta médica.'));
     }
   };
@@ -425,7 +443,8 @@ export const NewConsultationWizardPage: React.FC = () => {
   if (!paciente) {
     return (
       <div style={{ maxWidth: '800px', margin: '40px auto', textAlign: 'center' }}>
-        <h2>Paciente no encontrado</h2>
+        <h2>{errorValidacion ? 'No se pudo cargar la atención' : 'Paciente no encontrado'}</h2>
+        {errorValidacion && <p role="alert">{errorValidacion}</p>}
         <Button variant="primary" onClick={() => navigate('/pacientes')}>
           Volver a pacientes
         </Button>
@@ -521,6 +540,10 @@ export const NewConsultationWizardPage: React.FC = () => {
         </div>
       </div>
 
+      {institucionId === 'CLINICA_ODONTOLOGICA' && !citaVinculada && <div style={{padding: 16}}>
+        <label>Identificador de cita dental <input aria-label="Identificador de cita dental" value={citaSeleccionada} onChange={e => setCitaSeleccionada(e.target.value)} /></label>
+        <Button onClick={() => setSearchParams({citaId: citaSeleccionada})} disabled={!citaSeleccionada.trim()}>Seleccionar cita</Button>
+      </div>}
       {/* Conflicto Bloqueante de Cita Vinculada (CA06) */}
       {errorBloqueanteCita && (
         <div
@@ -550,6 +573,7 @@ export const NewConsultationWizardPage: React.FC = () => {
             </Button>
             <Button
               variant="primary"
+              disabled={institucionId === 'CLINICA_ODONTOLOGICA'}
               onClick={() => {
                 setErrorBloqueanteCita(null);
                 setCitaVinculada(null);
@@ -592,7 +616,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   if (item.num < paso) setPaso(item.num as any);
                 }}
                 aria-current={isActive ? 'step' : undefined}
-                disabled={item.num > paso}
+                disabled={item.num > paso || guardando || pendienteConfirmar}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -691,6 +715,7 @@ export const NewConsultationWizardPage: React.FC = () => {
           boxShadow: 'var(--shadow-sm)'
         }}
       >
+        <fieldset disabled={guardando || pendienteConfirmar} style={{border: 0, padding: 0, margin: 0, minWidth: 0}}>
         {/* PASO 1: Datos de la Consulta */}
         {paso === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1589,6 +1614,8 @@ export const NewConsultationWizardPage: React.FC = () => {
           </div>
         )}
 
+        </fieldset>
+        {pendienteConfirmar && <p role="status">Resultado pendiente de confirmar. Reintenta el registro con los mismos datos.</p>}
         {/* Barra de Navegación del Asistente */}
         <div
           style={{
@@ -1608,6 +1635,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                   setErrorValidacion(null);
                   setPaso((paso - 1) as any);
                 }}
+                disabled={pendienteConfirmar || guardando}
                 leftIcon={<ChevronLeft size={16} />}
               >
                 Paso anterior

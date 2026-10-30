@@ -45,5 +45,5 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, requierePermiso 
     }
   }
 
-  return <>{children}</>;
+  return <React.Fragment key={`${sesion.cuentaId}:${sesion.institucionId}:${sesion.fechaInicio}`}>{children}</React.Fragment>;
 };

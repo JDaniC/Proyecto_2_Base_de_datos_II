@@ -105,7 +105,7 @@ describe('Adaptador HTTP de pacientes E02', () => {
     const repo = createHttpPatientRepository(http());
     expect(await repo.obtenerHistorial?.('HOSPITAL_GENERAL', id, { limite: 1, orden: 'ASC', cursor: 'opaco' })).toEqual({ eventos: [], siguienteCursor: 'cursor-historial' });
     expect(fetchMock.mock.calls[0][0]).toContain(`/${id}/historial?`);
-    await expect(repo.archivar('HOSPITAL_GENERAL', id, 'TRASLADO', 'Prueba')).rejects.toMatchObject({ status: 501 }); expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(repo.obtenerPolizasSeguro('HOSPITAL_GENERAL', id)).rejects.toMatchObject({ status: 501 }); expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it.each([401, 403, 409, 503])('propaga error %s sin fallback', async (status) => {
     fetchMock.mockResolvedValue(fallo('PRUEBA', status));
