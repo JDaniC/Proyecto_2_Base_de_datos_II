@@ -1,3 +1,4 @@
+import { crearClinicaMongodb, aplicarCambiosClinicosMongodb } from '../consultas/clinica-mongodb.js';
 import { crearHistorialMongodb } from '../../historial/historial-mongodb.js';
 import type { ClientSession, Db } from 'mongodb';
 import type { BundleInstitucional } from '../../../../aplicacion/puertos/bundle-institucional.js';
@@ -39,13 +40,16 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
     crearLector(db, session, usuarioId) {
       const cache = new Map<string, DocumentoPacienteMongo>();
       originales.set(session, cache);
-      return crearLectorPacientesMongodb(db, session, usuarioId, cache);
+      const lector = crearLectorPacientesMongodb(db, session, usuarioId, cache);
+      return {...lector, clinica: crearClinicaMongodb(db, session, cache)};
     },
-    aplicarCambios(db, session, contexto, comando, cambios) {
+    async aplicarCambios(db, session, contexto, comando, cambios) {
+      if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },
   });
   return Object.freeze({
+    clinica: crearClinicaMongodb(cliente.db),
     institucion: 'LABORATORIO_CLINICO', estadoPersistencia: 'DISPONIBLE', historial: crearHistorialMongodb(cliente.db),
     cuenta: crearRepositorioCuentaInstitucionalMongodb(cliente), pacientes: crearRepositorioPacientesMongodb(cliente.db), uow,
   });

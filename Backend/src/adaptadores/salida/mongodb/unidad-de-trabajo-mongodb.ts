@@ -1,3 +1,4 @@
+import { verificarClinicaMongodb } from './consultas/clinica-mongodb.js';
 import type {
   CambioPlanificado,
   ComandoEstable,
@@ -55,6 +56,8 @@ export function crearUnidadDeTrabajoMongodb<
       if (contexto.identidad.institucion !== INSTITUCION_LABORATORIO) {
         throw new ErrorDominio('SIN_PERMISO', 'La institución del contexto no corresponde a Laboratorio.');
       }
+
+      if (comando.caso.startsWith('consulta.')) await verificarClinicaMongodb(db);
 
       for (let intento = 1; intento <= reintentosMaximos; intento += 1) {
         const session = dependencias.cliente.iniciarSesion();

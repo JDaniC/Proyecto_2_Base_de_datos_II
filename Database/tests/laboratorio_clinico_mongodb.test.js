@@ -124,7 +124,7 @@
       }
       let indices = 0;
       for (const n of nombres) indices += destino.getCollection(n).getIndexes().length - 1;
-      assert.equal(indices, 63);
+      assert.equal(indices, 65);
     });
     for (const nombreColeccion of nombres) {
       await verificar(`documento valido en ${nombreColeccion}`, async () => {

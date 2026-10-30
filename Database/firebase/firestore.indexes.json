@@ -1,5 +1,13 @@
 {
   "indexes": [
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "pediatra_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "DESCENDING" }
+    ] },
+    { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "cita_id", "order": "ASCENDING" },
+      { "fieldPath": "estado", "order": "ASCENDING" }
+    ] },
     { "collectionGroup": "pacientes", "queryScope": "COLLECTION", "fields": [
       { "fieldPath": "estado", "order": "ASCENDING" },
       { "fieldPath": "nombre_busqueda", "order": "ASCENDING" }
@@ -44,6 +52,8 @@
     ] }
   ],
   "fieldOverrides": [
+    { "collectionGroup": "consultas", "fieldPath": "snapshot_v1", "indexes": [] },
+    { "collectionGroup": "snapshots_v1", "fieldPath": "snapshot_v1", "indexes": [] },
     { "collectionGroup": "consultas", "fieldPath": "receta", "indexes": [] },
     { "collectionGroup": "consultas", "fieldPath": "diagnosticos", "indexes": [] },
     { "collectionGroup": "consultas", "fieldPath": "tratamientos", "indexes": [] },

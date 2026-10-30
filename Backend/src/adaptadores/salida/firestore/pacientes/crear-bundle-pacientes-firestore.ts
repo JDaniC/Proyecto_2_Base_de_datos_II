@@ -1,3 +1,4 @@
+import { crearClinicaFirestore, aplicarCambiosClinicosFirestore, aplicarCambiosAgendaFirestore } from '../consultas/clinica-firestore.js';
 import { crearHistorialFirestore } from '../../historial/historial-firestore.js';
 import type { ClienteFirestore } from '../tipos-firestore.js';
 import { INSTITUCION_PEDIATRIA } from '../tipos-firestore.js';
@@ -34,6 +35,7 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
       };
 
       return {
+        clinica: crearClinicaFirestore(cliente.firestore, transaction),
         cuentas: repoCuenta,
         pacientes: repoPacientes,
         identidades: {
@@ -73,12 +75,16 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
       } as unknown as LectorTransaccional;
     },
     aplicarCambios: (transaction, contexto, comando, cambios) =>
-      aplicarCambiosPacientesFirestore(transaction, cliente.firestore, contexto, comando, cambios),
+      comando.caso.startsWith('consulta.')
+        ? aplicarCambiosClinicosFirestore(transaction, cliente.firestore, contexto, comando, cambios)
+        : comando.caso.startsWith('cita.') ? aplicarCambiosAgendaFirestore(transaction, cliente.firestore, contexto, comando, cambios)
+        : aplicarCambiosPacientesFirestore(transaction, cliente.firestore, contexto, comando, cambios),
   });
 }
 
 export function crearBundlePacientesFirestore(cliente: ClienteFirestore): BundleInstitucional & { cuenta: RepositorioCuenta } {
   return Object.freeze({
+    clinica: crearClinicaFirestore(cliente.firestore),
     institucion: 'CENTRO_MEDICO_PEDIATRICO',
     estadoPersistencia: 'DISPONIBLE', historial: crearHistorialFirestore(cliente.firestore),
     cuenta: crearRepositorioCuentaInstitucionalFirestore(cliente),

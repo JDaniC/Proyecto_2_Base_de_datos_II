@@ -122,3 +122,67 @@ La extensión es una proyección transaccional de lectura: cada fila/documento c
 La migración no inventa fechas/autores/versiones de registros clínicos legados. Si encuentra consultas, órdenes, vacunas, hospitalizaciones o historiales archivados previos, registra `RECONCILIAR`; la lectura devuelve 503 hasta que el operador reconstruya todos sus eventos desde procedencia verificable y snapshots exactos. El operador conserva respaldo y originales, contrasta inventario por paciente/tipo/recurso, fechas y vínculos de versión, y solo entonces cambia el manifiesto a LISTO. Si falta procedencia verificable, conservar RECONCILIAR. El alta demográfica sin clínica no requiere backfill de eventos. El contrato AF03 exige esta puerta para legado sin versión.
 
 Recuperación: SQL PostgreSQL revierte la migración completa ante fallo; MySQL/documentales usan cambios aditivos reejecutables. Reaplicar no modifica eventos ni reinicia un manifiesto existente (incluido RECONCILIAR). Revertir el servidor conserva la extensión; no borrar filas/documentos ni volúmenes. Para reparar índices o completar una interrupción, reaplicar la preparación con administración. Esta migración no habilita escritores clínicos E03 ni recursos especializados E04/E05 por sí misma.
+
+### 005 — clínica MongoDB (E03-P2-01)
+
+`005_clinica_mongodb.mjs` exporta `migrarClinicaMongodb(dbAdmin)` para un operador
+con escritores detenidos y respaldo verificado. Ejecutar primero 004 y reconciliar
+su legado. Los manifiestos `esquemas/005_consultas_mongodb_v1.json` y `v2.json`
+fijan validadores e índices conocidos. Rechaza deriva y documentos incompatibles
+antes de modificar estructura; conserva índices adicionales, UUID y documentos.
+El inicializador nuevo entrega v2, pero no migra un volumen existente.
+
+Añade signos vitales cerrados con fecha de toma, profesional histórico, metadatos
+de diagnóstico/tratamiento y código/entidad de prescriptor de receta. No rellena
+historia desde perfiles actuales. Legado sin procedencia queda RECONCILIAR.
+La revisión usa el índice único existente `(tipo_recurso,recurso_id,version)`.
+
+Si falla después de collMod, reejecutar: reconoce v1 o v2 y completa el manifiesto
+id 5 en historial_modelo. El rollback de código nunca elimina campos nuevos:
+conservar el respaldo posterior y modo mantenimiento, restaurar solo una copia
+para diagnóstico. `npm run test:integration:clinica:mongodb` desde Backend prueba
+instalación nueva/existente, recuperación y atomicidad en réplica aislada.
+
+Aplicar 004 y 005 también en instalaciones nuevas antes de habilitar clínica.
+Mientras id 5 esté MIGRANDO/RECONCILIAR o ausente, lecturas/comandos clínicos
+responden 503; pacientes conserva su disponibilidad independiente. La marca
+MIGRANDO se escribe solo después de terminar el preflight y antes de collMod.
+
+## 006 · Clínica pediátrica Firestore (E03-P2-02)
+
+`006_clinica_firestore.mjs` exporta `prepararClinicaFirestore(db)`. El operador
+entrega un cliente administrativo al destino explícito, después de detener
+escritores y realizar respaldo externo verificable. Ejecutar también en una
+instalación nueva, después del inicializador M04 v2 y migración 004. No se
+llama automáticamente desde el servidor ni desde el inicializador.
+
+La versión anterior aceptada es M04 v1 con huella
+`d5f341030fb4740264245a67dc39f04298b0e263f2b6ef28086f38f529562a29`;
+la objetivo es el plan M04 v2 de `obtenerPlan()`. Otra huella falla cerrada.
+La migración conserva copia íntegra del manifiesto y de cada consulta en
+`clinica_migracion_006_respaldo`, avanza cursor por UUID en
+`clinica_configuracion/modelo` y puede reanudarse tras interrupción.
+Nunca sobrescribe el respaldo previo. No elimina consultas, componentes,
+auditoría, operaciones, revisiones ni cuentas.
+
+El backfill copia exclusivamente mediciones ya presentes en
+`control_crecimiento` a `signos_vitales`, sin inventar fecha de toma. Conserva
+el control original. El nuevo snapshot clínico cerrado conserva los metadatos
+comunes, fechas, autorización y profesional históricos; las escrituras nuevas
+crean también `consultas/{id}/snapshots_v1/{version}` por clave exacta.
+No se reconstruye clínica histórica desde perfiles actuales. Una consulta
+legada sin snapshot verificable deja la puerta `RECONCILIAR`; no se cambia
+manualmente a LISTO para eludir esa condición.
+
+Publicar los índices del archivo `firebase/firestore.indexes.json`, incluido
+cita+estado de consultas. El emulador no acredita despliegue de índices ni IAM
+remoto. El adaptador verifica versión/huella del manifiesto y estado LISTO de
+004/006 en cada lectura clínica transaccional. La agenda serializa reservas
+por pediatra con `agenda_revisiones/{id}`; conserva duración desconocida del
+legado y bloquea nuevas reservas sobre intervalos indeterminados.
+
+Recuperación: reejecutar la misma función con escritores detenidos. Conservar
+los respaldos y documentos ampliados; una versión anterior que no soporte el
+nuevo esquema requiere mantenimiento y restauración en copia aislada, nunca
+borrado de campos/volúmenes. Evidencia nueva/existente/interrupción:
+`npm run test:integration:clinica:firestore` en Backend.

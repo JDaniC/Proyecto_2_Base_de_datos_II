@@ -1,0 +1,1657 @@
+{
+  "nombre": "consultas_clinicas",
+  "esquema": {
+    "bsonType": "object",
+    "additionalProperties": false,
+    "properties": {
+      "_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "revision": {
+        "bsonType": [
+          "int",
+          "long"
+        ],
+        "minimum": 1
+      },
+      "paciente_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "historial_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "cita_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "solicitante_medico_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "registrado_por_id": {
+        "bsonType": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "fecha_hora": {
+        "bsonType": "date"
+      },
+      "motivo": {
+        "bsonType": "string",
+        "minLength": 1,
+        "maxLength": 4000,
+        "pattern": "\\S"
+      },
+      "sintomas": {
+        "bsonType": "string",
+        "minLength": 1,
+        "maxLength": 4000,
+        "pattern": "\\S"
+      },
+      "observaciones": {
+        "bsonType": "string",
+        "minLength": 1,
+        "maxLength": 4000,
+        "pattern": "\\S"
+      },
+      "profesional_historico": {
+        "bsonType": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "bsonType": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "nombre": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S"
+          },
+          "rol": {
+            "bsonType": "string",
+            "enum": [
+              "MEDICO_LABORATORIO"
+            ]
+          },
+          "colegiado": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "pattern": "\\S"
+          },
+          "entidad_colegiacion": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "rol",
+          "colegiado",
+          "entidad_colegiacion"
+        ]
+      },
+      "signos_vitales": {
+        "bsonType": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fecha_hora_medicion": {
+            "bsonType": "date"
+          },
+          "peso_kg": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 0.1,
+                "maximum": 500,
+                "multipleOf": 0.001
+              }
+            ]
+          },
+          "talla_cm": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 10,
+                "maximum": 300,
+                "multipleOf": 0.01
+              }
+            ]
+          },
+          "temperatura_c": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 20,
+                "maximum": 50,
+                "multipleOf": 0.1
+              }
+            ]
+          },
+          "presion_sistolica": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 10,
+                "maximum": 300,
+                "multipleOf": 1
+              }
+            ]
+          },
+          "presion_diastolica": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 10,
+                "maximum": 200,
+                "multipleOf": 1
+              }
+            ]
+          },
+          "frecuencia_cardiaca_lpm": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 10,
+                "maximum": 300,
+                "multipleOf": 1
+              }
+            ]
+          },
+          "frecuencia_respiratoria_rpm": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 1,
+                "maximum": 150,
+                "multipleOf": 1
+              }
+            ]
+          },
+          "saturacion_oxigeno_pct": {
+            "anyOf": [
+              {
+                "bsonType": "null"
+              },
+              {
+                "bsonType": [
+                  "decimal",
+                  "double",
+                  "int",
+                  "long"
+                ],
+                "minimum": 0,
+                "maximum": 100,
+                "multipleOf": 0.01
+              }
+            ]
+          }
+        },
+        "required": [
+          "fecha_hora_medicion"
+        ]
+      },
+      "estado": {
+        "bsonType": "string",
+        "enum": [
+          "ABIERTA",
+          "FINALIZADA"
+        ]
+      },
+      "diagnosticos": {
+        "bsonType": "array",
+        "minItems": 0,
+        "maxItems": 100,
+        "items": {
+          "bsonType": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fecha_registro": {
+              "bsonType": "date"
+            },
+            "registrado_por": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "nombre": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "rol": {
+                  "bsonType": "string",
+                  "enum": [
+                    "MEDICO_LABORATORIO"
+                  ]
+                },
+                "colegiado": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 60,
+                  "pattern": "\\S"
+                },
+                "entidad_colegiacion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "id",
+                "nombre",
+                "rol",
+                "colegiado",
+                "entidad_colegiacion"
+              ]
+            },
+            "diagnostico_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "codigo": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 60,
+              "pattern": "\\S"
+            },
+            "nombre": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S"
+            },
+            "descripcion": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "es_principal": {
+              "bsonType": "bool"
+            },
+            "observaciones": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "diagnostico_id",
+            "codigo",
+            "nombre",
+            "es_principal"
+          ]
+        }
+      },
+      "tratamientos": {
+        "bsonType": "array",
+        "minItems": 0,
+        "maxItems": 100,
+        "items": {
+          "bsonType": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fecha_registro": {
+              "bsonType": "date"
+            },
+            "registrado_por": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "nombre": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "rol": {
+                  "bsonType": "string",
+                  "enum": [
+                    "MEDICO_LABORATORIO"
+                  ]
+                },
+                "colegiado": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 60,
+                  "pattern": "\\S"
+                },
+                "entidad_colegiacion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "id",
+                "nombre",
+                "rol",
+                "colegiado",
+                "entidad_colegiacion"
+              ]
+            },
+            "tratamiento_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "nombre": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S"
+            },
+            "descripcion": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "fecha_inicio": {
+              "bsonType": "date"
+            },
+            "fecha_fin": {
+              "bsonType": "date"
+            },
+            "indicaciones": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "observaciones": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "diagnostico_ids": {
+              "bsonType": "array",
+              "minItems": 0,
+              "maxItems": 100,
+              "items": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "tratamiento_id",
+            "nombre"
+          ]
+        }
+      },
+      "receta": {
+        "bsonType": "object",
+        "additionalProperties": false,
+        "properties": {
+          "codigo_legible": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "pattern": "\\S"
+          },
+          "entidad_colegiacion_historica": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S"
+          },
+          "receta_id": {
+            "bsonType": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "bsonType": [
+              "int",
+              "long"
+            ],
+            "minimum": 1
+          },
+          "estado": {
+            "bsonType": "string",
+            "enum": [
+              "EMITIDA",
+              "ANULADA"
+            ]
+          },
+          "fecha_emision": {
+            "bsonType": "date"
+          },
+          "prescriptor_id": {
+            "bsonType": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "prescriptor_nombre_historico": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S"
+          },
+          "colegiado_historico": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "pattern": "\\S"
+          },
+          "medicamentos": {
+            "bsonType": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "medicamento_id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "nombre": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "presentacion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "concentracion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "dosis": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "frecuencia": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "duracion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "via": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "\\S"
+                },
+                "indicaciones": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 4000,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "medicamento_id",
+                "nombre",
+                "presentacion",
+                "concentracion",
+                "dosis",
+                "frecuencia",
+                "duracion",
+                "via",
+                "indicaciones"
+              ]
+            }
+          },
+          "indicaciones_generales": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "receta_id",
+          "version",
+          "estado",
+          "fecha_emision",
+          "prescriptor_id",
+          "prescriptor_nombre_historico",
+          "colegiado_historico",
+          "medicamentos"
+        ]
+      }
+    },
+    "required": [
+      "_id",
+      "revision",
+      "paciente_id",
+      "historial_id",
+      "solicitante_medico_id",
+      "registrado_por_id",
+      "fecha_hora",
+      "motivo",
+      "estado",
+      "diagnosticos",
+      "tratamientos"
+    ]
+  },
+  "reglas": [
+    {
+      "$expr": {
+        "$cond": [
+          {
+            "$isArray": "$diagnosticos"
+          },
+          {
+            "$eq": [
+              {
+                "$size": "$diagnosticos"
+              },
+              {
+                "$size": {
+                  "$setUnion": [
+                    "$diagnosticos.diagnostico_id",
+                    []
+                  ]
+                }
+              }
+            ]
+          },
+          false
+        ]
+      }
+    },
+    {
+      "$expr": {
+        "$cond": [
+          {
+            "$isArray": "$tratamientos"
+          },
+          {
+            "$eq": [
+              {
+                "$size": "$tratamientos"
+              },
+              {
+                "$size": {
+                  "$setUnion": [
+                    "$tratamientos.tratamiento_id",
+                    []
+                  ]
+                }
+              }
+            ]
+          },
+          false
+        ]
+      }
+    },
+    {
+      "$expr": {
+        "$cond": [
+          {
+            "$eq": [
+              {
+                "$type": "$receta"
+              },
+              "missing"
+            ]
+          },
+          true,
+          {
+            "$and": [
+              {
+                "$eq": [
+                  "$receta.prescriptor_id",
+                  "$solicitante_medico_id"
+                ]
+              },
+              {
+                "$cond": [
+                  {
+                    "$isArray": "$receta.medicamentos"
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$size": "$receta.medicamentos"
+                      },
+                      {
+                        "$size": {
+                          "$setUnion": [
+                            "$receta.medicamentos.medicamento_id",
+                            []
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  false
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "$expr": {
+        "$allElementsTrue": [
+          {
+            "$map": {
+              "input": {
+                "$ifNull": [
+                  "$tratamientos",
+                  []
+                ]
+              },
+              "as": "t",
+              "in": {
+                "$or": [
+                  {
+                    "$eq": [
+                      {
+                        "$type": "$$t.fecha_inicio"
+                      },
+                      "missing"
+                    ]
+                  },
+                  {
+                    "$eq": [
+                      {
+                        "$type": "$$t.fecha_fin"
+                      },
+                      "missing"
+                    ]
+                  },
+                  {
+                    "$gte": [
+                      "$$t.fecha_fin",
+                      "$$t.fecha_inicio"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$expr": {
+        "$cond": [
+          {
+            "$isArray": "$diagnosticos"
+          },
+          {
+            "$or": [
+              {
+                "$eq": [
+                  {
+                    "$size": "$diagnosticos"
+                  },
+                  0
+                ]
+              },
+              {
+                "$eq": [
+                  {
+                    "$size": {
+                      "$filter": {
+                        "input": "$diagnosticos",
+                        "as": "d",
+                        "cond": {
+                          "$eq": [
+                            "$$d.es_principal",
+                            true
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  1
+                ]
+              }
+            ]
+          },
+          false
+        ]
+      }
+    }
+  ],
+  "indices": [
+    {
+      "name": "uq_consulta_cita",
+      "key": {
+        "cita_id": 1
+      },
+      "unique": true,
+      "partialFilterExpression": {
+        "cita_id": {
+          "$type": "string"
+        }
+      }
+    },
+    {
+      "name": "uq_consulta_receta",
+      "key": {
+        "receta.receta_id": 1
+      },
+      "unique": true,
+      "partialFilterExpression": {
+        "receta.receta_id": {
+          "$type": "string"
+        }
+      }
+    },
+    {
+      "name": "ix_consulta_paciente_fecha",
+      "key": {
+        "paciente_id": 1,
+        "fecha_hora": 1,
+        "_id": 1
+      }
+    },
+    {
+      "name": "ix_consulta_historial_fecha",
+      "key": {
+        "historial_id": 1,
+        "fecha_hora": 1,
+        "_id": 1
+      }
+    }
+  ],
+  "validador": {
+    "$and": [
+      {
+        "$jsonSchema": {
+          "bsonType": "object",
+          "additionalProperties": false,
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "revision": {
+              "bsonType": [
+                "int",
+                "long"
+              ],
+              "minimum": 1
+            },
+            "paciente_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "historial_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "cita_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "solicitante_medico_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "registrado_por_id": {
+              "bsonType": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "fecha_hora": {
+              "bsonType": "date"
+            },
+            "motivo": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "sintomas": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "observaciones": {
+              "bsonType": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "pattern": "\\S"
+            },
+            "profesional_historico": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "nombre": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "rol": {
+                  "bsonType": "string",
+                  "enum": [
+                    "MEDICO_LABORATORIO"
+                  ]
+                },
+                "colegiado": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 60,
+                  "pattern": "\\S"
+                },
+                "entidad_colegiacion": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "id",
+                "nombre",
+                "rol",
+                "colegiado",
+                "entidad_colegiacion"
+              ]
+            },
+            "signos_vitales": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "fecha_hora_medicion": {
+                  "bsonType": "date"
+                },
+                "peso_kg": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 0.1,
+                      "maximum": 500,
+                      "multipleOf": 0.001
+                    }
+                  ]
+                },
+                "talla_cm": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 10,
+                      "maximum": 300,
+                      "multipleOf": 0.01
+                    }
+                  ]
+                },
+                "temperatura_c": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 20,
+                      "maximum": 50,
+                      "multipleOf": 0.1
+                    }
+                  ]
+                },
+                "presion_sistolica": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 10,
+                      "maximum": 300,
+                      "multipleOf": 1
+                    }
+                  ]
+                },
+                "presion_diastolica": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 10,
+                      "maximum": 200,
+                      "multipleOf": 1
+                    }
+                  ]
+                },
+                "frecuencia_cardiaca_lpm": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 10,
+                      "maximum": 300,
+                      "multipleOf": 1
+                    }
+                  ]
+                },
+                "frecuencia_respiratoria_rpm": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 1,
+                      "maximum": 150,
+                      "multipleOf": 1
+                    }
+                  ]
+                },
+                "saturacion_oxigeno_pct": {
+                  "anyOf": [
+                    {
+                      "bsonType": "null"
+                    },
+                    {
+                      "bsonType": [
+                        "decimal",
+                        "double",
+                        "int",
+                        "long"
+                      ],
+                      "minimum": 0,
+                      "maximum": 100,
+                      "multipleOf": 0.01
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "fecha_hora_medicion"
+              ]
+            },
+            "estado": {
+              "bsonType": "string",
+              "enum": [
+                "ABIERTA",
+                "FINALIZADA"
+              ]
+            },
+            "diagnosticos": {
+              "bsonType": "array",
+              "minItems": 0,
+              "maxItems": 100,
+              "items": {
+                "bsonType": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fecha_registro": {
+                    "bsonType": "date"
+                  },
+                  "registrado_por": {
+                    "bsonType": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "bsonType": "string",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "nombre": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "rol": {
+                        "bsonType": "string",
+                        "enum": [
+                          "MEDICO_LABORATORIO"
+                        ]
+                      },
+                      "colegiado": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 60,
+                        "pattern": "\\S"
+                      },
+                      "entidad_colegiacion": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "rol",
+                      "colegiado",
+                      "entidad_colegiacion"
+                    ]
+                  },
+                  "diagnostico_id": {
+                    "bsonType": "string",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "codigo": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "pattern": "\\S"
+                  },
+                  "nombre": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "pattern": "\\S"
+                  },
+                  "descripcion": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  },
+                  "es_principal": {
+                    "bsonType": "bool"
+                  },
+                  "observaciones": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  }
+                },
+                "required": [
+                  "diagnostico_id",
+                  "codigo",
+                  "nombre",
+                  "es_principal"
+                ]
+              }
+            },
+            "tratamientos": {
+              "bsonType": "array",
+              "minItems": 0,
+              "maxItems": 100,
+              "items": {
+                "bsonType": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fecha_registro": {
+                    "bsonType": "date"
+                  },
+                  "registrado_por": {
+                    "bsonType": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "bsonType": "string",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "nombre": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "rol": {
+                        "bsonType": "string",
+                        "enum": [
+                          "MEDICO_LABORATORIO"
+                        ]
+                      },
+                      "colegiado": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 60,
+                        "pattern": "\\S"
+                      },
+                      "entidad_colegiacion": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "nombre",
+                      "rol",
+                      "colegiado",
+                      "entidad_colegiacion"
+                    ]
+                  },
+                  "tratamiento_id": {
+                    "bsonType": "string",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "nombre": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "pattern": "\\S"
+                  },
+                  "descripcion": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  },
+                  "fecha_inicio": {
+                    "bsonType": "date"
+                  },
+                  "fecha_fin": {
+                    "bsonType": "date"
+                  },
+                  "indicaciones": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  },
+                  "observaciones": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  },
+                  "diagnostico_ids": {
+                    "bsonType": "array",
+                    "minItems": 0,
+                    "maxItems": 100,
+                    "items": {
+                      "bsonType": "string",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "tratamiento_id",
+                  "nombre"
+                ]
+              }
+            },
+            "receta": {
+              "bsonType": "object",
+              "additionalProperties": false,
+              "properties": {
+                "codigo_legible": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 60,
+                  "pattern": "\\S"
+                },
+                "entidad_colegiacion_historica": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "receta_id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "version": {
+                  "bsonType": [
+                    "int",
+                    "long"
+                  ],
+                  "minimum": 1
+                },
+                "estado": {
+                  "bsonType": "string",
+                  "enum": [
+                    "EMITIDA",
+                    "ANULADA"
+                  ]
+                },
+                "fecha_emision": {
+                  "bsonType": "date"
+                },
+                "prescriptor_id": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "prescriptor_nombre_historico": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "colegiado_historico": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 60,
+                  "pattern": "\\S"
+                },
+                "medicamentos": {
+                  "bsonType": "array",
+                  "minItems": 1,
+                  "maxItems": 100,
+                  "items": {
+                    "bsonType": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "medicamento_id": {
+                        "bsonType": "string",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "nombre": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "presentacion": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "concentracion": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "dosis": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "frecuencia": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "duracion": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "via": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "pattern": "\\S"
+                      },
+                      "indicaciones": {
+                        "bsonType": "string",
+                        "minLength": 1,
+                        "maxLength": 4000,
+                        "pattern": "\\S"
+                      }
+                    },
+                    "required": [
+                      "medicamento_id",
+                      "nombre",
+                      "presentacion",
+                      "concentracion",
+                      "dosis",
+                      "frecuencia",
+                      "duracion",
+                      "via",
+                      "indicaciones"
+                    ]
+                  }
+                },
+                "indicaciones_generales": {
+                  "bsonType": "string",
+                  "minLength": 1,
+                  "maxLength": 4000,
+                  "pattern": "\\S"
+                }
+              },
+              "required": [
+                "receta_id",
+                "version",
+                "estado",
+                "fecha_emision",
+                "prescriptor_id",
+                "prescriptor_nombre_historico",
+                "colegiado_historico",
+                "medicamentos"
+              ]
+            }
+          },
+          "required": [
+            "_id",
+            "revision",
+            "paciente_id",
+            "historial_id",
+            "solicitante_medico_id",
+            "registrado_por_id",
+            "fecha_hora",
+            "motivo",
+            "estado",
+            "diagnosticos",
+            "tratamientos"
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$lte": [
+            {
+              "$bsonSize": "$$ROOT"
+            },
+            262144
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$cond": [
+            {
+              "$isArray": "$diagnosticos"
+            },
+            {
+              "$eq": [
+                {
+                  "$size": "$diagnosticos"
+                },
+                {
+                  "$size": {
+                    "$setUnion": [
+                      "$diagnosticos.diagnostico_id",
+                      []
+                    ]
+                  }
+                }
+              ]
+            },
+            false
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$cond": [
+            {
+              "$isArray": "$tratamientos"
+            },
+            {
+              "$eq": [
+                {
+                  "$size": "$tratamientos"
+                },
+                {
+                  "$size": {
+                    "$setUnion": [
+                      "$tratamientos.tratamiento_id",
+                      []
+                    ]
+                  }
+                }
+              ]
+            },
+            false
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$cond": [
+            {
+              "$eq": [
+                {
+                  "$type": "$receta"
+                },
+                "missing"
+              ]
+            },
+            true,
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    "$receta.prescriptor_id",
+                    "$solicitante_medico_id"
+                  ]
+                },
+                {
+                  "$cond": [
+                    {
+                      "$isArray": "$receta.medicamentos"
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$size": "$receta.medicamentos"
+                        },
+                        {
+                          "$size": {
+                            "$setUnion": [
+                              "$receta.medicamentos.medicamento_id",
+                              []
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    false
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$allElementsTrue": [
+            {
+              "$map": {
+                "input": {
+                  "$ifNull": [
+                    "$tratamientos",
+                    []
+                  ]
+                },
+                "as": "t",
+                "in": {
+                  "$or": [
+                    {
+                      "$eq": [
+                        {
+                          "$type": "$$t.fecha_inicio"
+                        },
+                        "missing"
+                      ]
+                    },
+                    {
+                      "$eq": [
+                        {
+                          "$type": "$$t.fecha_fin"
+                        },
+                        "missing"
+                      ]
+                    },
+                    {
+                      "$gte": [
+                        "$$t.fecha_fin",
+                        "$$t.fecha_inicio"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "$expr": {
+          "$cond": [
+            {
+              "$isArray": "$diagnosticos"
+            },
+            {
+              "$or": [
+                {
+                  "$eq": [
+                    {
+                      "$size": "$diagnosticos"
+                    },
+                    0
+                  ]
+                },
+                {
+                  "$eq": [
+                    {
+                      "$size": {
+                        "$filter": {
+                          "input": "$diagnosticos",
+                          "as": "d",
+                          "cond": {
+                            "$eq": [
+                              "$$d.es_principal",
+                              true
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    1
+                  ]
+                }
+              ]
+            },
+            false
+          ]
+        }
+      }
+    ]
+  }
+}
