@@ -91,3 +91,15 @@ explícita 007 a v5; leer DEC18 para el snapshot canónico vigente y la historia
 física inmutable. 311 backend, 6 integración SQL, 11 Mongo real y 14 emulador
 Firestore PASS; modelos SQL nueva/existente PASS. React clínico corresponde a
 E03-P2-03; módulos especializados y cierre E03 conservan su alcance pendiente.
+
+
+Corte E03-P2-03 (30/10/2026, America/Guatemala): PR #63 MERGED en develop
+`eb2a83e`, revisión nativa limpia sobre `e363835`. La ficha HTTP registra atención
+completa, receta, corrección versionada, archivo y reactivación pediátrica; el
+historial enlaza el detalle y sus snapshots. 114 pruebas frontend PASS, 49
+comprobaciones de navegador con PG/MySQL/MongoDB aislados y Firestore/Auth
+emulados PASS; build postmerge PASS. [Evidencia](evidencias/E03/E03-P2-03.md).
+La agenda integra lectura para vincular citas, con filtros simulados y gestión
+pendiente deshabilitados en API. No acredita módulos E04–E05 ni producción
+Firestore. Las seis tareas de E03 están implementadas; falta demostración y
+auditoría de cierre conjunto antes de habilitar E04. Consultar tablero y plan/11.
