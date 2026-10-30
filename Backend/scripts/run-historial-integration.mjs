@@ -9,7 +9,8 @@ import {randomBytes} from 'node:crypto';
 import {createServer} from 'node:net';
 const execFile=promisify(execFileCallback);
 // Comparte únicamente la preparación aislada; cada recorrido conserva sus propias aserciones.
-const pacientesUi = process.argv.includes('--pacientes-ui');
+const clinicaUi = process.argv.includes('--clinica-ui');
+const pacientesUi = process.argv.includes('--pacientes-ui') || clinicaUi;
 const backend=resolve(fileURLToPath(new URL('..',import.meta.url))), root=resolve(backend,'..');
 const proyecto=`bdii-ca07-${randomBytes(5).toString('hex')}`;
 const temporal=await mkdtemp(join(tmpdir(),'bdii-ca07-')), secretos=join(temporal,'secrets');
@@ -54,6 +55,10 @@ try{
  try{await run('docker',[...compose,'exec','-T','mysql','sh','-c','MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot < /tmp/historial-parcial.sql']);}catch{falloEsperado=true;}
  if(!falloEsperado)throw new Error('FALLO_MYSQL_NO_INYECTADO');
  await migrarSql();
+ if(clinicaUi) for(const [servicio,archivo] of [['postgres','007_correcciones_postgresql.sql'],['mysql','007_correcciones_mysql.sql']]) {
+  await run('docker',[...compose,'cp',join(root,'Database/migrations',archivo),`${servicio}:/tmp/clinica.sql`]);
+  await run('docker',[...compose,'exec','-T',servicio,'sh','-c',servicio==='postgres'?'psql -X -v ON_ERROR_STOP=1 -U postgres_admin -d hospital_general -f /tmp/clinica.sql':'MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot < /tmp/clinica.sql']);
+ }
  console.log('PASS preparación SQL: rollback PostgreSQL y recuperación MySQL tras interrupción.');
  Object.assign(entorno,{PG_TEST_PORT:entorno.POSTGRES_PORT,PG_TEST_SECRET_FILE:join(secretos,'postgres_app_password'),MYSQL_TEST_PORT:entorno.MYSQL_PORT,MYSQL_TEST_SECRET_FILE:join(secretos,'mysql_app_password'),MONGO_TEST_PORT:entorno.MONGO_PORT,MONGO_TEST_SECRET_FILE:join(secretos,'mongo_app_password'),MONGO_ADMIN_TEST_SECRET_FILE:join(secretos,'mongo_admin_password')});
  await run('npm',['run','build:test'],{cwd:backend});
@@ -65,7 +70,7 @@ try{
  conf.firestore.rules=join(root,'Database/firebase/firestore.rules');conf.firestore.indexes=indexesPath;
  for(const n of ['auth','firestore','hub','logging'])if(conf.emulators[n])conf.emulators[n].port=Number(await puerto());
  const config=join(temporal,'firebase.json');await writeFile(config,JSON.stringify(conf));
- console.log(await run('firebase',['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/${pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`],{cwd:backend, timeout: pacientesUi ? 600000 : 300000}));
+ console.log(await run('firebase',['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/${clinicaUi ? 'clinica-ui-integration' : pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`],{cwd:backend, timeout: pacientesUi ? 600000 : 300000}));
  const antes=await estadoSql();
  await migrarSql();
  const despues=await estadoSql();

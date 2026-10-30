@@ -141,8 +141,8 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
           }
         },
         patientRepository: customPatientRepository || httpServices.patientRepository,
-        appointmentRepository: requireApiAdapter(customAppointmentRepository, 'appointmentRepository'),
-        consultationRepository: requireApiAdapter(customConsultationRepository, 'consultationRepository'),
+        appointmentRepository: customAppointmentRepository || httpServices.appointmentRepository,
+        consultationRepository: customConsultationRepository || httpServices.consultationRepository,
         userRepository: requireApiAdapter(customUserRepository, 'userRepository'),
         catalogRepository: requireApiAdapter(customCatalogRepository, 'catalogRepository'),
         auditRepository: requireApiAdapter(customAuditRepository, 'auditRepository'),

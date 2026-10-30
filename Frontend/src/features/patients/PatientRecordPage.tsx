@@ -124,14 +124,14 @@ const SimulatedPatientRecord: React.FC = () => {
 
   const handleArchivar = async (causa: CausaArchivo, motivo: string) => {
     if (!pacienteId) return;
-    await patientRepository.archivar(institucionId, pacienteId, causa, motivo);
+    await patientRepository.archivar(institucionId, pacienteId, causa, motivo, expediente?.paciente.version);
     setToastMensaje('Expediente clínico archivado correctamente.');
     await cargarExpediente();
   };
 
   const handleReactivar = async (motivo: string, correccionFallecimiento?: boolean) => {
     if (!pacienteId) return;
-    await patientRepository.reactivar(institucionId, pacienteId, motivo, correccionFallecimiento);
+    await patientRepository.reactivar(institucionId, pacienteId, motivo, correccionFallecimiento, expediente?.paciente.version);
     setToastMensaje('Expediente clínico reactivado exitosamente.');
     await cargarExpediente();
   };

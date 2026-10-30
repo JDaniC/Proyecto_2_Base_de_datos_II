@@ -1,5 +1,7 @@
 import { getErrorMessage } from '../../services/errors';
-import React, { useState } from 'react';
+import { HttpError } from '../../services/http/errors';
+import { generarClaveIdempotencia } from '../../services/http/idempotency';
+import React, { useState, useRef } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -37,13 +39,16 @@ export const ModificarConsultaModal: React.FC<ModificarConsultaModalProps> = ({
   const [signos, setSignos] = useState(consulta?.signosVitales || { pesoKg: null, tallaCm: null, temperaturaC: null, presionSistolica: null, presionDiastolica: null, frecuenciaCardiacaLpm: null });
 
 
+  const [pendienteConfirmar, setPendienteConfirmar] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
 
+  const intention = useRef<{fingerprint: string; key: string} | null>(null);
   if (!consulta) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (guardando || !sesion) return;
     setErrorValidacion(null);
 
     if (!motivo.trim() || motivo.trim().length < 4) {
@@ -61,21 +66,19 @@ export const ModificarConsultaModal: React.FC<ModificarConsultaModalProps> = ({
     if (diagnosticos.length && diagnosticos.filter(d => d.esPrincipal).length !== 1) { setErrorValidacion('Selecciona un diagnóstico principal.'); return; }
     setGuardando(true);
 
+    const cambios = {motivo: motivo.trim(), sintomas: sintomas.trim(), observaciones: observaciones.trim(), diagnosticos, tratamientos, signosVitales: signos, receta: medicamentos.length ? {medicamentos, observaciones: consulta.receta?.observaciones} : undefined};
+    const fingerprint = JSON.stringify([consulta.id, consulta.version, cambios, motivoCorreccion]);
+    if (intention.current?.fingerprint !== fingerprint) intention.current = {fingerprint, key: generarClaveIdempotencia()};
     try {
-      const autor = `${sesion?.nombre || 'Dra. Elena Morales'} (${sesion?.rolEtiqueta || 'Médico Especialista'})`;
+      const autor = `${sesion.nombre} (${sesion.rolEtiqueta})`;
       const actualizada = await consultationRepository.actualizarConsultaFinalizada(
         institucionId,
         consulta.pacienteId,
         consulta.id,
-        {
-          motivo: motivo.trim(),
-          sintomas: sintomas.trim(),
-          observaciones: observaciones.trim(),
-          diagnosticos, tratamientos, signosVitales: signos,
-          receta: medicamentos.length ? { medicamentos } : undefined
-        },
+        {...cambios, idempotencyKey: intention.current.key},
         motivoCorreccion.trim(),
-        autor
+        autor,
+        consulta.version
       );
 
       setGuardando(false);
@@ -83,6 +86,7 @@ export const ModificarConsultaModal: React.FC<ModificarConsultaModalProps> = ({
       onClose();
     } catch (err: any) {
       setGuardando(false);
+      setPendienteConfirmar(err instanceof HttpError && err.status === 503);
       setErrorValidacion(getErrorMessage(err, 'Error al actualizar la consulta clínica.'));
     }
   };
@@ -117,6 +121,7 @@ export const ModificarConsultaModal: React.FC<ModificarConsultaModalProps> = ({
 
         <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>La corrección conservará la revisión anterior y registrará su motivo.</p>
 
+        <fieldset disabled={guardando || pendienteConfirmar} style={{border: 0, padding: 0, margin: 0, display: 'contents'}}>
         {/* Motivo rectificado */}
         <div>
           <label
@@ -250,6 +255,8 @@ export const ModificarConsultaModal: React.FC<ModificarConsultaModalProps> = ({
           />
         </div>
 
+        </fieldset>
+        {pendienteConfirmar && <p role="status">Resultado pendiente de confirmar. Reintenta con los mismos datos.</p>}
         {/* Acciones */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
           <Button type="button" variant="secondary" onClick={onClose} disabled={guardando}>

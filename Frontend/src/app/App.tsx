@@ -54,8 +54,8 @@ export const App: React.FC = () => {
               <Route path="/pacientes/nuevo" element={<PatientFormPage />} />
               <Route path="/pacientes/:pacienteId/editar" element={<PatientFormPage />} />
               <Route path="/pacientes/:pacienteId" element={<PatientRecordPage />} />
-              <Route path="/pacientes/:pacienteId/consultas/nueva" element={<NewConsultationWizardPage />} />
-              <Route path="/pacientes/:pacienteId/consultas/:consultaId" element={<ConsultationDetailPage />} />
+              <Route path="/pacientes/:pacienteId/consultas/nueva" element={<AuthGuard requierePermiso="consultas.registrar"><NewConsultationWizardPage /></AuthGuard>} />
+              <Route path="/pacientes/:pacienteId/consultas/:consultaId" element={<AuthGuard requierePermiso="historial.leer"><ConsultationDetailPage /></AuthGuard>} />
               <Route path="/agenda" element={<AppointmentsCalendarPage />} />
               <Route path="/hospital/hospitalizaciones" element={<HospitalizationsListPage />} />
               <Route path="/hospital/hospitalizaciones/nueva" element={<HospitalizationAdmissionPage />} />

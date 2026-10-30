@@ -505,6 +505,9 @@ export interface MedicamentoRecetaDTO {
 }
 
 export interface RegistroConsultaCompletaDTO {
+  versionPaciente?: number;
+  versionCita?: number;
+  versionVinculo?: number;
   pacienteId: string;
   citaId?: string;
   responsableId?: string;
@@ -530,6 +533,7 @@ export interface RevisionConsultaItem {
 }
 
 export interface DetalleConsultaCompleta {
+  responsableId?: string;
   id: string;
   institucionId: InstitucionId;
   pacienteId: string;
@@ -564,6 +568,7 @@ export interface ConsultaPaciente {
 }
 
 export interface DiagnosticoHistorial {
+  observacion?: string;
   id: string;
   codigoCIE: string;
   nombre: string;
@@ -584,6 +589,7 @@ export interface RecetaMedicamentoItem {
 }
 
 export interface RecetaHistorial {
+  observaciones?: string;
   id: string;
   codigoReceta: string;
   fechaEmision: string;
