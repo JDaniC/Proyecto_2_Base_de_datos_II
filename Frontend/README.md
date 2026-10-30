@@ -33,7 +33,7 @@ El perfil administrativo se obtiene sin solicitar historial clínico. Las cuenta
 
 La ficha HTTP permite registrar atención completa y archivar con versión/motivo; pediatría permite reactivar. El asistente envía las versiones observadas del paciente, cita y vínculo autorizante. La cita dental se vincula por su identificador y se verifica en servidor. El detalle permite corregir el agregado y consultar versiones anteriores. La autoridad del profesional proviene de la cuenta verificada; los adaptadores omiten los nombres/autores de presentación. Ante respuesta incierta, los campos de la atención/corrección se bloquean y el reintento conserva clave y contenido. Cambiar de cuenta desmonta los formularios.
 
-El adaptador de agenda ofrece lectura para vincular citas existentes. Su alta/reprogramación/cancelación y los módulos especializados conservan rechazo explícito hasta su integración; no se acreditan por el recorrido clínico.
+El adaptador de agenda ofrece lectura para vincular citas existentes. En modo API se deshabilita el selector de profesionales hasta cargar opciones reales; una caída muestra error y reintento. Su alta/reprogramación/cancelación y los módulos especializados conservan rechazo explícito hasta su integración; no se acreditan por el recorrido clínico.
 
 Comprobaciones reproducibles:
 
