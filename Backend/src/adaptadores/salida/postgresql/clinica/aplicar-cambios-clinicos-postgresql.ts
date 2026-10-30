@@ -98,7 +98,7 @@ async function resolverCatalogoDiagnostico(
   if (id !== undefined) return Number(id);
   const creado = await executor.consultar<{ id: number | string }>(
     `INSERT INTO catalogo_diagnostico (sistema, codigo, nombre) VALUES ('CIE-10', $1, $2)
-     RETURNING id_catalogo_diagnostico AS id`,
+     ON CONFLICT (sistema, version, codigo) DO UPDATE SET codigo = EXCLUDED.codigo RETURNING id_catalogo_diagnostico AS id`,
     [codigo, nombre],
   );
   return Number(creado.filas[0]?.id);
@@ -200,10 +200,10 @@ async function guardarConsulta(
   } else {
     const actualizada = await executor.consultar<{ id_consulta: number | string }>(
       `UPDATE consulta SET revision = $1, motivo_consulta = $2, sintomas = $3, observaciones = $4,
-         estado = 'ABIERTA', profesional_historico = $5::jsonb, campos_signos = $8::jsonb
+         estado = $9, profesional_historico = $5::jsonb, campos_signos = $8::jsonb
        WHERE id_publico = $6 AND revision = $7 RETURNING id_consulta`,
       [consulta.version, consulta.motivo, consulta.sintomas === '' ? null : consulta.sintomas,
-        consulta.observaciones ?? null, profesionalJson, consulta.id, cambio.versionAnterior, JSON.stringify(Object.keys(consulta.signos_vitales))],
+        consulta.observaciones ?? null, profesionalJson, consulta.id, cambio.versionAnterior, JSON.stringify(Object.keys(consulta.signos_vitales)), consulta.estado],
     );
     const id = actualizada.filas[0]?.id_consulta;
     if (id === undefined) throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La consulta ha sido modificada por otro proceso.');
@@ -214,7 +214,7 @@ async function guardarConsulta(
   await guardarTratamientos(executor, idConsulta, consulta);
   if (consulta.receta) await guardarReceta(executor, idConsulta, consulta.receta);
   // Cierre al final: MySQL exige el principal ya insertado y ambos motores conservan la historia.
-  if (consulta.estado === 'FINALIZADA') {
+  if (consulta.estado === 'FINALIZADA' && cambio.versionAnterior === null) {
     await executor.consultar("UPDATE consulta SET estado = 'FINALIZADA' WHERE id_consulta = $1", [idConsulta]);
   }
 }

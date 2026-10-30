@@ -255,12 +255,17 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
   assert.equal(abierta.respuesta.estado, 'ABIERTA');
   assert.equal((await clinica.citas.porId(segundaCita.respuesta.id))?.estado, 'EN_CURSO');
 
+  // Una atención previa puede finalizar después del archivo (A-F01).
+  if (dialecto === 'postgresql') await pool.consultar(
+    "UPDATE historial_clinico SET estado_historial = 'ARCHIVADO', causa_baja='TRASLADO', motivo_baja='Prueba sintética', fecha_baja=CURRENT_TIMESTAMP, actor_baja=$2 WHERE id_paciente = (SELECT id_paciente FROM paciente WHERE id_publico = $1)", [pacienteId, cuentaId]);
   const finalizada = await atencion.ejecutar('finalizar', {
     contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()), id: abierta.respuesta.id,
     entrada: { version_esperada: 1 },
   });
   assert.equal(finalizada.respuesta.estado, 'FINALIZADA');
   assert.equal((await clinica.citas.porId(segundaCita.respuesta.id))?.estado, 'ATENDIDA');
+  if (dialecto === 'postgresql') await pool.consultar(
+    "UPDATE historial_clinico SET estado_historial = 'ACTIVO' WHERE id_paciente = (SELECT id_paciente FROM paciente WHERE id_publico = $1)", [pacienteId]);
   const versionUno = await clinica.consultas.porVersion(abierta.respuesta.id, versionPositiva(1));
   assert.ok(versionUno);
   assert.equal(versionUno.estado, 'ABIERTA');

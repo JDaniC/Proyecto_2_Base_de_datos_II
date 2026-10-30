@@ -40,7 +40,7 @@ const indefinido = (msg = 'No fue posible consultar la atención clínica.') =>
 export class RepositorioConsultasPostgresql implements PuertoConsultas {
   constructor(private readonly ejecutor: EjecutorSql) {}
 
-  async porId(id: UUID): Promise<Consulta | null> {
+  async porId(id: UUID, intentos = 0): Promise<Consulta | null> {
     try {
       const resultado = await this.ejecutor.consultar<FilaConsultaSql>(
         `${SELECT_CONSULTA} WHERE c.id_publico = $1`, [id],
@@ -51,6 +51,12 @@ export class RepositorioConsultasPostgresql implements PuertoConsultas {
       const diagnosticos = await this.diagnosticos(id);
       const tratamientos = await this.tratamientos(id);
       const receta = await this.receta(id);
+      const revision = await this.ejecutor.consultar<{ revision: number | string }>(
+        'SELECT revision FROM consulta WHERE id_publico = $1', [id]);
+      if (Number(revision.filas[0]?.revision) !== Number(fila.revision)) {
+        if (intentos >= 2) throw indefinido();
+        return this.porId(id, intentos + 1);
+      }
       return componentesDeConsulta(fila, signos, diagnosticos, tratamientos, receta);
     } catch (error) {
       if (error instanceof ErrorDominio) throw error;

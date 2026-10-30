@@ -38,7 +38,7 @@ const indefinido = () => new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No fue 
 export class RepositorioConsultasMysql implements PuertoConsultas {
   constructor(private readonly ejecutor: EjecutorSql) {}
 
-  async porId(id: UUID): Promise<Consulta | null> {
+  async porId(id: UUID, intentos = 0): Promise<Consulta | null> {
     try {
       const resultado = await this.ejecutor.consultar<FilaConsultaSql>(`${SELECT_CONSULTA} WHERE co.id_publico = ?`, [id]);
       const fila = resultado.filas[0];
@@ -47,6 +47,12 @@ export class RepositorioConsultasMysql implements PuertoConsultas {
       const diagnosticos = await this.diagnosticos(id);
       const tratamientos = await this.tratamientos(id);
       const receta = await this.receta(id);
+      const revision = await this.ejecutor.consultar<{ revision: number | string }>(
+        'SELECT revision FROM consulta_odontologica WHERE id_publico = ?', [id]);
+      if (Number(revision.filas[0]?.revision) !== Number(fila.revision)) {
+        if (intentos >= 2) throw indefinido();
+        return this.porId(id, intentos + 1);
+      }
       return componentesDeConsulta(fila, signos, diagnosticos, tratamientos, receta, 'ODONTOLOGO');
     } catch (error) {
       if (error instanceof ErrorDominio) throw error;

@@ -30,6 +30,10 @@ try {
   await comando('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '240', 'postgres', 'mysql'], {
     cwd: root, env: entorno, timeout: 300_000,
   });
+  // Simula una cuenta previa sin permisos sobre la tabla añadida en v4.
+  await comando('docker', [...compose, 'exec', '-T', 'mysql', 'sh', '-c',
+    `MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot -e "REVOKE SELECT, INSERT, UPDATE, DELETE ON clinica_odontologica.signos_vitales_consulta FROM 'clinica_app'@'%'"`],
+    { cwd: root, env: entorno });
   for (const [servicio, archivo] of [
     ['postgres', '004_historial_postgresql.sql'],
     ['postgres', '005_clinica_sql_postgresql.sql'],

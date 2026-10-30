@@ -90,9 +90,10 @@ export class RepositorioCitasMysql implements PuertoCitas {
 
   async solapamientos(profesional: UUID, fecha: string, inicio: string, fin: string): Promise<readonly Cita[]> {
     try {
+      await this.ejecutor.consultar('SELECT id_publico FROM odontologo WHERE id_publico = ? FOR UPDATE', [profesional]);
       const resultado = await this.ejecutor.consultar<FilaCitaSql>(
         `${SELECT_CITA} WHERE o.id_publico = ? AND DATE(c.fecha_hora) = ? AND TIME(c.fecha_hora) < ?
-           AND COALESCE(c.hora_fin, '23:59:59') > ? ORDER BY c.fecha_hora`,
+           AND COALESCE(c.hora_fin, '23:59:59') > ? ORDER BY c.fecha_hora FOR UPDATE`,
         [profesional, fecha, `${fin}:00`, `${inicio}:00`],
       );
       return Object.freeze(resultado.filas.map(mapearCitaSql));

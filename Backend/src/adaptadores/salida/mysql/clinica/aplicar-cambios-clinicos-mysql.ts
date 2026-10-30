@@ -96,7 +96,7 @@ async function resolverCatalogoDiagnostico(executor: EjecutorSql, codigo: string
   );
   if (existente.filas[0]) return Number(existente.filas[0].id);
   await executor.consultar(
-    'INSERT INTO diagnostico (id_publico, revision, codigo, nombre) VALUES (?, 1, ?, ?)',
+    'INSERT INTO diagnostico (id_publico, revision, codigo, nombre) VALUES (?, 1, ?, ?) ON DUPLICATE KEY UPDATE id_diagnostico = LAST_INSERT_ID(id_diagnostico)',
     [idClinicoEstable(codigo, 'catalogo-diagnostico-dental'), codigo, nombre],
   );
   return ultimoId(executor);
@@ -108,7 +108,7 @@ async function resolverTratamiento(executor: EjecutorSql, nombre: string): Promi
   );
   if (existente.filas[0]) return Number(existente.filas[0].id);
   await executor.consultar(
-    'INSERT INTO tratamiento (id_publico, revision, nombre) VALUES (?, 1, ?)',
+    'INSERT INTO tratamiento (id_publico, revision, nombre) VALUES (?, 1, ?) ON DUPLICATE KEY UPDATE id_tratamiento = LAST_INSERT_ID(id_tratamiento)',
     [idClinicoEstable(nombre, 'catalogo-tratamiento-dental'), nombre],
   );
   return ultimoId(executor);

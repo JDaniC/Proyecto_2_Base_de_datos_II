@@ -97,6 +97,7 @@ export class RepositorioCitasPostgresql implements PuertoCitas {
 
   async solapamientos(profesional: UUID, fecha: string, inicio: string, fin: string): Promise<readonly Cita[]> {
     try {
+      await this.ejecutor.consultar('SELECT id_publico FROM personal_medico WHERE id_publico = $1 FOR UPDATE', [profesional]);
       const resultado = await this.ejecutor.consultar<FilaCitaSql>(
         `${SELECT_CITA} WHERE pm.id_publico = $1 AND c.fecha_hora_inicio < $2::timestamp AND COALESCE(c.fecha_hora_fin, c.fecha_hora_inicio) > $3::timestamp ORDER BY c.fecha_hora_inicio`,
         [profesional, `${fecha} ${fin}`, `${fecha} ${inicio}`],

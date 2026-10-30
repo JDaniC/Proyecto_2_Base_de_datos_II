@@ -139,3 +139,10 @@ CALL _huella_modelo(@bdii_huella);
 UPDATE modelo_database SET version=4, huella=@bdii_huella WHERE id=1;
 
 DO RELEASE_LOCK('bdii_clinica_inicializador_v2');
+
+-- La cuenta existente no recibe permisos del inicializador de Docker.
+SET @bdii_grant = IF(EXISTS(SELECT 1 FROM mysql.user WHERE User='clinica_app' AND Host='%'),
+ 'GRANT SELECT, INSERT, UPDATE, DELETE ON clinica_odontologica.signos_vitales_consulta TO \'clinica_app\'@\'%\'', 'DO 0');
+PREPARE bdii_grant FROM @bdii_grant;
+EXECUTE bdii_grant;
+DEALLOCATE PREPARE bdii_grant;
