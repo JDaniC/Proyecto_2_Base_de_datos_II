@@ -1,5 +1,6 @@
 import {render, screen, waitFor, cleanup} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import {NewConsultationWizardPage} from '../../features/consultations/NewConsultationWizardPage';
+import {MemoryRouter, Routes, Route} from 'react-router-dom';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {ServiceProvider} from '../../app/ServiceContext';
 import {AppointmentsCalendarPage} from '../../features/appointments/AppointmentsCalendarPage';
@@ -14,6 +15,11 @@ describe('Agenda HTTP de lectura',()=>{
   expect(filtro.disabled).toBe(true);expect(filtro.options.length).toBe(1);
   expect(fetch.mock.calls[0][0]).not.toContain('profesional_id=');
   expect((screen.getByRole('button',{name:'Crear nueva cita odontológica'}) as HTMLButtonElement).disabled).toBe(true);
+ });
+ it('un fallo inicial de carga clínica conserva su causa y no afirma que falte el paciente',async()=>{
+  vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new TypeError('offline')));
+  render(<MemoryRouter initialEntries={['/pacientes/sintetico/consultas/nueva']}><ServiceProvider mode="api"><Routes><Route path="/pacientes/:pacienteId/consultas/nueva" element={<NewConsultationWizardPage />} /></Routes></ServiceProvider></MemoryRouter>);
+  await screen.findByRole('alert');expect(screen.queryByText('Paciente no encontrado')).toBeNull();
  });
  it('una caída del transporte muestra el error en lugar de una agenda vacía confirmada',async()=>{
   vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new TypeError('offline')));vista();

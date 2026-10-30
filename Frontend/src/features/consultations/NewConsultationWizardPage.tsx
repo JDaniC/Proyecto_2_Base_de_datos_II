@@ -443,7 +443,8 @@ export const NewConsultationWizardPage: React.FC = () => {
   if (!paciente) {
     return (
       <div style={{ maxWidth: '800px', margin: '40px auto', textAlign: 'center' }}>
-        <h2>Paciente no encontrado</h2>
+        <h2>{errorValidacion ? 'No se pudo cargar la atención' : 'Paciente no encontrado'}</h2>
+        {errorValidacion && <p role="alert">{errorValidacion}</p>}
         <Button variant="primary" onClick={() => navigate('/pacientes')}>
           Volver a pacientes
         </Button>
