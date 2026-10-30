@@ -1,3 +1,4 @@
+import { consultaCorregidaSql } from '../../sql/corregir-consulta-sql.js';
 import type { UUID } from '../../../../dominio/compartido/uuid.js';
 import type { Version } from '../../../../dominio/compartido/version.js';
 import type { PuertosClinicos } from '../../../../aplicacion/puertos/clinica.js';
@@ -20,7 +21,7 @@ type PuertoConsultas = PuertosClinicos['consultas'];
 const SELECT_CONSULTA = `
   SELECT co.id_publico, co.revision, p.id_publico AS paciente_id, ci.id_publico AS cita_id,
          DATE_FORMAT(co.fecha_hora, '%Y-%m-%dT%H:%i:%s.%fZ') AS fecha_hora,
-         co.estado, co.motivo, co.sintomas, co.observaciones, co.profesional_historico, co.campos_signos,
+         co.snapshot_actual, co.estado, co.motivo, co.sintomas, co.observaciones, co.profesional_historico, co.campos_signos,
          o.id_publico AS profesional_id,
          CONCAT_WS(' ', o.nombres, o.apellidos) AS profesional_nombre,
          o.colegiado AS profesional_colegiado,
@@ -43,6 +44,8 @@ export class RepositorioConsultasMysql implements PuertoConsultas {
       const resultado = await this.ejecutor.consultar<FilaConsultaSql>(`${SELECT_CONSULTA} WHERE co.id_publico = ?`, [id]);
       const fila = resultado.filas[0];
       if (!fila) return null;
+      const corregida = consultaCorregidaSql(fila.snapshot_actual, fila);
+      if (corregida) return corregida;
       const signos = await this.signos(id);
       const diagnosticos = await this.diagnosticos(id);
       const tratamientos = await this.tratamientos(id);

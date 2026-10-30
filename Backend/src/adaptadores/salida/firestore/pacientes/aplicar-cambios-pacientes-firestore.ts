@@ -1,3 +1,5 @@
+import { validarEventoHistorial } from '../../historial/proyeccion-historial.js';
+import { normalizarInstante } from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../../aplicacion/puertos/contexto-autenticado.js';
@@ -20,6 +22,20 @@ export async function aplicarCambiosPacientesFirestore(
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
   for (const cambio of cambios) {
+    if (cambio.agregado === 'eventosHistorial') {
+      const {pacienteId, ...entrada} = cambio.nuevoEstado as Record<string, unknown>;
+      const e = validarEventoHistorial(entrada, 'CENTRO_MEDICO_PEDIATRICO');
+      transaction.create(firestore.doc(`historial_eventos/${e.id}`), {id: e.id, paciente_id: pacienteId, tipo: e.tipo, fecha_hora: normalizarInstante(e.fechaHora), contenido: e});
+      continue;
+    }
+    if (cambio.agregado === 'estadoHistorial') {
+      const actual = cambio.nuevoEstado as Paciente;
+      if (!['historial.archivar', 'historial.reactivar'].includes(comando.caso) || actual.version !== Number(cambio.versionAnterior) + 1 || !actual.baja) throw new Error('PLAN_HISTORIAL_INCOMPATIBLE');
+      transaction.update(firestore.doc(`pacientes/${actual.id}`), {estado: actual.estado, revision: actual.version,
+        baja: {causa: actual.baja.causa, motivo: actual.baja.motivo, fecha: new Date(actual.baja.fecha), actor_id: actual.baja.actorId}});
+      continue;
+    }
+
     if (cambio.agregado === 'pacientes') {
       if (cambio.tipo === 'CREAR') {
         const paciente = cambio.nuevoEstado as Paciente;

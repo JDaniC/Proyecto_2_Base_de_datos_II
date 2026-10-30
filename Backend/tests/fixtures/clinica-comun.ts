@@ -64,7 +64,7 @@ export function escenarioClinico(institucion: Institucion) {
       if (plan.tipo === 'REPETIR') return plan.operacion.resultado;
       const nuevosPacientes = new Map(pacientes), nuevasCitas = new Map(citas), nuevasConsultas = new Map(consultas);
       for (const cambio of plan.cambios) {
-        const mapa = cambio.agregado === 'pacientes' ? nuevosPacientes : cambio.agregado === 'citas' ? nuevasCitas : cambio.agregado === 'consultas' ? nuevasConsultas : null;
+        const mapa = (cambio.agregado === 'pacientes' || cambio.agregado === 'estadoHistorial') ? nuevosPacientes : cambio.agregado === 'citas' ? nuevasCitas : cambio.agregado === 'consultas' ? nuevasConsultas : null;
         if (mapa) {
           const anterior = mapa.get(cambio.recursoId);
           if (cambio.versionAnterior !== null && anterior?.version !== cambio.versionAnterior) throw new ErrorDominio('VERSION_DESACTUALIZADA', 'Versión cambió.');

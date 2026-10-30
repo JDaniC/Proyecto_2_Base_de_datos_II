@@ -191,3 +191,29 @@ callback repetido; `tests/unitarios/atencion-clinica.test.ts` parametriza CA04/0
 para cuatro políticas. Adaptadores posteriores deben ejecutar los mismos escenarios
 contra sus motores y agregar carreras entre conexiones reales. HTTP usa transporte
 local real con identidad/persistencia sintéticas; no acredita persistencia clínica.
+
+## E03-P1-03 · Archivo y corrección histórica
+
+POST pacientes/:id/archivo exige historial.archivar, causa, motivo, versión e
+idempotencia. POST pacientes/:id/reactivacion solo admite pediatría; si la baja
+fue por fallecimiento exige correccion_fallecimiento=true y motivo. Se conservan
+la baja previa, revisiones y eventos cronológicos. El archivo y los escritores
+clínicos compiten por la revisión del paciente en la misma UoW.
+
+POST consultas/:id/correcciones reemplaza el contenido de una FINALIZADA con
+motivo_correccion y versión, conservando paciente/cita/profesional/autorización.
+Receta sin cambios conserva su versión; cambiarla o retirarla exige recetas.emitir.
+La corrección conserva fecha/prescriptor de emisión y guarda la versión previa.
+GET consultas/:id?version=N recupera el snapshot anterior autorizado. Los listados
+paginados de revisiones siguen NOT_IMPLEMENTED y no se acreditan por este recorrido.
+
+SQL requiere migración explícita 007 (v5), además de preparación 004/005 para
+volúmenes anteriores. Las tablas de componentes originalmente emitidos conservan
+historia física; snapshot_actual y los puertos son la lectura clínica vigente
+tras corrección (DEC18). MongoDB y Firestore conservan sus agregados y revisiones
+existentes; Firestore también guarda snapshots_v1 exactos por versión.
+
+Esta tarea habilita escritores comunes ya presentes. Órdenes, vacunas y cobros
+especializados siguen su alcance E04/E05: no se presentan como implementados
+porque las políticas de archivo estén disponibles. La integración React de
+estos comandos corresponde a E03-P2-03.

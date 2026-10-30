@@ -12,6 +12,7 @@ import { VerificadorIdentidadMemoria } from '../../src/adaptadores/salida/identi
 import { escenarioClinico, nuevoId } from '../fixtures/clinica-comun.js';
 import type { Consulta } from '../../src/dominio/clinica/consulta.js';
 const escenarios = INSTITUCIONES_CANONICAS.map(escenarioClinico);
+for (const s of escenarios) s.cuenta = {...s.cuenta, permisos: [...s.cuenta.permisos, 'historial.archivar']};
 const tokens = escenarios.map(s => ({ token: `clinica-${s.bundle.institucion}`, uid: s.cuenta.uid, institucion: s.bundle.institucion }));
 describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () => {
   let app: INestApplication, url: string;
@@ -63,4 +64,28 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
     assert.equal(body.data.motivo, 'Control'); assert.equal(body.data.fecha, '2026-10-29');
     assert.equal((await post(`/citas/${s.cita.id}/reprogramacion`, {})).status, 404);
   });
+  for (const [i, institucion] of INSTITUCIONES_CANONICAS.entries()) it(`archivo y corrección HTTP — ${institucion}`, async () => {
+    const s = escenarios[i]!;
+    const original = [...s.consultas.values()].find(c => c.estado === 'FINALIZADA')!;
+    const anterior = await get(`/consultas/${original.id}?version=${original.version}`, i);
+    assert.equal(anterior.status, 200);
+    const bodyAnterior = await anterior.json();
+    const paciente = s.pacientes.get(s.paciente.id)!;
+    const archivo = await post(`/pacientes/${paciente.id}/archivo`, {version_esperada: paciente.version, causa: 'TRASLADO', motivo: 'Prueba sintética'}, i);
+    assert.equal(archivo.status, 200);
+    const correccion = await post(`/consultas/${original.id}/correcciones`, {
+      version_esperada: original.version, motivo_correccion: 'Prueba sintética', contenido: {
+        motivo: 'Motivo rectificado', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: []}}, i);
+    assert.equal(correccion.status, 200);
+    const actual = (await correccion.json() as {data: Consulta}).data;
+    assert.equal(actual.version, original.version + 1);
+    assert.equal(actual.receta, undefined);
+    const previa = await get(`/consultas/${original.id}?version=${original.version}`, i);
+    assert.deepEqual((await previa.json() as {data: unknown}).data, (bodyAnterior as {data: unknown}).data);
+    assert.equal((await post(`/consultas/${original.id}/correcciones`, {version_esperada: actual.version, motivo_correccion: 'Inválido', actor: nuevoId(), contenido: {}}, i)).status, 400);
+    const version = s.pacientes.get(paciente.id)!.version;
+    const reactiva = await post(`/pacientes/${paciente.id}/reactivacion`, {version_esperada: version, motivo: 'Rectificación sintética'}, i);
+    assert.equal(reactiva.status, institucion === 'CENTRO_MEDICO_PEDIATRICO' ? 200 : 403);
+  });
+
 });

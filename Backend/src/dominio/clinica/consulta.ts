@@ -80,9 +80,9 @@ export function validarPrincipal(diagnosticos: readonly DiagnosticoEntrada[]): v
     throw solicitudInvalida('Los diagnósticos requieren exactamente un principal.');
   }
 }
-export function validarTratamiento(valor: unknown, institucion: Institucion): TratamientoEntrada {
+export function validarTratamiento(valor: unknown, institucion: Institucion, correccion = false): TratamientoEntrada {
   const t = objetoCerrado(valor, ['descripcion', 'indicaciones']);
-  return { descripcion: textoClinico(t.descripcion, 'descripcion', institucion === 'CLINICA_ODONTOLOGICA' ? 180 : 200),
+  return { descripcion: textoClinico(t.descripcion, 'descripcion', institucion === 'CLINICA_ODONTOLOGICA' ? 180 : correccion && institucion === 'HOSPITAL_GENERAL' ? 2000 : 200),
     indicaciones: textoClinico(t.indicaciones, 'indicaciones', 2000) };
 }
 export function validarReceta(valor: unknown): RecetaEntrada {

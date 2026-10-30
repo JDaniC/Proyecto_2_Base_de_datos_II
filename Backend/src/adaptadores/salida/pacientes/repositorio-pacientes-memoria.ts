@@ -393,7 +393,7 @@ export class RepositorioPacientesMemoria implements RepositorioPacienteLectura {
           const identidadesReservar = new Map<string, string>();
 
           for (const cambio of plan.cambios) {
-            if (cambio.agregado === 'pacientes') {
+            if (cambio.agregado === 'pacientes' || cambio.agregado === 'estadoHistorial') {
               const pac = cambio.nuevoEstado as Paciente;
               const titularCodigo = this.codigosPacientes.get(pac.codigoLegible);
               if (titularCodigo && titularCodigo !== pac.id) {

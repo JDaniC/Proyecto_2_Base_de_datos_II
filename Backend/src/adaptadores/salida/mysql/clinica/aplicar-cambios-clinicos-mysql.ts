@@ -1,3 +1,5 @@
+import { corregirConsultaSql } from '../../sql/corregir-consulta-sql.js';
+import { aplicarEstadoHistorialSql } from '../../sql/aplicar-estado-historial-sql.js';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import { ErrorDominio } from '../../../../dominio/compartido/error-dominio.js';
@@ -326,10 +328,11 @@ export async function aplicarCambiosClinicosMysql(
   comando: ComandoEstable,
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
+  for (const c of cambios.filter(c => c.agregado === 'estadoHistorial')) await aplicarEstadoHistorialSql(executor, 'mysql', c);
   const esClinico = (c: CambioPlanificado) =>
     c.agregado === 'citas' || c.agregado === 'consultas' || c.agregado === 'eventosHistorial' ||
     (c.agregado === 'pacientes' && c.tipo === 'AVANZAR_REVISION');
-  const dePacientes = cambios.filter((c) => !esClinico(c));
+  const dePacientes = cambios.filter((c) => !esClinico(c) && c.agregado !== 'estadoHistorial');
   if (dePacientes.length > 0) {
     await aplicarCambiosPacientesMysql(executor, contexto, comando, dePacientes);
   }
@@ -343,7 +346,8 @@ export async function aplicarCambiosClinicosMysql(
         await guardarCita(executor, cambio);
         break;
       case 'consultas':
-        await guardarConsulta(executor, cambio);
+        if (comando.caso === 'consulta.corregir') await corregirConsultaSql(executor, 'mysql', contexto, comando, cambio);
+        else await guardarConsulta(executor, cambio);
         break;
       case 'eventosHistorial':
         await guardarEvento(executor, cambio);

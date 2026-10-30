@@ -166,16 +166,17 @@ class Verificacion:
             assert funcion is not None
             huella = 'CREATE OR REPLACE FUNCTION pg_temp.huella_hospital() RETURNS text LANGUAGE sql AS $$' + funcion.group(1) + '$$;'
             self.ejecutar(migrada, 'SET search_path TO hospital_general, public;\n' +
-                          'ALTER TABLE hospital_general.consulta DROP COLUMN profesional_historico;\n' + huella +
+                          'ALTER TABLE hospital_general.consulta DROP COLUMN profesional_historico;\nALTER TABLE hospital_general.consulta DROP COLUMN snapshot_actual;\n' + huella +
                           'UPDATE hospital_general.modelo_database SET version=3, huella=pg_temp.huella_hospital() WHERE id=1;',
                           nombre='postgres_migracion_estado_v3')
             fallo_init = self.ejecutar(migrada, esquema, esperado=1, nombre='postgres_migracion_rechazo_init')
             assert 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' in fallo_init.stderr
             self.ejecutar(migrada, migracion, nombre='postgres_migracion_v3_v4')
+            self.ejecutar(migrada, (DB/'migrations/007_correcciones_postgresql.sql').read_text(), nombre='postgres_migracion_v4_v5')
             self.ejecutar(migrada, 'SELECT profesional_historico FROM hospital_general.consulta LIMIT 0;', nombre='postgres_migracion_columna')
             self.ejecutar(migrada, esquema, nombre='postgres_migracion_reejecucion')
             self.ejecutar(migrada, (DB/'tests/regresiones_archivo_postgresql.sql').read_text(), nombre='postgres_migracion_regresiones_archivo')
-            self.registrar('PostgreSQL', 'migracion explicita v3 -> v4 compatible con inicializador')
+            self.registrar('PostgreSQL', 'migracion explicita v3 -> v4 -> v5 compatible con inicializador')
         finally:
             self.ejecutar([base/'pg_ctl', '-D', data, 'stop', '-m', 'fast'])
 
@@ -250,15 +251,17 @@ class Verificacion:
             # Simula el modelo v3 retirando una tabla aditiva de v4 y recalculando el manifiesto.
             sql('''USE clinica_odontologica;
             DROP TABLE signos_vitales_consulta;
+            ALTER TABLE consulta_odontologica DROP COLUMN snapshot_actual;
             CALL _huella_modelo(@bdii_huella_v3);
             UPDATE modelo_database SET version=3, huella=@bdii_huella_v3 WHERE id=1;''',
                 nombre='mysql_migracion_estado_v3')
             fallo_init = sql(esquema, esperado=1, nombre='mysql_migracion_rechazo_init')
             assert 'MODELO_INCOMPATIBLE_REQUIERE_MIGRACION' in fallo_init.stderr
             sql((DB/'migrations/005_clinica_sql_mysql.sql').read_text(), nombre='mysql_migracion_v3_v4')
+            sql((DB/'migrations/007_correcciones_mysql.sql').read_text(), nombre='mysql_migracion_v4_v5')
             sql('SELECT 1 FROM clinica_odontologica.signos_vitales_consulta LIMIT 0;', nombre='mysql_migracion_tabla')
             sql(esquema, nombre='mysql_migracion_reejecucion')
-            self.registrar('MySQL', 'migracion explicita v3 -> v4 compatible con inicializador')
+            self.registrar('MySQL', 'migracion explicita v3 -> v4 -> v5 compatible con inicializador')
         finally:
             proceso.terminate()
             proceso.wait(timeout=30)

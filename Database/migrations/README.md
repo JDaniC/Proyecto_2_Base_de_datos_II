@@ -201,3 +201,18 @@ si se interrumpe, conservar el volumen y restaurar el respaldo previo antes de
 reintentar; no borrar datos para recuperar compatibilidad. El legado sin autor o
 profesional histórico verificable requiere reconciliación y se rechaza como
 persistencia no disponible; no se inventan identidades ni fechas históricas.
+
+## E03-P1-03 · Archivo y corrección SQL (modelo v5)
+
+Después de 005 aplicar 007_correcciones_postgresql.sql / 007_correcciones_mysql.sql
+con cuenta administradora y respaldo previo; las instalaciones nuevas ya
+incluyen snapshot_actual. La migración 007 conserva tablas/filas/relaciones y
+actualiza el manifiesto. PostgreSQL es transaccional; MySQL exige restaurar el
+respaldo previo si un DDL se interrumpe antes de finalizar el manifiesto.
+Los inicializadores v5 rechazan volúmenes v4; no sustituyen esta migración.
+
+La lectura clínica corregida es el agregado versionado de consulta; los
+componentes SQL emitidos originalmente son historia inmutable. Leer la versión
+vigente por los puertos clínicos o snapshot_actual, nunca mezclarla con los
+componentes iniciales. Detalle y justificación: DEC18 y
+Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md.

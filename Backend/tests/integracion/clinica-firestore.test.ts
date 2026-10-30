@@ -1,3 +1,4 @@
+import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -30,7 +31,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
   await inicializador.inicializarFirestore(db);
   const actor = id(), rol = id(), profesional = id(), uid = `clinica-${randomUUID()}`;
   await db.doc(`pediatras/${profesional}`).set({revision:1,nombres:'Ana',apellidos:'Sintética',colegiado:'SINT-1',entidad_colegiacion:'Colegio sintético',especialidad:'Pediatría',estado:'ACTIVO'});
-  await db.doc(`roles/${rol}`).set({revision:1,nombre:'PEDIATRA',descripcion:'Ensayo',permisos:['pacientes.administrar','historial.leer','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir','citas.administrar']});
+  await db.doc(`roles/${rol}`).set({revision:1,nombre:'PEDIATRA',descripcion:'Ensayo',permisos:['historial.archivar','pacientes.administrar','historial.leer','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir','citas.administrar']});
   await db.doc(`usuarios/${actor}`).set({revision:1,auth_uid:uid,proveedor_identidad:'FIREBASE',institucion_id:'CENTRO_MEDICO_PEDIATRICO',estado:'ACTIVO',rol_ids:[rol],pediatra_id:profesional,nombre_usuario:'ensayo'});
   const cuenta = await crearRepositorioCuentaFirestore(db,db).porUid(uid); assert.ok(cuenta);
   const contexto = crearContextoAutenticado({uid,institucion:'CENTRO_MEDICO_PEDIATRICO',emitidoEn:instanteUtc('2026-10-29T12:00:00Z')},cuenta,id());
@@ -191,4 +192,33 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     }
     await assert.rejects(atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:id(),entrada:{...e,sintomas:'a'.repeat(262145)}}));
   });
+  await t.test('archivo, corrección y reactivación conservan historia en emulador', async () => {
+    const original = await atencion.ejecutar('completa', {contexto, bundle, claveIdempotencia: id(), entrada: await entrada()});
+    const estado = new CambiarEstadoHistorial(deps);
+    const paciente = (await bundle.pacientes!.porId(pacienteId))!;
+    const archivado = await estado.ejecutar('archivar', {contexto, bundle, id: pacienteId, claveIdempotencia: id(), entrada: {
+      version_esperada: paciente.version, causa: 'FALLECIMIENTO', motivo: 'Registro sintético'}});
+    assert.equal((await bundle.pacientes!.porId(pacienteId))?.estado, 'ARCHIVADO');
+    await assert.rejects(atencion.ejecutar('completa', {contexto, bundle, claveIdempotencia: id(), entrada: await entrada()}), {codigo: 'ESTADO_INVALIDO'});
+    const corregida = await atencion.ejecutar('corregir', {contexto, bundle, id: original.respuesta.id, claveIdempotencia: id(), entrada: {
+      version_esperada: 1, motivo_correccion: 'Corrección sintética', contenido: {motivo: 'Corregido', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: []}}});
+    assert.deepEqual(await bundle.clinica!.consultas.porId(original.respuesta.id), corregida.respuesta);
+    assert.deepEqual(await bundle.clinica!.consultas.porVersion(original.respuesta.id, versionPositiva(1)), original.respuesta);
+    const version = archivado.respuesta.version + 1;
+    await assert.rejects(estado.ejecutar('reactivar', {contexto, bundle, id: pacienteId, claveIdempotencia: id(), entrada: {version_esperada: version, motivo: 'Rectificación sintética'}}));
+    const activa = await estado.ejecutar('reactivar', {contexto, bundle, id: pacienteId, claveIdempotencia: id(), entrada: {version_esperada: version, motivo: 'Rectificación sintética', correccion_fallecimiento: true}});
+    assert.equal(activa.respuesta.estado, 'ACTIVO');
+    assert.equal((await bundle.pacientes!.porId(pacienteId))?.baja?.causa, 'FALLECIMIENTO');
+  });
+
+  await t.test('archivo compite con atención sobre una única revisión Firestore', async () => {
+    const datos = await entrada(); const estado = new CambiarEstadoHistorial(deps);
+    const r = await Promise.allSettled([
+      estado.ejecutar('archivar', {contexto, bundle, id: pacienteId, claveIdempotencia: id(), entrada: {version_esperada: datos.version_paciente, causa: 'TRASLADO', motivo: 'Carrera sintética'}}),
+      atencion.ejecutar('completa', {contexto, bundle, claveIdempotencia: id(), entrada: datos}),
+    ]);
+    assert.equal(r.filter(x => x.status === 'fulfilled').length, 1);
+    assert.equal((await bundle.pacientes!.porId(pacienteId))?.version, datos.version_paciente + 1);
+  });
+
 });

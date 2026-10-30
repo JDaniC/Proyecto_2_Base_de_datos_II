@@ -90,3 +90,30 @@ AF06: `LIBERAR_IDENTIDAD` acepta `IdentificacionLeida` para retirar la reserva e
 AF07: `TratamientoEntrada.descripcion` es la etiqueta del campo UI “Tratamiento / Procedimiento”; no existe un segundo campo de nombre en la UI. En Hospital se persiste en `tratamiento.descripcion` (`TEXT`); en odontología se resuelve/crea el nombre exacto del catálogo `tratamiento.nombre` (`VARCHAR(180)`) y se enlaza en `consulta_tratamiento`; en laboratorio y pediatría se guarda en `consultas_clinicas.tratamientos[].nombre` y `consultas.tratamientos[].nombre` (máximo 200). `indicaciones` se guarda en `tratamiento.indicaciones` en Hospital y en `indicaciones` de los documentos de laboratorio/pediatría; odontología la guarda en `consulta_tratamiento.observaciones`, que pertenece a la relación consulta-tratamiento y permite conservar las indicaciones específicas de esa consulta. Las lecturas proyectan la misma etiqueta como `descripcion` y las indicaciones desde su campo asociado, sin pérdida ni inferencia.
 
 La captura nueva común admite 1–200 caracteres y odontología 1–180 en consulta completa, adición y corrección. `TratamientoRegistrado` conserva lecturas de hasta 2000 caracteres. La corrección reemplaza el snapshot completo: Hospital admite hasta 2000 para reenviar etiquetas legadas guardadas en su columna `TEXT`; odontología limita el dato a 180 y laboratorio/pediatría a 200, según sus nombres persistidos. Una lista odontológica no puede repetir nombres en el mismo comando (400 `SOLICITUD_INVALIDA`); añadir un nombre ya enlazado a la misma consulta devuelve 409 `ESTADO_INVALIDO`. En odontología, resolver/reutilizar o crear el catálogo y enlazarlo ocurre en la misma UoW que consulta, revisión y auditoría, respetando su índice único y sin escritura parcial. No se usa catálogo alterno ni truncamiento. DEC16 sigue siendo especificación: esta tarea no implementa ni migra persistencia.
+
+## E03-P1-03 · Corrección de agregado finalizado (SQL v5)
+
+La consulta SQL incorpora `snapshot_actual` para el reemplazo clínico completo
+versionado. La revisión pública del agregado apunta al snapshot vigente; los
+componentes y recetas físicos originalmente emitidos se conservan inmutables,
+con sus relaciones, y no se borran ni se reescriben como si fueran datos nuevos.
+El puerto `consultas.porId/porVersion` es la lectura canónica para consumidores:
+si hay snapshot corregido no mezcla componentes iniciales con esa versión.
+Las consultas directas a componentes físicos representan la emisión original,
+no el estado clínico corregido; informes futuros deben resolver la versión por
+el puerto o por snapshot_actual. El comparativo de E07 debe explicitar esta
+representación en los motores SQL frente al agregado documental.
+
+Antes de cambiar el puntero se guarda la revisión canónica con motivo. En PG
+se guarda además la fila física exigida por el trigger de M05. Datos, puntero,
+revisión, operación y auditoría se confirman en la misma conexión/UoW.
+El snapshot conserva paciente, cita, profesional, fecha de consulta y autorización
+originales; los componentes corregidos incluyen autor y fecha del cambio. Una
+receta corregida conserva su ID y avanza versión; retirarla del snapshot vigente
+conserva sus versiones previas y exige el permiso recetas.emitir.
+
+Preparar v4→v5 con `007_correcciones_postgresql.sql` y
+`007_correcciones_mysql.sql`. Instalaciones nuevas incluyen la extensión;
+volúmenes existentes deben migrarse explícitamente con respaldo previo. MySQL
+DDL no es transaccional: ante interrupción conservar el volumen y restaurar el
+respaldo antes de repetir. No borrar datos ni rehacer inicializadores sobre v4.

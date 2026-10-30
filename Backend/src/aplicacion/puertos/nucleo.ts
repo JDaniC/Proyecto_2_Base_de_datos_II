@@ -95,6 +95,7 @@ export interface CambioPlanificado<TEstado = unknown> {
 }
 
 export interface RevisionPlanificada<TSnapshot = unknown> {
+  readonly motivo?: string;
   readonly id: UUID;
   readonly agregado: string;
   readonly recursoId: UUID;

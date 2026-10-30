@@ -256,7 +256,7 @@ async function guardarRevisiones(
     await executor.consultar(
       `INSERT INTO revisiones (id_revision, tipo_recurso, recurso_id, version, id_usuario, fecha_hora, motivo, contenido_anterior) VALUES (${p(1)}, ${p(2)}, ${p(3)}, ${p(4)}, ${p(5)}, ${p(6)}, ${p(7)}, ${marcadorJson(dialecto, 8)})`,
       [revision.id, revision.agregado, revision.recursoId, revision.versionAnterior, idUsuario,
-        fechaDb(comando.instante), comando.caso, snapshot],
+        fechaDb(comando.instante), revision.motivo ?? comando.caso, snapshot],
     );
   }
 }

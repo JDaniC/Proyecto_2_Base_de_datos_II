@@ -1,3 +1,4 @@
+import { consultaCorregidaSql } from '../../sql/corregir-consulta-sql.js';
 import type { UUID } from '../../../../dominio/compartido/uuid.js';
 import type { Version } from '../../../../dominio/compartido/version.js';
 import type { PuertosClinicos } from '../../../../aplicacion/puertos/clinica.js';
@@ -19,7 +20,7 @@ import {
 const SELECT_CONSULTA = `
   SELECT c.id_publico, c.revision, p.id_publico AS paciente_id, ci.id_publico AS cita_id,
          TO_CHAR(c.fecha_hora, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS fecha_hora,
-         c.estado, c.motivo_consulta AS motivo, c.sintomas, c.observaciones, c.profesional_historico, c.campos_signos,
+         c.snapshot_actual, c.estado, c.motivo_consulta AS motivo, c.sintomas, c.observaciones, c.profesional_historico, c.campos_signos,
          pm.id_publico AS profesional_id,
          COALESCE(pm.primer_nombre, '') AS profesional_nombre,
          pm.numero_colegiado AS profesional_colegiado,
@@ -47,6 +48,8 @@ export class RepositorioConsultasPostgresql implements PuertoConsultas {
       );
       const fila = resultado.filas[0];
       if (!fila) return null;
+      const corregida = consultaCorregidaSql(fila.snapshot_actual, fila);
+      if (corregida) return corregida;
       const signos = await this.signos(id);
       const diagnosticos = await this.diagnosticos(id);
       const tratamientos = await this.tratamientos(id);

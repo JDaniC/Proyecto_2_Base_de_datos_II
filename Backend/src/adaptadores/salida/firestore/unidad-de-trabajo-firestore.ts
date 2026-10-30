@@ -172,7 +172,7 @@ async function guardarRevisiones(
       version: revision.versionAnterior,
       actor_id: contexto.cuenta.id,
       fecha_hora: new Date(comando.instante),
-      motivo: comando.caso,
+      motivo: revision.motivo ?? comando.caso,
       contenido_anterior: revision.snapshotAnterior,
     };
     const validado = validarDocumento(ruta, datos);

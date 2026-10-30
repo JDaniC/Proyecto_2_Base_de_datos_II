@@ -1,3 +1,4 @@
+import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -61,7 +62,7 @@ test('MySQL: cita + atención compuesta persisten, se reconstruyen y son atómic
 async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql'): Promise<void> {
   const institucion = dialecto === 'postgresql' ? 'HOSPITAL_GENERAL' : 'CLINICA_ODONTOLOGICA';
   const rol = dialecto === 'postgresql' ? 'MEDICO' : 'ODONTOLOGO';
-  const permisos = ['pacientes.administrar', 'historial.leer', 'citas.administrar', 'consultas.registrar',
+  const permisos = ['historial.archivar', 'pacientes.administrar', 'historial.leer', 'citas.administrar', 'consultas.registrar',
     'diagnosticos.registrar', 'tratamientos.registrar', 'recetas.emitir'];
   const uid = `clinica-${randomUUID()}`;
   const cuentaId = randomUUID();
@@ -325,4 +326,57 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     contexto, bundle, claveIdempotencia: clave, entrada,
   });
   assert.deepEqual(repetida.respuesta, recuperada.respuesta);
+  // E03-P1-03: corrección completa, versiones previas y archivo real por caso de uso.
+  const corregida = await atencion.ejecutar('corregir', {contexto, bundle,
+    claveIdempotencia: uuidPublico(randomUUID()), id: recuperada.respuesta.id,
+    entrada: {version_esperada: 1, motivo_correccion: 'Ajuste sintético trazable', contenido: {
+      motivo: 'Motivo corregido', sintomas: 'Síntoma corregido', signos_vitales: {},
+      diagnosticos: [], tratamientos: [], receta: {...receta, observaciones: 'Versión corregida'},
+    }}});
+  assert.equal(corregida.respuesta.version, 2);
+  assert.deepEqual(await clinica.consultas.porId(corregida.respuesta.id), corregida.respuesta);
+  assert.deepEqual(await clinica.consultas.porVersion(corregida.respuesta.id, versionPositiva(1)), recuperada.respuesta);
+  assert.equal(corregida.respuesta.receta?.version, 2);
+  const estado = new CambiarEstadoHistorial(dependencias);
+  const antesArchivo = (await pacientes.porId(uuidPublico(pacienteId)))!;
+  const cuarta = await agenda.ejecutar('crear', {contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()), entrada: {
+    paciente_id: pacienteId, version_paciente: antesArchivo.version, profesional_id: profesionalId,
+    fecha: '2026-11-05', hora_inicio: '11:00', duracion_minutos: 30, motivo: 'Carrera de archivo'}});
+  const versionCarrera = (await pacientes.porId(uuidPublico(pacienteId)))!.version;
+  const parametrosArchivo = {contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()), id: uuidPublico(pacienteId),
+    entrada: {version_esperada: versionCarrera, causa: 'TRASLADO', motivo: 'Traslado sintético'}};
+  const carrera = await Promise.allSettled([
+    estado.ejecutar('archivar', parametrosArchivo),
+    atencion.ejecutar('abrir', {contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()), entrada: {
+      paciente_id: pacienteId, version_paciente: versionCarrera, cita_id: cuarta.respuesta.id, version_cita: 1,
+      motivo: 'Atención concurrente', sintomas: '', signos_vitales: {}}}),
+  ]);
+  assert.equal(carrera.filter(r => r.status === 'fulfilled').length, 1);
+  const archivo = carrera[0]!.status === 'fulfilled' ? carrera[0]!.value : await estado.ejecutar('archivar', {
+    ...parametrosArchivo, claveIdempotencia: uuidPublico(randomUUID()), entrada: {...parametrosArchivo.entrada,
+      version_esperada: (await pacientes.porId(uuidPublico(pacienteId)))!.version}});
+  if (carrera[1]!.status === 'fulfilled') {
+    await atencion.ejecutar('finalizar', {contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()),
+      id: carrera[1]!.value.respuesta.id, entrada: {version_esperada: 1}});
+  }
+  assert.equal(archivo.respuesta.estado, 'ARCHIVADO');
+  assert.equal((await pacientes.porId(uuidPublico(pacienteId)))?.estado, 'ARCHIVADO');
+  await assert.rejects(atencion.ejecutar('abrir', {contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {paciente_id: pacienteId, version_paciente: (await pacientes.porId(uuidPublico(pacienteId)))!.version,
+      ...(dialecto === 'mysql' ? {cita_id: tercera.respuesta.id, version_cita: 2} : {}),
+      motivo: 'No permitido', sintomas: '', signos_vitales: {}}}), /archivado/);
+  const trasArchivo = await atencion.ejecutar('corregir', {contexto, bundle,
+    claveIdempotencia: uuidPublico(randomUUID()), id: corregida.respuesta.id,
+    entrada: {version_esperada: 2, motivo_correccion: 'Ajuste después de archivo', contenido: {
+      motivo: 'Corrección posterior', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: []}}});
+  assert.equal(trasArchivo.respuesta.receta, undefined);
+  assert.equal((await clinica.consultas.porVersion(corregida.respuesta.id, versionPositiva(2)))?.receta?.version, 2);
+  await assert.rejects(atencion.ejecutar('corregir', {contexto, bundle: bundleConFallo,
+    claveIdempotencia: uuidPublico(randomUUID()), id: trasArchivo.respuesta.id, entrada: {
+      version_esperada: 3, motivo_correccion: 'Rollback sintético de revisión', contenido: {
+        motivo: 'No debe persistir', sintomas: '', signos_vitales: {}, diagnosticos: [], tratamientos: []}}}));
+  assert.deepEqual(await clinica.consultas.porId(trasArchivo.respuesta.id), trasArchivo.respuesta);
+  assert.equal(await clinica.consultas.porVersion(trasArchivo.respuesta.id, versionPositiva(4)), null);
+
+
 }

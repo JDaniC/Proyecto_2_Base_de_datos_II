@@ -43,7 +43,7 @@ BEGIN
   IF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='modelo_database') THEN
     SELECT version,huella INTO version_actual,huella_guardada FROM modelo_database WHERE id=1;
     CALL _huella_modelo(huella_actual);
-    IF version_actual IS NULL OR version_actual<>4 OR huella_guardada<>huella_actual THEN
+    IF version_actual IS NULL OR version_actual<>5 OR huella_guardada<>huella_actual THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='MODELO_INCOMPATIBLE_REQUIERE_MIGRACION';
     END IF;
   ELSEIF EXISTS(SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()) THEN
@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS cita (
 CREATE TABLE IF NOT EXISTS historial_clinico (
     causa_baja VARCHAR(30),
     motivo_baja TEXT,
-    fecha_baja DATETIME,
+    fecha_baja DATETIME(3),
     actor_baja CHAR(36) CHARACTER SET ascii COLLATE ascii_bin,
     id_publico CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT (UUID()) UNIQUE,
     revision BIGINT UNSIGNED NOT NULL DEFAULT 1 CHECK (revision > 0),
@@ -216,6 +216,7 @@ CREATE TABLE IF NOT EXISTS antecedente (
 
 CREATE TABLE IF NOT EXISTS consulta_odontologica (
     id_publico CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT (UUID()) UNIQUE,
+    snapshot_actual JSON,
     revision BIGINT UNSIGNED NOT NULL DEFAULT 1 CHECK (revision > 0),
     id_consulta BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     id_historial BIGINT UNSIGNED NOT NULL,
@@ -622,5 +623,5 @@ CREATE TABLE IF NOT EXISTS modelo_database (
  fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 CALL _huella_modelo(@bdii_huella);
-INSERT INTO modelo_database(id,version,huella) VALUES(1,4,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO modelo_database(id,version,huella) VALUES(1,5,@bdii_huella) ON DUPLICATE KEY UPDATE id=id;
 DO RELEASE_LOCK('bdii_clinica_inicializador_v2');

@@ -1,3 +1,4 @@
+import { CambiarEstadoHistorial } from '../aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import { AtencionClinica } from '../aplicacion/casos-uso/consultas/atencion-clinica.js';
 import { ConsultarConsulta } from '../aplicacion/casos-uso/consultas/consultar-consulta.js';
 import { GestionarCitas } from '../aplicacion/casos-uso/citas/gestionar-citas.js';
@@ -67,6 +68,7 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide: CambiarEstadoHistorial, useFactory: () => new CambiarEstadoHistorial(dependenciasComandoPorDefecto)},
         { provide: AtencionClinica, useFactory: () => new AtencionClinica(dependenciasComandoPorDefecto) },
         { provide: GestionarCitas, useFactory: () => new GestionarCitas(dependenciasComandoPorDefecto) },
         { provide: ConsultarCitas, useFactory: () => new ConsultarCitas() },
