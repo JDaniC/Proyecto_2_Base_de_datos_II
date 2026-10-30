@@ -77,3 +77,9 @@ emulador y 82 modelo offline +99 emulador PASS; build postmerge PASS. No se
 acredita UI clínica ni cierre E03. SQL continúa reservado en PR #54, activo en
 otro chat por confirmación humana; conservar su checkout. La siguiente tarea
 dependiente requiere esa integración, según tablero y PR abiertos.
+
+## Sincronización del 29/10/2026
+
+GitHub/develop `801f787` incorpora E03-P1-01 (#51/#53), E03-P2-01 (#55/#56) y E03-P2-02 (#57/#58). E03-P1-02 mantiene reserva activa de JDaniC en PR #54 borrador; falta integrar SQL, archivo, conexión UI y cierre de E03. El tablero registra 21/48 tareas HECHA (43,75 % por conteo, no cobertura de requisitos).
+
+La copia raíz estaba en una rama antigua. Sus cambios clínicos pendientes se preservaron en un stash identificado como `Respaldo previo a sincronizar tablero 2026-10-29 E03-P1-01`; no aplicar sobre develop sin comparar con #51. No se descartó código. Las ramas permanentes son main/develop; la tarea SQL conserva su rama y worktree activos.
