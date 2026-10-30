@@ -191,7 +191,7 @@ export function recetaDeJson(valor: unknown): RecetaEmitida | undefined {
     fecha_emision: instanteUtc(obj.fecha_emision, 'fecha_emision'),
     prescriptor,
     medicamentos,
-    ...(typeof obj.observaciones === 'string' && obj.observaciones !== '' ? { observaciones: obj.observaciones } : {}),
+    ...(typeof obj.observaciones === 'string' ? { observaciones: obj.observaciones } : {}),
   };
 }
 
@@ -240,7 +240,7 @@ export function componentesDeConsulta(
     version: versionPositiva(numero(fila.revision)),
     motivo: fila.motivo,
     sintomas: fila.sintomas ?? '',
-    ...(textoONulo(fila.observaciones) ? { observaciones: fila.observaciones as string } : {}),
+    ...(typeof fila.observaciones === 'string' ? { observaciones: fila.observaciones as string } : {}),
     signos_vitales: signosConPresencia(signos, fila.campos_signos),
     diagnosticos: diagnosticos.map((d) => ({
       id: uuidPublico(d.id_publico),
@@ -249,7 +249,7 @@ export function componentesDeConsulta(
       codigo_cie: d.codigo,
       nombre: d.nombre_historico ?? d.nombre ?? 'Sin dato',
       es_principal: d.es_principal === true || d.es_principal === 1 || d.es_principal === '1',
-      ...(textoONulo(d.observacion) ? { observacion: d.observacion as string } : {}),
+      ...(typeof d.observacion === 'string' ? { observacion: d.observacion as string } : {}),
     })),
     tratamientos: tratamientos.map((t) => ({
       id: uuidPublico(t.id_publico),

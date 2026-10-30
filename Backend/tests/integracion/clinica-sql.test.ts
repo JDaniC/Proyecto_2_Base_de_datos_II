@@ -166,12 +166,12 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     presion_diastolica: 80, frecuencia_cardiaca_lpm: 72, frecuencia_respiratoria_rpm: 16,
     saturacion_oxigeno_pct: 98 };
   const diagnostico = institucion === 'HOSPITAL_GENERAL'
-    ? { codigo_cie: 'J00', nombre: 'Rinofaringitis aguda', es_principal: true, observacion: 'Cuadro leve' }
+    ? { codigo_cie: 'J00', nombre: 'Rinofaringitis aguda', es_principal: true, observacion: '' }
     : { codigo_cie: 'K02.9', nombre: 'Caries dental', es_principal: true };
   const tratamiento = institucion === 'HOSPITAL_GENERAL'
     ? { descripcion: 'Reposo relativo', indicaciones: 'Hidratación y control en 48 horas' }
     : { descripcion: 'Profilaxis dental', indicaciones: 'Cepillado tres veces al día' };
-  const receta = { observaciones: 'Sin alergias conocidas', medicamentos: [{
+  const receta = { observaciones: '', medicamentos: [{
     nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', dosis: 'D'.repeat(200),
     frecuencia: 'F'.repeat(200), duracion: 'T'.repeat(200), via: 'Oral', indicaciones: 'Después de alimentos',
   }] };
@@ -193,7 +193,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     contexto, bundle, claveIdempotencia: uuidPublico(randomUUID()),
     entrada: { paciente_id: pacienteId, version_paciente: 2, cita_id: cita.respuesta.id, version_cita: 1,
       motivo: 'Dolor faríngeo', sintomas: 'Odinofagia de 48 horas', signos_vitales: signos,
-      observaciones: 'Sin signos de alarma', diagnosticos: [diagnostico], tratamientos: [tratamiento], receta },
+      observaciones: '', diagnosticos: [diagnostico], tratamientos: [tratamiento], receta },
   });
   assert.equal(completa.httpStatus, 201);
   assert.equal(completa.respuesta.estado, 'FINALIZADA');
