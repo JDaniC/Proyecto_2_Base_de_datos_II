@@ -199,10 +199,6 @@ function crearRepositorioCatalogosMysql(ejecutor: EjecutorSql): NonNullable<Puer
             principio_activo: nombreGen,
             ...(fila.presentacion ? { presentacion: String(fila.presentacion) } : {}),
             ...(conc ? { concentracion: conc } : {}),
-            dosis_sugerida: conc || '1 unidad',
-            frecuencia_sugerida: 'Cada 8 horas',
-            duracion_sugerida: '5 días',
-            via_administracion: 'ORAL',
           });
         }
 

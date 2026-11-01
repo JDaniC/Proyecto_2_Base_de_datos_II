@@ -58,7 +58,8 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    await page.goto(`${url}/pacientes/${paciente.id}/consultas/nueva${cita?`?citaId=${cita.id}`:''}`);
    await page.locator('#motivo-input').fill('Control clínico sintético'); await page.getByRole('button',{name:'Siguiente paso'}).click();
    await page.locator('#peso-input').fill('25'); await page.getByRole('button',{name:'Siguiente paso'}).click();
-   await page.locator('#cie-search').fill('J00'); await page.getByRole('button',{name:'Agregar',exact:true}).click();
+   const terminoBusqueda = cuenta.institucion === 'CLINICA_ODONTOLOGICA' ? 'K02' : 'J00';
+   await page.locator('#cie-search').fill(terminoBusqueda); await page.getByRole('button',{name:'Agregar',exact:true}).click();
    await page.locator('#trat-desc').fill('Tratamiento sintético'); await page.locator('#trat-indic').fill('Solo prueba'); await page.getByRole('button',{name:'Añadir',exact:true}).click();
    await page.getByRole('button',{name:'Siguiente paso'}).click();
    await page.locator('#toggle-receta').check();

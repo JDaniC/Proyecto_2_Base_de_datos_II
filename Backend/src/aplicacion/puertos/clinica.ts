@@ -58,10 +58,10 @@ export interface ItemCatalogoMedicamentoOdontologico {
   readonly principio_activo?: string;
   readonly presentacion?: string;
   readonly concentracion?: string;
-  readonly dosis_sugerida: string;
-  readonly frecuencia_sugerida: string;
-  readonly duracion_sugerida: string;
-  readonly via_administracion: string;
+  readonly dosis_sugerida?: string;
+  readonly frecuencia_sugerida?: string;
+  readonly duracion_sugerida?: string;
+  readonly via_administracion?: string;
 }
 export interface CatalogoOdontologico {
   readonly diagnosticos: readonly ItemCatalogoDiagnosticoOdontologico[];

@@ -237,6 +237,15 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* Al convertir instantes UTC para cláusulas SQL `desde` o `hasta` con más de 3 dígitos fraccionarios, `fechaDb` convertía vía `Date` truncando a milisegundos, alterando la inclusión/exclusión en los límites del rango semi-abierto.
   - *Corrección aplicada:* `fechaDb` preserva textualmente la fracción de microsegundos de la cadena ISO 8601 (hasta 6 dígitos) antes de normalizar el formato SQL `YYYY-MM-DD HH:MM:SS.ffffff`.
 
+### DEV-022 — Supresión de pautas posológicas inventadas para medicamentos del catálogo MySQL
+- **Tipo:** `INTEGRIDAD CLÍNICA`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Backend/src/adaptadores/salida/mysql/clinica/crear-puertos-clinicos-mysql.ts:196` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434392955`).
+  - *Comportamiento detectado:* El mapeador de medicamentos adicionales de la base de datos MySQL asignaba por defecto posología oral sintética (`Cada 8 horas`, `5 días`, `ORAL`, `conc || '1 unidad'`), que se autocompletaba en la prescripción sin haber sido dictaminada por un profesional clínico.
+  - *Corrección aplicada:* Se eliminaron las pautas posológicas inventadas en el mapeo MySQL dejando las propiedades como opcionales; en `NewConsultationWizardPage.tsx` los campos de vía, dosis, frecuencia y duración permanecen en blanco para su llenado explícito por parte del odontólogo tratante cuando el catálogo no provea pauta institucional predefinida.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

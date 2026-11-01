@@ -186,16 +186,22 @@ export const NewConsultationWizardPage: React.FC = () => {
         if (cat.medicamentos.length > 0) {
           setMedicamentosSugeridos(
             cat.medicamentos.map((m) => {
-              const conc = m.concentracion ?? m.dosis_sugerida;
+              const conc = m.concentracion ?? m.dosis_sugerida ?? '';
+              const via =
+                m.via_administracion === 'TOPICA'
+                  ? 'Enjuague bucal'
+                  : m.via_administracion === 'ORAL'
+                    ? 'Oral'
+                    : m.via_administracion ?? '';
               return {
                 nombre: m.nombre,
-                presentacion: m.presentacion ?? 'Tableta',
+                presentacion: m.presentacion ?? '',
                 concentracion: conc,
-                dosis: m.dosis_sugerida || '1',
+                dosis: m.dosis_sugerida ?? '',
                 unidad: '',
-                via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
-                frecuencia: m.frecuencia_sugerida,
-                duracion: m.duracion_sugerida,
+                via,
+                frecuencia: m.frecuencia_sugerida ?? '',
+                duracion: m.duracion_sugerida ?? '',
               };
             })
           );
@@ -376,11 +382,11 @@ export const NewConsultationWizardPage: React.FC = () => {
     setMedNombre(med.nombre);
     setMedPresentacion(med.presentacion);
     setMedConcentracion(med.concentracion);
-    if (med.dosis) setMedDosis(med.dosis);
-    if (med.unidad) setMedUnidad(med.unidad);
-    setMedVia(med.via);
-    setMedFrecuencia(med.frecuencia);
-    setMedDuracion(med.duracion);
+    setMedDosis(med.dosis || '');
+    setMedUnidad(med.unidad || '');
+    setMedVia(med.via || 'Oral');
+    setMedFrecuencia(med.frecuencia || '');
+    setMedDuracion(med.duracion || '');
   };
 
   // Validaciones por paso

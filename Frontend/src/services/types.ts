@@ -623,10 +623,10 @@ export interface CatalogoOdontologiaDTO {
     principio_activo?: string;
     presentacion?: string;
     concentracion?: string;
-    dosis_sugerida: string;
-    frecuencia_sugerida: string;
-    duracion_sugerida: string;
-    via_administracion: string;
+    dosis_sugerida?: string;
+    frecuencia_sugerida?: string;
+    duracion_sugerida?: string;
+    via_administracion?: string;
   }>;
 }
 
