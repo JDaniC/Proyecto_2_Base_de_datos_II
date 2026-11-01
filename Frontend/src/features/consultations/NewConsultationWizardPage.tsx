@@ -91,9 +91,16 @@ export const NewConsultationWizardPage: React.FC = () => {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [citaVinculada, setCitaVinculada] = useState<CitaAgenda | null>(null);
   const [cargandoInicial, setCargandoInicial] = useState(true);
-  const [catalogoDiagnosticos, setCatalogoDiagnosticos] = useState(CATALOGO_CIE10);
-  const [tratamientosOdontologia, setTratamientosOdontologia] = useState(TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA);
-  const [medicamentosSugeridos, setMedicamentosSugeridos] = useState(MEDICAMENTOS_SUGERIDOS);
+  const [errorCatalogo, setErrorCatalogo] = useState<string | null>(null);
+  const [catalogoDiagnosticos, setCatalogoDiagnosticos] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : CATALOGO_CIE10
+  );
+  const [tratamientosOdontologia, setTratamientosOdontologia] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA
+  );
+  const [medicamentosSugeridos, setMedicamentosSugeridos] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : MEDICAMENTOS_SUGERIDOS
+  );
 
   // Paso del Stepper (1 a 5)
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -161,38 +168,54 @@ export const NewConsultationWizardPage: React.FC = () => {
       return;
     }
     let activo = true;
-    catalogRepository.obtenerCatalogoOdontologia(institucionId).then((cat) => {
-      if (!activo || !cat) return;
-      if (cat.diagnosticos.length > 0) {
-        const existentes = new Set(cat.diagnosticos.map((d) => d.codigo));
-        setCatalogoDiagnosticos([
-          ...cat.diagnosticos,
-          ...CATALOGO_CIE10.filter((d) => !existentes.has(d.codigo))
-        ]);
-      }
-      if (cat.procedimientos.length > 0) {
-        setTratamientosOdontologia(cat.procedimientos.map((p) => ({
-          nombre: p.nombre,
-          indicaciones: p.indicaciones ?? p.descripcion ?? 'Procedimiento odontológico institucional.'
-        })));
-      }
-      if (cat.medicamentos.length > 0) {
-        setMedicamentosSugeridos(cat.medicamentos.map((m) => {
-          const conc = m.concentracion ?? m.dosis_sugerida;
-          return {
-            nombre: m.nombre,
-            presentacion: m.presentacion ?? 'Tableta',
-            concentracion: conc,
-            dosis: m.dosis_sugerida || '1',
-            unidad: '',
-            via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
-            frecuencia: m.frecuencia_sugerida,
-            duracion: m.duracion_sugerida
-          };
-        }));
-      }
-    }).catch(() => {});
-    return () => { activo = false; };
+    setErrorCatalogo(null);
+    catalogRepository
+      .obtenerCatalogoOdontologia(institucionId)
+      .then((cat) => {
+        if (!activo || !cat) return;
+        if (cat.diagnosticos.length > 0) {
+          const existentes = new Set(cat.diagnosticos.map((d) => d.codigo));
+          setCatalogoDiagnosticos([
+            ...cat.diagnosticos,
+            ...CATALOGO_CIE10.filter((d) => !existentes.has(d.codigo)),
+          ]);
+        }
+        if (cat.procedimientos.length > 0) {
+          setTratamientosOdontologia(
+            cat.procedimientos.map((p) => ({
+              nombre: p.nombre,
+              indicaciones:
+                p.indicaciones ?? p.descripcion ?? 'Procedimiento odontológico institucional.',
+            }))
+          );
+        }
+        if (cat.medicamentos.length > 0) {
+          setMedicamentosSugeridos(
+            cat.medicamentos.map((m) => {
+              const conc = m.concentracion ?? m.dosis_sugerida;
+              return {
+                nombre: m.nombre,
+                presentacion: m.presentacion ?? 'Tableta',
+                concentracion: conc,
+                dosis: m.dosis_sugerida || '1',
+                unidad: '',
+                via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
+                frecuencia: m.frecuencia_sugerida,
+                duracion: m.duracion_sugerida,
+              };
+            })
+          );
+        }
+      })
+      .catch(() => {
+        if (!activo) return;
+        setErrorCatalogo(
+          'No fue posible cargar el catálogo institucional odontológico por HTTP. Las sugerencias automáticas están deshabilitadas.'
+        );
+      });
+    return () => {
+      activo = false;
+    };
   }, [catalogRepository, institucionId, mode]);
 
   useEffect(() => {
@@ -726,6 +749,28 @@ export const NewConsultationWizardPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Alerta de Error de Catálogo */}
+      {errorCatalogo && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'var(--color-warning-bg, #fffbeb)',
+            color: 'var(--color-warning-text, #b45309)',
+            border: '1px solid var(--color-warning-border, #fcd34d)',
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-input)',
+            marginBottom: '20px',
+            fontSize: '13px',
+          }}
+        >
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <span>{errorCatalogo}</span>
+        </div>
+      )}
 
       {/* Alerta de Error de Validación */}
       {errorValidacion && (

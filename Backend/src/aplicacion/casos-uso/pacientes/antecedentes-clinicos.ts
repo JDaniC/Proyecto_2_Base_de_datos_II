@@ -91,6 +91,13 @@ export class ActualizarAntecedentesClinicos {
     if (p.bundle.institucion !== p.contexto.cuenta.institucion) {
       throw new ErrorDominio('SIN_PERMISO', 'Ámbito incompatible.');
     }
+    const clinicaBundle = exigirClinica(p.bundle);
+    if (!clinicaBundle.antecedentes) {
+      throw new ErrorDominio(
+        'PERSISTENCIA_NO_DISPONIBLE',
+        'La institución no soporta gestión de antecedentes clínicos directos.'
+      );
+    }
     validarPermiso(p.contexto.cuenta, 'consultas.registrar');
     const pacienteId = uuidPublico(p.id, 'id');
     const e = objetoCerrado(p.entrada, [
@@ -135,6 +142,12 @@ export class ActualizarAntecedentesClinicos {
         const contexto = await contextoVigente(lector, p.contexto);
         validarPermiso(contexto.cuenta, 'consultas.registrar');
         const clinica = exigirClinica(lector);
+        if (!clinica.antecedentes) {
+          throw new ErrorDominio(
+            'PERSISTENCIA_NO_DISPONIBLE',
+            'La institución no soporta gestión de antecedentes clínicos directos.'
+          );
+        }
         const previa = await lector.operaciones.porClave<AntecedentesClinicos & { readonly version_paciente: number }>(
           contexto.cuenta.id,
           comando.caso,

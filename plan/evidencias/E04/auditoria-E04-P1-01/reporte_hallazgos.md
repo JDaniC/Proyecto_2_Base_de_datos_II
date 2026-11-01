@@ -192,6 +192,24 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* En citas con más de 50 revisiones, `obtenerRevisiones` descartaba `siguiente_cursor` y devolvía solo la primera página en orden ascendente, ocultando las revisiones más recientes y posibles cancelaciones.
   - *Corrección aplicada:* Se implementó un bucle asíncrono que sigue recursivamente el cursor devuelto por el backend hasta agotar todas las páginas (`while (cursor)`), consolidando la cronología completa de la cita sin truncamiento.
 
+### DEV-017 — Rechazo explícito de actualización de antecedentes en bundles sin persistencia
+- **Tipo:** `PERSISTENCIA / SEGURIDAD`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Backend/src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.ts:93` vs `REQ-OD-03`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434357093`).
+  - *Comportamiento detectado:* La actualización de antecedentes ejecutaba el comando aún si el bundle (ej. PostgreSQL hospitalario) carecía de adaptador para persistir antecedentes, consumiendo la versión del paciente y devolviendo éxito sobre datos no almacenados.
+  - *Corrección aplicada:* En `ActualizarAntecedentesClinicos`, se verifica antes de preparar y al ejecutar el comando que `clinica.antecedentes` exista; en caso contrario, se lanza `PERSISTENCIA_NO_DISPONIBLE` (`503`), garantizando que solo motores con almacenamiento durable de antecedentes acepten modificaciones.
+
+### DEV-018 — Exposición de fallo en carga HTTP de catálogos y supresión de simulación
+- **Tipo:** `FALLBACK PROHIBIDO`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Frontend/src/features/consultations/NewConsultationWizardPage.tsx:94` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434357095`).
+  - *Comportamiento detectado:* En modo API odontológico, un fallo de `/catalogos/odontologia` retenía en silencio los arreglos de diagnósticos, tratamientos y medicamentos simulados en local, permitiendo seleccionar y enviar datos simulados sin advertencia.
+  - *Corrección aplicada:* En modo API para odontología, los catálogos se inicializan vacíos (`[]`), se captura el fallo en `errorCatalogo` para alertar en la interfaz y se deshabilitan las sugerencias simuladas ante fallos de red o del backend.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas
