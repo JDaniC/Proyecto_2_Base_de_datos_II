@@ -3,7 +3,8 @@
 - **Fase y objetivo:** E03 — atención clínica común completa (consulta, signos, diagnósticos, tratamientos y receta histórica), archivo de expediente y correcciones versionadas conectados de extremo a extremo (UI → API → cuatro motores institucionales).
 - **Base integrada verificada:** `origin/develop` `e6e8310` antes de este PR documental.
 - **Fecha y participante:** 31/10/2026, America/Guatemala · JDaniC (con `E03-P1-01` implementada por Davidix888).
-- **Estado:** EN_REVISION; PR documental [#65 — Cerrar fase E03 con demostración integrada](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/65).
+- **Estado:** CERRADA; PR documental [#65 — Cerrar fase E03 con demostración integrada](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/65) integrado en `develop` (`f516156`).
+- **Revisión automática:** Codex sin hallazgos sobre `66e5f46` ("Didn't find any major issues. Breezy!"); `contrato-pr` y `revision-codex` success.
 - **Auditoría funcional:** [informe](auditoria-cierre-2026-10-31/INFORME.md), [inventario](auditoria-cierre-2026-10-31/inventario.csv) y [trazabilidad](auditoria-cierre-2026-10-31/trazabilidad.csv).
 
 ## Tareas y revisión
@@ -51,7 +52,7 @@ Complementariamente se ejecutaron en esta sesión las tres suites físicas de in
 | Archivo conserva historia, impide nuevas atenciones, permite correcciones autorizadas y reactivación solo en pediatría | Recorrido UI (archivo, reinicio, corrección post-archivo y reactivación pediátrica) y suites CA08/CA10 | PASS | Incluye regresión A-F01 en PostgreSQL |
 | Corrección de consulta/receta conserva versiones históricas inmutables y lectura por versión | Recorrido UI (`GET /consultas/{id}?version=1`) y suites por motor (DEC18 `snapshot_actual` en SQL) | PASS | Catálogo o cambios posteriores no alteran snapshots emitidos |
 | Reinicio del servidor y fallo/reejecución de migraciones preservan los datos | Runner `--clinica-ui` y suites de migración `004–007` | PASS | Sin tocar volúmenes de desarrollo ni bases compartidas |
-| Revisión automática de cierre | PR #65 | EN_REVISION | Pendiente de veredicto nativo de Codex sobre el SHA final antes de integrar |
+| Revisión automática de cierre | PR #65 (`f516156`), revisión sobre `66e5f46` | PASS | `contrato-pr` y `revision-codex` sin hallazgos antes del merge |
 
 Comprobaciones adicionales del checkout en esta sesión: `npm --prefix Backend test` **PASS** (311/311: 279 runtime/unitarias + 32 contractuales); `npm --prefix Backend run lint` **PASS**; `npm --prefix Frontend run build` **PASS**; `npm --prefix Frontend test -- src/test/http/ src/test/product-scope/ src/services/errors.test.ts src/services/dates.test.ts` **PASS** (114/114). Las pruebas históricas del flujo simulado anterior de módulos E04–E06 mantienen la clasificación de `DEC12` (reconciliación en `E06-P2-02`) y no se presentan como pruebas verdes de E03.
 
@@ -64,4 +65,4 @@ Comprobaciones adicionales del checkout en esta sesión: `npm --prefix Backend t
 
 ## Decisión
 
-La demostración conjunta y los criterios de salida de la fase E03 cumplen en los cuatro motores, distinguiendo pruebas en contenedores reales, emuladores locales y suites unitarias/transporte controlado. Se somete el PR #65 a revisión automática de Codex y check `contrato-pr` antes de su integración en `develop`.
+La demostración conjunta y los criterios de salida de la fase E03 cumplen en los cuatro motores, distinguiendo pruebas en contenedores reales, emuladores locales y suites unitarias/transporte controlado. Al integrarse el PR #65 (`f516156`) con revisión automática limpia sobre `66e5f46` y `contrato-pr` verde, la fase E03 queda formalmente cerrada en `develop` y habilita la fase E04 (`E04-P1-01`, `E04-P1-02`, `E04-P2-01`).
