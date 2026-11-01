@@ -174,19 +174,21 @@ export class ActualizarAntecedentesClinicos {
           : ANTECEDENTES_VACIOS;
 
         // Reutilizar id y fecha_registro de registros preexistentes para preservar identidad e historia
-        const mapaAnteriores = new Map<string, { id: UUID; fecha_registro: string }>();
+        // Usar cola por clave para consumir cada registro exactamente una vez y no repetir id_publico
+        const mapaAnteriores = new Map<string, Array<{ id: UUID; fecha_registro: string }>>();
         for (const reg of anterior.registros) {
           const clave = `${reg.tipo.toUpperCase()}:${reg.descripcion.trim().toLowerCase()}`;
-          if (!mapaAnteriores.has(clave)) {
-            mapaAnteriores.set(clave, { id: reg.id, fecha_registro: reg.fecha_registro });
-          }
+          const cola = mapaAnteriores.get(clave) ?? [];
+          cola.push({ id: reg.id, fecha_registro: reg.fecha_registro });
+          mapaAnteriores.set(clave, cola);
         }
 
         let idx = 0;
         const fechaHoy = comando.instante.slice(0, 10);
         const resolverRegistro = (tipo: string, descripcion: string): RegistroAntecedente => {
           const clave = `${tipo.toUpperCase()}:${descripcion.trim().toLowerCase()}`;
-          const existente = mapaAnteriores.get(clave);
+          const cola = mapaAnteriores.get(clave);
+          const existente = cola && cola.length > 0 ? cola.shift() : undefined;
           if (existente) {
             return {
               id: existente.id,
@@ -219,7 +221,8 @@ export class ActualizarAntecedentesClinicos {
           familiares,
           alergias: alergias.map((a) => {
             const clave = `ALERGIA:${a.sustancia.trim().toLowerCase()} [${a.severidad}]: ${a.reaccion.trim().toLowerCase()}`;
-            const existente = mapaAnteriores.get(clave);
+            const cola = mapaAnteriores.get(clave);
+            const existente = cola && cola.length > 0 ? cola[0] : undefined;
             return {
               ...a,
               fechaRegistro: a.fechaRegistro || existente?.fecha_registro || fechaHoy,

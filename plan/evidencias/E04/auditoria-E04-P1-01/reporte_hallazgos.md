@@ -147,6 +147,24 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* Si una búsqueda no arrojaba resultados, `pacienteId` conservaba el valor del paciente anterior, permitiendo enviar el formulario y asociar la cita al paciente incorrecto.
   - *Corrección aplicada:* Se limpia `setPacienteId('')` cuando los resultados están vacíos y `handleSubmit` valida explícitamente `!pacienteId || !pacientes.some((p) => p.id === pacienteId)`.
 
+### DEV-012 — Consumo único de identidades preexistentes de antecedentes clínicos
+- **Tipo:** `DIVERGENTE`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Backend/src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.ts:177` vs `REQ-OD-03`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434277688`).
+  - *Comportamiento detectado:* Si un paciente tenía múltiples antecedentes con la misma clave normalizada de tipo y descripción, el mapa reutilizaba el mismo UUID en cada ocurrencia, violando la restricción de unicidad de `antecedente.id_publico` en MySQL al persistir.
+  - *Corrección aplicada:* Se estructura una cola FIFO (`Array<{ id: UUID; fecha_registro: string }>`) por clave para que cada identidad existente sea consumida exactamente una vez; si se acotan o añaden duplicados, se generan nuevos UUIDs deterministas sin colisión.
+
+### DEV-013 — Descarte de respuestas tardías u obsoletas en búsqueda de pacientes
+- **Tipo:** `CONCURRENCIA / CARRERA`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/appointments/CrearCitaModal.tsx:102` vs `REQ-OD-01`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434277682`).
+  - *Comportamiento detectado:* Respuestas asíncronas de búsquedas previas de pacientes podían resolverse fuera de orden o con el modal cerrado, sobreescribiendo el listado y la selección del usuario.
+  - *Corrección aplicada:* Se incorporó un flag `cancelado` en el cleanup del efecto de búsqueda para descartar cualquier promesa pendiente tras nuevas teclas o cierre del modal.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

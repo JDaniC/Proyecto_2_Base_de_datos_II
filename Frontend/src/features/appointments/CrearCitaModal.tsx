@@ -98,6 +98,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   // Cargar lista de pacientes con expediente activo
   useEffect(() => {
     if (!isOpen) return;
+    let cancelado = false;
     const termino = mode === 'api' ? busquedaPaciente.trim() || 'a' : busquedaPaciente.trim();
     patientRepository
       .buscar(institucionId, {
@@ -106,6 +107,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
         limite: 50,
       })
       .then((res) => {
+        if (cancelado) return;
         setPacientes(res.items);
         if (res.items.length > 0) {
           if (!pacienteId || !res.items.some((p) => p.id === pacienteId)) {
@@ -116,8 +118,13 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
         }
       })
       .catch((err) => {
-        console.error('Error cargando pacientes:', err);
+        if (!cancelado) {
+          console.error('Error cargando pacientes:', err);
+        }
       });
+    return () => {
+      cancelado = true;
+    };
   }, [isOpen, mode, institucionId, patientRepository, busquedaPaciente, pacienteId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
