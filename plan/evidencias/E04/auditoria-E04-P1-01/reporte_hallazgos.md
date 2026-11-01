@@ -75,6 +75,42 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
 - **Corrección aplicada:** Se añadió `secretariaGestoraActor` en `PuertosClinicos` (implementado en MySQL mediante `JOIN secretaria` por `u.id_publico`) y se incluyó en el estado construido por `GestionarCitas.ejecutar`.
 - **Test de regresión asociado:** `Frontend/scripts/clinica-e2e.mjs` y `Backend/tests/integracion/clinica-sql.test.ts`.
 
+### DEV-004 — Bloqueo de mutaciones de antecedentes si la carga inicial de antecedentes falla
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Frontend/src/features/patients/HttpPatientRecord.tsx:55` vs `REQ-OD-04`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434148840`).
+  - *Comportamiento detectado:* Si `obtenerAntecedentes` fallaba pero el expediente cargaba, el error se atrapaba silenciosamente tratando los antecedentes como vacíos. Si el odontólogo guardaba una nueva alergia, el reemplazo `PUT /antecedentes` borraba los antecedentes preexistentes.
+  - *Corrección aplicada:* Se utilizó `Promise.allSettled`, se expuso el error `errorAntecedentes`, se inhabilitaron los botones/inputs de agregar alergia o condición y `handleGuardarAntecedente` bloquea la escritura si no hay antecedentes válidos cargados.
+
+### DEV-005 — Clave idempotente conservada ante reintentos en alta de citas
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/appointments/CrearCitaModal.tsx:145` vs `REQ-OD-01`, `DEC07`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434148843`).
+  - *Comportamiento detectado:* Cada envío generaba un `randomUUID` nuevo, impidiendo la recuperación de una respuesta perdida ante caída de conexión (produciendo `VERSION_DESACTUALIZADA` en el reintento).
+  - *Corrección aplicada:* Se implementó `claveIntencionRef` memorizando la huella del formulario y preservando la misma `idempotencyKey` entre reintentos del mismo formulario, reseteándola al cambiar los campos o tras éxito.
+
+### DEV-006 — Reactividad de nombres de paciente y profesional en agenda HTTP
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/appointments/AppointmentsCalendarPage.tsx:187` vs `REQ-OD-01`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434148845`).
+  - *Comportamiento detectado:* La resolución de nombres dependía de `citas.length`. Al cambiar de fecha o filtros con la misma cantidad de citas, se mantenían los IDs en lugar de los nombres enriquecidos.
+  - *Corrección aplicada:* Se indexó la dependencia con una huella compuesta `huellaCitas` basada en IDs y estado de resolución, asegurando re-enriquecimiento reactivo sin ciclos.
+
+### DEV-007 — Separación de concentración y dosis sugerida en catálogo de medicamentos odontológicos
+- **Tipo:** `DIVERGENTE`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/consultations/NewConsultationWizardPage.tsx:183`, `Backend/src/aplicacion/puertos/clinica.ts:59` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434148846`).
+  - *Comportamiento detectado:* La concentración se poblaba con `dosis_sugerida` (e.g., "15 ml en enjuague bucal sin diluir"), pisando la concentración real del fármaco (e.g. "0.12%").
+  - *Corrección aplicada:* Se añadió el campo opcional `concentracion` en `ItemCatalogoMedicamentoOdontologico` del puerto backend y del DTO frontend, y en `NewConsultationWizardPage` se asignan por separado la concentración y la dosis sugerida al autocompletar la receta.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

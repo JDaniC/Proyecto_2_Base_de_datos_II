@@ -144,12 +144,17 @@ export const AppointmentsCalendarPage: React.FC = () => {
     cargarProfesionalesApi();
   }, [mode, citas.length, cargarProfesionalesApi]);
 
+  const huellaCitas = citas
+    .map((c) => `${c.id}:${c.pacienteId}:${c.profesionalId}:${c.pacienteNombre === c.pacienteId ? 'raw' : 'named'}`)
+    .join('|');
+
   useEffect(() => {
     if (mode !== 'api' || citas.length === 0) return;
     const idsFaltantes = Array.from(
       new Set(citas.filter((c) => c.pacienteNombre === c.pacienteId).map((c) => c.pacienteId))
     );
-    if (idsFaltantes.length === 0 && profesionalesApi.length === 0) return;
+    const necesitaNombresProf = citas.some((c) => !c.profesionalNombre || c.profesionalNombre === c.profesionalId);
+    if (idsFaltantes.length === 0 && (!necesitaNombresProf || profesionalesApi.length === 0)) return;
     let cancelado = false;
     Promise.all(
       idsFaltantes.map((id) =>
@@ -184,7 +189,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
     return () => {
       cancelado = true;
     };
-  }, [mode, citas.length, profesionalesApi, patientRepository, institucionId]);
+  }, [mode, huellaCitas, profesionalesApi, patientRepository, institucionId]);
 
   useEffect(() => {
     if (

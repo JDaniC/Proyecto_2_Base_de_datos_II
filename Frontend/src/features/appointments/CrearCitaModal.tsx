@@ -1,5 +1,5 @@
 import { getErrorMessage } from '../../services/errors';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CalendarPlus, AlertCircle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -57,9 +57,13 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
 
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
+  const claveIntencionRef = useRef<{ huella: string; clave: string } | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      claveIntencionRef.current = null;
+      return;
+    }
     if (fechaInicial) setFecha(fechaInicial);
     if (horaInicial) setHoraInicio(horaInicial);
   }, [isOpen, fechaInicial, horaInicial]);
@@ -141,6 +145,27 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
 
     try {
       const pacienteSeleccionado = pacientes.find((p) => p.id === pacienteId);
+      const motivoLimpio = motivo.trim();
+      const huella = JSON.stringify([
+        pacienteId,
+        profesionalId,
+        fecha,
+        horaInicio,
+        duracionMinutos,
+        consultorio,
+        motivoLimpio,
+      ]);
+      let claveIdempotente: string;
+      if (claveIntencionRef.current && claveIntencionRef.current.huella === huella) {
+        claveIdempotente = claveIntencionRef.current.clave;
+      } else {
+        claveIdempotente =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `cita-${Date.now()}`;
+        claveIntencionRef.current = { huella, clave: claveIdempotente };
+      }
+
       const dto: CrearCitaDTO = {
         pacienteId,
         ...(pacienteSeleccionado?.version !== undefined
@@ -151,15 +176,13 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
         horaInicio,
         duracionMinutos,
         consultorio,
-        motivo: motivo.trim(),
+        motivo: motivoLimpio,
         secretariaGestora: sesion?.nombre,
-        idempotencyKey:
-          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `cita-${Date.now()}`
+        idempotencyKey: claveIdempotente,
       };
 
       const nuevaCita = await appointmentRepository.crear(institucionId, dto);
+      claveIntencionRef.current = null;
       setGuardando(false);
       onCitaCreada(nuevaCita.id);
       onClose();

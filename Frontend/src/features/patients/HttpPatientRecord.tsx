@@ -47,6 +47,7 @@ const PatientRecord: React.FC = () => {
     let vigente = true;
     setCargando(true);
     setError(null);
+    setErrorAntecedentes(null);
     setPaciente(null);
     setExpediente(null);
     setAntecedentes(null);
@@ -56,21 +57,32 @@ const PatientRecord: React.FC = () => {
       : patientRepository.obtenerPorId(sesion.institucionId, pacienteId);
     const cargaAntecedentes =
       puedeLeer && esOdontologia && patientRepository.obtenerAntecedentes
-        ? patientRepository.obtenerAntecedentes(sesion.institucionId, pacienteId).catch(() => null)
+        ? patientRepository.obtenerAntecedentes(sesion.institucionId, pacienteId)
         : Promise.resolve(null);
-    Promise.all([carga, cargaAntecedentes]).then(([data, ant]) => {
+    Promise.allSettled([carga, cargaAntecedentes]).then(([resExp, resAnt]) => {
       if (!vigente) return;
-      if (data && 'paciente' in data) { setPaciente(data.paciente); setExpediente(data); }
-      else setPaciente(data as Paciente | null);
-      if (ant) setAntecedentes(ant);
-    }).catch((err: unknown) => {
-      if (vigente) setError(getErrorMessage(err, 'No se pudo cargar el perfil. Reintenta la consulta.'));
+      if (resExp.status === 'fulfilled') {
+        const data = resExp.value;
+        if (data && 'paciente' in data) { setPaciente(data.paciente); setExpediente(data); }
+        else setPaciente(data as Paciente | null);
+      } else {
+        setError(getErrorMessage(resExp.reason, 'No se pudo cargar el perfil. Reintenta la consulta.'));
+      }
+      if (resAnt.status === 'fulfilled') {
+        if (resAnt.value) setAntecedentes(resAnt.value);
+      } else {
+        setErrorAntecedentes(getErrorMessage(resAnt.reason, 'No fue posible cargar los antecedentes clínicos. Las modificaciones permanecen bloqueadas.'));
+      }
     }).finally(() => { if (vigente) setCargando(false); });
     return () => { vigente = false; };
   }, [patientRepository, sesion, pacienteId, puedeLeer, esOdontologia, filtros, reintento]);
 
   const handleGuardarAntecedente = async (tipo: 'ALERGIA' | 'CONDICION') => {
     if (!sesion || !paciente || !patientRepository.actualizarAntecedentes) return;
+    if (!antecedentes) {
+      setErrorAntecedentes('No es posible guardar antecedentes porque no se pudieron cargar los registros previos.');
+      return;
+    }
     const texto = (tipo === 'ALERGIA' ? nuevaAlergia : nuevaCondicion).trim();
     if (!texto) return;
     setGuardandoAntecedentes(true);
@@ -147,7 +159,9 @@ const PatientRecord: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
               <div>
                 <strong>Alergias registradas</strong>
-                {(antecedentes?.alergias ?? []).length === 0 ? (
+                {errorAntecedentes ? (
+                  <p style={{ color: 'var(--color-danger-text)', fontSize: '13px' }}>Error al consultar antecedentes clínicos</p>
+                ) : (antecedentes?.alergias ?? []).length === 0 ? (
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Sin alergias registradas</p>
                 ) : (
                   <ul>
@@ -163,12 +177,13 @@ const PatientRecord: React.FC = () => {
                     <input
                       aria-label="Nueva alergia odontológica"
                       type="text"
+                      disabled={!antecedentes || guardandoAntecedentes}
                       value={nuevaAlergia}
                       onChange={(e) => setNuevaAlergia(e.target.value)}
                       placeholder="Ej. Penicilina"
                       style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
                     />
-                    <Button size="sm" variant="secondary" disabled={guardandoAntecedentes || !nuevaAlergia.trim()} onClick={() => void handleGuardarAntecedente('ALERGIA')}>
+                    <Button size="sm" variant="secondary" disabled={!antecedentes || guardandoAntecedentes || !nuevaAlergia.trim()} onClick={() => void handleGuardarAntecedente('ALERGIA')}>
                       Agregar alergia
                     </Button>
                   </div>
@@ -176,7 +191,9 @@ const PatientRecord: React.FC = () => {
               </div>
               <div>
                 <strong>Condiciones sistémicas y antecedentes médicos</strong>
-                {(antecedentes?.patologicos ?? []).length === 0 ? (
+                {errorAntecedentes ? (
+                  <p style={{ color: 'var(--color-danger-text)', fontSize: '13px' }}>Error al consultar condiciones clínicas</p>
+                ) : (antecedentes?.patologicos ?? []).length === 0 ? (
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Sin condiciones relevantes registradas</p>
                 ) : (
                   <ul>
@@ -188,12 +205,13 @@ const PatientRecord: React.FC = () => {
                     <input
                       aria-label="Nuevo antecedente odontológico"
                       type="text"
+                      disabled={!antecedentes || guardandoAntecedentes}
                       value={nuevaCondicion}
                       onChange={(e) => setNuevaCondicion(e.target.value)}
                       placeholder="Ej. Hipertensión controlada"
                       style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
                     />
-                    <Button size="sm" variant="secondary" disabled={guardandoAntecedentes || !nuevaCondicion.trim()} onClick={() => void handleGuardarAntecedente('CONDICION')}>
+                    <Button size="sm" variant="secondary" disabled={!antecedentes || guardandoAntecedentes || !nuevaCondicion.trim()} onClick={() => void handleGuardarAntecedente('CONDICION')}>
                       Agregar antecedente
                     </Button>
                   </div>

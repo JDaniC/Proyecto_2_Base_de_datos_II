@@ -56,16 +56,16 @@ const CATALOGO_CIE10 = [
 ];
 
 const MEDICAMENTOS_SUGERIDOS = [
-  { nombre: 'Losartán Potásico', presentacion: 'Comprimido', concentracion: '50 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
-  { nombre: 'Metformina Clorhidrato', presentacion: 'Tableta', concentracion: '850 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
-  { nombre: 'Amoxicilina + Ácido Clavulánico', presentacion: 'Tableta', concentracion: '500/125 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
-  { nombre: 'Amoxicilina', presentacion: 'Cápsula', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
-  { nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '3 días' },
-  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '600 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
-  { nombre: 'Ketorolaco Trometamina', presentacion: 'Tableta sublingual', concentracion: '10 mg', via: 'Sublingual', frecuencia: 'Cada 8 horas', duracion: '2 días' },
-  { nombre: 'Clorhexidina al 0.12%', presentacion: 'Colutorio bucal', concentracion: '15 ml', via: 'Enjuague bucal', frecuencia: 'Cada 12 horas por 1 min', duracion: '10 días' },
-  { nombre: 'Omeprazol', presentacion: 'Cápsula', concentracion: '20 mg', via: 'Oral', frecuencia: 'Cada 24 horas en ayunas', duracion: '30 días' },
-  { nombre: 'Salbutamol aerosol', presentacion: 'Inhalador', concentracion: '100 mcg/dosis', via: 'Inhalatoria', frecuencia: 'Cada 6 a 8 horas a demanda', duracion: '30 días' }
+  { nombre: 'Losartán Potásico', presentacion: 'Comprimido', concentracion: '50 mg', dosis: '1', unidad: 'comprimido', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
+  { nombre: 'Metformina Clorhidrato', presentacion: 'Tableta', concentracion: '850 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
+  { nombre: 'Amoxicilina + Ácido Clavulánico', presentacion: 'Tableta', concentracion: '500/125 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
+  { nombre: 'Amoxicilina', presentacion: 'Cápsula', concentracion: '500 mg', dosis: '1', unidad: 'cápsula', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
+  { nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '3 días' },
+  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '600 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
+  { nombre: 'Ketorolaco Trometamina', presentacion: 'Tableta sublingual', concentracion: '10 mg', dosis: '1', unidad: 'tableta', via: 'Sublingual', frecuencia: 'Cada 8 horas', duracion: '2 días' },
+  { nombre: 'Clorhexidina al 0.12%', presentacion: 'Colutorio bucal', concentracion: '0.12%', dosis: '15', unidad: 'ml', via: 'Enjuague bucal', frecuencia: 'Cada 12 horas por 1 min', duracion: '10 días' },
+  { nombre: 'Omeprazol', presentacion: 'Cápsula', concentracion: '20 mg', dosis: '1', unidad: 'cápsula', via: 'Oral', frecuencia: 'Cada 24 horas en ayunas', duracion: '30 días' },
+  { nombre: 'Salbutamol aerosol', presentacion: 'Inhalador', concentracion: '100 mcg/dosis', dosis: '2', unidad: 'disparos', via: 'Inhalatoria', frecuencia: 'Cada 6 a 8 horas a demanda', duracion: '30 días' }
 ];
 
 const TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA = [
@@ -177,14 +177,19 @@ export const NewConsultationWizardPage: React.FC = () => {
         })));
       }
       if (cat.medicamentos.length > 0) {
-        setMedicamentosSugeridos(cat.medicamentos.map((m) => ({
-          nombre: m.nombre,
-          presentacion: m.presentacion ?? 'Tableta',
-          concentracion: m.dosis_sugerida,
-          via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
-          frecuencia: m.frecuencia_sugerida,
-          duracion: m.duracion_sugerida
-        })));
+        setMedicamentosSugeridos(cat.medicamentos.map((m) => {
+          const conc = m.concentracion ?? m.dosis_sugerida;
+          return {
+            nombre: m.nombre,
+            presentacion: m.presentacion ?? 'Tableta',
+            concentracion: conc,
+            dosis: m.dosis_sugerida || '1',
+            unidad: m.presentacion ? m.presentacion.toLowerCase() : 'unidad',
+            via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
+            frecuencia: m.frecuencia_sugerida,
+            duracion: m.duracion_sugerida
+          };
+        }));
       }
     }).catch(() => {});
     return () => { activo = false; };
@@ -354,6 +359,8 @@ export const NewConsultationWizardPage: React.FC = () => {
     setMedNombre(med.nombre);
     setMedPresentacion(med.presentacion);
     setMedConcentracion(med.concentracion);
+    if (med.dosis) setMedDosis(med.dosis);
+    if (med.unidad) setMedUnidad(med.unidad);
     setMedVia(med.via);
     setMedFrecuencia(med.frecuencia);
     setMedDuracion(med.duracion);

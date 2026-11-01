@@ -622,6 +622,7 @@ export interface CatalogoOdontologiaDTO {
     nombre: string;
     principio_activo?: string;
     presentacion?: string;
+    concentracion?: string;
     dosis_sugerida: string;
     frecuencia_sugerida: string;
     duracion_sugerida: string;

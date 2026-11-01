@@ -57,6 +57,7 @@ export interface ItemCatalogoMedicamentoOdontologico {
   readonly nombre: string;
   readonly principio_activo?: string;
   readonly presentacion?: string;
+  readonly concentracion?: string;
   readonly dosis_sugerida: string;
   readonly frecuencia_sugerida: string;
   readonly duracion_sugerida: string;
