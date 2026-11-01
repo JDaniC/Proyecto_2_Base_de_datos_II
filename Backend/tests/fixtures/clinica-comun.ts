@@ -9,7 +9,8 @@ import type { Cita } from '../../src/dominio/clinica/cita.js';
 import type { Consulta, ProfesionalClinico } from '../../src/dominio/clinica/consulta.js';
 import { crearContextoAutenticado, type CuentaAutorizada } from '../../src/aplicacion/puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-institucional.js';
-import type { PuertosClinicos } from '../../src/aplicacion/puertos/clinica.js';
+import type { AntecedentesClinicos, PuertosClinicos, RevisionCita } from '../../src/aplicacion/puertos/clinica.js';
+import { CATALOGO_ODONTOLOGIA_BASE } from '../../src/aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import type { LectorTransaccional, UnidadDeTrabajo, OperacionIdempotente, RevisionPlanificada, EventoAuditoria, CambioPlanificado } from '../../src/aplicacion/puertos/nucleo.js';
 export const nuevoId = () => uuidPublico(randomUUID());
 export const ahora = instanteUtc('2026-10-28T18:00:00Z');
@@ -27,6 +28,7 @@ export function escenarioClinico(institucion: Institucion) {
   let pacientes = new Map([[paciente.id, paciente]]);
   let citas = new Map<string, Cita>();
   let consultas = new Map<string, Consulta>();
+  let antecedentes = new Map<string, AntecedentesClinicos>();
   let operaciones = new Map<string, OperacionIdempotente<unknown>>();
   let revisiones: RevisionPlanificada[] = [];
   let auditoria: EventoAuditoria[] = [];
@@ -35,7 +37,10 @@ export function escenarioClinico(institucion: Institucion) {
   const control = { fallo: '' as '' | 'datos' | 'receta' | 'auditoria', repetirCallback: false };
   const clinica: PuertosClinicos = {
     pacientes: { async porId(id) { return pacientes.get(id) ?? null; } },
-    profesionales: { async porId(id) { return id === profesional.id ? profesional : null; } },
+    profesionales: {
+      async porId(id) { return id === profesional.id ? profesional : null; },
+      async listar() { return [profesional]; },
+    },
     consultas: {
       async porId(id) { return consultas.get(id) ?? null; },
       async porVersion(id, version) { const vigente = consultas.get(id); if (vigente?.version === version) return vigente;
@@ -44,7 +49,43 @@ export function escenarioClinico(institucion: Institucion) {
     },
     citas: { async porId(id) { return citas.get(id) ?? null; },
       async listar() { return { elementos: [...citas.values()] }; },
-      async solapamientos(id, fecha, inicio, fin) { return [...citas.values()].filter(c => c.profesional_id === id && c.fecha === fecha && c.hora_inicio < fin && (c.hora_fin ?? '23:59') > inicio && c.estado !== 'CANCELADA'); } },
+      async solapamientos(id, fecha, inicio, fin) { return [...citas.values()].filter(c => c.profesional_id === id && c.fecha === fecha && c.hora_inicio < fin && (c.hora_fin ?? '23:59') > inicio && c.estado !== 'CANCELADA'); },
+      async revisiones(id, rango, pagina) {
+        const items: RevisionCita[] = revisiones
+          .filter(r => r.agregado === 'citas' && r.recursoId === id)
+          .map(r => {
+            const snap = r.snapshotAnterior as Record<string, unknown>;
+            return {
+              id: r.id,
+              version: r.versionAnterior,
+              fecha_hora: String(snap.fecha_hora ?? ahora),
+              actor_id: uuidPublico(snap.actor_id ?? cuenta.id),
+              motivo_cambio: String(snap.motivo_cambio ?? r.motivo ?? ''),
+              anterior: snap.anterior as Cita,
+              actual: snap.actual as Cita,
+            };
+          })
+          .filter(item => (!rango.desde || item.fecha_hora >= rango.desde) && (!rango.hasta || item.fecha_hora < rango.hasta));
+        if (pagina.orden === 'DESC') items.reverse();
+        return { elementos: items.slice(0, pagina.limite) };
+      } },
+    antecedentes: {
+      async porPaciente(id) {
+        return antecedentes.get(id) ?? {
+          patologicos: [],
+          quirurgicos: [],
+          familiares: [],
+          alergias: [],
+          medicamentos_actuales: [],
+          registros: [],
+        };
+      },
+    },
+    catalogos: {
+      async odontologia() {
+        return CATALOGO_ODONTOLOGIA_BASE;
+      },
+    },
     responsables: { async autorizacion(id, responsable) { return id === paciente.id && responsable === responsableId ? autorizacion : null; } },
   };
   const uow: UnidadDeTrabajo = { async ejecutar(contextoActual, comando, planificar) {
@@ -62,8 +103,13 @@ export function escenarioClinico(institucion: Institucion) {
       if (control.repetirCallback) await planificar(lector);
       const plan = await planificar(lector);
       if (plan.tipo === 'REPETIR') return plan.operacion.resultado;
-      const nuevosPacientes = new Map(pacientes), nuevasCitas = new Map(citas), nuevasConsultas = new Map(consultas);
+      const nuevosPacientes = new Map(pacientes), nuevasCitas = new Map(citas), nuevasConsultas = new Map(consultas), nuevosAntecedentes = new Map(antecedentes);
       for (const cambio of plan.cambios) {
+        if (cambio.agregado === 'antecedentes') {
+          nuevosAntecedentes.set(cambio.recursoId, structuredClone(cambio.nuevoEstado as AntecedentesClinicos));
+          if (control.fallo === 'datos') throw new Error('FALLO_DATOS_SINTETICO');
+          continue;
+        }
         const mapa = (cambio.agregado === 'pacientes' || cambio.agregado === 'estadoHistorial') ? nuevosPacientes : cambio.agregado === 'citas' ? nuevasCitas : cambio.agregado === 'consultas' ? nuevasConsultas : null;
         if (mapa) {
           const anterior = mapa.get(cambio.recursoId);
@@ -75,7 +121,7 @@ export function escenarioClinico(institucion: Institucion) {
       }
       if (control.fallo === 'receta' && plan.cambios.some(c => c.agregado === 'consultas' && (c.nuevoEstado as Consulta).receta)) throw new Error('FALLO_RECETA_SINTETICO');
       if (control.fallo === 'auditoria') throw new Error('FALLO_AUDITORIA_SINTETICO');
-      pacientes = nuevosPacientes; citas = nuevasCitas; consultas = nuevasConsultas;
+      pacientes = nuevosPacientes; citas = nuevasCitas; consultas = nuevasConsultas; antecedentes = nuevosAntecedentes;
       revisiones = [...revisiones, ...structuredClone(plan.revisiones)]; auditoria = [...auditoria, ...structuredClone(plan.auditoria)];
       eventos = [...eventos, ...structuredClone(plan.cambios.filter(c => c.agregado === 'eventosHistorial'))];
       operaciones = new Map(operaciones).set(`${contextoActual.cuenta.id}:${comando.caso}:${comando.claveIdempotencia}`, { hashEntrada: comando.hashEntrada, resultado: structuredClone(plan.resultado) });

@@ -84,13 +84,16 @@ export const NewConsultationWizardPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { patientRepository, appointmentRepository, consultationRepository } = useServices();
+  const { patientRepository, appointmentRepository, consultationRepository, catalogRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [citaVinculada, setCitaVinculada] = useState<CitaAgenda | null>(null);
   const [cargandoInicial, setCargandoInicial] = useState(true);
+  const [catalogoDiagnosticos, setCatalogoDiagnosticos] = useState(CATALOGO_CIE10);
+  const [tratamientosOdontologia, setTratamientosOdontologia] = useState(TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA);
+  const [medicamentosSugeridos, setMedicamentosSugeridos] = useState(MEDICAMENTOS_SUGERIDOS);
 
   // Paso del Stepper (1 a 5)
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -153,6 +156,40 @@ export const NewConsultationWizardPage: React.FC = () => {
   const intention = useRef<{fingerprint: string; key: string} | null>(null);
 
   // Cargar datos del paciente y de la cita vinculada
+  useEffect(() => {
+    if (institucionId !== 'CLINICA_ODONTOLOGICA' || mode !== 'api' || !catalogRepository?.obtenerCatalogoOdontologia) {
+      return;
+    }
+    let activo = true;
+    catalogRepository.obtenerCatalogoOdontologia(institucionId).then((cat) => {
+      if (!activo || !cat) return;
+      if (cat.diagnosticos.length > 0) {
+        const existentes = new Set(cat.diagnosticos.map((d) => d.codigo));
+        setCatalogoDiagnosticos([
+          ...cat.diagnosticos,
+          ...CATALOGO_CIE10.filter((d) => !existentes.has(d.codigo))
+        ]);
+      }
+      if (cat.procedimientos.length > 0) {
+        setTratamientosOdontologia(cat.procedimientos.map((p) => ({
+          nombre: p.nombre,
+          indicaciones: p.indicaciones ?? p.descripcion ?? 'Procedimiento odontológico institucional.'
+        })));
+      }
+      if (cat.medicamentos.length > 0) {
+        setMedicamentosSugeridos(cat.medicamentos.map((m) => ({
+          nombre: m.nombre,
+          presentacion: m.presentacion ?? 'Tableta',
+          concentracion: m.dosis_sugerida,
+          via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
+          frecuencia: m.frecuencia_sugerida,
+          duracion: m.duracion_sugerida
+        })));
+      }
+    }).catch(() => {});
+    return () => { activo = false; };
+  }, [catalogRepository, institucionId, mode]);
+
   useEffect(() => {
     if (!pacienteId) return;
 
@@ -1060,7 +1097,7 @@ export const NewConsultationWizardPage: React.FC = () => {
 
               {busquedaCIE.trim().length > 0 && (
                 <div style={{ marginTop: '8px', maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#FFFFFF' }}>
-                  {CATALOGO_CIE10.filter((c) => c.nombre.toLowerCase().includes(busquedaCIE.toLowerCase()) || c.codigo.toLowerCase().includes(busquedaCIE.toLowerCase())).map((cie) => (
+                  {catalogoDiagnosticos.filter((c) => c.nombre.toLowerCase().includes(busquedaCIE.toLowerCase()) || c.codigo.toLowerCase().includes(busquedaCIE.toLowerCase())).map((cie) => (
                     <div
                       key={cie.codigo}
                       onClick={() => agregarDiagnostico(cie)}
@@ -1141,7 +1178,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     Tratamientos del catálogo odontológico:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA.map((t) => (
+                    {tratamientosOdontologia.map((t) => (
                       <button
                         key={t.nombre}
                         type="button"
@@ -1260,7 +1297,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     Sugerencias frecuentes del catálogo institucional:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {MEDICAMENTOS_SUGERIDOS.map((m) => (
+                    {medicamentosSugeridos.map((m) => (
                       <button
                         key={m.nombre}
                         type="button"

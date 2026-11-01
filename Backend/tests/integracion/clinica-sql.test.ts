@@ -1,4 +1,7 @@
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
+import { ConsultarCitas } from '../../src/aplicacion/casos-uso/citas/consultar-citas.js';
+import { ConsultarAntecedentesClinicos, ActualizarAntecedentesClinicos } from '../../src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.js';
+import { ConsultarCatalogosClinicos } from '../../src/aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -378,5 +381,223 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
   assert.deepEqual(await clinica.consultas.porId(trasArchivo.respuesta.id), trasArchivo.respuesta);
   assert.equal(await clinica.consultas.porVersion(trasArchivo.respuesta.id, versionPositiva(4)), null);
 
+  if (dialecto === 'mysql') {
+    await verificarFlujoDentalDosRolesMysql(pool, bundle, clinica, pacientes, profesionalId);
+  }
+}
 
+async function verificarFlujoDentalDosRolesMysql(
+  pool: PoolSql,
+  bundle: BundleInstitucional,
+  clinica: NonNullable<BundleInstitucional['clinica']>,
+  pacientes: NonNullable<BundleInstitucional['pacientes']>,
+  odontologoPublicoId: string,
+): Promise<void> {
+  const secretariaPublicoId = randomUUID();
+  const cuentaSecId = randomUUID();
+  const uidSec = `sec-odo-${randomUUID()}`;
+  const pacienteDentalId = randomUUID();
+
+  await pool.consultar(
+    `INSERT INTO secretaria (id_publico, nombres, apellidos, telefono)
+     VALUES (?, 'Laura', 'Gómez', '5555-1234')`,
+    [secretariaPublicoId],
+  );
+  const idSecretariaInterno = await pool.consultar<{ id: number | string }>(
+    'SELECT id_secretaria AS id FROM secretaria WHERE id_publico = ?',
+    [secretariaPublicoId],
+  );
+  await pool.consultar(
+    `INSERT INTO usuario (id_publico, id_secretaria, nombre_usuario, auth_uid, institucion_id, estado)
+     VALUES (?, ?, ?, ?, 'CLINICA_ODONTOLOGICA', 'ACTIVO')`,
+    [cuentaSecId, idSecretariaInterno.filas[0]?.id, `sec_${randomUUID().slice(0, 8)}`, uidSec],
+  );
+  const permisosSecretaria = ['pacientes.administrar', 'citas.administrar'];
+  await pool.consultar(
+    "INSERT INTO rol (nombre, permisos) VALUES ('SECRETARIA', ?) ON DUPLICATE KEY UPDATE permisos = VALUES(permisos)",
+    [JSON.stringify(permisosSecretaria)],
+  );
+  await pool.consultar(
+    "INSERT INTO usuario_rol (id_usuario, id_rol) SELECT u.id_usuario, r.id_rol FROM usuario u, rol r WHERE u.auth_uid = ? AND r.nombre = 'SECRETARIA'",
+    [uidSec],
+  );
+
+  await pool.consultar(
+    `INSERT INTO paciente (id_publico, nombres, apellidos, fecha_nacimiento, sexo)
+     VALUES (?, 'Sofía', 'Castillo', '1994-08-12', 'FEMENINO')`,
+    [pacienteDentalId],
+  );
+  const idPacInterno = await pool.consultar<{ id: number | string }>(
+    'SELECT id_paciente AS id FROM paciente WHERE id_publico = ?',
+    [pacienteDentalId],
+  );
+  await pool.consultar(
+    `INSERT INTO historial_clinico (id_publico, id_paciente, estado)
+     VALUES (?, ?, 'ACTIVO')`,
+    [randomUUID(), idPacInterno.filas[0]?.id],
+  );
+
+  const cuentaSec = await crearRepositorioCuentaMysql(pool).porUid(uidSec);
+  assert.ok(cuentaSec);
+  const ctxSecretaria = crearContextoAutenticado(
+    { uid: uidSec, institucion: 'CLINICA_ODONTOLOGICA', emitidoEn: instanteUtc(new Date().toISOString()) },
+    cuentaSec,
+    uuidPublico(randomUUID()),
+  );
+
+  // Obtener contexto del ODONTOLOGO existente
+  const filaUidOdo = await pool.consultar<{ auth_uid: string }>(
+    'SELECT u.auth_uid FROM usuario u JOIN odontologo o ON o.id_odontologo = u.id_odontologo WHERE o.id_publico = ? LIMIT 1',
+    [odontologoPublicoId],
+  );
+  const uidOdo = String(filaUidOdo.filas[0]?.auth_uid);
+  const cuentaOdo = await crearRepositorioCuentaMysql(pool).porUid(uidOdo);
+  assert.ok(cuentaOdo);
+  const ctxOdontologo = crearContextoAutenticado(
+    { uid: uidOdo, institucion: 'CLINICA_ODONTOLOGICA', emitidoEn: instanteUtc(new Date().toISOString()) },
+    cuentaOdo,
+    uuidPublico(randomUUID()),
+  );
+
+  const agenda = new GestionarCitas(dependencias);
+  const lecturaCitas = new ConsultarCitas();
+  const atencion = new AtencionClinica(dependencias);
+  const leerAnt = new ConsultarAntecedentesClinicos();
+  const actAnt = new ActualizarAntecedentesClinicos(dependencias);
+  const catalogos = new ConsultarCatalogosClinicos();
+
+  // 1) SECRETARIA consulta directorio de odontólogos pero NO puede leer ni editar antecedentes ni abrir consulta (RF-C08, CA18)
+  const profesionales = await catalogos.listarProfesionales(ctxSecretaria, bundle);
+  assert.ok(profesionales.some((p) => p.id === odontologoPublicoId));
+  await assert.rejects(leerAnt.ejecutar(ctxSecretaria, bundle, pacienteDentalId), /SIN_PERMISO|permiso/);
+  await assert.rejects(
+    actAnt.ejecutar({
+      contexto: ctxSecretaria,
+      bundle,
+      claveIdempotencia: uuidPublico(randomUUID()),
+      id: uuidPublico(pacienteDentalId),
+      entrada: {
+        version_esperada: 1,
+        patologicos: ['Asma'],
+        quirurgicos: [],
+        familiares: [],
+        alergias: [],
+        medicamentos_actuales: [],
+      },
+    }),
+    /SIN_PERMISO|permiso/,
+  );
+
+  // 2) SECRETARIA crea cita para el ODONTOLOGO y se persiste id_secretaria + secretaria_gestora (RF-C02, RF-C03)
+  const citaCreada = await agenda.ejecutar('crear', {
+    contexto: ctxSecretaria,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      paciente_id: pacienteDentalId,
+      version_paciente: 1,
+      profesional_id: odontologoPublicoId,
+      fecha: '2026-11-12',
+      hora_inicio: '09:00',
+      duracion_minutos: 30,
+      motivo: 'Dolor molar inferior derecho',
+      consultorio: 'Sillón 2',
+    },
+  });
+  assert.equal(citaCreada.httpStatus, 201);
+  const citaLeida1 = await lecturaCitas.porId(ctxSecretaria, bundle, citaCreada.respuesta.id);
+  assert.equal(citaLeida1.secretaria_gestora, 'Laura Gómez');
+
+  // 3) SECRETARIA reprograma la cita con motivo y se registra en revisiones (CA06)
+  const citaReprog = await agenda.ejecutar('reprogramar', {
+    contexto: ctxSecretaria,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    id: citaCreada.respuesta.id,
+    entrada: {
+      version_esperada: 1,
+      fecha: '2026-11-12',
+      hora_inicio: '10:30',
+      duracion_minutos: 30,
+      motivo: 'Cambio de turno solicitado por paciente',
+    },
+  });
+  assert.equal(citaReprog.httpStatus, 200);
+  const revisionesCita = await lecturaCitas.revisiones(ctxOdontologo, bundle, citaCreada.respuesta.id, {});
+  assert.equal(revisionesCita.elementos.length, 1);
+  assert.equal(revisionesCita.elementos[0]?.motivo_cambio, 'Cambio de turno solicitado por paciente');
+  assert.equal(revisionesCita.elementos[0]?.anterior.hora_inicio, '09:00');
+  assert.equal(revisionesCita.elementos[0]?.actual.hora_inicio, '10:30');
+
+  // 4) ODONTOLOGO registra antecedentes clínicos en MySQL (tabla antecedente) y consulta catálogo (RF-C04, RF-C06)
+  const catOdo = await catalogos.obtenerCatalogoOdontologia(ctxOdontologo, bundle);
+  assert.ok(catOdo.diagnosticos.length > 0);
+  assert.ok(catOdo.procedimientos.length > 0);
+
+  const pacAntesAnt = (await pacientes.porId(uuidPublico(pacienteDentalId)))!;
+  const antGuardados = await actAnt.ejecutar({
+    contexto: ctxOdontologo,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    id: uuidPublico(pacienteDentalId),
+    entrada: {
+      version_esperada: pacAntesAnt.version,
+      patologicos: ['Hipertensión arterial controlada'],
+      quirurgicos: ['Exodoncia terceros molares (2022)'],
+      familiares: [],
+      alergias: [{ sustancia: 'Penicilina', severidad: 'SEVERA', reaccion: 'Anfilaxia' }],
+      medicamentos_actuales: ['Losartán 50 mg'],
+    },
+  });
+  assert.equal(antGuardados.httpStatus, 200);
+  const antLeidos = await leerAnt.ejecutar(ctxOdontologo, bundle, pacienteDentalId);
+  assert.deepEqual(antLeidos.patologicos, ['Hipertensión arterial controlada']);
+  assert.deepEqual(antLeidos.quirurgicos, ['Exodoncia terceros molares (2022)']);
+  assert.equal(antLeidos.alergias[0]?.sustancia, 'Penicilina');
+  assert.equal(antLeidos.alergias[0]?.severidad, 'SEVERA');
+
+  const filasAntMysql = await pool.consultar<{ total: number | string }>(
+    'SELECT count(*) AS total FROM antecedente a JOIN historial_clinico h ON h.id_historial = a.id_historial JOIN paciente p ON p.id_paciente = h.id_paciente WHERE p.id_publico = ?',
+    [pacienteDentalId],
+  );
+  assert.equal(Number(filasAntMysql.filas[0]?.total), 4);
+
+  // 5) ODONTOLOGO atiende la cita reprogramada: se preserva id_secretaria y la cita pasa a ATENDIDA (RF-C03, RF-C05..C07)
+  const pacAntesAtencion = (await pacientes.porId(uuidPublico(pacienteDentalId)))!;
+  const consultaDental = await atencion.ejecutar('completa', {
+    contexto: ctxOdontologo,
+    bundle,
+    claveIdempotencia: uuidPublico(randomUUID()),
+    entrada: {
+      paciente_id: pacienteDentalId,
+      version_paciente: pacAntesAtencion.version,
+      cita_id: citaCreada.respuesta.id,
+      version_cita: 2,
+      motivo: 'Dolor molar inferior derecho',
+      sintomas: 'Sensibilidad térmica aguda en pieza 46',
+      signos_vitales: { presion_sistolica: 120, presion_diastolica: 80 },
+      observaciones: 'Se realiza obturación con resina compuesta',
+      diagnosticos: [{ codigo_cie: 'K02.1', nombre: 'Caries de la dentina', es_principal: true }],
+      tratamientos: [{ descripcion: 'Restauración con resina compuesta fotocurada', indicaciones: 'Evitar alimentos duros por 24 horas' }],
+      receta: {
+        observaciones: 'Analgésico postoperatorio',
+        medicamentos: [{
+          nombre: 'Ibuprofeno 400 mg',
+          presentacion: 'Tableta recubierta',
+          concentracion: '400 mg',
+          dosis: '1 tableta',
+          frecuencia: 'Cada 8 horas',
+          duracion: '3 días',
+          via: 'Oral',
+          indicaciones: 'Tomar después de los alimentos',
+        }],
+      },
+    },
+  });
+  assert.equal(consultaDental.httpStatus, 201);
+  assert.equal(consultaDental.respuesta.estado, 'FINALIZADA');
+
+  const citaFinal = await lecturaCitas.porId(ctxOdontologo, bundle, citaCreada.respuesta.id);
+  assert.equal(citaFinal.estado, 'ATENDIDA');
+  assert.equal(citaFinal.secretaria_gestora, 'Laura Gómez');
 }

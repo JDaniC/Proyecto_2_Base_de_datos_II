@@ -51,7 +51,8 @@ export const CancelarCitaModal: React.FC<CancelarCitaModalProps> = ({
       const citaActualizada = await appointmentRepository.cancelar(
         institucionId,
         cita.id,
-        motivoCancelacion.trim()
+        motivoCancelacion.trim(),
+        cita.version
       );
 
       setGuardando(false);

@@ -590,7 +590,7 @@ paths:
       - HOSPITAL_GENERAL
       - CLINICA_ODONTOLOGICA
       - CENTRO_MEDICO_PEDIATRICO
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: cursor
         in: query
@@ -671,7 +671,7 @@ paths:
       x-permisos:
       - citas.administrar
       x-instituciones: *id008
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - $ref: '#/components/parameters/Idempotencia'
       responses:
@@ -713,7 +713,7 @@ paths:
       x-permisos:
       - citas.administrar|consultas.registrar
       x-instituciones: *id008
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -754,7 +754,7 @@ paths:
       x-permisos:
       - citas.administrar
       x-instituciones: *id008
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -802,7 +802,7 @@ paths:
       x-permisos:
       - citas.administrar
       x-instituciones: *id008
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -851,7 +851,7 @@ paths:
       x-permisos:
       - consultas.registrar
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - $ref: '#/components/parameters/Idempotencia'
       responses:
@@ -904,7 +904,7 @@ paths:
       - diagnosticos.registrar
       - tratamientos.registrar
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - $ref: '#/components/parameters/Idempotencia'
       responses:
@@ -960,7 +960,7 @@ paths:
       x-permisos:
       - historial.leer
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -1006,7 +1006,7 @@ paths:
       x-permisos:
       - consultas.registrar
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -1053,7 +1053,7 @@ paths:
       x-permisos:
       - diagnosticos.registrar
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -1103,7 +1103,7 @@ paths:
       x-permisos:
       - tratamientos.registrar
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -1157,7 +1157,7 @@ paths:
       x-permisos:
       - recetas.emitir
       x-instituciones: *id001
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -1335,7 +1335,7 @@ paths:
       x-permisos:
       - citas.administrar|consultas.registrar
       x-instituciones: *id008
-      x-implementacion: NOT_IMPLEMENTED
+      x-implementacion: IMPLEMENTED
       parameters:
       - name: id
         in: path
@@ -2755,6 +2755,11 @@ components:
           type: string
           minLength: 1
           maxLength: 100
+          pattern: \S
+        secretaria_gestora:
+          type: string
+          minLength: 1
+          maxLength: 320
           pattern: \S
         estado: *id032
         motivo_cancelacion:

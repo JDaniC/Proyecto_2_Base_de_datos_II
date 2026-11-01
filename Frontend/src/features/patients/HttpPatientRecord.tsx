@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useServices } from '../../app/ServiceContext';
 import { useAuthSession } from '../../app/AuthSessionContext';
-import type { ExpedienteCompleto, FiltrosHistorial, Paciente } from '../../services/types';
+import type { AntecedentesClinicos, ExpedienteCompleto, FiltrosHistorial, Paciente } from '../../services/types';
 import { getErrorMessage } from '../../services/errors';
 import { getDisplayLabel } from '../../services/displayLabels';
 import { Button } from '../../design-system/components/Button';
@@ -13,7 +13,7 @@ import { Alert } from '../../design-system/components/Alert';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { ClinicalTimeline } from './components/ClinicalTimeline';
 
-/** Ficha E02: perfil autorizado e índice de eventos paginado, sin inferir detalle clínico. */
+/** Ficha E02/E04: perfil autorizado, antecedentes clínicos odontológicos e índice de eventos paginado. */
 export const HttpPatientRecord: React.FC = () => {
   const { pacienteId } = useParams<{ pacienteId: string }>();
   const { sesion } = useAuthSession();
@@ -28,6 +28,11 @@ const PatientRecord: React.FC = () => {
   const [archivoAbierto, setArchivoAbierto] = useState(false);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
+  const [antecedentes, setAntecedentes] = useState<AntecedentesClinicos | null>(null);
+  const [nuevaAlergia, setNuevaAlergia] = useState('');
+  const [nuevaCondicion, setNuevaCondicion] = useState('');
+  const [guardandoAntecedentes, setGuardandoAntecedentes] = useState(false);
+  const [errorAntecedentes, setErrorAntecedentes] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosHistorial>({ orden: 'ASC', limite: 20 });
   const [previos, setPrevios] = useState<(string | undefined)[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -35,6 +40,8 @@ const PatientRecord: React.FC = () => {
   const [reintento, setReintento] = useState(0);
   const puedeLeer = Boolean(sesion?.permisos.includes('historial.leer'));
   const puedeEditar = Boolean(sesion?.permisos.includes('pacientes.administrar'));
+  const puedeRegistrarClinica = Boolean(sesion?.permisos.includes('consultas.registrar'));
+  const esOdontologia = sesion?.institucionId === 'CLINICA_ODONTOLOGICA';
 
   useEffect(() => {
     let vigente = true;
@@ -42,19 +49,68 @@ const PatientRecord: React.FC = () => {
     setError(null);
     setPaciente(null);
     setExpediente(null);
+    setAntecedentes(null);
     if (!sesion || !pacienteId) { setCargando(false); return; }
     const carga = puedeLeer
       ? patientRepository.obtenerExpedienteCompleto(sesion.institucionId, pacienteId, filtros)
       : patientRepository.obtenerPorId(sesion.institucionId, pacienteId);
-    carga.then((data) => {
+    const cargaAntecedentes =
+      puedeLeer && esOdontologia && patientRepository.obtenerAntecedentes
+        ? patientRepository.obtenerAntecedentes(sesion.institucionId, pacienteId).catch(() => null)
+        : Promise.resolve(null);
+    Promise.all([carga, cargaAntecedentes]).then(([data, ant]) => {
       if (!vigente) return;
       if (data && 'paciente' in data) { setPaciente(data.paciente); setExpediente(data); }
       else setPaciente(data as Paciente | null);
+      if (ant) setAntecedentes(ant);
     }).catch((err: unknown) => {
       if (vigente) setError(getErrorMessage(err, 'No se pudo cargar el perfil. Reintenta la consulta.'));
     }).finally(() => { if (vigente) setCargando(false); });
     return () => { vigente = false; };
-  }, [patientRepository, sesion, pacienteId, puedeLeer, filtros, reintento]);
+  }, [patientRepository, sesion, pacienteId, puedeLeer, esOdontologia, filtros, reintento]);
+
+  const handleGuardarAntecedente = async (tipo: 'ALERGIA' | 'CONDICION') => {
+    if (!sesion || !paciente || !patientRepository.actualizarAntecedentes) return;
+    const texto = (tipo === 'ALERGIA' ? nuevaAlergia : nuevaCondicion).trim();
+    if (!texto) return;
+    setGuardandoAntecedentes(true);
+    setErrorAntecedentes(null);
+    try {
+      const alergiasBase = antecedentes?.alergias ?? [];
+      const patologicosBase = antecedentes?.patologicos ?? [];
+      const alergias =
+        tipo === 'ALERGIA'
+          ? alergiasBase.some((a) => a.sustancia.toLowerCase() === texto.toLowerCase())
+            ? alergiasBase
+            : [...alergiasBase, { sustancia: texto, severidad: 'MODERADA' as const, reaccion: 'Alergia reportada en ficha odontológica' }]
+          : alergiasBase;
+      const patologicos =
+        tipo === 'CONDICION' ? Array.from(new Set([...patologicosBase, texto])) : patologicosBase;
+      const actualizado = await patientRepository.actualizarAntecedentes(
+        sesion.institucionId,
+        paciente.id,
+        {
+          patologicos,
+          quirurgicos: antecedentes?.quirurgicos ?? [],
+          familiares: antecedentes?.familiares ?? [],
+          alergias,
+          medicamentosActuales: antecedentes?.medicamentosActuales ?? [],
+          versionPaciente: antecedentes?.versionPaciente ?? paciente.version,
+        },
+        antecedentes?.versionPaciente ?? paciente.version
+      );
+      setAntecedentes(actualizado);
+      if (actualizado.versionPaciente !== undefined) {
+        setPaciente((prev) => (prev ? { ...prev, version: actualizado.versionPaciente } : prev));
+      }
+      if (tipo === 'ALERGIA') setNuevaAlergia('');
+      else setNuevaCondicion('');
+    } catch (err: unknown) {
+      setErrorAntecedentes(getErrorMessage(err, 'No se pudieron actualizar los antecedentes clínicos.'));
+    } finally {
+      setGuardandoAntecedentes(false);
+    }
+  };
 
   return <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
     <nav aria-label="Migas de pan"><Button variant="ghost" onClick={() => navigate('/pacientes')}>Pacientes</Button> / Perfil</nav>
@@ -85,6 +141,67 @@ const PatientRecord: React.FC = () => {
           {paciente.contactoEmergencia && <p>Contacto de emergencia: {paciente.contactoEmergencia.nombre} · {paciente.contactoEmergencia.parentesco} · {paciente.contactoEmergencia.telefono}</p>}
           {paciente.estado === 'ARCHIVADO' && <p>Archivo: {paciente.causaArchivo ? getDisplayLabel(paciente.causaArchivo) : 'Sin dato'} · {paciente.motivoArchivo}</p>}
         </Panel>
+        {puedeLeer && esOdontologia && (
+          <Panel title="Antecedentes clínicos odontológicos" style={{ marginBottom: '24px' }}>
+            {errorAntecedentes && <Alert variant="danger" title="Error en antecedentes">{errorAntecedentes}</Alert>}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div>
+                <strong>Alergias registradas</strong>
+                {(antecedentes?.alergias ?? []).length === 0 ? (
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Sin alergias registradas</p>
+                ) : (
+                  <ul>
+                    {(antecedentes?.alergias ?? []).map((alergia) => (
+                      <li key={alergia.sustancia}>
+                        {alergia.sustancia} ({alergia.severidad}) — {alergia.reaccion}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {puedeRegistrarClinica && paciente.estado === 'ACTIVO' && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <input
+                      aria-label="Nueva alergia odontológica"
+                      type="text"
+                      value={nuevaAlergia}
+                      onChange={(e) => setNuevaAlergia(e.target.value)}
+                      placeholder="Ej. Penicilina"
+                      style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                    <Button size="sm" variant="secondary" disabled={guardandoAntecedentes || !nuevaAlergia.trim()} onClick={() => void handleGuardarAntecedente('ALERGIA')}>
+                      Agregar alergia
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <strong>Condiciones sistémicas y antecedentes médicos</strong>
+                {(antecedentes?.patologicos ?? []).length === 0 ? (
+                  <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Sin condiciones relevantes registradas</p>
+                ) : (
+                  <ul>
+                    {(antecedentes?.patologicos ?? []).map((cond) => <li key={cond}>{cond}</li>)}
+                  </ul>
+                )}
+                {puedeRegistrarClinica && paciente.estado === 'ACTIVO' && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <input
+                      aria-label="Nuevo antecedente odontológico"
+                      type="text"
+                      value={nuevaCondicion}
+                      onChange={(e) => setNuevaCondicion(e.target.value)}
+                      placeholder="Ej. Hipertensión controlada"
+                      style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                    />
+                    <Button size="sm" variant="secondary" disabled={guardandoAntecedentes || !nuevaCondicion.trim()} onClick={() => void handleGuardarAntecedente('CONDICION')}>
+                      Agregar antecedente
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Panel>
+        )}
         {paciente.responsables && <Panel title="Responsables vinculados" style={{ marginBottom: '24px' }}>
           {paciente.responsables.map((r) => <p key={r.id}>{r.nombre} · {r.parentesco} · {r.telefono}{r.esPrincipal ? ' · Principal' : ''} · {r.autorizaAtencion ? 'Autoriza atención' : 'Sin autorización de atención'}</p>)}
         </Panel>}

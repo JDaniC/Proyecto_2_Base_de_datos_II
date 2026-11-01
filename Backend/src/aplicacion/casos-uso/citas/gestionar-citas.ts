@@ -63,19 +63,24 @@ export class GestionarCitas {
         const solapadas = await clinica.citas.solapamientos(profesionalAsignadoId, horario.fecha, horario.hora_inicio, horario.hora_fin);
         if (solapadas.some(c => c.id !== anterior?.id && c.estado !== 'CANCELADA')) throw new ErrorDominio('CITA_SOLAPADA', 'El intervalo no está disponible.');
       }
+      const secretariaGestoraActor = clinica.secretariaGestoraActor
+        ? await clinica.secretariaGestoraActor(contexto.cuenta.id)
+        : null;
+      const secretariaGestora = secretariaGestoraActor ?? anterior?.secretaria_gestora;
       const cita: Cita = { ...(anterior ?? { id: comando.ids.cita!, paciente_id: paciente.id, profesional_id: profesionalAsignadoId,
         fecha: '', hora_inicio: '', hora_fin: null, duracion_minutos: null, motivo, fecha_creacion: comando.instante,
         ...(consultorio ? { consultorio } : {}) }), ...intervalo,
+        ...(secretariaGestora ? { secretaria_gestora: secretariaGestora } : {}),
         version: anterior ? siguienteVersion(anterior.version) : versionPositiva(1),
         estado: accion === 'cancelar' ? 'CANCELADA' : 'PROGRAMADA', ...(accion === 'cancelar' ? { motivo_cancelacion: motivo } : {}) };
       return { tipo: 'CONFIRMAR', cambios: [
         { agregado: 'citas', tipo: 'GUARDAR', recursoId: cita.id, versionAnterior: anterior?.version ?? null, nuevoEstado: cita },
         { agregado: 'pacientes', tipo: 'AVANZAR_REVISION', recursoId: paciente.id, versionAnterior: paciente.version,
           nuevoEstado: { ...paciente, version: siguienteVersion(paciente.version) } },
-      ], revisiones: anterior ? [{ id: comando.ids.revision!, agregado: 'citas', recursoId: cita.id,
+      ], revisiones: anterior ? [{ id: comando.ids.revision!, motivo, agregado: 'citas', recursoId: cita.id,
         versionAnterior: anterior.version, snapshotAnterior: { anterior, actual: cita, motivo_cambio: motivo, actor_id: contexto.cuenta.id, fecha_hora: comando.instante } }] : [],
       auditoria: [{ id: comando.ids.auditoria!, actorId: contexto.cuenta.id, caso: comando.caso, recursoId: cita.id,
-        fechaHora: comando.instante, correlacion: contexto.correlacion }],
+        fechaHora: comando.instante, correlacion: contexto.correlacion, ...(motivo ? { motivo } : {}) }],
       resultado: { httpStatus: accion === 'crear' ? 201 : 200, respuesta: cita, correlacionOriginal: contexto.correlacion } };
     });
   }

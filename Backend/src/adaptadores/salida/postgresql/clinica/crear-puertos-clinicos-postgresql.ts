@@ -8,7 +8,10 @@ import { profesionalClinicoSql } from '../../sql/mapear-clinica-sql.js';
 import { RepositorioCitasPostgresql } from './repositorio-citas-postgresql.js';
 import { RepositorioConsultasPostgresql } from './repositorio-consultas-postgresql.js';
 
-export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): { porId(id: UUID): Promise<ProfesionalClinico | null> } {
+export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): {
+  porId(id: UUID): Promise<ProfesionalClinico | null>;
+  listar(): Promise<readonly ProfesionalClinico[]>;
+} {
   return {
     async porId(id) {
       try {
@@ -24,6 +27,21 @@ export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): 
       } catch (error) {
         if (error instanceof ErrorDominio) throw error;
         throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No fue posible consultar el profesional.');
+      }
+    },
+    async listar() {
+      try {
+        const resultado = await ejecutor.consultar<Record<string, unknown>>(
+          `SELECT id_publico,
+                  CONCAT_WS(' ', primer_nombre, segundo_nombre, primer_apellido, segundo_apellido) AS nombre,
+                  numero_colegiado AS colegiado, entidad_colegiacion, (estado = 'ACTIVO') AS activo
+             FROM personal_medico
+            ORDER BY primer_nombre ASC, primer_apellido ASC`,
+        );
+        return Object.freeze(resultado.filas.map((fila) => profesionalClinicoSql(fila, 'MEDICO')));
+      } catch (error) {
+        if (error instanceof ErrorDominio) throw error;
+        throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No fue posible listar profesionales.');
       }
     },
   };

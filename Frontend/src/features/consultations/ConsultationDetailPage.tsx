@@ -269,7 +269,7 @@ export const ConsultationDetailPage: React.FC = () => {
               <span>·</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                 <Stethoscope size={14} />
-                {consulta.profesionalNombre} ({consulta.profesionalRol})
+                {consulta.profesionalNombre} ({consulta.profesionalRol}){consulta.profesionalColegiado ? ` · Colegiado ${consulta.profesionalColegiado}` : ''}{consulta.profesionalEntidadColegiacion ? ` (${consulta.profesionalEntidadColegiacion})` : ''}
               </span>
               <span>·</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>

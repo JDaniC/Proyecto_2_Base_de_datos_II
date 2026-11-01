@@ -1,5 +1,5 @@
 import { getErrorMessage } from '../../services/errors';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -31,6 +31,15 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
   const [motivo, setMotivo] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cita) {
+      setNuevaFecha(cita.fecha);
+      setNuevaHora(cita.horaInicio);
+      setMotivo('');
+      setErrorValidacion(null);
+    }
+  }, [cita]);
 
   if (!cita) return null;
 
@@ -71,7 +80,9 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
         cita.id,
         nuevaFecha,
         nuevaHora,
-        motivo.trim()
+        motivo.trim(),
+        cita.version,
+        cita.duracionMinutos
       );
 
       setGuardando(false);

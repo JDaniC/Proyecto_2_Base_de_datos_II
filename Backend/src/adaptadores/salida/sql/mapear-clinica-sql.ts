@@ -18,6 +18,7 @@ export interface FilaCitaSql extends Record<string, unknown> {
   duracion_minutos: number | string | null;
   motivo: string;
   consultorio: string | null;
+  secretaria_gestora?: string | null;
   estado: string;
   motivo_cancelacion: string | null;
   fecha_creacion: string;
@@ -141,6 +142,7 @@ export function mapearCitaSql(fila: FilaCitaSql): Cita {
     duracion_minutos: numeroONulo(fila.duracion_minutos),
     motivo: fila.motivo,
     ...(textoONulo(fila.consultorio) ? { consultorio: fila.consultorio as string } : {}),
+    ...(textoONulo(fila.secretaria_gestora) ? { secretaria_gestora: fila.secretaria_gestora as string } : {}),
     estado,
     ...(textoONulo(fila.motivo_cancelacion) ? { motivo_cancelacion: fila.motivo_cancelacion as string } : {}),
     fecha_creacion: instanteDeBd(fila.fecha_creacion, 'fecha_creacion'),

@@ -35,12 +35,14 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   onCitaCreada
 }) => {
   const { sesion } = useAuthSession();
-  const { appointmentRepository, patientRepository } = useServices();
+  const { appointmentRepository, patientRepository, catalogRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const profesionales = PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const [profesionalesApi, setProfesionalesApi] = useState<Array<{ id: string; nombre: string; especialidad: string }>>([]);
+  const profesionales = mode === 'api' ? profesionalesApi : PROFESIONALES_DISPONIBLES[institucionId] || [];
 
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [pacienteId, setPacienteId] = useState('');
   const [profesionalId, setProfesionalId] = useState(profesionales[0]?.id || '');
   const [fecha, setFecha] = useState(fechaInicial || '2026-10-19');
@@ -56,22 +58,59 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (fechaInicial) setFecha(fechaInicial);
+    if (horaInicial) setHoraInicio(horaInicial);
+  }, [isOpen, fechaInicial, horaInicial]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'api') return;
+    let cancelado = false;
+    catalogRepository
+      .obtenerMedicos(institucionId)
+      .then((medicos) => {
+        if (cancelado || !Array.isArray(medicos)) return;
+        const activos = medicos
+          .filter((m) => m.estado === 'ACTIVO')
+          .map((m) => ({
+            id: m.id,
+            nombre: m.nombreCompleto ?? m.nombre,
+            especialidad: m.especialidad ?? m.especialidadPrincipal,
+          }));
+        setProfesionalesApi(activos);
+        if (activos.length > 0 && !activos.some((a) => a.id === profesionalId)) {
+          setProfesionalId(activos[0]!.id);
+        }
+      })
+      .catch(() => {
+        // Ignorar si no hay catálogo disponible
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [isOpen, mode, institucionId, catalogRepository, profesionalId]);
+
   // Cargar lista de pacientes con expediente activo
   useEffect(() => {
     if (!isOpen) return;
-
+    const termino = mode === 'api' ? busquedaPaciente.trim() || 'a' : busquedaPaciente.trim();
     patientRepository
-      .buscar(institucionId, { estado: 'ACTIVO', limite: 50 })
+      .buscar(institucionId, {
+        ...(termino ? { q: termino } : {}),
+        estado: 'ACTIVO',
+        limite: 50,
+      })
       .then((res) => {
         setPacientes(res.items);
-        if (res.items.length > 0 && !pacienteId) {
-          setPacienteId(res.items[0].id);
+        if (res.items.length > 0 && (!pacienteId || !res.items.some((p) => p.id === pacienteId))) {
+          setPacienteId(res.items[0]!.id);
         }
       })
       .catch((err) => {
         console.error('Error cargando pacientes:', err);
       });
-  }, [isOpen, institucionId, patientRepository, pacienteId]);
+  }, [isOpen, mode, institucionId, patientRepository, busquedaPaciente, pacienteId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +140,12 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
     setGuardando(true);
 
     try {
+      const pacienteSeleccionado = pacientes.find((p) => p.id === pacienteId);
       const dto: CrearCitaDTO = {
         pacienteId,
+        ...(pacienteSeleccionado?.version !== undefined
+          ? { versionPaciente: pacienteSeleccionado.version }
+          : {}),
         profesionalId,
         fecha,
         horaInicio,
@@ -110,7 +153,10 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
         consultorio,
         motivo: motivo.trim(),
         secretariaGestora: sesion?.nombre,
-        idempotencyKey: `cita-${Date.now()}`
+        idempotencyKey:
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `cita-${Date.now()}`
       };
 
       const nuevaCita = await appointmentRepository.crear(institucionId, dto);
@@ -184,6 +230,25 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
           >
             Paciente con expediente activo <span style={{ color: 'var(--color-danger-text)' }}>*</span>
           </label>
+          {mode === 'api' && (
+            <input
+              type="search"
+              value={busquedaPaciente}
+              onChange={(e) => setBusquedaPaciente(e.target.value)}
+              placeholder="Filtrar paciente por nombre, apellido o documento..."
+              aria-label="Buscar paciente para cita"
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--color-background)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-input)',
+                padding: '8px 12px',
+                fontSize: '13px',
+                color: 'var(--color-text)',
+                marginBottom: '6px'
+              }}
+            />
+          )}
           <select
             id="cita-paciente-select"
             value={pacienteId}
