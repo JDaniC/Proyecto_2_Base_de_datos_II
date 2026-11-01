@@ -3,6 +3,7 @@ import type { AppointmentRepository } from '../../contracts';
 import type { CitaAgenda, CrearCitaDTO, InstitucionId, ReprogramacionRegistro } from '../../types';
 import { HttpClient } from '../httpClient';
 import { HttpError } from '../errors';
+import type { RespuestaApi } from '../types';
 
 interface CitaDto {
   id: string;
@@ -113,11 +114,25 @@ export function createHttpAppointmentRepository(http: HttpClient): AppointmentRe
       }
     },
 
-    async obtenerRevisiones(_i, id) {
-      const r = await http.get<RevisionCitaDto[]>(`${path(id)}/revisiones`, {
-        query: { orden: 'ASC', limite: 50 },
-      });
-      return r.data.map(mapearRevision);
+    async obtenerRevisiones(_i, id): Promise<ReprogramacionRegistro[]> {
+      const todas: RevisionCitaDto[] = [];
+      let cursor: string | undefined = undefined;
+      while (true) {
+        const respuesta: RespuestaApi<RevisionCitaDto[]> = await http.get<RevisionCitaDto[]>(
+          `${path(id)}/revisiones`,
+          {
+            query: {
+              orden: 'ASC',
+              limite: 100,
+              ...(cursor ? { cursor } : {}),
+            },
+          }
+        );
+        todas.push(...respuesta.data);
+        cursor = respuesta.meta?.siguiente_cursor ?? undefined;
+        if (!cursor) break;
+      }
+      return todas.map(mapearRevision);
     },
 
     async crear(i: InstitucionId, dto: CrearCitaDTO) {

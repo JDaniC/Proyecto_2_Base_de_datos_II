@@ -1356,14 +1356,19 @@ export const NewConsultationWizardPage: React.FC = () => {
                         onChange={(e) => setMedPresentacion(e.target.value)}
                         style={{ width: '100%', backgroundColor: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '8px 10px', fontSize: '13px' }}
                       >
-                        <option value="Tableta">Tableta</option>
-                        <option value="Comprimido">Comprimido</option>
-                        <option value="Cápsula">Cápsula</option>
-                        <option value="Jarabe">Jarabe</option>
-                        <option value="Suspensión">Suspensión</option>
-                        <option value="Inhalador">Inhalador</option>
-                        <option value="Ampolla">Ampolla</option>
-                        <option value="Crema / Ungüento">Crema / Ungüento</option>
+                        {Array.from(new Set([
+                          'Tableta',
+                          'Comprimido',
+                          'Cápsula',
+                          'Jarabe',
+                          'Suspensión',
+                          'Inhalador',
+                          'Ampolla',
+                          'Crema / Ungüento',
+                          ...(medPresentacion ? [medPresentacion] : [])
+                        ])).map((pres) => (
+                          <option key={pres} value={pres}>{pres}</option>
+                        ))}
                       </select>
                     </div>
 

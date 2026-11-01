@@ -174,6 +174,24 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* Si una cita existente tenía una duración atípica (ej. 35, 40 o 75 min), el `<select>` no contenía dicha opción y visualizaba la primera opción por defecto (15 min) mientras el estado preservaba la duración original, discrepando entre lo exhibido y lo enviado.
   - *Corrección aplicada:* Se genera la lista de opciones unificando los intervalos estándar `[15, 20, 30, 45, 60, 90, 120]` con `duracionMinutos`, filtrando números enteros entre 5 y 480 minutos y ordenando numéricamente, garantizando que cualquier duración preexistente esté disponible y seleccionada en la interfaz.
 
+### DEV-015 — Inclusión de presentaciones de medicamentos del catálogo HTTP en el selector
+- **Tipo:** `DIVERGENTE`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/consultations/NewConsultationWizardPage.tsx:1353` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434301181`).
+  - *Comportamiento detectado:* El catálogo HTTP devuelve presentaciones específicas de odontología como `Cápsula 500 mg` o `Colutorio frasco 250 ml`, las cuales no existían en las opciones fijas del `<select>`, haciendo que la UI mostrara un valor predeterminado distinto al valor asignado en el estado y persistido.
+  - *Corrección aplicada:* Se unifican las presentaciones estándar con la presentación del medicamento seleccionado dinámicamente (`Set([...estándar, medPresentacion])`), asegurando que siempre exista una opción coincidente en el DOM.
+
+### DEV-016 — Paginación por cursor completa en revisiones de citas
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/services/http/appointments/httpAppointmentRepository.ts:117` vs `REQ-OD-02`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434301185`).
+  - *Comportamiento detectado:* En citas con más de 50 revisiones, `obtenerRevisiones` descartaba `siguiente_cursor` y devolvía solo la primera página en orden ascendente, ocultando las revisiones más recientes y posibles cancelaciones.
+  - *Corrección aplicada:* Se implementó un bucle asíncrono que sigue recursivamente el cursor devuelto por el backend hasta agotar todas las páginas (`while (cursor)`), consolidando la cronología completa de la cita sin truncamiento.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas
