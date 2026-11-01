@@ -248,11 +248,14 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
                 cursor: 'pointer'
               }}
             >
-              {[15, 20, 30, 45, 60, 90, 120].map((mins) => (
-                <option key={mins} value={mins}>
-                  {mins} min
-                </option>
-              ))}
+              {Array.from(new Set([15, 20, 30, 45, 60, 90, 120, duracionMinutos]))
+                .filter((mins) => Number.isInteger(mins) && mins >= 5 && mins <= 480)
+                .sort((a, b) => a - b)
+                .map((mins) => (
+                  <option key={mins} value={mins}>
+                    {mins} min
+                  </option>
+                ))}
             </select>
           </div>
         </div>

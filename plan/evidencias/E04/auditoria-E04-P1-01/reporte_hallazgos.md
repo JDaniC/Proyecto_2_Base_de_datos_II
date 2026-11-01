@@ -165,6 +165,15 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* Respuestas asíncronas de búsquedas previas de pacientes podían resolverse fuera de orden o con el modal cerrado, sobreescribiendo el listado y la selección del usuario.
   - *Corrección aplicada:* Se incorporó un flag `cancelado` en el cleanup del efecto de búsqueda para descartar cualquier promesa pendiente tras nuevas teclas o cierre del modal.
 
+### DEV-014 — Inclusión de la duración actual de la cita en el selector de reprogramación
+- **Tipo:** `DIVERGENTE`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/appointments/ReprogramarCitaModal.tsx:251` vs `REQ-OD-02`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434291229`).
+  - *Comportamiento detectado:* Si una cita existente tenía una duración atípica (ej. 35, 40 o 75 min), el `<select>` no contenía dicha opción y visualizaba la primera opción por defecto (15 min) mientras el estado preservaba la duración original, discrepando entre lo exhibido y lo enviado.
+  - *Corrección aplicada:* Se genera la lista de opciones unificando los intervalos estándar `[15, 20, 30, 45, 60, 90, 120]` con `duracionMinutos`, filtrando números enteros entre 5 y 480 minutos y ordenando numéricamente, garantizando que cualquier duración preexistente esté disponible y seleccionada en la interfaz.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas
