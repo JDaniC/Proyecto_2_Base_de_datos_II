@@ -107,8 +107,12 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
       })
       .then((res) => {
         setPacientes(res.items);
-        if (res.items.length > 0 && (!pacienteId || !res.items.some((p) => p.id === pacienteId))) {
-          setPacienteId(res.items[0]!.id);
+        if (res.items.length > 0) {
+          if (!pacienteId || !res.items.some((p) => p.id === pacienteId)) {
+            setPacienteId(res.items[0]!.id);
+          }
+        } else {
+          setPacienteId('');
         }
       })
       .catch((err) => {
@@ -120,8 +124,8 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
     e.preventDefault();
     setErrorValidacion(null);
 
-    if (!pacienteId) {
-      setErrorValidacion('Debe seleccionar un paciente con expediente activo.');
+    if (!pacienteId || !pacientes.some((p) => p.id === pacienteId)) {
+      setErrorValidacion('Debe seleccionar un paciente con expediente activo de los resultados mostrados.');
       return;
     }
     if (!profesionalId) {

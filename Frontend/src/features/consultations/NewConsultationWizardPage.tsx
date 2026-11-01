@@ -184,7 +184,7 @@ export const NewConsultationWizardPage: React.FC = () => {
             presentacion: m.presentacion ?? 'Tableta',
             concentracion: conc,
             dosis: m.dosis_sugerida || '1',
-            unidad: m.presentacion ? m.presentacion.toLowerCase() : 'unidad',
+            unidad: '',
             via: m.via_administracion === 'TOPICA' ? 'Enjuague bucal' : 'Oral',
             frecuencia: m.frecuencia_sugerida,
             duracion: m.duracion_sugerida

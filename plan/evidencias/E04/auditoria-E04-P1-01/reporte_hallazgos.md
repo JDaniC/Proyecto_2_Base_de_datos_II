@@ -111,6 +111,42 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* La concentración se poblaba con `dosis_sugerida` (e.g., "15 ml en enjuague bucal sin diluir"), pisando la concentración real del fármaco (e.g. "0.12%").
   - *Corrección aplicada:* Se añadió el campo opcional `concentracion` en `ItemCatalogoMedicamentoOdontologico` del puerto backend y del DTO frontend, y en `NewConsultationWizardPage` se asignan por separado la concentración y la dosis sugerida al autocompletar la receta.
 
+### DEV-008 — Preservación de identificadores y cronología de antecedentes en MySQL
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Backend/src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.ts:175` vs `REQ-OD-04`, `AGENTS.md` §Historia
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434261071`).
+  - *Comportamiento detectado:* Al actualizar antecedentes agregando un ítem, se generaban IDs UUID nuevos y la fecha del día para todos los antecedentes (incluyendo los inalterados), borrando la cronología histórica previa en la tabla `antecedente`.
+  - *Corrección aplicada:* En `ActualizarAntecedentesClinicos`, se indexan los antecedentes existentes por clave de contenido (`TIPO:DESCRIPCIÓN`) y se reutilizan exactamente su `id` y su `fecha_registro` previa, asignando nuevo ID y fecha de hoy únicamente a los ítems genuinamente nuevos.
+
+### DEV-009 — Supresión de unidades redundantes en prescripción odontológica
+- **Tipo:** `DIVERGENTE`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/features/consultations/NewConsultationWizardPage.tsx:187` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434261074`).
+  - *Comportamiento detectado:* La sugerencia de medicamentos copiaba la presentación del producto a `medUnidad`, produciendo concatenaciones como "500 mg cápsula 500 mg" o "15 ml colutorio frasco 250 ml".
+  - *Corrección aplicada:* Se deja `unidad: ''` cuando `dosis_sugerida` ya incluye la especificación completa, evitando duplicar textos de empaque en la dosis.
+
+### DEV-010 — Exigencia de duración explícita al reprogramar citas legadas sin duración
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Frontend/src/services/http/appointments/httpAppointmentRepository.ts:163`, `ReprogramarCitaModal.tsx:160` vs `REQ-OD-02`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434261077`).
+  - *Comportamiento detectado:* Citas con `duracion_minutos === null` caían a un valor por defecto de 30 minutos sin input en la interfaz, sorteando la regla del backend de capturar la duración de citas legadas.
+  - *Corrección aplicada:* Se incorporó un selector obligatorio de duración en `ReprogramarCitaModal` y en `httpAppointmentRepository` se valida que la duración esté definida y sea válida antes de enviar el PATCH.
+
+### DEV-011 — Reseteo de selección de paciente al vaciar resultados de búsqueda
+- **Tipo:** `SUB_IMPLEMENTADO`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Frontend/src/features/appointments/CrearCitaModal.tsx:110` vs `REQ-OD-01`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434261079`).
+  - *Comportamiento detectado:* Si una búsqueda no arrojaba resultados, `pacienteId` conservaba el valor del paciente anterior, permitiendo enviar el formulario y asociar la cita al paciente incorrecto.
+  - *Corrección aplicada:* Se limpia `setPacienteId('')` cuando los resultados están vacíos y `handleSubmit` valida explícitamente `!pacienteId || !pacientes.some((p) => p.id === pacienteId)`.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

@@ -155,10 +155,17 @@ export function createHttpAppointmentRepository(http: HttpClient): AppointmentRe
     ) {
       let version = versionEsperada;
       let duracion = duracionMinutos;
-      if (version === undefined || !duracion) {
+      if (version === undefined || duracion === undefined || duracion === null) {
         const actual = (await http.get<CitaDto>(path(id))).data;
         version = version ?? actual.version;
-        duracion = duracion || actual.duracion_minutos || 30;
+        duracion = duracion ?? (actual.duracion_minutos !== null ? actual.duracion_minutos : undefined);
+      }
+      if (duracion === undefined || duracion === null || duracion <= 0) {
+        throw new HttpError({
+          status: 400,
+          codigo: 'ESTADO_INVALIDO',
+          mensaje: 'Es obligatorio especificar la duración de la cita para reprogramarla.',
+        });
       }
       const body = {
         version_esperada: version,

@@ -1,5 +1,5 @@
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
-import { uuidPublico } from '../../../dominio/compartido/uuid.js';
+import { uuidPublico, type UUID } from '../../../dominio/compartido/uuid.js';
 import { versionPositiva } from '../../../dominio/compartido/version.js';
 import { objetoCerrado, textoClinico } from '../../../dominio/clinica/consulta.js';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../../../dominio/clinica/politicas-institucionales.js';
 import type { ContextoAutenticado } from '../../puertos/contexto-autenticado.js';
 import type { BundleInstitucional } from '../../puertos/bundle-institucional.js';
-import type { AlergiaAntecedente, AntecedentesClinicos } from '../../puertos/clinica.js';
+import type { AlergiaAntecedente, AntecedentesClinicos, RegistroAntecedente } from '../../puertos/clinica.js';
 import { prepararComandoEstable } from '../../servicios/preparar-comando-estable.js';
 import {
   contextoVigente,
@@ -173,46 +173,58 @@ export class ActualizarAntecedentesClinicos {
           ? await clinica.antecedentes.porPaciente(pacienteId)
           : ANTECEDENTES_VACIOS;
 
+        // Reutilizar id y fecha_registro de registros preexistentes para preservar identidad e historia
+        const mapaAnteriores = new Map<string, { id: UUID; fecha_registro: string }>();
+        for (const reg of anterior.registros) {
+          const clave = `${reg.tipo.toUpperCase()}:${reg.descripcion.trim().toLowerCase()}`;
+          if (!mapaAnteriores.has(clave)) {
+            mapaAnteriores.set(clave, { id: reg.id, fecha_registro: reg.fecha_registro });
+          }
+        }
+
         let idx = 0;
-        const fechaRegistro = comando.instante.slice(0, 10);
+        const fechaHoy = comando.instante.slice(0, 10);
+        const resolverRegistro = (tipo: string, descripcion: string): RegistroAntecedente => {
+          const clave = `${tipo.toUpperCase()}:${descripcion.trim().toLowerCase()}`;
+          const existente = mapaAnteriores.get(clave);
+          if (existente) {
+            return {
+              id: existente.id,
+              tipo,
+              descripcion,
+              fecha_registro: existente.fecha_registro,
+            };
+          }
+          return {
+            id: comando.ids[`ant_${idx++}`]!,
+            tipo,
+            descripcion,
+            fecha_registro: fechaHoy,
+          };
+        };
+
         const registros = [
-          ...patologicos.map((desc) => ({
-            id: comando.ids[`ant_${idx++}`]!,
-            tipo: 'PATOLOGICO',
-            descripcion: desc,
-            fecha_registro: fechaRegistro,
-          })),
-          ...quirurgicos.map((desc) => ({
-            id: comando.ids[`ant_${idx++}`]!,
-            tipo: 'QUIRURGICO',
-            descripcion: desc,
-            fecha_registro: fechaRegistro,
-          })),
-          ...familiares.map((desc) => ({
-            id: comando.ids[`ant_${idx++}`]!,
-            tipo: 'FAMILIAR',
-            descripcion: desc,
-            fecha_registro: fechaRegistro,
-          })),
-          ...alergias.map((al) => ({
-            id: comando.ids[`ant_${idx++}`]!,
-            tipo: 'ALERGIA',
-            descripcion: `${al.sustancia} [${al.severidad}]: ${al.reaccion}`,
-            fecha_registro: fechaRegistro,
-          })),
-          ...medicamentosActuales.map((med) => ({
-            id: comando.ids[`ant_${idx++}`]!,
-            tipo: 'MEDICAMENTO_ACTUAL',
-            descripcion: med,
-            fecha_registro: fechaRegistro,
-          })),
+          ...patologicos.map((desc) => resolverRegistro('PATOLOGICO', desc)),
+          ...quirurgicos.map((desc) => resolverRegistro('QUIRURGICO', desc)),
+          ...familiares.map((desc) => resolverRegistro('FAMILIAR', desc)),
+          ...alergias.map((al) =>
+            resolverRegistro('ALERGIA', `${al.sustancia} [${al.severidad}]: ${al.reaccion}`),
+          ),
+          ...medicamentosActuales.map((med) => resolverRegistro('MEDICAMENTO_ACTUAL', med)),
         ];
 
         const actual: AntecedentesClinicos = {
           patologicos,
           quirurgicos,
           familiares,
-          alergias: alergias.map((a) => ({ ...a, fechaRegistro })),
+          alergias: alergias.map((a) => {
+            const clave = `ALERGIA:${a.sustancia.trim().toLowerCase()} [${a.severidad}]: ${a.reaccion.trim().toLowerCase()}`;
+            const existente = mapaAnteriores.get(clave);
+            return {
+              ...a,
+              fechaRegistro: a.fechaRegistro || existente?.fecha_registro || fechaHoy,
+            };
+          }),
           medicamentos_actuales: medicamentosActuales,
           registros,
         };

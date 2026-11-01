@@ -28,6 +28,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
 
   const [nuevaFecha, setNuevaFecha] = useState(cita?.fecha || '2026-10-20');
   const [nuevaHora, setNuevaHora] = useState(cita?.horaInicio || '09:00');
+  const [duracionMinutos, setDuracionMinutos] = useState<number>(cita?.duracionMinutos || 30);
   const [motivo, setMotivo] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
     if (cita) {
       setNuevaFecha(cita.fecha);
       setNuevaHora(cita.horaInicio);
+      setDuracionMinutos(cita.duracionMinutos || 30);
       setMotivo('');
       setErrorValidacion(null);
     }
@@ -62,13 +64,18 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
       return;
     }
 
+    if (!duracionMinutos || duracionMinutos < 5 || duracionMinutos > 480) {
+      setErrorValidacion('Debe especificar una duración válida en minutos (entre 5 y 480).');
+      return;
+    }
+
     if (!motivo.trim() || motivo.trim().length < 4) {
       setErrorValidacion('El motivo de la reprogramación es obligatorio (mínimo 4 caracteres).');
       return;
     }
 
-    if (nuevaFecha === cita.fecha && nuevaHora === cita.horaInicio) {
-      setErrorValidacion('Debe seleccionar una fecha u horario distinto al actual para reprogramar.');
+    if (nuevaFecha === cita.fecha && nuevaHora === cita.horaInicio && duracionMinutos === cita.duracionMinutos) {
+      setErrorValidacion('Debe seleccionar una fecha, horario o duración distinta al actual para reprogramar.');
       return;
     }
 
@@ -82,7 +89,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
         nuevaHora,
         motivo.trim(),
         cita.version,
-        cita.duracionMinutos
+        duracionMinutos
       );
 
       setGuardando(false);
@@ -146,7 +153,7 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
         </div>
 
         {/* Nuevos datos de fecha y hora */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
           <div>
             <label
               htmlFor="reprogramar-fecha-input"
@@ -208,6 +215,42 @@ export const ReprogramarCitaModal: React.FC<ReprogramarCitaModalProps> = ({
               {INTERVALOS_HORA_24H.map((hora) => (
                 <option key={hora} value={hora}>
                   {hora} h
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="reprogramar-duracion-select"
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--color-strong)',
+                marginBottom: '6px'
+              }}
+            >
+              Duración <span style={{ color: 'var(--color-danger-text)' }}>*</span>
+            </label>
+            <select
+              id="reprogramar-duracion-select"
+              value={duracionMinutos}
+              onChange={(e) => setDuracionMinutos(Number(e.target.value))}
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--color-control)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-input)',
+                padding: '10px 14px',
+                fontSize: '14px',
+                color: 'var(--color-text)',
+                cursor: 'pointer'
+              }}
+            >
+              {[15, 20, 30, 45, 60, 90, 120].map((mins) => (
+                <option key={mins} value={mins}>
+                  {mins} min
                 </option>
               ))}
             </select>
