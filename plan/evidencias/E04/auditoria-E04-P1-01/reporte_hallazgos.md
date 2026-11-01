@@ -210,6 +210,15 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* En modo API odontológico, un fallo de `/catalogos/odontologia` retenía en silencio los arreglos de diagnósticos, tratamientos y medicamentos simulados en local, permitiendo seleccionar y enviar datos simulados sin advertencia.
   - *Corrección aplicada:* En modo API para odontología, los catálogos se inicializan vacíos (`[]`), se captura el fallo en `errorCatalogo` para alertar en la interfaz y se deshabilitan las sugerencias simuladas ante fallos de red o del backend.
 
+### DEV-019 — Uso exclusivo de diagnósticos institucionales devueltos por HTTP
+- **Tipo:** `FALLBACK PROHIBIDO`
+- **Severidad:** `HIGH`
+- **Unidad / Requisito:** `Frontend/src/features/consultations/NewConsultationWizardPage.tsx:175` vs `REQ-OD-05`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434369497`).
+  - *Comportamiento detectado:* Al resolverse exitosamente `/catalogos/odontologia`, el código realizaba un merge con `CATALOGO_CIE10` local para rellenar diagnósticos ausentes (ej. `K04.7`), introduciendo diagnósticos simulados en el catálogo real.
+  - *Corrección aplicada:* Se eliminó la unión con las constantes locales en modo API, asignando directamente `cat.diagnosticos` devuelto por el backend institucional HTTP sin inyecciones simuladas.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

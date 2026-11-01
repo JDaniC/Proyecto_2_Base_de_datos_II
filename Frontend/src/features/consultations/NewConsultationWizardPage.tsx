@@ -173,13 +173,7 @@ export const NewConsultationWizardPage: React.FC = () => {
       .obtenerCatalogoOdontologia(institucionId)
       .then((cat) => {
         if (!activo || !cat) return;
-        if (cat.diagnosticos.length > 0) {
-          const existentes = new Set(cat.diagnosticos.map((d) => d.codigo));
-          setCatalogoDiagnosticos([
-            ...cat.diagnosticos,
-            ...CATALOGO_CIE10.filter((d) => !existentes.has(d.codigo)),
-          ]);
-        }
+        setCatalogoDiagnosticos(cat.diagnosticos);
         if (cat.procedimientos.length > 0) {
           setTratamientosOdontologia(
             cat.procedimientos.map((p) => ({
