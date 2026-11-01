@@ -4,7 +4,7 @@
 
 Alcance: puerta de cierre conjunto de la fase E03 (núcleo clínico común, cuatro adaptadores de persistencia, archivo/reactivación, corrección histórica versionada e integración React por HTTP). Fuentes: `plan/00_PLAN_MAESTRO.md` §3, `plan/01_ALCANCE_Y_DECISIONES.md` (DEC02–DEC08, DEC16–DEC18), `plan/03_CONTRATOS_Y_FLUJOS.md`, `plan/entregas/E03_nucleo_clinico/01_P1.md` y `02_P2.md`, los seis informes individuales `plan/evidencias/E03/E03-P*.md` y la demostración conjunta ejecutada en esta sesión.
 
-Resultado: **6/6 requisitos de salida PASS en la demostración conjunta, 0 FAIL confirmados de producto, 0 BLOCKED**. Las seis tareas individuales (`E03-P1-01`, `E03-P1-02`, `E03-P1-03`, `E03-P2-01`, `E03-P2-02` y `E03-P2-03`) están `HECHA` y sus commits de integración son ancestros verificados de `origin/develop` (`e6e8310`).
+Resultado: **6/6 requisitos de salida PASS en la demostración conjunta, 0 FAIL confirmados de producto, 0 BLOCKED**. Las seis tareas individuales (`E03-P1-01`, `E03-P1-02`, `E03-P1-03`, `E03-P2-01`, `E03-P2-02` y `E03-P2-03`) están `HECHA` y sus commits de integración son ancestros verificados de `origin/develop` (`e6e8310`). El PR documental de cierre #65 se integró en `develop` (`f516156`) tras revisión automática de Codex sin hallazgos sobre `66e5f46`.
 
 En esta sesión se ejecutó la demostración conjunta UI→API→BD (`node Backend/scripts/run-historial-integration.mjs --clinica-ui`), guardando la salida estructurada y saneada en [recorrido.json](recorrido.json) (**49 PASS, 0 FAIL**), además de las tres suites físicas de integración por motor (`test:integration:sql` **6/6 PASS**, `test:integration:clinica:mongodb` **11/11 clínicas + 102 modelo PASS** y `test:integration:clinica:firestore` **14/14 PASS**), y las suites de `Backend` (`npm test` **311/311 PASS**, `npm run lint` **PASS**) y `Frontend` (`npm run build` **PASS**, 114/114 pruebas vigentes **PASS**).
 
@@ -68,6 +68,9 @@ Las pruebas históricas de la suite simulada antigua del Frontend que conciernen
 | Integración clínica Firestore (`test:integration:clinica:firestore`) | 14 | 0 | 0 | 0 | 0 |
 | Pruebas Frontend vigentes HTTP / alcance / servicios | 114 | 0 | 0 | 0 | 0 |
 | Backend `lint` y Frontend `build` | PASS | 0 | 0 | 0 | 0 |
+| Revisión nativa del PR #65 en SHA final (`66e5f46`) | PASS | 0 | 0 | 0 | 0 |
+
+La revisión automática de Codex sobre `66e5f46` concluyó sin hallazgos (`has_any_findings: false`) y con `contrato-pr`/`revision-codex` en `SUCCESS`, integrándose el PR #65 en `develop` (`f516156`).
 
 ## 8. Riesgos residuales
 
