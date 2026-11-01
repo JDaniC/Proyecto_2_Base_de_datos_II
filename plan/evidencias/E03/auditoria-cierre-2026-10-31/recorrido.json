@@ -1,0 +1,247 @@
+[
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "detalle y receta después de recarga",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "corrección conserva consulta y crea versión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "lectura de versión original",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "archivo conserva eventos y consultas",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "historia y receta conservadas tras reinicio",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
+    "caso": "corrección histórica autorizada después del archivo",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "detalle y receta después de recarga",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "corrección conserva consulta y crea versión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "lectura de versión original",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "archivo conserva eventos y consultas",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "historia y receta conservadas tras reinicio",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CLINICA_ODONTOLOGICA",
+    "caso": "corrección histórica autorizada después del archivo",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "detalle y receta después de recarga",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "corrección conserva consulta y crea versión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "lectura de versión original",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "archivo conserva eventos y consultas",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "historia y receta conservadas tras reinicio",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "LABORATORIO_CLINICO",
+    "caso": "corrección histórica autorizada después del archivo",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "detalle y receta después de recarga",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "corrección conserva consulta y crea versión",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "lectura de versión original",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "archivo conserva eventos y consultas",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "historia y receta conservadas tras reinicio",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "corrección histórica autorizada después del archivo",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "CENTRO_MEDICO_PEDIATRICO",
+    "caso": "reactivación pediátrica por HTTP",
+    "resultado": "PASS"
+  }
+]
