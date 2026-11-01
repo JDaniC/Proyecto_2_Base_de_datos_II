@@ -62,7 +62,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | E00 | HECHA | [Cierre y demostración](evidencias/E00/CIERRE.md); PR #20 integrado (`566e75c`); Codex sin hallazgos |
 | E01 | HECHA | [Cierre y demostración](evidencias/E01/CIERRE.md); PR #39 integrado; Codex sin hallazgos |
 | E02 | HECHA | [Cierre y demostración](evidencias/E02/CIERRE.md); PR #49 integrado (`c1a932a`); Codex sin hallazgos sobre `a09fb9f` |
-| E03 | EN_CURSO | reservado por JDaniC; rama `codex/cierre-e03-demostracion`; 31/10/2026; [seguimiento](seguimiento/E03-CIERRE.md) |
+| E03 | EN_REVISION | [Cierre y demostración](evidencias/E03/CIERRE.md); [auditoría](evidencias/E03/auditoria-cierre-2026-10-31/INFORME.md); PR #65 en revisión automática de Codex; 31/10/2026 |
 | E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
 | E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
 | E06 | PENDIENTE | `plan/evidencias/E06/CIERRE.md` por crear al ejecutar |
