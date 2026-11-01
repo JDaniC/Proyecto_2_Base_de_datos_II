@@ -6,8 +6,14 @@ import { ConsultarCitas } from '../aplicacion/casos-uso/citas/consultar-citas.js
 import { ConsultasController } from '../adaptadores/entrada/http/consultas/consultas.controller.js';
 import { CitasController } from '../adaptadores/entrada/http/citas/citas.controller.js';
 import { ConsultarHistorial } from '../aplicacion/casos-uso/historiales/consultar-historial.js';
+import {
+  ActualizarAntecedentesClinicos,
+  ConsultarAntecedentesClinicos,
+} from '../aplicacion/casos-uso/pacientes/antecedentes-clinicos.js';
+import { ConsultarCatalogosClinicos } from '../aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import { CursorHistorialCifrado } from '../adaptadores/salida/historial/cursor-historial.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
+import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catalogos.controller.js';
 import { DynamicModule, Module, type OnModuleDestroy } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-bundles-configurados.js';
@@ -57,7 +63,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [ConsultasController, CitasController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -74,6 +80,9 @@ export class AppModule {
         { provide: ConsultarCitas, useFactory: () => new ConsultarCitas() },
         { provide: ConsultarConsulta, useFactory: () => new ConsultarConsulta() },
         { provide: ConsultarHistorial, useFactory: () => new ConsultarHistorial(new CursorHistorialCifrado()) },
+        { provide: ConsultarAntecedentesClinicos, useFactory: () => new ConsultarAntecedentesClinicos() },
+        { provide: ActualizarAntecedentesClinicos, useFactory: () => new ActualizarAntecedentesClinicos(dependenciasComandoPorDefecto) },
+        { provide: ConsultarCatalogosClinicos, useFactory: () => new ConsultarCatalogosClinicos() },
         {
           provide: BUNDLES_INSTITUCIONALES,
           useValue: bundles,

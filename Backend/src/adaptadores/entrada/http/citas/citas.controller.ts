@@ -21,6 +21,23 @@ export class CitasController {
   obtener(@Contexto() contexto: ContextoAutenticado, @Bundle() bundle: BundleInstitucional, @Param('id') id: string) {
     return this.lectura.porId(contexto, bundle, id);
   }
+  @Get(':id/revisiones')
+  @RequiereAcceso({ permisos: ['citas.administrar', 'consultas.registrar'], modo: 'ALGUNO', capacidad: 'AGENDA' })
+  async revisiones(
+    @Contexto() contexto: ContextoAutenticado,
+    @Bundle() bundle: BundleInstitucional,
+    @Param('id') id: string,
+    @Query() query: unknown,
+  ) {
+    const pagina = await this.lectura.revisiones(contexto, bundle, id, query);
+    return {
+      data: pagina.elementos,
+      meta: {
+        correlacion: contexto.correlacion,
+        ...(pagina.siguienteCursor ? { siguiente_cursor: pagina.siguienteCursor } : {}),
+      },
+    };
+  }
   @Post('')
   @HttpCode(201)
   @RequiereAcceso({ permisos: ['citas.administrar'], capacidad: 'AGENDA' })

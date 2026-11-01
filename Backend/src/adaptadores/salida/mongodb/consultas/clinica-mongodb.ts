@@ -57,7 +57,7 @@ export function crearClinicaMongodb(db: Db, session?: ClientSession, originales 
       },
       async porCita(id) {await preparar(); const doc = await consultas.findOne({cita_id: id}, opciones); return doc ? mapearConsulta(doc) : null;},
     },
-    citas: {porId: noAgenda, listar: noAgenda, solapamientos: noAgenda}, responsables: {autorizacion: noAgenda},
+    citas: {porId: noAgenda, listar: noAgenda, solapamientos: noAgenda, revisiones: noAgenda}, responsables: {autorizacion: noAgenda},
   };
 }
 export async function aplicarCambiosClinicosMongodb(db: Db, session: ClientSession, contexto: ContextoAutenticado,

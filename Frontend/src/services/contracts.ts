@@ -38,6 +38,8 @@ import {
   CitaAgenda,
   FiltrosAgendaQuery,
   CrearCitaDTO,
+  ReprogramacionRegistro,
+  CatalogoOdontologiaDTO,
   RegistroConsultaCompletaDTO,
   DetalleConsultaCompleta,
   UsuarioInstitucional,
@@ -163,6 +165,7 @@ export interface PatientRepository {
 export interface AppointmentRepository {
   obtenerCitas(institucionId: InstitucionId, query: FiltrosAgendaQuery): Promise<CitaAgenda[]>;
   obtenerPorId(institucionId: InstitucionId, id: string): Promise<CitaAgenda | null>;
+  obtenerRevisiones?(institucionId: InstitucionId, id: string): Promise<ReprogramacionRegistro[]>;
   crear(institucionId: InstitucionId, dto: CrearCitaDTO): Promise<CitaAgenda>;
   reprogramar(
     institucionId: InstitucionId,
@@ -170,9 +173,17 @@ export interface AppointmentRepository {
     nuevaFecha: string,
     nuevaHora: string,
     motivo: string,
-    versionEsperada?: number
+    versionEsperada?: number,
+    duracionMinutos?: number,
+    idempotencyKey?: string
   ): Promise<CitaAgenda>;
-  cancelar(institucionId: InstitucionId, id: string, motivoCancelacion: string, versionEsperada?: number): Promise<CitaAgenda>;
+  cancelar(
+    institucionId: InstitucionId,
+    id: string,
+    motivoCancelacion: string,
+    versionEsperada?: number,
+    idempotencyKey?: string
+  ): Promise<CitaAgenda>;
 }
 
 export interface ConsultationRepository {
@@ -236,8 +247,9 @@ export interface CatalogRepository {
    */
   cambiarEstadoMedico(institucionId: InstitucionId, id: string, estado: 'ACTIVO' | 'INACTIVO'): Promise<MedicoCatalogo>;
   obtenerAseguradoras(institucionId: InstitucionId): Promise<AseguradoraCatalogo[]>;
-  /** @remarks Selector de solo lectura por seed para atención odontológica (`E04-P1-01`); actualmente `NewConsultationWizardPage.tsx` usa constante local. */
+  /** @remarks Selector de solo lectura por seed para atención odontológica (`E04-P1-01`). */
   obtenerProcedimientosOdontologicos(institucionId: InstitucionId): Promise<ProcedimientoOdontologico[]>;
+  obtenerCatalogoOdontologia?(institucionId: InstitucionId): Promise<CatalogoOdontologiaDTO>;
   /**
    * @deprecated Excluido del alcance HTTP (DEC11): catálogos odontológicos por seed + selectores, sin alta en UI.
    */

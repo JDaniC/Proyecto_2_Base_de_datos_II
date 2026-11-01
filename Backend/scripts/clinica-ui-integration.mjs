@@ -42,6 +42,14 @@ async function crearCuenta(institucion, secretaria = false) {
   const permisos = ['pacientes.administrar','historial.leer','historial.archivar','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir', ...(institucion === 'LABORATORIO_CLINICO' ? [] : ['citas.administrar'])];
   if (institucion === 'HOSPITAL_GENERAL' || institucion === 'CLINICA_ODONTOLOGICA') {
     const esPg = institucion === 'HOSPITAL_GENERAL', pool = esPg ? pg : mysql;
+    if (secretaria && !esPg) {
+      const permisosSec = ['pacientes.administrar', 'citas.administrar'];
+      await pool.consultar("INSERT INTO rol(nombre,permisos) VALUES('SECRETARIA',?) ON DUPLICATE KEY UPDATE permisos=VALUES(permisos)", [JSON.stringify(permisosSec)]);
+      await pool.consultar("INSERT INTO secretaria(id_publico,nombres,apellidos,telefono) VALUES(?,'Laura','Secretaría Sintética','55551234')", [profesionalId]);
+      await pool.consultar("INSERT INTO usuario(id_publico,id_secretaria,nombre_usuario,auth_uid,estado) VALUES(?,(SELECT id_secretaria FROM secretaria WHERE id_publico=?),?,?,'ACTIVO')", [id, profesionalId, uid, uid]);
+      await pool.consultar("INSERT INTO usuario_rol(id_usuario,id_rol) SELECT u.id_usuario,r.id_rol FROM usuario u CROSS JOIN rol r WHERE u.auth_uid=? AND r.nombre='SECRETARIA'", [uid]);
+      return { institucion, email, password, secretaria, profesionalId };
+    }
     await pool.consultar(esPg ? 'INSERT INTO rol(nombre,permisos) VALUES($1,$2::jsonb)' : 'INSERT INTO rol(nombre,permisos) VALUES(?,?)', [rol, JSON.stringify(permisos)]);
     await pool.consultar(esPg ? "INSERT INTO usuario(id_publico,nombre_usuario,auth_uid,estado) VALUES($1,$2,$3,'ACTIVO')" : "INSERT INTO usuario(id_publico,nombre_usuario,auth_uid,estado) VALUES(?,?,?,'ACTIVO')", [id, uid, uid]);
     if(esPg) await pool.consultar("INSERT INTO personal_medico(id_publico,primer_nombre,primer_apellido,numero_colegiado,entidad_colegiacion,estado) VALUES($1,'Ana','Sintética',$2,'Colegio sintético','ACTIVO')", [profesionalId, profesionalId]);
@@ -64,6 +72,9 @@ try {
   await mongo.connect();
   await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico')); await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore);
   for (const institucion of instituciones) cuentas.push(await crearCuenta(institucion));
+  const secretariaDental = await crearCuenta('CLINICA_ODONTOLOGICA', true);
+  const cuentaDental = cuentas.find((c) => c.institucion === 'CLINICA_ODONTOLOGICA');
+  if (cuentaDental) cuentaDental.secretariaCuenta = secretariaDental;
 
   const port = await puerto();
   runtime = { ...process.env, APP_ENV: 'test', HOST: '127.0.0.1', PORT: String(port), INSTITUTIONS: instituciones.join(','),

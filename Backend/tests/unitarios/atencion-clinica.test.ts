@@ -3,6 +3,9 @@ import { describe, it } from 'node:test';
 import { AtencionClinica } from '../../src/aplicacion/casos-uso/consultas/atencion-clinica.js';
 import { ConsultarConsulta } from '../../src/aplicacion/casos-uso/consultas/consultar-consulta.js';
 import { GestionarCitas } from '../../src/aplicacion/casos-uso/citas/gestionar-citas.js';
+import { ConsultarCitas } from '../../src/aplicacion/casos-uso/citas/consultar-citas.js';
+import { ConsultarAntecedentesClinicos, ActualizarAntecedentesClinicos } from '../../src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.js';
+import { ConsultarCatalogosClinicos } from '../../src/aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import { dependenciasComandoPorDefecto } from '../../src/adaptadores/salida/sistema/servicios-sistema.js';
 import { INSTITUCIONES_CANONICAS } from '../../src/dominio/compartido/institucion.js';
 import { validarSignos, validarReceta, validarTamanoClinico } from '../../src/dominio/clinica/consulta.js';
@@ -183,5 +186,100 @@ for (const institucion of INSTITUCIONES_CANONICAS.filter(i => i !== 'LABORATORIO
     const cancelada = await agenda.ejecutar('cancelar', { ...p, id: cita.id, claveIdempotencia: nuevoId(), entrada: { version_esperada: 2, motivo: 'Cancelación justificada' } });
     assert.equal(cancelada.respuesta.motivo_cancelacion, 'Cancelación justificada'); assert.equal(cancelada.respuesta.motivo, 'Atención original'); assert.equal(s.revisiones.length, 2);
     assert.equal(s.citas.get(cita.id)!.estado, 'CANCELADA'); assert.ok(cita.fecha_creacion >= ahora);
+    const revCitas = await new ConsultarCitas().revisiones(s.contexto, s.bundle, cita.id, {});
+    assert.equal(revCitas.elementos.length, 2);
+    assert.equal(revCitas.elementos[0]?.motivo_cambio, 'Nueva disponibilidad');
+    assert.equal(revCitas.elementos[1]?.motivo_cambio, 'Cancelación justificada');
+  });
+});
+
+describe('E04-P1-01 — Antecedentes clínicos odontológicos, catálogos y separación de roles', () => {
+  const leerAnt = new ConsultarAntecedentesClinicos();
+  const actAnt = new ActualizarAntecedentesClinicos(dependenciasComandoPorDefecto);
+  const catalogos = new ConsultarCatalogosClinicos();
+
+  it('ODONTOLOGO consulta y actualiza antecedentes clínicos atómicamente con control de versión y auditoría', async () => {
+    const s = escenarioClinico('CLINICA_ODONTOLOGICA');
+    const inicial = await leerAnt.ejecutar(s.contexto, s.bundle, s.paciente.id);
+    assert.deepEqual(inicial.alergias, []);
+    assert.deepEqual(inicial.patologicos, []);
+
+    const actualizado = await actAnt.ejecutar({
+      contexto: s.contexto,
+      bundle: s.bundle,
+      claveIdempotencia: nuevoId(),
+      id: s.paciente.id,
+      entrada: {
+        version_esperada: 1,
+        patologicos: ['Hipertensión controlada'],
+        quirurgicos: [],
+        familiares: [],
+        alergias: [{ sustancia: 'Penicilina', severidad: 'SEVERA', reaccion: 'Urticaria' }],
+        medicamentos_actuales: ['Losartán 50 mg'],
+      },
+    });
+    assert.equal(actualizado.httpStatus, 200);
+    assert.equal(actualizado.respuesta.alergias.length, 1);
+    assert.equal(actualizado.respuesta.alergias[0]?.sustancia, 'Penicilina');
+    assert.deepEqual(actualizado.respuesta.patologicos, ['Hipertensión controlada']);
+    assert.equal(actualizado.respuesta.version_paciente, 2);
+    assert.equal(s.auditoria.length, 1);
+    assert.equal(s.revisiones.length, 1);
+
+    await assert.rejects(
+      actAnt.ejecutar({
+        contexto: s.contexto,
+        bundle: s.bundle,
+        claveIdempotencia: nuevoId(),
+        id: s.paciente.id,
+        entrada: {
+          version_esperada: 1,
+          patologicos: ['Diabetes'],
+          quirurgicos: [],
+          familiares: [],
+          alergias: [],
+          medicamentos_actuales: [],
+        },
+      }),
+      error('VERSION_DESACTUALIZADA'),
+    );
+  });
+
+  it('SECRETARIA tiene acceso a agenda y directorio pero es rechazada (SIN_PERMISO) al leer o editar antecedentes clínicos y consultas', async () => {
+    const s = escenarioClinico('CLINICA_ODONTOLOGICA');
+    const cuentaSecretaria = {
+      id: s.cuenta.id,
+      uid: s.cuenta.uid,
+      institucion: s.cuenta.institucion,
+      estado: s.cuenta.estado,
+      version: s.cuenta.version,
+      roles: ['SECRETARIA'] as const,
+      permisos: ['pacientes.administrar', 'citas.administrar'] as const,
+    };
+    s.cuenta = cuentaSecretaria;
+    const contextoSecretaria = { ...s.contexto, cuenta: cuentaSecretaria };
+    const medicos = await catalogos.listarProfesionales(contextoSecretaria, s.bundle);
+    assert.equal(medicos.length, 1);
+    assert.equal(medicos[0]?.id, s.profesional.id);
+
+    await assert.rejects(leerAnt.ejecutar(contextoSecretaria, s.bundle, s.paciente.id), error('SIN_PERMISO'));
+    await assert.rejects(
+      actAnt.ejecutar({
+        contexto: contextoSecretaria,
+        bundle: s.bundle,
+        claveIdempotencia: nuevoId(),
+        id: s.paciente.id,
+        entrada: {
+          version_esperada: 1,
+          patologicos: ['Hipertensión'],
+          quirurgicos: [],
+          familiares: [],
+          alergias: [],
+          medicamentos_actuales: [],
+        },
+      }),
+      error('SIN_PERMISO'),
+    );
+    await assert.rejects(catalogos.obtenerCatalogoOdontologia(contextoSecretaria, s.bundle), error('SIN_PERMISO'));
   });
 });

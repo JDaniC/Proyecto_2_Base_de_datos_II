@@ -56,16 +56,16 @@ const CATALOGO_CIE10 = [
 ];
 
 const MEDICAMENTOS_SUGERIDOS = [
-  { nombre: 'Losartán Potásico', presentacion: 'Comprimido', concentracion: '50 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
-  { nombre: 'Metformina Clorhidrato', presentacion: 'Tableta', concentracion: '850 mg', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
-  { nombre: 'Amoxicilina + Ácido Clavulánico', presentacion: 'Tableta', concentracion: '500/125 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
-  { nombre: 'Amoxicilina', presentacion: 'Cápsula', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
-  { nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '3 días' },
-  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '600 mg', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
-  { nombre: 'Ketorolaco Trometamina', presentacion: 'Tableta sublingual', concentracion: '10 mg', via: 'Sublingual', frecuencia: 'Cada 8 horas', duracion: '2 días' },
-  { nombre: 'Clorhexidina al 0.12%', presentacion: 'Colutorio bucal', concentracion: '15 ml', via: 'Enjuague bucal', frecuencia: 'Cada 12 horas por 1 min', duracion: '10 días' },
-  { nombre: 'Omeprazol', presentacion: 'Cápsula', concentracion: '20 mg', via: 'Oral', frecuencia: 'Cada 24 horas en ayunas', duracion: '30 días' },
-  { nombre: 'Salbutamol aerosol', presentacion: 'Inhalador', concentracion: '100 mcg/dosis', via: 'Inhalatoria', frecuencia: 'Cada 6 a 8 horas a demanda', duracion: '30 días' }
+  { nombre: 'Losartán Potásico', presentacion: 'Comprimido', concentracion: '50 mg', dosis: '1', unidad: 'comprimido', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
+  { nombre: 'Metformina Clorhidrato', presentacion: 'Tableta', concentracion: '850 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 12 horas', duracion: '90 días' },
+  { nombre: 'Amoxicilina + Ácido Clavulánico', presentacion: 'Tableta', concentracion: '500/125 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
+  { nombre: 'Amoxicilina', presentacion: 'Cápsula', concentracion: '500 mg', dosis: '1', unidad: 'cápsula', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '7 días' },
+  { nombre: 'Paracetamol', presentacion: 'Tableta', concentracion: '500 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '3 días' },
+  { nombre: 'Ibuprofeno', presentacion: 'Tableta', concentracion: '600 mg', dosis: '1', unidad: 'tableta', via: 'Oral', frecuencia: 'Cada 8 horas', duracion: '5 días' },
+  { nombre: 'Ketorolaco Trometamina', presentacion: 'Tableta sublingual', concentracion: '10 mg', dosis: '1', unidad: 'tableta', via: 'Sublingual', frecuencia: 'Cada 8 horas', duracion: '2 días' },
+  { nombre: 'Clorhexidina al 0.12%', presentacion: 'Colutorio bucal', concentracion: '0.12%', dosis: '15', unidad: 'ml', via: 'Enjuague bucal', frecuencia: 'Cada 12 horas por 1 min', duracion: '10 días' },
+  { nombre: 'Omeprazol', presentacion: 'Cápsula', concentracion: '20 mg', dosis: '1', unidad: 'cápsula', via: 'Oral', frecuencia: 'Cada 24 horas en ayunas', duracion: '30 días' },
+  { nombre: 'Salbutamol aerosol', presentacion: 'Inhalador', concentracion: '100 mcg/dosis', dosis: '2', unidad: 'disparos', via: 'Inhalatoria', frecuencia: 'Cada 6 a 8 horas a demanda', duracion: '30 días' }
 ];
 
 const TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA = [
@@ -84,13 +84,23 @@ export const NewConsultationWizardPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { patientRepository, appointmentRepository, consultationRepository } = useServices();
+  const { patientRepository, appointmentRepository, consultationRepository, catalogRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [citaVinculada, setCitaVinculada] = useState<CitaAgenda | null>(null);
   const [cargandoInicial, setCargandoInicial] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState<string | null>(null);
+  const [catalogoDiagnosticos, setCatalogoDiagnosticos] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : CATALOGO_CIE10
+  );
+  const [tratamientosOdontologia, setTratamientosOdontologia] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA
+  );
+  const [medicamentosSugeridos, setMedicamentosSugeridos] = useState(
+    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : MEDICAMENTOS_SUGERIDOS
+  );
 
   // Paso del Stepper (1 a 5)
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -153,6 +163,61 @@ export const NewConsultationWizardPage: React.FC = () => {
   const intention = useRef<{fingerprint: string; key: string} | null>(null);
 
   // Cargar datos del paciente y de la cita vinculada
+  useEffect(() => {
+    if (institucionId !== 'CLINICA_ODONTOLOGICA' || mode !== 'api' || !catalogRepository?.obtenerCatalogoOdontologia) {
+      return;
+    }
+    let activo = true;
+    setErrorCatalogo(null);
+    catalogRepository
+      .obtenerCatalogoOdontologia(institucionId)
+      .then((cat) => {
+        if (!activo || !cat) return;
+        setCatalogoDiagnosticos(cat.diagnosticos);
+        if (cat.procedimientos.length > 0) {
+          setTratamientosOdontologia(
+            cat.procedimientos.map((p) => ({
+              nombre: p.nombre,
+              indicaciones:
+                p.indicaciones ?? p.descripcion ?? 'Procedimiento odontológico institucional.',
+            }))
+          );
+        }
+        if (cat.medicamentos.length > 0) {
+          setMedicamentosSugeridos(
+            cat.medicamentos.map((m) => {
+              const conc = m.concentracion ?? m.dosis_sugerida ?? '';
+              const via =
+                m.via_administracion === 'TOPICA'
+                  ? 'Enjuague bucal'
+                  : m.via_administracion === 'ORAL'
+                    ? 'Oral'
+                    : m.via_administracion ?? '';
+              return {
+                nombre: m.nombre,
+                presentacion: m.presentacion ?? '',
+                concentracion: conc,
+                dosis: m.dosis_sugerida ?? '',
+                unidad: '',
+                via,
+                frecuencia: m.frecuencia_sugerida ?? '',
+                duracion: m.duracion_sugerida ?? '',
+              };
+            })
+          );
+        }
+      })
+      .catch(() => {
+        if (!activo) return;
+        setErrorCatalogo(
+          'No fue posible cargar el catálogo institucional odontológico por HTTP. Las sugerencias automáticas están deshabilitadas.'
+        );
+      });
+    return () => {
+      activo = false;
+    };
+  }, [catalogRepository, institucionId, mode]);
+
   useEffect(() => {
     if (!pacienteId) return;
 
@@ -317,9 +382,11 @@ export const NewConsultationWizardPage: React.FC = () => {
     setMedNombre(med.nombre);
     setMedPresentacion(med.presentacion);
     setMedConcentracion(med.concentracion);
-    setMedVia(med.via);
-    setMedFrecuencia(med.frecuencia);
-    setMedDuracion(med.duracion);
+    setMedDosis(med.dosis || '');
+    setMedUnidad(med.unidad || '');
+    setMedVia(med.via || 'Oral');
+    setMedFrecuencia(med.frecuencia || '');
+    setMedDuracion(med.duracion || '');
   };
 
   // Validaciones por paso
@@ -682,6 +749,28 @@ export const NewConsultationWizardPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Alerta de Error de Catálogo */}
+      {errorCatalogo && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'var(--color-warning-bg, #fffbeb)',
+            color: 'var(--color-warning-text, #b45309)',
+            border: '1px solid var(--color-warning-border, #fcd34d)',
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-input)',
+            marginBottom: '20px',
+            fontSize: '13px',
+          }}
+        >
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <span>{errorCatalogo}</span>
+        </div>
+      )}
 
       {/* Alerta de Error de Validación */}
       {errorValidacion && (
@@ -1060,7 +1149,7 @@ export const NewConsultationWizardPage: React.FC = () => {
 
               {busquedaCIE.trim().length > 0 && (
                 <div style={{ marginTop: '8px', maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#FFFFFF' }}>
-                  {CATALOGO_CIE10.filter((c) => c.nombre.toLowerCase().includes(busquedaCIE.toLowerCase()) || c.codigo.toLowerCase().includes(busquedaCIE.toLowerCase())).map((cie) => (
+                  {catalogoDiagnosticos.filter((c) => c.nombre.toLowerCase().includes(busquedaCIE.toLowerCase()) || c.codigo.toLowerCase().includes(busquedaCIE.toLowerCase())).map((cie) => (
                     <div
                       key={cie.codigo}
                       onClick={() => agregarDiagnostico(cie)}
@@ -1141,7 +1230,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     Tratamientos del catálogo odontológico:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA.map((t) => (
+                    {tratamientosOdontologia.map((t) => (
                       <button
                         key={t.nombre}
                         type="button"
@@ -1260,7 +1349,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                     Sugerencias frecuentes del catálogo institucional:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {MEDICAMENTOS_SUGERIDOS.map((m) => (
+                    {medicamentosSugeridos.map((m) => (
                       <button
                         key={m.nombre}
                         type="button"
@@ -1312,14 +1401,19 @@ export const NewConsultationWizardPage: React.FC = () => {
                         onChange={(e) => setMedPresentacion(e.target.value)}
                         style={{ width: '100%', backgroundColor: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '8px 10px', fontSize: '13px' }}
                       >
-                        <option value="Tableta">Tableta</option>
-                        <option value="Comprimido">Comprimido</option>
-                        <option value="Cápsula">Cápsula</option>
-                        <option value="Jarabe">Jarabe</option>
-                        <option value="Suspensión">Suspensión</option>
-                        <option value="Inhalador">Inhalador</option>
-                        <option value="Ampolla">Ampolla</option>
-                        <option value="Crema / Ungüento">Crema / Ungüento</option>
+                        {Array.from(new Set([
+                          'Tableta',
+                          'Comprimido',
+                          'Cápsula',
+                          'Jarabe',
+                          'Suspensión',
+                          'Inhalador',
+                          'Ampolla',
+                          'Crema / Ungüento',
+                          ...(medPresentacion ? [medPresentacion] : [])
+                        ])).map((pres) => (
+                          <option key={pres} value={pres}>{pres}</option>
+                        ))}
                       </select>
                     </div>
 

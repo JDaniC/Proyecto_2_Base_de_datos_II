@@ -88,4 +88,123 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
     assert.equal(reactiva.status, institucion === 'CENTRO_MEDICO_PEDIATRICO' ? 200 : 403);
   });
 
+  it('E04-P1-01: revisiones de cita, catálogos y antecedentes clínicos en odontología con separación de roles', async () => {
+    const idxDental = INSTITUCIONES_CANONICAS.indexOf('CLINICA_ODONTOLOGICA');
+    const s = escenarios[idxDental]!;
+    const headersOdontologo = {
+      authorization: `Bearer ${tokens[idxDental]!.token}`,
+      'content-type': 'application/json',
+      'idempotency-key': nuevoId(),
+    };
+    const catMedicos = await get('/catalogos/medicos', idxDental);
+    assert.equal(catMedicos.status, 200);
+    const bodyMedicos = (await catMedicos.json()) as { data: Array<{ id: string; rol: string }> };
+    assert.equal(bodyMedicos.data.length, 1);
+    assert.equal(bodyMedicos.data[0]?.id, s.profesional.id);
+    assert.equal(bodyMedicos.data[0]?.rol, 'ODONTOLOGO');
+
+    const catOdo = await get('/catalogos/odontologia', idxDental);
+    assert.equal(catOdo.status, 200);
+    const bodyCatOdo = (await catOdo.json()) as {
+      data: { diagnosticos: unknown[]; procedimientos: unknown[]; medicamentos: unknown[] };
+    };
+    assert.ok(bodyCatOdo.data.diagnosticos.length > 0);
+    assert.ok(bodyCatOdo.data.procedimientos.length > 0);
+    assert.ok(bodyCatOdo.data.medicamentos.length > 0);
+
+    const antInicial = await get(`/pacientes/${s.paciente.id}/antecedentes`, idxDental);
+    assert.equal(antInicial.status, 200);
+
+    // En la prueba previa el paciente quedó ARCHIVADO; activarlo en el fixture para probar flujo dental activo
+    const pacientePrevio = s.pacientes.get(s.paciente.id)!;
+    s.pacientes.set(s.paciente.id, { ...pacientePrevio, estado: 'ACTIVO' });
+    const pacienteActual = s.pacientes.get(s.paciente.id)!;
+    const putAnt = await fetch(`${url}/pacientes/${s.paciente.id}/antecedentes`, {
+      method: 'PUT',
+      headers: headersOdontologo,
+      body: JSON.stringify({
+        version_esperada: pacienteActual.version,
+        patologicos: ['Diabetes tipo 2 controlada'],
+        quirurgicos: [],
+        familiares: [],
+        alergias: [{ sustancia: 'Penicilina', severidad: 'SEVERA', reaccion: 'Urticaria' }],
+        medicamentos_actuales: ['Metformina 850 mg'],
+      }),
+    });
+    assert.equal(putAnt.status, 200);
+    const bodyAnt = (await putAnt.json()) as {
+      data: { alergias: Array<{ sustancia: string }>; patologicos: string[]; version_paciente: number };
+    };
+    assert.equal(bodyAnt.data.alergias[0]?.sustancia, 'Penicilina');
+    assert.deepEqual(bodyAnt.data.patologicos, ['Diabetes tipo 2 controlada']);
+
+    // Crear cita nueva, reprogramarla y consultar GET /citas/:id/revisiones
+    const pacTrasAnt = s.pacientes.get(s.paciente.id)!;
+    const nuevaCitaRes = await post(
+      '/citas',
+      {
+        paciente_id: s.paciente.id,
+        version_paciente: pacTrasAnt.version,
+        profesional_id: s.profesional.id,
+        fecha: '2026-11-10',
+        hora_inicio: '14:00',
+        duracion_minutos: 30,
+        motivo: 'Profilaxis y control',
+      },
+      idxDental,
+    );
+    assert.equal(nuevaCitaRes.status, 201);
+    const nuevaCita = ((await nuevaCitaRes.json()) as { data: { id: string; version: number } }).data;
+
+    const reprogRes = await fetch(`${url}/citas/${nuevaCita.id}/reprogramacion`, {
+      method: 'PATCH',
+      headers: { ...headersOdontologo, 'idempotency-key': nuevoId() },
+      body: JSON.stringify({
+        version_esperada: 1,
+        fecha: '2026-11-11',
+        hora_inicio: '15:00',
+        motivo: 'Solicitud del paciente por viaje',
+      }),
+    });
+    assert.equal(reprogRes.status, 200);
+
+    const revRes = await get(`/citas/${nuevaCita.id}/revisiones`, idxDental);
+    assert.equal(revRes.status, 200);
+    const bodyRev = (await revRes.json()) as { data: Array<{ motivo_cambio: string; version: number }> };
+    assert.equal(bodyRev.data.length, 1);
+    assert.equal(bodyRev.data[0]?.motivo_cambio, 'Solicitud del paciente por viaje');
+
+    // Simular rol SECRETARIA (sin historial.leer ni consultas.registrar): deniega antecedentes y catálogo clínico
+    const cuentaOriginal = s.cuenta;
+    s.cuenta = {
+      id: cuentaOriginal.id,
+      uid: cuentaOriginal.uid,
+      institucion: cuentaOriginal.institucion,
+      estado: cuentaOriginal.estado,
+      version: cuentaOriginal.version,
+      roles: ['SECRETARIA'],
+      permisos: ['pacientes.administrar', 'citas.administrar'],
+    };
+    try {
+      assert.equal((await get(`/pacientes/${s.paciente.id}/antecedentes`, idxDental)).status, 403);
+      const putSecretaria = await fetch(`${url}/pacientes/${s.paciente.id}/antecedentes`, {
+        method: 'PUT',
+        headers: { ...headersOdontologo, 'idempotency-key': nuevoId() },
+        body: JSON.stringify({
+          version_esperada: s.pacientes.get(s.paciente.id)!.version,
+          patologicos: [],
+          quirurgicos: [],
+          familiares: [],
+          alergias: [{ sustancia: 'Látex', severidad: 'LEVE', reaccion: 'Dermatitis' }],
+          medicamentos_actuales: [],
+        }),
+      });
+      assert.equal(putSecretaria.status, 403);
+      assert.equal((await get('/catalogos/odontologia', idxDental)).status, 403);
+      assert.equal((await get('/catalogos/medicos', idxDental)).status, 200);
+      assert.equal((await get(`/citas/${nuevaCita.id}/revisiones`, idxDental)).status, 200);
+    } finally {
+      s.cuenta = cuentaOriginal;
+    }
+  });
 });

@@ -19,6 +19,7 @@ import { TokenProvider } from './types';
 import { TrialAuthProvider } from './authProvider';
 import { HttpAuthRepository } from './httpAuthRepository';
 import { createHttpAppointmentRepository } from './appointments/httpAppointmentRepository';
+import { createHttpCatalogRepository } from './catalogs/httpCatalogRepository';
 import { createHttpConsultationRepository } from './consultations/httpConsultationRepository';
 import { createHttpPatientRepository } from './patients/httpPatientRepository';
 
@@ -77,7 +78,7 @@ export function createHttpServices(options: HttpServiceFactoryOptions = {}): Htt
     appointmentRepository: createHttpAppointmentRepository(httpClient),
     consultationRepository: createHttpConsultationRepository(httpClient),
     userRepository: requireApiAdapter<UserRepository>(undefined, 'userRepository'),
-    catalogRepository: requireApiAdapter<CatalogRepository>(undefined, 'catalogRepository'),
+    catalogRepository: createHttpCatalogRepository(httpClient),
     auditRepository: requireApiAdapter<AuditRepository>(undefined, 'auditRepository'),
     hospitalizationRepository: requireApiAdapter<HospitalizationRepository>(undefined, 'hospitalizationRepository'),
     examRepository: requireApiAdapter<HospitalExamRepository>(undefined, 'examRepository'),

@@ -112,7 +112,7 @@ export const ImprimirRecetaModal: React.FC<ImprimirRecetaModalProps> = ({
             </div>
             <div>
               <span style={{ color: 'var(--color-text-secondary)' }}>Profesional Emisor:</span>{' '}
-              <span>{receta.emitidaPor}</span>
+              <span>{receta.emitidaPor}{receta.colegiadoEmisor ? ` · Colegiado ${receta.colegiadoEmisor}` : ''}{receta.entidadColegiacionEmisor ? ` (${receta.entidadColegiacionEmisor})` : ''}</span>
             </div>
           </div>
 
@@ -179,7 +179,10 @@ export const ImprimirRecetaModal: React.FC<ImprimirRecetaModalProps> = ({
             <div style={{ textAlign: 'center', width: '220px' }}>
               <div style={{ borderBottom: '1px solid var(--color-strong)', height: '40px', marginBottom: '6px' }} />
               <div style={{ fontSize: '12px', fontWeight: 700 }}>{receta.emitidaPor}</div>
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{receta.rolEmisor}</div>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{receta.rolEmisor}{receta.colegiadoEmisor ? ` · Colegiado ${receta.colegiadoEmisor}` : ''}</div>
+              {receta.entidadColegiacionEmisor && (
+                <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>{receta.entidadColegiacionEmisor}</div>
+              )}
             </div>
           </div>
         </div>

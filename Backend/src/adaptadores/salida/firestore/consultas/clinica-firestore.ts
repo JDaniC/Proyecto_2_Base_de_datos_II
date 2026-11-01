@@ -1,7 +1,7 @@
 import { CursorHistorialCifrado } from '../../historial/cursor-historial.js';
 import { validarDocumento } from '../validador-firestore.js';
 import { FieldPath, type Firestore, type Transaction, type Query, type DocumentReference } from 'firebase-admin/firestore';
-import type { PuertosClinicos } from '../../../../aplicacion/puertos/clinica.js';
+import type { PuertosClinicos, RevisionCita } from '../../../../aplicacion/puertos/clinica.js';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import type { Consulta, ProfesionalClinico } from '../../../../dominio/clinica/consulta.js';
@@ -81,11 +81,28 @@ export function crearClinicaFirestore(db: Firestore, transaction?: Transaction):
   };
   return {
     pacientes: new RepositorioPacientesFirestore(transaction ?? db,db),
-    profesionales: { async porId(id) {
-      await preparar(); const s = await get(db.doc(`pediatras/${id}`)); if (!s.exists) return null;
-      const d = s.data()!;
-      return {id, nombre: `${d.nombres} ${d.apellidos}`,rol: 'PEDIATRA', activo: d.estado === 'ACTIVO', colegiado: d.colegiado,entidad_colegiacion: d.entidad_colegiacion} as ProfesionalClinico;
-    }},
+    profesionales: {
+      async porId(id) {
+        await preparar(); const s = await get(db.doc(`pediatras/${id}`)); if (!s.exists) return null;
+        const d = s.data()!;
+        return {id, nombre: `${d.nombres} ${d.apellidos}`,rol: 'PEDIATRA', activo: d.estado === 'ACTIVO', colegiado: d.colegiado,entidad_colegiacion: d.entidad_colegiacion} as ProfesionalClinico;
+      },
+      async listar() {
+        await preparar();
+        const s = await query(db.collection('pediatras').limit(100));
+        return s.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            id: uuidPublico(doc.id),
+            nombre: `${d.nombres} ${d.apellidos}`,
+            rol: 'PEDIATRA',
+            activo: d.estado === 'ACTIVO',
+            colegiado: d.colegiado,
+            entidad_colegiacion: d.entidad_colegiacion,
+          } as ProfesionalClinico;
+        });
+      },
+    },
     consultas: {porId, async porVersion(id,version) {
       const actual = await porId(id); if (!actual || actual.version === version) return actual;
       const s = await get(db.doc(`consultas/${id}/snapshots_v1/${version}`)); if (!s.exists) return null;
@@ -103,6 +120,40 @@ export function crearClinicaFirestore(db: Firestore, transaction?: Transaction):
       if (s.size > 100) throw new ErrorDominio('LIMITE_AGREGADO','La agenda diaria excede el límite de reserva.');
       const citas: Cita[] = []; for (const d of s.docs) {const c = await citaPorId(uuidPublico(d.id)); if (c && c.estado !== 'CANCELADA' && (c.hora_fin === null || c.hora_inicio < fin && c.hora_fin > inicio)) citas.push(c);}
       return citas;
+    }, async revisiones(id, rango, pagina, ambito = '') {
+      await preparar();
+      const scope = JSON.stringify(['citas-revisiones-v1', ambito, id, rango, pagina.orden]);
+      const codec = new CursorHistorialCifrado();
+      const cursor = pagina.cursor ? codec.decodificar(pagina.cursor, scope) : undefined;
+      const dir = pagina.orden === 'DESC' ? 'desc' : 'asc';
+      let q: Query = db.collection(`citas/${id}/versiones`).orderBy('fecha_hora', dir).orderBy(FieldPath.documentId(), dir);
+      if (rango.desde) q = q.where('fecha_hora', '>=', new Date(rango.desde));
+      if (rango.hasta) q = q.where('fecha_hora', '<', new Date(rango.hasta));
+      if (cursor) q = q.startAfter(new Date(cursor.fechaHora), cursor.id);
+      const s = await query(q.limit(pagina.limite + 1));
+      const hayMas = s.docs.length > pagina.limite;
+      const docs = hayMas ? s.docs.slice(0, pagina.limite) : s.docs;
+      const elementos: RevisionCita[] = docs.map((doc) => {
+        const d = doc.data();
+        const raw = (d.contenido_anterior ?? {}) as Record<string, unknown>;
+        const fIso = d.fecha_hora?.toDate ? d.fecha_hora.toDate().toISOString() : String(raw.fecha_hora ?? '');
+        return {
+          id: uuidPublico(doc.id),
+          version: versionPositiva(d.version),
+          fecha_hora: instanteUtc(raw.fecha_hora ?? fIso),
+          actor_id: uuidPublico(raw.actor_id ?? d.actor_id),
+          motivo_cambio: String(raw.motivo_cambio ?? d.motivo ?? ''),
+          anterior: (raw.anterior ?? raw) as Cita,
+          actual: (raw.actual ?? raw) as Cita,
+        };
+      });
+      const ultimoDoc = docs.at(-1);
+      const ultimoElemento = elementos.at(-1);
+      const instanteUltimo = ultimoDoc?.get('fecha_hora')?.toDate?.()?.toISOString?.() ?? ultimoElemento?.fecha_hora ?? '';
+      return {
+        elementos,
+        ...(hayMas && ultimoElemento ? { siguienteCursor: codec.codificar(scope, { id: ultimoElemento.id, fechaHora: instanteUltimo }) } : {}),
+      };
     }},
     responsables: {async autorizacion(pacienteId,responsableId) {
       await preparar();

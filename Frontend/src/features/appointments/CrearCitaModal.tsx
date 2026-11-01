@@ -1,5 +1,5 @@
 import { getErrorMessage } from '../../services/errors';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CalendarPlus, AlertCircle } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import { useServices } from '../../app/ServiceContext';
@@ -35,12 +35,14 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   onCitaCreada
 }) => {
   const { sesion } = useAuthSession();
-  const { appointmentRepository, patientRepository } = useServices();
+  const { appointmentRepository, patientRepository, catalogRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const profesionales = PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const [profesionalesApi, setProfesionalesApi] = useState<Array<{ id: string; nombre: string; especialidad: string }>>([]);
+  const profesionales = mode === 'api' ? profesionalesApi : PROFESIONALES_DISPONIBLES[institucionId] || [];
 
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [pacienteId, setPacienteId] = useState('');
   const [profesionalId, setProfesionalId] = useState(profesionales[0]?.id || '');
   const [fecha, setFecha] = useState(fechaInicial || '2026-10-19');
@@ -55,30 +57,82 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
 
   const [guardando, setGuardando] = useState(false);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
+  const claveIntencionRef = useRef<{ huella: string; clave: string } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      claveIntencionRef.current = null;
+      return;
+    }
+    if (fechaInicial) setFecha(fechaInicial);
+    if (horaInicial) setHoraInicio(horaInicial);
+  }, [isOpen, fechaInicial, horaInicial]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'api') return;
+    let cancelado = false;
+    catalogRepository
+      .obtenerMedicos(institucionId)
+      .then((medicos) => {
+        if (cancelado || !Array.isArray(medicos)) return;
+        const activos = medicos
+          .filter((m) => m.estado === 'ACTIVO')
+          .map((m) => ({
+            id: m.id,
+            nombre: m.nombreCompleto ?? m.nombre,
+            especialidad: m.especialidad ?? m.especialidadPrincipal,
+          }));
+        setProfesionalesApi(activos);
+        if (activos.length > 0 && !activos.some((a) => a.id === profesionalId)) {
+          setProfesionalId(activos[0]!.id);
+        }
+      })
+      .catch(() => {
+        // Ignorar si no hay catálogo disponible
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [isOpen, mode, institucionId, catalogRepository, profesionalId]);
 
   // Cargar lista de pacientes con expediente activo
   useEffect(() => {
     if (!isOpen) return;
-
+    let cancelado = false;
+    const termino = mode === 'api' ? busquedaPaciente.trim() || 'a' : busquedaPaciente.trim();
     patientRepository
-      .buscar(institucionId, { estado: 'ACTIVO', limite: 50 })
+      .buscar(institucionId, {
+        ...(termino ? { q: termino } : {}),
+        estado: 'ACTIVO',
+        limite: 50,
+      })
       .then((res) => {
+        if (cancelado) return;
         setPacientes(res.items);
-        if (res.items.length > 0 && !pacienteId) {
-          setPacienteId(res.items[0].id);
+        if (res.items.length > 0) {
+          if (!pacienteId || !res.items.some((p) => p.id === pacienteId)) {
+            setPacienteId(res.items[0]!.id);
+          }
+        } else {
+          setPacienteId('');
         }
       })
       .catch((err) => {
-        console.error('Error cargando pacientes:', err);
+        if (!cancelado) {
+          console.error('Error cargando pacientes:', err);
+        }
       });
-  }, [isOpen, institucionId, patientRepository, pacienteId]);
+    return () => {
+      cancelado = true;
+    };
+  }, [isOpen, mode, institucionId, patientRepository, busquedaPaciente, pacienteId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorValidacion(null);
 
-    if (!pacienteId) {
-      setErrorValidacion('Debe seleccionar un paciente con expediente activo.');
+    if (!pacienteId || !pacientes.some((p) => p.id === pacienteId)) {
+      setErrorValidacion('Debe seleccionar un paciente con expediente activo de los resultados mostrados.');
       return;
     }
     if (!profesionalId) {
@@ -101,19 +155,45 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
     setGuardando(true);
 
     try {
-      const dto: CrearCitaDTO = {
+      const pacienteSeleccionado = pacientes.find((p) => p.id === pacienteId);
+      const motivoLimpio = motivo.trim();
+      const huella = JSON.stringify([
         pacienteId,
         profesionalId,
         fecha,
         horaInicio,
         duracionMinutos,
         consultorio,
-        motivo: motivo.trim(),
+        motivoLimpio,
+      ]);
+      let claveIdempotente: string;
+      if (claveIntencionRef.current && claveIntencionRef.current.huella === huella) {
+        claveIdempotente = claveIntencionRef.current.clave;
+      } else {
+        claveIdempotente =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `cita-${Date.now()}`;
+        claveIntencionRef.current = { huella, clave: claveIdempotente };
+      }
+
+      const dto: CrearCitaDTO = {
+        pacienteId,
+        ...(pacienteSeleccionado?.version !== undefined
+          ? { versionPaciente: pacienteSeleccionado.version }
+          : {}),
+        profesionalId,
+        fecha,
+        horaInicio,
+        duracionMinutos,
+        consultorio,
+        motivo: motivoLimpio,
         secretariaGestora: sesion?.nombre,
-        idempotencyKey: `cita-${Date.now()}`
+        idempotencyKey: claveIdempotente,
       };
 
       const nuevaCita = await appointmentRepository.crear(institucionId, dto);
+      claveIntencionRef.current = null;
       setGuardando(false);
       onCitaCreada(nuevaCita.id);
       onClose();
@@ -184,6 +264,25 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
           >
             Paciente con expediente activo <span style={{ color: 'var(--color-danger-text)' }}>*</span>
           </label>
+          {mode === 'api' && (
+            <input
+              type="search"
+              value={busquedaPaciente}
+              onChange={(e) => setBusquedaPaciente(e.target.value)}
+              placeholder="Filtrar paciente por nombre, apellido o documento..."
+              aria-label="Buscar paciente para cita"
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--color-background)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-input)',
+                padding: '8px 12px',
+                fontSize: '13px',
+                color: 'var(--color-text)',
+                marginBottom: '6px'
+              }}
+            />
+          )}
           <select
             id="cita-paciente-select"
             value={pacienteId}

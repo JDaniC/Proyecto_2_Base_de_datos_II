@@ -1,11 +1,13 @@
-import type { UUID } from '../../../../dominio/compartido/uuid.js';
-import type { Pagina } from '../../../../aplicacion/puertos/nucleo.js';
-import type { FiltrosCitas, PuertosClinicos } from '../../../../aplicacion/puertos/clinica.js';
+import { uuidPublico, type UUID } from '../../../../dominio/compartido/uuid.js';
+import { versionPositiva } from '../../../../dominio/compartido/version.js';
+import { instanteUtc } from '../../../../dominio/compartido/instante-utc.js';
+import type { FiltrosPagina, Pagina } from '../../../../aplicacion/puertos/nucleo.js';
+import type { FiltrosCitas, PuertosClinicos, RangoRevisiones, RevisionCita } from '../../../../aplicacion/puertos/clinica.js';
 import type { Cita } from '../../../../dominio/clinica/cita.js';
 import { ErrorDominio } from '../../../../dominio/compartido/error-dominio.js';
 import type { EjecutorSql } from '../../sql/tipos-sql.js';
 import { codificarCursorSql, decodificarCursorSql, escaparLikeSql } from '../../sql/cursor-paginacion-sql.js';
-import { mapearCitaSql, type FilaCitaSql } from '../../sql/mapear-clinica-sql.js';
+import { fechaDb, mapearCitaSql, numero, type FilaCitaSql } from '../../sql/mapear-clinica-sql.js';
 
 type PuertoCitas = PuertosClinicos['citas'];
 
@@ -103,6 +105,81 @@ export class RepositorioCitasPostgresql implements PuertoCitas {
         [profesional, `${fecha} ${fin}`, `${fecha} ${inicio}`],
       );
       return Object.freeze(resultado.filas.map(mapearCitaSql));
+    } catch (error) {
+      if (error instanceof ErrorDominio) throw error;
+      throw indisponible();
+    }
+  }
+
+  async revisiones(id: UUID, rango: RangoRevisiones, pagina: FiltrosPagina, ambitoCursor = ''): Promise<Pagina<RevisionCita>> {
+    try {
+      const condiciones: string[] = ["r.tipo_recurso = 'citas'", 'r.recurso_id = $1'];
+      const parametros: unknown[] = [id];
+      let indice = 2;
+      if (rango.desde) {
+        condiciones.push(`r.fecha_hora >= $${indice}::timestamp`);
+        parametros.push(fechaDb(rango.desde));
+        indice += 1;
+      }
+      if (rango.hasta) {
+        condiciones.push(`r.fecha_hora < $${indice}::timestamp`);
+        parametros.push(fechaDb(rango.hasta));
+        indice += 1;
+      }
+      const huella = JSON.stringify([ambitoCursor, id, rango.desde ?? '', rango.hasta ?? '']);
+      if (pagina.cursor) {
+        const cursor = decodificarCursorSql(pagina.cursor, INSTITUCION, huella, pagina.orden, undefined, 'citas_revisiones');
+        const operador = pagina.orden === 'ASC' ? '>' : '<';
+        condiciones.push(`(r.fecha_hora ${operador} $${indice}::timestamp OR (r.fecha_hora = $${indice}::timestamp AND r.id_revision ${operador} $${indice + 1}))`);
+        parametros.push(cursor.fecha, cursor.id);
+        indice += 2;
+      }
+      const sql = `
+        SELECT r.id_revision, r.version, r.motivo, r.contenido_anterior,
+               u.id_publico AS actor_id,
+               TO_CHAR(r.fecha_hora, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS fecha_hora_iso,
+               TO_CHAR(r.fecha_hora, 'YYYY-MM-DD HH24:MI:SS.US') AS orden_fecha
+          FROM revisiones r
+          LEFT JOIN usuario u ON u.id_usuario = r.id_usuario
+         WHERE ${condiciones.join(' AND ')}
+         ORDER BY r.fecha_hora ${pagina.orden}, r.id_revision ${pagina.orden}
+         LIMIT $${indice}
+      `;
+      parametros.push(pagina.limite + 1);
+      const resultado = await this.ejecutor.consultar<Record<string, unknown>>(sql, parametros);
+      const haySiguiente = resultado.filas.length > pagina.limite;
+      const filas = haySiguiente ? resultado.filas.slice(0, pagina.limite) : resultado.filas;
+      const elementos: RevisionCita[] = filas.map((fila) => {
+        const raw = typeof fila.contenido_anterior === 'string'
+          ? JSON.parse(fila.contenido_anterior) as Record<string, unknown>
+          : (fila.contenido_anterior as Record<string, unknown> ?? {});
+        const anterior = (raw.anterior ?? raw) as Cita;
+        const actual = (raw.actual ?? raw) as Cita;
+        return {
+          id: uuidPublico(fila.id_revision),
+          version: versionPositiva(numero(fila.version)),
+          fecha_hora: instanteUtc(raw.fecha_hora ?? fila.fecha_hora_iso),
+          actor_id: uuidPublico(raw.actor_id ?? fila.actor_id),
+          motivo_cambio: String(raw.motivo_cambio ?? fila.motivo ?? ''),
+          anterior,
+          actual,
+        };
+      });
+      const ultima = filas[filas.length - 1];
+      return Object.freeze({
+        elementos: Object.freeze(elementos),
+        ...(haySiguiente && ultima ? {
+          siguienteCursor: codificarCursorSql({
+            v: 1,
+            recurso: 'citas_revisiones',
+            institucion: INSTITUCION,
+            q: huella,
+            orden: pagina.orden,
+            f: String(ultima.orden_fecha),
+            id: String(ultima.id_revision),
+          }),
+        } : {}),
+      });
     } catch (error) {
       if (error instanceof ErrorDominio) throw error;
       throw indisponible();

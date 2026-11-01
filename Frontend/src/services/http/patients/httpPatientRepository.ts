@@ -1,10 +1,26 @@
 import { stableCommandKeys } from '../stableCommand';
 import type { PatientRepository } from '../../contracts';
-import type { ActualizarPacienteDTO, BuscarPacientesQuery, CrearPacienteDTO, FiltrosHistorial, InstitucionId } from '../../types';
+import type {
+  ActualizarPacienteDTO,
+  AntecedentesClinicos,
+  BuscarPacientesQuery,
+  CrearPacienteDTO,
+  FiltrosHistorial,
+  InstitucionId,
+} from '../../types';
 import { HttpClient } from '../httpClient';
 import { HttpError } from '../errors';
 import type { ExpedienteDto, HistorialDto, PacienteDto } from './patientDtos';
 import { mapearAlta, mapearCambio, mapearEvento, mapearPaciente } from './patientMapper';
+
+interface AntecedentesDto {
+  patologicos: string[];
+  quirurgicos: string[];
+  familiares: string[];
+  alergias: AntecedentesClinicos['alergias'];
+  medicamentos_actuales: string[];
+  version_paciente?: number;
+}
 
 export function createHttpPatientRepository(http: HttpClient): PatientRepository {
   const path = (id: string) => `/pacientes/${encodeURIComponent(id)}`;
@@ -45,6 +61,52 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
     async obtenerHistorial(_institucion: InstitucionId, id: string, filtros: FiltrosHistorial) {
       const res = await http.get<HistorialDto>(`${path(id)}/historial`, { query: { ...filtros, orden: filtros.orden ?? 'ASC', limite: filtros.limite ?? 20 } });
       return { eventos: res.data.eventos.map(mapearEvento), siguienteCursor: res.meta.siguiente_cursor };
+    },
+    async obtenerAntecedentes(_institucion: InstitucionId, id: string): Promise<AntecedentesClinicos> {
+      const res = await http.get<AntecedentesDto>(`${path(id)}/antecedentes`);
+      return {
+        patologicos: res.data.patologicos ?? [],
+        quirurgicos: res.data.quirurgicos ?? [],
+        familiares: res.data.familiares ?? [],
+        alergias: res.data.alergias ?? [],
+        medicamentosActuales: res.data.medicamentos_actuales ?? [],
+        versionPaciente: res.data.version_paciente,
+      };
+    },
+    async actualizarAntecedentes(
+      _institucion: InstitucionId,
+      id: string,
+      antecedentes: AntecedentesClinicos,
+      versionEsperada?: number
+    ): Promise<AntecedentesClinicos> {
+      let version = versionEsperada ?? antecedentes.versionPaciente;
+      if (version === undefined) {
+        const pac = await http.get<PacienteDto>(path(id));
+        version = pac.data.version;
+      }
+      const body = {
+        version_esperada: version,
+        patologicos: antecedentes.patologicos,
+        quirurgicos: antecedentes.quirurgicos,
+        familiares: antecedentes.familiares,
+        alergias: antecedentes.alergias.map((a) => ({
+          sustancia: a.sustancia,
+          severidad: a.severidad,
+          reaccion: a.reaccion,
+        })),
+        medicamentos_actuales: antecedentes.medicamentosActuales,
+      };
+      const res = await http.put<AntecedentesDto>(`${path(id)}/antecedentes`, body, {
+        idempotencyKey: key(`${id}/antecedentes`, body),
+      });
+      return {
+        patologicos: res.data.patologicos ?? [],
+        quirurgicos: res.data.quirurgicos ?? [],
+        familiares: res.data.familiares ?? [],
+        alergias: res.data.alergias ?? [],
+        medicamentosActuales: res.data.medicamentos_actuales ?? [],
+        versionPaciente: res.data.version_paciente,
+      };
     },
   };
   // Las capacidades E03–E05 conservan un rechazo explícito hasta integrar su adaptador.

@@ -8,6 +8,7 @@ export interface Cita {
   readonly id: UUID; readonly paciente_id: UUID; readonly profesional_id: UUID; readonly version: Version;
   readonly fecha: string; readonly hora_inicio: string; readonly hora_fin: string | null;
   readonly duracion_minutos: number | null; readonly motivo: string; readonly consultorio?: string;
+  readonly secretaria_gestora?: string;
   readonly estado: 'PROGRAMADA' | 'EN_CURSO' | 'ATENDIDA' | 'CANCELADA';
   readonly motivo_cancelacion?: string; readonly fecha_creacion: InstanteUTC;
 }

@@ -19,12 +19,47 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    assert.equal(alta.status(),201,`alta ${cuenta.institucion}`); const paciente=(await alta.json()).data;
    let cita;
    if(cuenta.institucion==='CLINICA_ODONTOLOGICA') {
-    const r=await page.request.post(`${url}/api/v1/citas`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{paciente_id:paciente.id,version_paciente:paciente.version,profesional_id:cuenta.profesionalId,fecha:'2026-10-30',hora_inicio:'09:00',duracion_minutos:30,motivo:'Control dental'}}); assert.equal(r.status(),201); cita=(await r.json()).data;
+    if(cuenta.secretariaCuenta) {
+     const ctxSec=await browser.newContext(); const pageSec=await ctxSec.newPage();
+     try {
+      await pageSec.goto(`${url}/acceso`);
+      await pageSec.getByLabel(/Correo institucional/).fill(cuenta.secretariaCuenta.email);
+      await pageSec.getByLabel(/Contraseña/).fill(cuenta.secretariaCuenta.password);
+      const loginSec=pageSec.waitForRequest(r=>r.method()==='POST'&&r.url().endsWith('/api/v1/sesion'));
+      await pageSec.getByRole('button',{name:'Iniciar sesión'}).click();
+      const headersSec={authorization:(await loginSec).headers().authorization,'Idempotency-Key':randomUUID()};
+      const loginSecResp=await (await loginSec).response();
+      assert.equal(loginSecResp.status(),200,'login secretaria dental');
+      await pageSec.waitForURL(/\/(panel|sesion-activa)$/);
+      const antRechazo=await pageSec.request.get(`${url}/api/v1/pacientes/${paciente.id}/antecedentes`,{headers:headersSec});
+      assert.equal(antRechazo.status(),403,'secretaria no lee antecedentes');
+      const r=await pageSec.request.post(`${url}/api/v1/citas`,{headers:{...headersSec,'Idempotency-Key':randomUUID()},data:{paciente_id:paciente.id,version_paciente:paciente.version,profesional_id:cuenta.profesionalId,fecha:'2026-10-19',hora_inicio:'09:00',duracion_minutos:30,motivo:'Control dental inicial'}});
+      assert.equal(r.status(),201); cita=(await r.json()).data;
+      assert.equal(cita.secretaria_gestora,'Laura Secretaría Sintética');
+      const rReprog=await pageSec.request.patch(`${url}/api/v1/citas/${cita.id}/reprogramacion`,{headers:{...headersSec,'Idempotency-Key':randomUUID()},data:{version_esperada:cita.version,fecha:'2026-10-19',hora_inicio:'10:00',duracion_minutos:45,motivo:'Ajuste solicitado por paciente'}});
+      assert.equal(rReprog.status(),200); cita=(await rReprog.json()).data;
+      pass('SECRETARIA agenda y reprograma cita dental con secretaria_gestora diferenciada y 403 en antecedentes');
+     } finally {
+      await ctxSec.close();
+     }
+     await page.goto(`${url}/agenda`);
+     await page.getByText('Laura Secretaría Sintética',{exact:false}).first().click();
+     await page.getByText('Ajuste solicitado por paciente',{exact:false}).first().waitFor({timeout:10000});
+     pass('ODONTOLOGO visualiza agenda dental con secretaria gestora e historial de revisiones de cita');
+     await page.goto(`${url}/pacientes/${paciente.id}`);
+     await page.getByLabel('Nueva alergia odontológica').fill('Alergia controlada a penicilina');
+     await page.getByRole('button',{name:'Agregar alergia'}).click();
+     await page.getByText('Alergia controlada a penicilina',{exact:false}).waitFor({timeout:10000});
+     pass('ODONTOLOGO registra y consulta antecedente odontológico en expediente HTTP');
+    } else {
+     const r=await page.request.post(`${url}/api/v1/citas`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{paciente_id:paciente.id,version_paciente:paciente.version,profesional_id:cuenta.profesionalId,fecha:'2026-10-30',hora_inicio:'09:00',duracion_minutos:30,motivo:'Control dental'}}); assert.equal(r.status(),201); cita=(await r.json()).data;
+    }
    }
    await page.goto(`${url}/pacientes/${paciente.id}/consultas/nueva${cita?`?citaId=${cita.id}`:''}`);
    await page.locator('#motivo-input').fill('Control clínico sintético'); await page.getByRole('button',{name:'Siguiente paso'}).click();
    await page.locator('#peso-input').fill('25'); await page.getByRole('button',{name:'Siguiente paso'}).click();
-   await page.locator('#cie-search').fill('J00'); await page.getByRole('button',{name:'Agregar',exact:true}).click();
+   const terminoBusqueda = cuenta.institucion === 'CLINICA_ODONTOLOGICA' ? 'K02' : 'J00';
+   await page.locator('#cie-search').fill(terminoBusqueda); await page.getByRole('button',{name:'Agregar',exact:true}).click();
    await page.locator('#trat-desc').fill('Tratamiento sintético'); await page.locator('#trat-indic').fill('Solo prueba'); await page.getByRole('button',{name:'Añadir',exact:true}).click();
    await page.getByRole('button',{name:'Siguiente paso'}).click();
    await page.locator('#toggle-receta').check();

@@ -2,6 +2,7 @@ import { corregirConsultaSql } from '../../sql/corregir-consulta-sql.js';
 import { aplicarEstadoHistorialSql } from '../../sql/aplicar-estado-historial-sql.js';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
 import type { ContextoAutenticado } from '../../../../aplicacion/puertos/contexto-autenticado.js';
+import type { AntecedentesClinicos } from '../../../../aplicacion/puertos/clinica.js';
 import { ErrorDominio } from '../../../../dominio/compartido/error-dominio.js';
 import type { Cita } from '../../../../dominio/clinica/cita.js';
 import type { Consulta, RecetaEmitida } from '../../../../dominio/clinica/consulta.js';
@@ -62,18 +63,34 @@ async function avanzarRevisionPaciente(executor: EjecutorSql, cambio: CambioPlan
   }
 }
 
-async function guardarCita(executor: EjecutorSql, cambio: CambioPlanificado): Promise<void> {
+async function resolverIdSecretariaActor(executor: EjecutorSql, actorPublicoId: string): Promise<number | null> {
+  const res = await executor.consultar<{ id_secretaria: number | string | null }>(
+    'SELECT id_secretaria FROM usuario WHERE id_publico = ? LIMIT 1',
+    [actorPublicoId],
+  );
+  const raw = res.filas[0]?.id_secretaria;
+  if (raw === null || raw === undefined) return null;
+  const num = Number(raw);
+  return Number.isSafeInteger(num) && num > 0 ? num : null;
+}
+
+async function guardarCita(
+  executor: EjecutorSql,
+  cambio: CambioPlanificado,
+  contexto: ContextoAutenticado,
+): Promise<void> {
   const cita = cambio.nuevoEstado as Cita;
   const idPaciente = await interno(executor, 'paciente', 'id_paciente', cita.paciente_id, 'Paciente no disponible para la cita.');
   const idOdontologo = await interno(executor, 'odontologo', 'id_odontologo', cita.profesional_id, 'Profesional no disponible para la cita.');
+  const idSecretaria = await resolverIdSecretariaActor(executor, contexto.cuenta.id);
   const fechaHora = `${cita.fecha} ${cita.hora_inicio}:00`;
   const horaFin = cita.hora_fin === null ? null : `${cita.hora_fin}:00`;
   if (cambio.versionAnterior === null) {
     await executor.consultar(
-      `INSERT INTO cita (id_publico, revision, id_paciente, id_odontologo, fecha_hora, hora_fin,
+      `INSERT INTO cita (id_publico, revision, id_paciente, id_odontologo, id_secretaria, fecha_hora, hora_fin,
          duracion_minutos, consultorio, motivo, motivo_cancelacion, estado, fecha_creacion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [cita.id, cita.version, idPaciente, idOdontologo, fechaHora, horaFin, cita.duracion_minutos,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [cita.id, cita.version, idPaciente, idOdontologo, idSecretaria, fechaHora, horaFin, cita.duracion_minutos,
         cita.consultorio ?? null, cita.motivo, cita.motivo_cancelacion ?? null, cita.estado, fechaDb(cita.fecha_creacion)],
     );
     return;
@@ -81,14 +98,41 @@ async function guardarCita(executor: EjecutorSql, cambio: CambioPlanificado): Pr
   // EN_CURSO es lógico (consulta abierta); el enum físico dental no lo admite.
   const estadoFisico = cita.estado === 'EN_CURSO' ? null : cita.estado;
   await executor.consultar(
-    `UPDATE cita SET revision = ?, fecha_hora = ?, hora_fin = ?, duracion_minutos = ?, consultorio = ?,
-       motivo = ?, motivo_cancelacion = ?, estado = COALESCE(?, estado)
+    `UPDATE cita SET revision = ?, id_secretaria = COALESCE(?, id_secretaria), fecha_hora = ?, hora_fin = ?,
+       duracion_minutos = ?, consultorio = ?, motivo = ?, motivo_cancelacion = ?, estado = COALESCE(?, estado)
      WHERE id_publico = ? AND revision = ?`,
-    [cita.version, fechaHora, horaFin, cita.duracion_minutos, cita.consultorio ?? null, cita.motivo,
+    [cita.version, idSecretaria, fechaHora, horaFin, cita.duracion_minutos, cita.consultorio ?? null, cita.motivo,
       cita.motivo_cancelacion ?? null, estadoFisico, cita.id, cambio.versionAnterior],
   );
   if (await revisionActual(executor, 'cita', cita.id) !== cita.version) {
     throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La cita ha sido modificada por otro proceso.');
+  }
+}
+
+async function guardarAntecedentes(executor: EjecutorSql, cambio: CambioPlanificado): Promise<void> {
+  const antecedentes = cambio.nuevoEstado as AntecedentesClinicos;
+  const idPaciente = await interno(
+    executor,
+    'paciente',
+    'id_paciente',
+    cambio.recursoId,
+    'Paciente no disponible para registrar antecedentes.',
+  );
+  const historial = await executor.consultar<{ id_historial: number | string }>(
+    'SELECT id_historial FROM historial_clinico WHERE id_paciente = ? FOR UPDATE',
+    [idPaciente],
+  );
+  const idHistorial = Number(historial.filas[0]?.id_historial);
+  if (!Number.isSafeInteger(idHistorial)) {
+    throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'Historial clínico no disponible para registrar antecedentes.');
+  }
+  await executor.consultar('DELETE FROM antecedente WHERE id_historial = ?', [idHistorial]);
+  for (const reg of antecedentes.registros) {
+    await executor.consultar(
+      `INSERT INTO antecedente (id_publico, revision, id_historial, tipo, descripcion, fecha_registro)
+       VALUES (?, 1, ?, ?, ?, ?)`,
+      [reg.id, idHistorial, reg.tipo, reg.descripcion, reg.fecha_registro],
+    );
   }
 }
 
@@ -331,6 +375,7 @@ export async function aplicarCambiosClinicosMysql(
   for (const c of cambios.filter(c => c.agregado === 'estadoHistorial')) await aplicarEstadoHistorialSql(executor, 'mysql', c);
   const esClinico = (c: CambioPlanificado) =>
     c.agregado === 'citas' || c.agregado === 'consultas' || c.agregado === 'eventosHistorial' ||
+    c.agregado === 'antecedentes' ||
     (c.agregado === 'pacientes' && c.tipo === 'AVANZAR_REVISION');
   const dePacientes = cambios.filter((c) => !esClinico(c) && c.agregado !== 'estadoHistorial');
   if (dePacientes.length > 0) {
@@ -343,7 +388,10 @@ export async function aplicarCambiosClinicosMysql(
         await avanzarRevisionPaciente(executor, cambio);
         break;
       case 'citas':
-        await guardarCita(executor, cambio);
+        await guardarCita(executor, cambio, contexto);
+        break;
+      case 'antecedentes':
+        await guardarAntecedentes(executor, cambio);
         break;
       case 'consultas':
         if (comando.caso === 'consulta.corregir') await corregirConsultaSql(executor, 'mysql', contexto, comando, cambio);

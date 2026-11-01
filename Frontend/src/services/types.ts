@@ -70,7 +70,9 @@ export interface DefinicionRolInstitucional {
 export interface MedicoCatalogo {
   id: string;
   nombre: string;
+  nombreCompleto?: string;
   colegiado: string;
+  especialidad?: string;
   especialidadPrincipal: string;
   especialidadesSecundarias: string[];
   email: string;
@@ -97,6 +99,8 @@ export interface ProcedimientoOdontologico {
   id: string;
   codigo: string;
   nombre: string;
+  descripcion?: string;
+  indicaciones?: string;
   categoria: 'PREVENTIVA' | 'RESTAURADORA' | 'ENDODONCIA' | 'CIRUGIA' | 'PERIODONCIA';
   duracionEstimadaMin: number;
   arancelReferencialGTQ: number;
@@ -339,6 +343,7 @@ export interface FiltrosAgendaQuery {
 
 export interface CrearCitaDTO {
   pacienteId: string;
+  versionPaciente?: number;
   profesionalId: string;
   fecha: string;
   horaInicio: string;
@@ -466,6 +471,7 @@ export interface AntecedentesClinicos {
   medicamentosActuales: string[];
   perinatales?: AntecedentesPerinatales;
   verificacionAlergias?: VerificacionAlergias;
+  versionPaciente?: number;
 }
 
 export interface SignosVitales {
@@ -544,6 +550,8 @@ export interface DetalleConsultaCompleta {
   observaciones?: string;
   profesionalNombre: string;
   profesionalRol: string;
+  profesionalColegiado?: string;
+  profesionalEntidadColegiacion?: string;
   estado: 'ABIERTA' | 'FINALIZADA';
   signosVitales: SignosVitales;
   diagnosticos: DiagnosticoHistorial[];
@@ -595,8 +603,31 @@ export interface RecetaHistorial {
   fechaEmision: string;
   emitidaPor: string;
   rolEmisor: string;
+  colegiadoEmisor?: string;
+  entidadColegiacionEmisor?: string;
   estado: 'EMITIDA' | 'DISPENSADA';
   medicamentos: RecetaMedicamentoItem[];
+}
+
+export interface CatalogoOdontologiaDTO {
+  diagnosticos: Array<{
+    id: string;
+    codigo: string;
+    nombre: string;
+    descripcion?: string;
+  }>;
+  procedimientos: ProcedimientoOdontologico[];
+  medicamentos: Array<{
+    id: string;
+    nombre: string;
+    principio_activo?: string;
+    presentacion?: string;
+    concentracion?: string;
+    dosis_sugerida?: string;
+    frecuencia_sugerida?: string;
+    duracion_sugerida?: string;
+    via_administracion?: string;
+  }>;
 }
 
 export type TipoEventoHistorial =

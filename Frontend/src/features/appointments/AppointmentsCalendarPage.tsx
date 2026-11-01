@@ -47,10 +47,12 @@ const DIAS_SEMANA_BASE = [
 export const AppointmentsCalendarPage: React.FC = () => {
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { appointmentRepository, mode } = useServices();
+  const { appointmentRepository, catalogRepository, patientRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const profesionales = mode === 'api' ? [] : PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const puedeAdministrarAgenda = sesion ? sesion.permisos.includes('citas.administrar') : true;
+  const [profesionalesApi, setProfesionalesApi] = useState<Array<{ id: string; nombre: string; especialidad: string }>>([]);
+  const profesionales = mode === 'api' ? profesionalesApi : PROFESIONALES_DISPONIBLES[institucionId] || [];
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('2026-10-19');
   const [vistaModo, setVistaModo] = useState<'DIARIA' | 'SEMANAL'>('DIARIA');
@@ -116,6 +118,114 @@ export const AppointmentsCalendarPage: React.FC = () => {
       if (cleanup) cleanup();
     };
   }, [cargarCitas]);
+
+  const cargarProfesionalesApi = useCallback(() => {
+    if (mode !== 'api' || profesionalesApi.length > 0) return;
+    catalogRepository
+      .obtenerMedicos(institucionId)
+      .then((medicos) => {
+        if (Array.isArray(medicos)) {
+          setProfesionalesApi(
+            medicos.map((m) => ({
+              id: m.id,
+              nombre: m.nombreCompleto ?? m.nombre,
+              especialidad: m.especialidad ?? m.especialidadPrincipal,
+            }))
+          );
+        }
+      })
+      .catch(() => {
+        // Ignorar si el endpoint no responde en pruebas aisladas
+      });
+  }, [mode, profesionalesApi.length, catalogRepository, institucionId]);
+
+  useEffect(() => {
+    if (mode !== 'api' || citas.length === 0) return;
+    cargarProfesionalesApi();
+  }, [mode, citas.length, cargarProfesionalesApi]);
+
+  const huellaCitas = citas
+    .map((c) => `${c.id}:${c.pacienteId}:${c.profesionalId}:${c.pacienteNombre === c.pacienteId ? 'raw' : 'named'}`)
+    .join('|');
+
+  useEffect(() => {
+    if (mode !== 'api' || citas.length === 0) return;
+    const idsFaltantes = Array.from(
+      new Set(citas.filter((c) => c.pacienteNombre === c.pacienteId).map((c) => c.pacienteId))
+    );
+    const necesitaNombresProf = citas.some((c) => !c.profesionalNombre || c.profesionalNombre === c.profesionalId);
+    if (idsFaltantes.length === 0 && (!necesitaNombresProf || profesionalesApi.length === 0)) return;
+    let cancelado = false;
+    Promise.all(
+      idsFaltantes.map((id) =>
+        patientRepository
+          .obtenerPorId(institucionId, id)
+          .catch(() => null)
+      )
+    ).then((pacientesResueltos) => {
+      if (cancelado) return;
+      const mapaPacientes = new Map(
+        pacientesResueltos.filter(Boolean).map((p) => [p!.id, p!])
+      );
+      const mapaProfesionales = new Map(profesionalesApi.map((p) => [p.id, p]));
+      setCitas((prev) =>
+        prev.map((c) => {
+          const pac = mapaPacientes.get(c.pacienteId);
+          const prof = mapaProfesionales.get(c.profesionalId);
+          if (!pac && !prof) return c;
+          return {
+            ...c,
+            ...(pac
+              ? {
+                  pacienteNombre: `${pac.nombres} ${pac.apellidos}`.trim(),
+                  pacienteCodigo: pac.codigoLegible || pac.id,
+                }
+              : {}),
+            ...(prof ? { profesionalNombre: prof.nombre } : {}),
+          };
+        })
+      );
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [mode, huellaCitas, profesionalesApi, patientRepository, institucionId]);
+
+  useEffect(() => {
+    if (
+      mode !== 'api' ||
+      !citaSeleccionada ||
+      citaSeleccionada.historialReprogramaciones !== undefined ||
+      !appointmentRepository.obtenerRevisiones
+    ) {
+      return;
+    }
+    let cancelado = false;
+    const citaIdActual = citaSeleccionada.id;
+    appointmentRepository
+      .obtenerRevisiones(institucionId, citaIdActual)
+      .then((revisiones) => {
+        if (!cancelado) {
+          setCitaSeleccionada((prev) =>
+            prev && prev.id === citaIdActual
+              ? { ...prev, historialReprogramaciones: revisiones }
+              : prev
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setCitaSeleccionada((prev) =>
+            prev && prev.id === citaIdActual
+              ? { ...prev, historialReprogramaciones: [] }
+              : prev
+          );
+        }
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [mode, citaSeleccionada, appointmentRepository, institucionId]);
 
   const mostrarToast = (mensaje: string) => {
     setToastMensaje(mensaje);
@@ -246,7 +356,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <Button
           variant="primary"
           leftIcon={<CalendarPlus size={18} />}
-          disabled={mode === 'api'}
+          disabled={!puedeAdministrarAgenda}
           onClick={() => setIsCrearModalOpen(true)}
           aria-label={
             institucionId === 'CLINICA_ODONTOLOGICA'
@@ -479,8 +589,9 @@ export const AppointmentsCalendarPage: React.FC = () => {
         <div className="inline-filter">
           <User size={16} style={{ color: 'var(--color-text-secondary)' }} />
           <select
-            disabled={mode === 'api'}
             value={profesionalFiltro}
+            onFocus={cargarProfesionalesApi}
+            onMouseDown={cargarProfesionalesApi}
             onChange={(e) => setProfesionalFiltro(e.target.value)}
             aria-label="Filtrar por profesional"
             style={{
@@ -940,7 +1051,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      disabled={mode === 'api'}
+                      disabled={!puedeAdministrarAgenda}
                       leftIcon={<RefreshCw size={14} />}
                       onClick={() => {
                         setCitaParaReprogramar(citaSeleccionada);
@@ -952,7 +1063,7 @@ export const AppointmentsCalendarPage: React.FC = () => {
                     <Button
                       variant="danger"
                       size="sm"
-                      disabled={mode === 'api'}
+                      disabled={!puedeAdministrarAgenda}
                       leftIcon={<XCircle size={14} />}
                       onClick={() => {
                         setCitaParaCancelar(citaSeleccionada);
