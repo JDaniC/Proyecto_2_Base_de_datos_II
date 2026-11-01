@@ -16,6 +16,7 @@ import { crearClienteFirestore } from '../adaptadores/salida/firestore/crear-cli
 import { crearRepositorioCuentaInstitucionalPostgresql, crearRepositorioCuentaInstitucionalMysql } from '../adaptadores/salida/identidad/repositorios-cuenta-sql.js';
 import {
   crearClinicaPostgresql,
+  crearHospitalPostgresql,
   crearRepositorioPacientesPostgresql,
   crearUnidadDeTrabajoPacientesPostgresql,
 } from '../adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
@@ -129,6 +130,7 @@ export async function crearDependenciasBackend(
         pacientes: crearRepositorioPacientesPostgresql(postgresql),
         historial: crearHistorialSql(postgresql, 'postgresql'),
         clinica: crearClinicaPostgresql(postgresql),
+        hospital: crearHospitalPostgresql(postgresql),
         uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
       },
       CLINICA_ODONTOLOGICA: {

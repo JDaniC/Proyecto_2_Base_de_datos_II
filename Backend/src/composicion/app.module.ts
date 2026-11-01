@@ -12,6 +12,9 @@ import {
 } from '../aplicacion/casos-uso/pacientes/antecedentes-clinicos.js';
 import { ConsultarCatalogosClinicos } from '../aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import { CursorHistorialCifrado } from '../adaptadores/salida/historial/cursor-historial.js';
+import { ConsultarHospitalizaciones } from '../aplicacion/casos-uso/hospital/consultar-hospitalizaciones.js';
+import { GestionarHospitalizaciones } from '../aplicacion/casos-uso/hospital/gestionar-hospitalizaciones.js';
+import { HospitalController } from '../adaptadores/entrada/http/hospital/hospital.controller.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
 import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catalogos.controller.js';
 import { DynamicModule, Module, type OnModuleDestroy } from '@nestjs/common';
@@ -63,7 +66,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -83,6 +86,8 @@ export class AppModule {
         { provide: ConsultarAntecedentesClinicos, useFactory: () => new ConsultarAntecedentesClinicos() },
         { provide: ActualizarAntecedentesClinicos, useFactory: () => new ActualizarAntecedentesClinicos(dependenciasComandoPorDefecto) },
         { provide: ConsultarCatalogosClinicos, useFactory: () => new ConsultarCatalogosClinicos() },
+        { provide: ConsultarHospitalizaciones, useFactory: () => new ConsultarHospitalizaciones() },
+        { provide: GestionarHospitalizaciones, useFactory: () => new GestionarHospitalizaciones() },
         {
           provide: BUNDLES_INSTITUCIONALES,
           useValue: bundles,

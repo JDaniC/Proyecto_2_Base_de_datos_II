@@ -7,6 +7,7 @@ import { crearConsultaHistorialSql } from '../../sql/consulta-historial-sql.js';
 import { RepositorioPacientesPostgresql } from './repositorio-pacientes-postgresql.js';
 import { aplicarCambiosClinicosPostgresql } from '../clinica/aplicar-cambios-clinicos-postgresql.js';
 import { crearPuertosClinicosPostgresql } from '../clinica/crear-puertos-clinicos-postgresql.js';
+import { crearPuertosHospitalPostgresql } from '../hospital/puertos-hospital-postgresql.js';
 
 export function crearRepositorioPacientesPostgresql(pool: PoolSql): RepositorioPacienteLectura {
   return new RepositorioPacientesPostgresql(pool);
@@ -15,6 +16,10 @@ export function crearRepositorioPacientesPostgresql(pool: PoolSql): RepositorioP
 /** Puertos clínicos del hospital, ligados al pool institucional. */
 export function crearClinicaPostgresql(pool: PoolSql) {
   return crearPuertosClinicosPostgresql(pool);
+}
+
+export function crearHospitalPostgresql(pool: PoolSql) {
+  return crearPuertosHospitalPostgresql(pool);
 }
 
 export function crearUnidadDeTrabajoPacientesPostgresql(pool: PoolSql): UnidadDeTrabajo {

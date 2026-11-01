@@ -383,7 +383,139 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
 
   if (dialecto === 'mysql') {
     await verificarFlujoDentalDosRolesMysql(pool, bundle, clinica, pacientes, profesionalId);
+  } else if (dialecto === 'postgresql') {
+    await verificarHospitalizacionesPostgresql(pool, bundle, profesionalId);
   }
+}
+
+async function verificarHospitalizacionesPostgresql(
+  pool: PoolSql,
+  bundle: BundleInstitucional,
+  medicoId: string,
+): Promise<void> {
+  const hospital = bundle.hospital;
+  if (!hospital) return;
+
+  // Insertar un paciente activo nuevo para la prueba hospitalaria
+  const pacHospId = randomUUID();
+  await pool.consultar(
+    `INSERT INTO paciente (id_publico, primer_nombre, primer_apellido)
+     VALUES ($1, 'Carlos', 'Gómez')`,
+    [pacHospId],
+  );
+  const idPacInterno = await pool.consultar<{ id_paciente: number }>(
+    'SELECT id_paciente FROM paciente WHERE id_publico = $1',
+    [pacHospId],
+  );
+  await pool.consultar(
+    `INSERT INTO historial_clinico (id_paciente, numero_historial)
+     VALUES ($1, $2)`,
+    [idPacInterno.filas[0]!.id_paciente, `HOSP-${randomUUID().slice(0, 8)}`],
+  );
+
+  // Asegurar que existan al menos dos camas disponibles
+  const habRes = await pool.consultar<{ id_habitacion: number }>(
+    `INSERT INTO habitacion (numero, piso, tipo)
+     VALUES ($1, '2', 'Medicina Interna')
+     RETURNING id_habitacion`,
+    [`HAB-${randomUUID().slice(0, 6)}`],
+  );
+  const idHab = habRes.filas[0]!.id_habitacion;
+
+  const cama1Res = await pool.consultar<{ id_publico: string }>(
+    `INSERT INTO cama (id_habitacion, numero_cama)
+     VALUES ($1, 'A')
+     RETURNING id_publico`,
+    [idHab],
+  );
+  const cama2Res = await pool.consultar<{ id_publico: string }>(
+    `INSERT INTO cama (id_habitacion, numero_cama)
+     VALUES ($1, 'B')
+     RETURNING id_publico`,
+    [idHab],
+  );
+
+  const cama1Id = uuidPublico(cama1Res.filas[0]!.id_publico);
+  const cama2Id = uuidPublico(cama2Res.filas[0]!.id_publico);
+  const pacienteUuid = uuidPublico(pacHospId);
+  const medicoUuid = uuidPublico(medicoId);
+
+  // 1. Ingreso hospitalario ocupa cama1
+  const ingreso = await hospital.hospitalizaciones.ingresar({
+    pacienteId: pacienteUuid,
+    camaId: cama1Id,
+    motivoIngreso: 'Observación clínica postoperatoria',
+    diagnosticoIngresoCIE: 'Z09',
+    diagnosticoIngresoNombre: 'Examen de seguimiento',
+  }, medicoUuid);
+
+  assert.equal(ingreso.estado, 'ACTIVA');
+  assert.equal(ingreso.camaActual?.camaId, cama1Id);
+
+  // 2. Comprobar que cama1 queda OCUPADA y rechaza segundo ingreso (CA17)
+  const camasTrasIngreso = await hospital.camas.listar();
+  const c1 = camasTrasIngreso.find((c) => c.id === cama1Id);
+  assert.equal(c1?.estado, 'OCUPADA');
+
+  await assert.rejects(
+    hospital.hospitalizaciones.ingresar({
+      pacienteId: pacienteUuid,
+      camaId: cama1Id,
+      motivoIngreso: 'Segundo intento concurrente',
+      diagnosticoIngresoCIE: 'Z09',
+      diagnosticoIngresoNombre: 'Examen',
+    }, medicoUuid),
+    (err: unknown) => {
+      const error = err as { codigo?: string };
+      return error.codigo === 'ESTADO_INVALIDO' || error.codigo === 'CAMA_NO_DISPONIBLE';
+    },
+    'Debe rechazar ocupar una cama que ya está asignada',
+  );
+
+  // 3. Traslado atómico a cama2
+  const trasladada = await hospital.hospitalizaciones.asignarCama({
+    hospitalizacionId: ingreso.id,
+    nuevaCamaId: cama2Id,
+    fechaInicio: new Date().toISOString(),
+    motivo: 'Traslado a cuidados intermedios',
+    versionEsperada: ingreso.version,
+  }, medicoUuid);
+
+  assert.equal(trasladada.camaActual?.camaId, cama2Id);
+
+  // Comprobar que cama1 fue liberada y cama2 quedó ocupada
+  const camasTrasTraslado = await hospital.camas.listar();
+  assert.equal(camasTrasTraslado.find((c) => c.id === cama1Id)?.estado, 'DISPONIBLE');
+  assert.equal(camasTrasTraslado.find((c) => c.id === cama2Id)?.estado, 'OCUPADA');
+
+  // 4. Agregar nota de evolución
+  const conNota = await hospital.hospitalizaciones.agregarNotaEvolucion({
+    hospitalizacionId: ingreso.id,
+    notaClinica: 'Evolución satisfactoria sin complicaciones.',
+    versionEsperada: trasladada.version,
+  }, {
+    id: medicoUuid,
+    nombre: 'Médico Hospitalario',
+    colegiado: 'COL-123',
+  });
+  assert.equal(conNota.notasEvolucion.length, 1);
+
+  // 5. Egreso hospitalario libera ocupación
+  const egresada = await hospital.hospitalizaciones.egresar({
+    hospitalizacionId: ingreso.id,
+    fechaEgreso: new Date().toISOString(),
+    tipoEgreso: 'ALTA_MEDICA',
+    diagnosticoEgresoCIE: 'Z09',
+    diagnosticoEgresoNombre: 'Recuperación completa',
+    resumenClinico: 'Alta médica concedida sin secuelas.',
+    versionEsperada: conNota.version,
+  }, medicoUuid);
+
+  assert.equal(egresada.estado, 'FINALIZADA');
+  assert.equal(egresada.camaActual, undefined);
+
+  const camasTrasEgreso = await hospital.camas.listar();
+  assert.equal(camasTrasEgreso.find((c) => c.id === cama2Id)?.estado, 'DISPONIBLE');
 }
 
 async function verificarFlujoDentalDosRolesMysql(
