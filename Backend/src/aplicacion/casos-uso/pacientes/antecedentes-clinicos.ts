@@ -74,9 +74,13 @@ export class ConsultarAntecedentesClinicos {
     if (!paciente || paciente.institucion !== bundle.institucion) {
       throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Paciente no encontrado.');
     }
-    const base = clinica.antecedentes
-      ? await clinica.antecedentes.porPaciente(pacienteId)
-      : ANTECEDENTES_VACIOS;
+    if (!clinica.antecedentes) {
+      throw new ErrorDominio(
+        'PERSISTENCIA_NO_DISPONIBLE',
+        'La institución no soporta consulta de antecedentes clínicos directos.'
+      );
+    }
+    const base = await clinica.antecedentes.porPaciente(pacienteId);
     return {
       ...base,
       version_paciente: paciente.version,

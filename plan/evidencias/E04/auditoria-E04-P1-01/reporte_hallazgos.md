@@ -219,6 +219,24 @@ Ver detalle completo en [matriz_trazabilidad.md](matriz_trazabilidad.md). Todos 
   - *Comportamiento detectado:* Al resolverse exitosamente `/catalogos/odontologia`, el código realizaba un merge con `CATALOGO_CIE10` local para rellenar diagnósticos ausentes (ej. `K04.7`), introduciendo diagnósticos simulados en el catálogo real.
   - *Corrección aplicada:* Se eliminó la unión con las constantes locales en modo API, asignando directamente `cat.diagnosticos` devuelto por el backend institucional HTTP sin inyecciones simuladas.
 
+### DEV-020 — Rechazo de lectura de antecedentes en bundles sin soporte
+- **Tipo:** `PERSISTENCIA / SEGURIDAD`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Backend/src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.ts:77` vs `REQ-OD-03`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434381736`).
+  - *Comportamiento detectado:* En instituciones sin soporte para antecedentes directos (ej. hospital general en PostgreSQL), `GET /pacientes/{id}/antecedentes` devolvía un objeto vacío simulando ausencia de antecedentes en lugar de advertir la falta de soporte.
+  - *Corrección aplicada:* Se valida que `clinica.antecedentes` exista; en caso contrario, se arroja `PERSISTENCIA_NO_DISPONIBLE` con código 503 impidiendo reportar como vacíos antecedentes no soportados.
+
+### DEV-021 — Preservación de precisión fraccionaria en rangos de revisiones SQL
+- **Tipo:** `PRECISIÓN TEMPORAL`
+- **Severidad:** `MEDIUM`
+- **Unidad / Requisito:** `Backend/src/adaptadores/salida/sql/mapear-clinica-sql.ts:295` vs `REQ-OD-02`
+- **Evidencia:**
+  - *Identificada por:* Revisión automática Codex (`PR #67 discussion_r4434381740`).
+  - *Comportamiento detectado:* Al convertir instantes UTC para cláusulas SQL `desde` o `hasta` con más de 3 dígitos fraccionarios, `fechaDb` convertía vía `Date` truncando a milisegundos, alterando la inclusión/exclusión en los límites del rango semi-abierto.
+  - *Corrección aplicada:* `fechaDb` preserva textualmente la fracción de microsegundos de la cadena ISO 8601 (hasta 6 dígitos) antes de normalizar el formato SQL `YYYY-MM-DD HH:MM:SS.ffffff`.
+
 ---
 
 ## 5. Pruebas Añadidas y Ejecutadas

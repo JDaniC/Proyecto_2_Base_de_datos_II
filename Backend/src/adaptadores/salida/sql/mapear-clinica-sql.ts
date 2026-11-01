@@ -291,8 +291,20 @@ export function instantaneaReceta(receta: RecetaEmitida): Record<string, unknown
   };
 }
 
-/** TIMESTAMP/DATETIME en UTC sin conversión de zona. */
+/** TIMESTAMP/DATETIME en UTC sin conversión de zona, preservando hasta microsegundos si están presentes. */
 export function fechaDb(iso: string): string {
+  if (typeof iso === 'string' && iso.endsWith('Z')) {
+    const cuerpo = iso.slice(0, -1);
+    const partes = cuerpo.split('.');
+    if (partes.length === 2 && partes[0]!.includes('T')) {
+      const fechaHora = partes[0]!.replace('T', ' ');
+      const fraccion = partes[1]!.slice(0, 6).padEnd(6, '0');
+      return `${fechaHora}.${fraccion}`;
+    }
+    if (partes.length === 1 && partes[0]!.includes('T')) {
+      return `${partes[0]!.replace('T', ' ')}.000000`;
+    }
+  }
   const fecha = new Date(iso);
   if (!Number.isFinite(fecha.getTime())) throw new Error('INSTANTE_UTC_INVALIDO');
   return fecha.toISOString().replace('T', ' ').replace('Z', '');
