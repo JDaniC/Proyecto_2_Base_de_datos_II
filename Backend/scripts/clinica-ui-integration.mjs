@@ -14,7 +14,7 @@ import { MongoClient } from 'mongodb';
 import { prepararHistorialMongodb, prepararHistorialFirestore } from '../../Database/migrations/004_historial_documental.mjs';
 import { crearPoolPostgresql } from '../dist-test/src/adaptadores/salida/postgresql/crear-pool-postgresql.js';
 import { crearPoolMysql } from '../dist-test/src/adaptadores/salida/mysql/crear-pool-mysql.js';
-import { iniciarServidor } from '../dist-test/src/main.js';
+
 import { recorrerClinica } from '../../Frontend/scripts/clinica-e2e.mjs';
 import { migrarClinicaMongodb } from '../../Database/migrations/005_clinica_mongodb.mjs';
 import { prepararClinicaFirestore } from '../../Database/migrations/006_clinica_firestore.mjs';
@@ -32,6 +32,21 @@ const mysql = await crearPoolMysql({ host: '127.0.0.1', puerto: Number(process.e
 const mongo = new MongoClient(`mongodb://127.0.0.1:${process.env.MONGO_TEST_PORT}/?directConnection=true`, { auth: { username: 'mongo_admin', password: (await readFile(process.env.MONGO_ADMIN_TEST_SECRET_FILE, 'utf8')).trim() }, authSource: 'admin' });
 let app, vite, browser;
 let runtime;
+async function iniciarBackendAislado() {
+  const child=spawn(process.execPath,['dist-test/src/main.js'],{cwd:new URL('..',import.meta.url),env:runtime,stdio:['ignore','ignore','pipe']});
+  let errorOutput='';child.stderr.on('data',data=>{errorOutput=(errorOutput+data.toString()).slice(-12000);});
+  const exit=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
+  child.on('error',error=>{errorOutput+=error.message;});
+  let listo=false;
+  for(let i=0;i<200;i++){
+    if(child.exitCode!==null||child.signalCode)throw new Error(`Backend aislado terminó antes de escuchar: ${errorOutput}`);
+    try{if((await fetch(`http://127.0.0.1:${runtime.PORT}/api/v1/health/live`)).ok){listo=true;break;}}catch{/* arranque aislado */}
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.ok(listo,`Backend aislado no inició: ${errorOutput}`);
+  return {close:async()=>{child.kill('SIGTERM');const result=await exit;assert.ok(result.code===0||result.signal==='SIGTERM',`Cierre backend aislado falló: ${errorOutput}`);}};
+}
+
 async function puerto() { const server = createServer(); await new Promise((ok, fail) => { server.once('error', fail); server.listen(0, '127.0.0.1', ok); }); const p = server.address().port; await new Promise((ok) => server.close(ok)); return p; }
 const instituciones = ['HOSPITAL_GENERAL', 'CLINICA_ODONTOLOGICA', 'LABORATORIO_CLINICO', 'CENTRO_MEDICO_PEDIATRICO'];
 const cuentas = [];
@@ -101,16 +116,21 @@ try {
     MONGO_HOST: '127.0.0.1', MONGO_PORT: process.env.MONGO_TEST_PORT, MONGO_APP_PASSWORD_FILE: process.env.MONGO_TEST_SECRET_FILE, MONGO_DIRECT_CONNECTION: 'true',
     FIRESTORE_PROJECT_ID: process.env.GCLOUD_PROJECT, FIREBASE_AUTH_PROJECT_ID: process.env.GCLOUD_PROJECT, CURSOR_SIGNING_SECRET: randomBytes(32).toString('hex'),
   };
-  app = await iniciarServidor(runtime);
+  app = await iniciarBackendAislado();
+  if(process.env.CLINICA_UI_SMOKE_REINICIOS==='1') {
+    for(let i=0;i<2;i++){await app.close();app=await iniciarBackendAislado();}
+    console.log('PASS backend en proceso separado: arranque y dos reinicios completos.');
+  } else {
   const frontPort = await puerto();
   vite = spawn(process.execPath, ['../Frontend/node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(frontPort), '--strictPort'], { cwd: new URL('../../Frontend', import.meta.url), env: { ...process.env, VITE_SERVICE_MODE: 'api', VITE_BACKEND_TARGET: `http://127.0.0.1:${port}`, VITE_FIREBASE_AUTH_EMULATOR_URL: `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}` }, stdio: 'ignore' });
   const url = `http://127.0.0.1:${frontPort}`;
   for (let i = 0; i < 100; i++) { try { if ((await fetch(url)).ok) break; } catch { /* arranque local */ } await new Promise((r) => setTimeout(r, 100)); }
   assert.equal((await fetch(url)).status, 200);
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const resultados = await recorrerClinica({browser,url,cuentas:process.env.CLINICA_UI_SOLO_PEDIATRIA==='1'?cuentas.filter(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO'):cuentas, reiniciarBackend: async () => {await Promise.all(browser.contexts().flatMap(context=>context.pages().map(page=>page.waitForLoadState('networkidle'))));await app.close(); app = await iniciarServidor(runtime);}});
+  const resultados = await recorrerClinica({browser,url,cuentas:process.env.CLINICA_UI_SOLO_PEDIATRIA==='1'?cuentas.filter(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO'):cuentas, reiniciarBackend: async () => {await Promise.all(browser.contexts().flatMap(context=>context.pages().map(page=>page.waitForLoadState('networkidle'))));await app.close(); app = await iniciarBackendAislado();}});
   console.log(JSON.stringify(resultados));
   if(process.env.CLINICA_UI_EVIDENCE) await writeFile(process.env.CLINICA_UI_EVIDENCE, JSON.stringify(resultados,null,2));
+  }
 } finally {
   await browser?.close();
   if (vite) { vite.kill('SIGTERM'); await new Promise((ok) => vite.once('exit', ok)); }
