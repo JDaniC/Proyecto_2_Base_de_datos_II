@@ -24,3 +24,21 @@ sus comprobaciones de salud/rutas simuladas fuera del contrato.
 Frontend completo: base `268cbf3` 131 FAIL/123 PASS; copia modificada 131 FAIL/124
 PASS. Comparación exacta de los 131 nombres: sin fallos agregados ni eliminados.
 No se confunde esa suite histórica con las 77 comprobaciones HTTP PASS.
+
+## Segunda revisión nativa sobre ca07571
+
+Codex identificó cuatro observaciones adicionales, atendidas en la misma rama:
+
+- Motivo del traslado conservado por UUID de asignación en el snapshot del
+  agregado existente y proyectado como motivoCambio al recargar; no añade tablas.
+- Procedimiento en estancia finalizada rechazado antes de modificar historia.
+- Listado con consulta única de resúmenes, páginas de 25 por defecto (máximo 100),
+  orden estable fecha/UUID y controles anterior/siguiente; detalle por ID bajo
+  demanda. El mapa de camas carga la estancia seleccionada, sin recorrer listados.
+- Ocupación/camaActual calculadas por intervalos efectivos, incluidos traslados
+  futuros; los formularios usan precisión de milisegundos sin anticipar su hora.
+
+Regresiones añadidas en SQL: motivo tras reconstrucción, rechazo postegreso sin
+cambios, origen todavía ocupado/destino libre antes de traslado futuro, páginas
+distintas sin colecciones clínicas y rechazo de página inválida. El navegador
+comprueba además listado resumido y navegación a detalle.

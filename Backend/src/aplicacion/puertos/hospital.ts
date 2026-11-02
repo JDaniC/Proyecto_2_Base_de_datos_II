@@ -4,6 +4,7 @@ import type { Version } from '../../dominio/compartido/version.js';
 import type {
   CamaHospitalaria,
   Hospitalizacion,
+  ResumenHospitalizacion,
   TipoEgresoHospitalario,
 } from '../../dominio/hospital/hospitalizacion.js';
 
@@ -66,8 +67,8 @@ export interface ParametrosProcedimientoHospitalario {
 export interface PuertosHospital {
   readonly hospitalizaciones: {
     porId(id: UUID): Promise<Hospitalizacion | null>;
-    listar(filtroEstado?: string): Promise<readonly Hospitalizacion[]>;
-    porPaciente(pacienteId: UUID): Promise<readonly Hospitalizacion[]>;
+    listar(filtroEstado?: string, pagina?: PaginaHospital): Promise<readonly ResumenHospitalizacion[]>;
+    porPaciente(pacienteId: UUID, pagina?: PaginaHospital): Promise<readonly ResumenHospitalizacion[]>;
     ingresar(params: ParametrosIngresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion>;
     egresar(params: ParametrosEgresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion>;
     asignarCama(params: ParametrosAsignarCama, actorId: UUID): Promise<Hospitalizacion>;
@@ -91,3 +92,5 @@ export interface ComandoHospital {
   readonly contexto: ContextoAutenticado;
   readonly clave: string;
 }
+
+export interface PaginaHospital { readonly pagina: number; readonly limite: number; }

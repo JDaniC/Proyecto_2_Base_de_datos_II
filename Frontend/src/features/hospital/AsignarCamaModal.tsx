@@ -24,7 +24,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
 }) => {
   const [nuevaCamaId, setNuevaCamaId] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>(
-    toClinicDateTimeInput(new Date(Date.now() + 60000))
+    toClinicDateTimeInput(new Date(), true)
   );
   const [motivo, setMotivo] = useState<string>('');
   const [guardando, setGuardando] = useState(false);
@@ -157,6 +157,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
           <input
             id="fecha-inicio-traslado"
             type="datetime-local"
+            step="0.001"
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
             required

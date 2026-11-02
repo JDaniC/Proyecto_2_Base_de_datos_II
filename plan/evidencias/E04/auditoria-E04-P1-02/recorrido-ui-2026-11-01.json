@@ -66,6 +66,11 @@
   },
   {
     "institucion": "HOSPITAL_GENERAL",
+    "caso": "listado UI paginado recibe resúmenes y carga detalle clínico bajo demanda",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
     "caso": "archivo conserva eventos y consultas",
     "resultado": "PASS"
   },

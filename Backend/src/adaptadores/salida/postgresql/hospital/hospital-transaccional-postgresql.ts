@@ -50,7 +50,7 @@ export function crearHospitalTransaccionalPostgresql(pool: PoolSql): PuertosHosp
       const anterior = parametros.hospitalizacionId ? await puertos.hospitalizaciones.porId(uuidPublico(parametros.hospitalizacionId)) : null;
       const respuesta = await operar(puertos);
       await executor.consultar(`UPDATE cama SET revision=revision+1 WHERE id_publico=ANY($1::uuid[])`,
-        [[...new Set([anterior?.camaActual?.camaId, respuesta.camaActual?.camaId].filter(Boolean))]]);
+        [[...new Set([anterior?.camaActual?.camaId, respuesta.camaActual?.camaId, respuesta.asignacionesCama.at(-1)?.camaId].filter(Boolean))]]);
       const fechaNanos = fecha.replace(/\.(\d+)Z$/, (_, fraccion: string) => `.${fraccion.padEnd(9, '0')}Z`);
       await executor.consultar(
         `INSERT INTO hospital_historial.eventos(id,paciente_id,tipo,fecha_hora,contenido) VALUES($1,$2,'HOSPITALIZACION',$3,$4::jsonb)`,

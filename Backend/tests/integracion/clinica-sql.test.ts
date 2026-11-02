@@ -532,6 +532,7 @@ async function verificarHospitalizacionesPostgresql(
   }, medicoUuid);
 
   assert.equal(trasladada.camaActual?.camaId, cama2Id);
+  assert.equal(trasladada.asignacionesCama[1]?.motivoCambio, 'Traslado a cuidados intermedios');
 
   // Comprobar que cama1 fue liberada y cama2 quedó ocupada
   const camasTrasTraslado = await hospital.camas.listar();
@@ -584,6 +585,11 @@ async function verificarHospitalizacionesPostgresql(
   const revisiones = await pool.consultar<{ total: string }>(
     "SELECT count(*) AS total FROM revisiones WHERE recurso_id=$1 AND tipo_recurso='hospitalizaciones'", [ingreso.id]);
   assert.equal(Number(revisiones.filas[0]?.total), 3);
+  await assert.rejects(hospital.hospitalizaciones.agregarProcedimiento({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id,
+    nombre: 'No autorizado tras egreso', resultado: 'No debe persistir', versionEsperada: egresada.version,
+  }, { id: medicoUuid, nombre: 'Sintético' }), { codigo: 'ESTADO_INVALIDO' });
+  assert.deepEqual(await hospital.hospitalizaciones.porId(ingreso.id), egresada);
   // Sesiones independientes compiten realmente por la misma cama.
   const competidores = await Promise.allSettled([1, 2].map(() => hospital.hospitalizaciones.ingresar({
     ...ingresoEntrada, comando: { contexto, clave: randomUUID() }, versionEsperadaCama: undefined,
@@ -592,14 +598,33 @@ async function verificarHospitalizacionesPostgresql(
   assert.equal(competidores.filter(r => r.status === 'rejected').length, 1);
   const ganadora = competidores.find(r => r.status === 'fulfilled');
   assert.ok(ganadora?.status === 'fulfilled');
+  const inicioFuturo = new Date(Date.now() + 60000).toISOString();
+  const futura = await hospital.hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ganadora.value.id,
+    nuevaCamaId: cama2Id, fechaInicio: inicioFuturo, motivo: 'Cambio programado',
+    versionEsperada: ganadora.value.version,
+  }, medicoUuid);
+  assert.equal(futura.camaActual?.camaId, cama1Id);
+  assert.equal((await hospital.camas.porId(cama1Id))?.estado, 'OCUPADA');
+  assert.equal((await hospital.camas.porId(cama2Id))?.estado, 'DISPONIBLE');
+  assert.equal(futura.asignacionesCama[1]?.motivoCambio, 'Cambio programado');
   // Archivo rechaza nueva atención pero permite terminar la estancia anterior.
   await pool.consultar("UPDATE historial_clinico SET estado_historial='ARCHIVADO', causa_baja='OTRA_ADMINISTRATIVA', motivo_baja='Archivo sintético', fecha_baja=CURRENT_TIMESTAMP, actor_baja=$2 WHERE id_paciente=$1", [idPacInterno.filas[0]!.id_paciente, contexto.cuenta.id]);
   await assert.rejects(hospital.hospitalizaciones.ingresar({ ...ingresoEntrada, camaId: cama2Id,
     comando: { contexto, clave: randomUUID() }, versionEsperadaCama: undefined }, medicoUuid), { codigo: 'ESTADO_INVALIDO' });
   await hospital.hospitalizaciones.egresar({ comando: { contexto, clave: randomUUID() },
-    hospitalizacionId: ganadora.value.id, fechaEgreso: new Date(Date.now() + 1000).toISOString(),
+    hospitalizacionId: ganadora.value.id, fechaEgreso: new Date(Date.now() + 120000).toISOString(),
     tipoEgreso: 'ALTA_MEDICA', diagnosticoEgresoCIE: 'Z09', diagnosticoEgresoNombre: 'Alta',
-    resumenClinico: 'Estable', versionEsperada: ganadora.value.version }, medicoUuid);
+    resumenClinico: 'Estable', versionEsperada: futura.version }, medicoUuid);
+
+  const paginaUno = await hospital.hospitalizaciones.listar(undefined, { pagina: 1, limite: 1 });
+  const paginaDos = await hospital.hospitalizaciones.listar(undefined, { pagina: 2, limite: 1 });
+  assert.equal(paginaUno.length, 2, 'incluye un centinela para hayMas, no detalle completo');
+  assert.equal(paginaDos.length, 1);
+  assert.notEqual(paginaUno[0]?.id, paginaDos[0]?.id);
+  assert.equal('notasEvolucion' in paginaUno[0]!, false);
+  assert.equal('asignacionesCama' in paginaUno[0]!, false);
+  await assert.rejects(hospital.hospitalizaciones.listar(undefined, { pagina: 0, limite: 1 }), { codigo: 'SOLICITUD_INVALIDA' });
 
 }
 

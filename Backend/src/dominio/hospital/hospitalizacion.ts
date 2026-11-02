@@ -82,3 +82,7 @@ export interface Hospitalizacion {
   readonly procedimientos: readonly ProcedimientoHospitalarioItem[];
   readonly version: Version;
 }
+
+/** Proyección de listado: el detalle clínico y sus colecciones se consultan por ID. */
+export type ResumenHospitalizacion = Omit<Hospitalizacion,
+  'asignacionesCama' | 'consultasEnlazadasIds' | 'notasEvolucion' | 'procedimientos'>;

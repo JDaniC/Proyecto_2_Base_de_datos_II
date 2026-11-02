@@ -93,3 +93,20 @@ La optimización de carga no acredita persistencia ni transacciones. La evidenci
 La auditoría de producto del 23/10/2026 informó 35 pruebas específicas PASS, compilación PASS y 124 combinaciones de ruta/tamaño recorridas con datos sintéticos. Se conservan [inventario](../plan/evidencias/UI/2026-10-23/inventario.json) y [recorrido](../plan/evidencias/UI/2026-10-23/recorrido-playwright.json). Sus conteos y líneas corresponden a ese corte, no al código actual.
 
 Esos resultados acreditan presentación y simulación; no las cuatro bases integradas ni seguridad clínica real. Las precisiones vigentes de responsables compartidos, archivo y contratos están en el plan. La limpieza documental y la carga diferida requieren sus propias comprobaciones actuales; no se presentan como una auditoría completa de todos los flujos.
+
+## Hospitalizaciones HTTP (E04-P1-02)
+
+Hospital conecta ingreso, evolución, traslado/liberación y egreso con PostgreSQL.
+El formulario busca pacientes y permite vincular consultas reales del expediente;
+el servidor atribuye el ingreso al médico autenticado. Listado: resúmenes en
+páginas de 25, con detalle clínico por ID al abrir la estancia. Búsqueda y servicio
+se aplican a la página visible; el estado se filtra en servidor. Las métricas de
+estancias indican el alcance de la página; las camas se consultan por separado.
+
+Los comandos envían revisión observada y clave UUID estable para reintentos.
+El motivo de traslado se conserva al recargar. La disponibilidad refleja los
+intervalos efectivos: un cambio futuro conserva la ocupación de origen hasta su
+inicio. Los formularios de traslado/egreso usan hora local de Guatemala con
+precisión suficiente para estancias recién ingresadas. La historia enlaza el
+detalle hospitalario. Exámenes/pólizas siguen la tarea E04-P1-03; no se habilita
+mantenimiento administrativo de camas ni médicos.

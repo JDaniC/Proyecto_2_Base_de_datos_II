@@ -35,13 +35,15 @@ export class HospitalController {
     @Bundle() bundle: BundleInstitucional,
     @Query('estado') estado?: string,
     @Query('pacienteId') pacienteId?: string,
+    @Query('pagina') numeroPagina = '1',
+    @Query('limite') numeroLimite = '25',
   ) {
-    if (pacienteId) {
-      const items = await this.consultarHospitalizaciones.ejecutarPorPaciente(contexto, bundle, pacienteId);
-      return { hospitalizaciones: items };
-    }
-    const items = await this.consultarHospitalizaciones.ejecutarListado(contexto, bundle, estado);
-    return { hospitalizaciones: items };
+    const pagina = { pagina: Number(numeroPagina), limite: Number(numeroLimite) };
+    const items = pacienteId
+      ? await this.consultarHospitalizaciones.ejecutarPorPaciente(contexto, bundle, pacienteId, pagina)
+      : await this.consultarHospitalizaciones.ejecutarListado(contexto, bundle, estado, pagina);
+    return { hospitalizaciones: items.slice(0, pagina.limite), pagina: pagina.pagina, hayMas: items.length > pagina.limite };
+
   }
 
   @Get('hospitalizaciones/:id')

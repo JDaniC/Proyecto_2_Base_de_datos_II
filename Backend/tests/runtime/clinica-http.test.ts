@@ -277,6 +277,17 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
     assert.equal(hospEgresada.estado, 'FINALIZADA');
     assert.equal(hospEgresada.camaActual, undefined);
 
+    const pagina = await fetch(`${url}/hospital/hospitalizaciones?pagina=1&limite=1`, { headers: authHeaders });
+    assert.equal(pagina.status, 200);
+    const paginaBody = await pagina.json() as { data: { pagina: number; hayMas: boolean; hospitalizaciones: unknown[] } };
+    assert.equal(paginaBody.data.pagina, 1);
+    assert.equal(paginaBody.data.hospitalizaciones.length, 1);
+    assert.equal(paginaBody.data.hayMas, false);
+    for (const query of ['pagina=0', 'limite=101', 'pagina=texto']) {
+      const invalida = await fetch(`${url}/hospital/hospitalizaciones?${query}`, { headers: authHeaders });
+      assert.equal(invalida.status, 400);
+    }
+
     // 5. Verificar rechazo en otra institución (ej: CLINICA_ODONTOLOGICA, index 1)
     const resDental = await fetch(`${url}/hospital/camas`, {
       method: 'GET',

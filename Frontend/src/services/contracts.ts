@@ -309,7 +309,7 @@ export interface AuditRepository {
 }
 
 export interface HospitalizationRepository {
-  listarHospitalizaciones(institucionId: InstitucionId, filtroEstado?: string): Promise<HospitalizacionItem[]>;
+  listarHospitalizaciones(institucionId: InstitucionId, filtroEstado?: string, pagina?: { pagina: number; limite: number }): Promise<HospitalizacionItem[]>;
   obtenerHospitalizacionPorId(institucionId: InstitucionId, id: string): Promise<HospitalizacionItem | null>;
   /** @remarks Sin llamada directa en UI actual: cubierto por `listarHospitalizaciones` y `obtenerExpedienteCompleto`. */
   obtenerHospitalizacionesPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<HospitalizacionItem[]>;

@@ -23,9 +23,11 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
   async listarHospitalizaciones(
     _institucionId: InstitucionId,
     filtroEstado?: string,
+    pagina?: { pagina: number; limite: number },
   ): Promise<HospitalizacionItem[]> {
     const query: Record<string, string> = {};
-    if (filtroEstado) query.estado = filtroEstado;
+    if (filtroEstado) query.estado = filtroEstado === 'EGRESADA' ? 'FINALIZADA' : filtroEstado;
+    if (pagina) { query.pagina = String(pagina.pagina); query.limite = String(pagina.limite); }
     const res = await this.client.get<{ hospitalizaciones: HospitalizacionItem[] }>(
       '/hospital/hospitalizaciones',
       { query },

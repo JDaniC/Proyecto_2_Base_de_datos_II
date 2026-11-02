@@ -121,7 +121,7 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
     pass('nota UI persiste autor médico verificado y nueva revisión');
     await page.getByRole('button', { name: 'Cambiar Cama' }).first().click();
     await page.locator('#cama-destino-select').selectOption(cuenta.hospitalCamas[1]);
-    await page.locator('#fecha-inicio-traslado').fill('2026-11-05T12:00');
+    assert.ok(await page.locator('#fecha-inicio-traslado').inputValue());
     await page.locator('#motivo-traslado-input').fill('Traslado sintético');
     const trasladoReq = page.waitForResponse(r => r.url().endsWith('/asignacion-cama') && r.request().method() === 'POST');
     await page.getByRole('button', { name: 'Confirmar Traslado' }).click();
@@ -132,10 +132,11 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
     const detalle = await page.request.get(`${url}/api/v1/hospital/hospitalizaciones/${estancia.id}`, {headers});
     const reconstruida = (await detalle.json()).data;
     assert.equal(reconstruida.asignacionesCama.length,2);
+    assert.equal(reconstruida.asignacionesCama[1].motivoCambio, 'Traslado sintético');
     assert.equal(reconstruida.asignacionesCama[0].fechaFin,reconstruida.asignacionesCama[1].fechaInicio);
     pass('traslado UI conserva períodos contiguos tras recarga');
     await page.getByRole('button', {name:/Registrar Egreso/i}).first().click();
-    await page.locator('#fecha-egreso-input').fill('2026-11-05T13:00');
+    assert.ok(await page.locator('#fecha-egreso-input').inputValue());
     await page.locator('#resumen-clinico-textarea').fill('Alta sintética estable');
     const egresoReq = page.waitForResponse(r=>r.url().endsWith('/egreso') && r.request().method()==='POST');
     await page.getByRole('button',{name:'Confirmar Egreso y Liberar Cama'}).click();
@@ -147,6 +148,18 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
     const disponibles = await page.request.get(`${url}/api/v1/hospital/camas`,{headers});
     assert.equal((await disponibles.json()).data.camas.find(c=>c.id===cuenta.hospitalCamas[1]).estado,'DISPONIBLE');
     pass('egreso UI libera cama y conserva estancia después de reiniciar backend');
+    const listadoReq = page.waitForResponse(r => r.request().method() === 'GET' && new URL(r.url()).pathname === '/api/v1/hospital/hospitalizaciones');
+    await page.goto(`${url}/hospital/hospitalizaciones`);
+    const listadoResp = await listadoReq;
+    assert.equal(listadoResp.status(),200);
+    const listado = (await listadoResp.json()).data;
+    assert.equal(listado.pagina,1); assert.equal(listado.hayMas,false);
+    assert.equal('notasEvolucion' in listado.hospitalizaciones[0],false);
+    await page.getByRole('button',{name:'Ver Detalle'}).first().click();
+    await page.waitForURL(new RegExp(`/hospital/hospitalizaciones/${estancia.id}$`));
+    await page.getByText('Alta sintética estable',{exact:true}).waitFor();
+    pass('listado UI paginado recibe resúmenes y carga detalle clínico bajo demanda');
+
    }
    await page.goto(`${url}/pacientes/${paciente.id}`); await page.getByRole('button',{name:'Archivar expediente'}).click(); await page.locator('textarea').fill('Archivo sintético');
    await page.getByRole('button',{name:/Confirmar archivo/i}).click(); await page.getByText('Expediente archivado',{exact:true}).waitFor(); pass('archivo conserva eventos y consultas');
