@@ -41,7 +41,7 @@ Tras completar la revisión automática y comprobar su resultado, usar Squash an
 
 ## 6. Activación y diagnóstico
 
-La configuración versionada entra en develop al aprobar y fusionar el PR inicial. Las reglas remotas y acceso del compañero deben verificarse en Settings. Si David no puede aprobar, debe aceptar la invitación y tener escritura. Si faltan checks, comprobar que el workflow existe en la rama del PR y que Actions puede ejecutarse. No fusionar mediante bypass para sortear un fallo.
+La configuración versionada entra en develop al aprobar y fusionar el PR inicial. Las reglas remotas y acceso del compañero deben verificarse en Settings. Las aprobaciones humanas son opcionales. Si faltan checks, comprobar que el workflow existe en la rama del PR y que Actions puede ejecutarse. No fusionar mediante bypass para sortear un fallo.
 
 ## Consolidación inicial
 
