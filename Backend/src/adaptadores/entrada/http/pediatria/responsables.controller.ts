@@ -10,6 +10,16 @@ import { GestionarResponsable } from '../../../../aplicacion/casos-uso/pediatria
 export class ResponsablesController {
   constructor(private readonly gestionar: GestionarResponsable) {}
 
+  @Post('')
+  @HttpCode(201)
+  @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})
+  async crear(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,
+    @Param('pacienteId') pacienteId:string,@Headers('idempotency-key') clave:string,
+    @Body() entrada:unknown,@Res({passthrough:true}) res:Response) {
+    const r=await this.gestionar.ejecutar('crear',{contexto,bundle,id:uuidPublico(pacienteId),claveIdempotencia:uuidPublico(clave),entrada});
+    res.status(r.httpStatus);return {data:r.respuesta,meta:{correlacion:r.correlacionOriginal}};
+  }
+
   @Post(':id/contacto')
   @HttpCode(200)
   @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})

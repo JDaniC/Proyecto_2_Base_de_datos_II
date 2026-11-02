@@ -232,9 +232,13 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.equal((await bundle.pacientes!.porId(pid))!.responsables![0]!.responsable.telefono,'55550001');
     assert.equal((await db.doc(`responsables/${responsableId}`).get()).get('revision'),2);
     await assert.rejects(cmd('baja',responsableId,{version_paciente:2,version_vinculo:1,motivo:'Baja imposible'}),{codigo:'ESTADO_INVALIDO'});
-    const otro=id();
-    await db.doc(`responsables/${otro}`).set({revision:1,identificacion:'CUI:1234567890102',tipo_documento:'CUI',nombres:'Tutor',apellidos:'Sintético',telefono:'55555555',fecha_registro:new Date()});
-    await cmd('vincular',otro,{version_paciente:2,version_responsable:1,parentesco:'TUTOR',es_principal:true,autoriza_atencion:false});
+    const altaClave=id();
+    const altaEntrada={version_paciente:2,nombres:'Tutor',apellidos:'Sintético',telefono:'55555555',documento:{tipo:'CUI',numero:'1234567890102'},parentesco:'TUTOR',es_principal:true,autoriza_atencion:false};
+    const alta=await gestor.ejecutar('crear',{contexto,bundle,id:pid,claveIdempotencia:altaClave,entrada:altaEntrada});
+    const repetida=await gestor.ejecutar('crear',{contexto,bundle,id:pid,claveIdempotencia:altaClave,entrada:altaEntrada});
+    assert.deepEqual(repetida.respuesta,alta.respuesta);
+    assert.equal((await db.doc(`responsables/${alta.respuesta.id}`).get()).get('revision'),1);
+    await assert.rejects(gestor.ejecutar('crear',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{...altaEntrada,version_paciente:3}}),{codigo:'PACIENTE_DUPLICADO'});
     await cmd('baja',responsableId,{version_paciente:3,version_vinculo:1,motivo:'Baja sintética'});
     assert.equal((await db.doc(`pacientes/${pid}/responsables/${responsableId}`).get()).get('estado'),'INACTIVO');
     await cmd('vincular',responsableId,{version_paciente:4,version_responsable:2,version_vinculo:2,parentesco:'MADRE',es_principal:false,autoriza_atencion:true});

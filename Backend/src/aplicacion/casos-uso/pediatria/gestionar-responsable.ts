@@ -1,5 +1,8 @@
 import { ErrorDominio } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico } from '../../../dominio/compartido/uuid.js';
+import { validarIdentificacion } from '../../../dominio/clinica/paciente.js';
+import { versionPositiva } from '../../../dominio/compartido/version.js';
+import type { CambioPlanificado } from '../../puertos/nucleo.js';
 import type { Paciente, ResponsableDetalle } from '../../../dominio/clinica/paciente.js';
 import { objetoCerrado, textoClinico } from '../../../dominio/clinica/consulta.js';
 import { validarPermiso } from '../../../dominio/clinica/politicas-institucionales.js';
@@ -9,12 +12,13 @@ import { contextoVigente, exigirVersion, siguienteVersion, type DependenciasClin
 
 export class GestionarResponsable {
   constructor(private readonly deps: DependenciasClinicas) {}
-  async ejecutar(accion: 'contacto' | 'vinculo' | 'baja' | 'vincular', p: ParametrosClinicos, responsableId: string) {
+  async ejecutar(accion: 'contacto' | 'vinculo' | 'baja' | 'vincular' | 'crear', p: ParametrosClinicos, responsableId?: string) {
     if(p.contexto.cuenta.institucion !== 'CENTRO_MEDICO_PEDIATRICO' || p.bundle.institucion !== 'CENTRO_MEDICO_PEDIATRICO') throw new ErrorDominio('SIN_PERMISO','Operación exclusiva de pediatría.');
     validarPermiso(p.contexto.cuenta,'pacientes.administrar');
-    const pacienteId=uuidPublico(p.id), id=uuidPublico(responsableId);
-    const e=objetoCerrado(p.entrada,accion==='contacto'?['version_paciente','version_responsable','telefono']:accion==='baja'?['version_paciente','version_vinculo','motivo']:['version_paciente','version_vinculo','version_responsable','parentesco','es_principal','autoriza_atencion']);
-    const comando=await prepararComandoEstable(p.claveIdempotencia,`pediatria.responsable.${accion}`,{pacienteId,id,e},['revision','auditoria'],this.deps);
+    const pacienteId=uuidPublico(p.id), referencia=accion==='crear'?null:uuidPublico(responsableId);
+    const e=objetoCerrado(p.entrada,accion==='crear'?['version_paciente','nombres','apellidos','telefono','documento','parentesco','es_principal','autoriza_atencion']:accion==='contacto'?['version_paciente','version_responsable','telefono']:accion==='baja'?['version_paciente','version_vinculo','motivo']:['version_paciente','version_vinculo','version_responsable','parentesco','es_principal','autoriza_atencion']);
+    const comando=await prepararComandoEstable(p.claveIdempotencia,`pediatria.responsable.${accion}`,{pacienteId,id:referencia,e},['revision','auditoria','responsable'],this.deps);
+    const id=referencia??comando.ids.responsable!;
     if(!p.bundle.uow)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Persistencia no disponible.');
     return p.bundle.uow.ejecutar<ResponsableDetalle | {id:string;activo:boolean}>(p.contexto,comando,async lector=>{
       const contexto=await contextoVigente(lector,p.contexto);validarPermiso(contexto.cuenta,'pacientes.administrar');
@@ -25,23 +29,31 @@ export class GestionarResponsable {
       if(paciente.estado!=='ACTIVO')throw new ErrorDominio('ESTADO_INVALIDO','El expediente está archivado.');
       exigirVersion(paciente.version,e.version_paciente);
       const vinculo=paciente.responsables?.find(r=>r.responsable.id===id);
-      if(accion==='vincular'){
-        const responsable=await lector.responsables.porId(id) as ResponsableDetalle|null;
+      if(accion==='vincular'||accion==='crear'){
+        const adicionales:CambioPlanificado[]=[];
+        let responsable:ResponsableDetalle|null;
+        if(accion==='crear'){
+          const documento=validarIdentificacion(e.documento,'documento');
+          if(await lector.identidades.titular(documento))throw new ErrorDominio('PACIENTE_DUPLICADO','La identificación ya existe; reutilice su referencia.');
+          const nombres=textoClinico(e.nombres,'nombres',200),apellidos=textoClinico(e.apellidos,'apellidos',200);
+          responsable={id,nombres,apellidos,nombre:`${nombres} ${apellidos}`,telefono:textoClinico(e.telefono,'telefono',30),documento,version:versionPositiva(1)};
+          adicionales.push({agregado:'responsables',tipo:'CREAR',recursoId:id,versionAnterior:null,nuevoEstado:responsable},{agregado:'identidades',tipo:'RESERVAR',recursoId:id,versionAnterior:null,nuevoEstado:{identificacion:documento,titularId:id}});
+        }else responsable=await lector.responsables.porId(id) as ResponsableDetalle|null;
         if(!responsable)throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Responsable no encontrado.');
-        exigirVersion(responsable.version,e.version_responsable);
+        if(accion!=='crear')exigirVersion(responsable.version,e.version_responsable);
         if(vinculo)throw new ErrorDominio('ESTADO_INVALIDO','El responsable ya está vinculado.');
         if(typeof e.es_principal!=='boolean'||typeof e.autoriza_atencion!=='boolean')throw new ErrorDominio('SOLICITUD_INVALIDA','Las decisiones del vínculo deben ser booleanas.');
         if(!lector.clinica)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Lectura de vínculo no disponible.');
-        const anterior=await lector.clinica.responsables.autorizacion(pacienteId,id);
+        const anterior=accion==='crear'?null:await lector.clinica.responsables.autorizacion(pacienteId,id);
         if(anterior)exigirVersion(anterior.version,e.version_vinculo);
         const version=anterior?siguienteVersion(anterior.version):1;
         const nuevo={responsableId:id,versionResponsable:responsable.version,parentesco:textoClinico(e.parentesco,'parentesco',60),esPrincipal:e.es_principal,autorizaAtencion:e.autoriza_atencion};
         validarPrincipalidad([...(paciente.responsables??[]).map(r=>({responsableId:r.responsable.id,estado:'ACTIVO' as const,esPrincipal:r.vinculo.esPrincipal,autorizaAtencion:r.vinculo.autorizaAtencion})),{...nuevo,estado:'ACTIVO'}]);
-        return {tipo:'CONFIRMAR',cambios:[{agregado:'vinculoPediatrico',tipo:anterior?'ACTUALIZAR':'CREAR',recursoId:id,versionAnterior:anterior?.version??null,nuevoEstado:{pacienteId,vinculo:nuevo,estado:'ACTIVO',version}},
+        return {tipo:'CONFIRMAR',cambios:[...adicionales,{agregado:'vinculoPediatrico',tipo:anterior?'ACTUALIZAR':'CREAR',recursoId:id,versionAnterior:anterior?.version??null,nuevoEstado:{pacienteId,vinculo:nuevo,estado:'ACTIVO',version}},
           {agregado:'pacientes',tipo:'ACTUALIZAR',recursoId:pacienteId,versionAnterior:paciente.version,nuevoEstado:{...paciente,version:siguienteVersion(paciente.version)}}],
           revisiones:[{id:comando.ids.revision!,agregado:'pacientes',recursoId:pacienteId,versionAnterior:paciente.version,snapshotAnterior:paciente}],
           auditoria:[{id:comando.ids.auditoria!,actorId:contexto.cuenta.id,caso:comando.caso,recursoId:id,fechaHora:comando.instante,correlacion:contexto.correlacion}],
-          resultado:{httpStatus:200,respuesta:{id,activo:true},correlacionOriginal:contexto.correlacion}};
+          resultado:{httpStatus:accion==='crear'?201:200,respuesta:{id,activo:true},correlacionOriginal:contexto.correlacion}};
       }
       if(!vinculo)throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Vínculo no encontrado.');
       let respuesta:ResponsableDetalle|{id:string;activo:boolean};
