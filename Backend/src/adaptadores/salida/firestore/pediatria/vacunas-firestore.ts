@@ -72,14 +72,15 @@ export function crearVacunasFirestore(
 
         const catalogo: VacunaCatalogo[] = [];
         for (const doc of snapVacunas.docs) {
-          const vData = doc.data();
+          const vData = validarDocumento<Record<string,unknown>>(doc.ref.path,doc.data());
           const versionVigenteId = String(vData.version_vigente || '');
           let dosis: DosisVacuna[] = [];
 
           if (versionVigenteId) {
             const snapVersion = await get(doc.ref.collection('versiones').doc(versionVigenteId));
+            if (!snapVersion.exists)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Versión vigente no disponible.');
             if (snapVersion.exists) {
-              const verData = snapVersion.data()!;
+              const verData = validarDocumento<Record<string,unknown>>(snapVersion.ref.path,snapVersion.data()!);
               const listaDosis = Array.isArray(verData.dosis) ? verData.dosis : [];
               dosis = listaDosis.map(mapearDosis);
             }
