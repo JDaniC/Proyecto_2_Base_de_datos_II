@@ -1,8 +1,8 @@
-# Trabajo por tareas y revisión con Codex
+# Trabajo por tareas y revisión con CodeRabbit
 
 ## 1. Responsables y ramas
 
-Integrantes: **JDaniC** y **Davidix888**. Cualquiera puede tomar IDs P1/P2; son lotes históricos. Codex revisa automáticamente el PR; la revisión del compañero es opcional. develop es la rama de integración (en minúsculas); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
+Integrantes: **JDaniC** y **Davidix888**. Cualquiera puede tomar IDs P1/P2; son lotes históricos. CodeRabbit revisa automáticamente el PR; la revisión del compañero es opcional. develop es la rama de integración (en minúsculas); main recibe entregas revisadas. No usar Frontend/Backend como ramas permanentes para nuevas tareas.
 
 Antes de empezar, integrar el plan ya preparado mediante un PR documental `[PLAN] Integrar planificación`. No publicar cambios ajenos ni todo el directorio de trabajo por accidente. El validador rechaza tareas que todavía no estén en plan/06_TABLERO.md.
 
@@ -19,21 +19,19 @@ Leer dependencias y criterios en el plan, actualizar estado a EN_CURSO y trabaja
 
 Si hay cambios locales pendientes, usar otro worktree; no usar reset/clean ni borrar volúmenes. Si una dependencia está bloqueada, registrar BLOQUEADA y avanzar solo tareas independientes.
 
-## 3. Conectar Codex (sin API key)
+## 3. Revisar con CodeRabbit
 
-En el navegador habitual abrir https://chatgpt.com/settings/code-review, iniciar sesión y conectar GitHub con acceso a JDaniC/Proyecto_2_Base_de_datos_II. Seleccionar el repositorio y activar Automatic review para All PRs. La disponibilidad depende de la cuenta y sus límites. No pegar tokens en GitHub ni en chats.
+CodeRabbit es el revisor automático vigente. Comprobar el check nativo `CodeRabbit` correspondiente al SHA actual del PR. Si no aparece, solicitar `@coderabbitai full review` una vez y verificar que se crea el check correspondiente. No asumir aprobado por silencio ni repetir solicitudes en bucle.
 
-Para una revisión manual comentar `@codex review` en el PR. Después de cambios, comprobar que la revisión corresponde al commit actual y solicitar otra si hace falta. Si no aparece el repositorio, comprobar permisos de la conexión. Si no responde el bot, revisar conexión, configuración y disponibilidad de la cuenta; no asumir aprobado.
-
-Documentación: https://developers.openai.com/codex/integrations/github
+El responsable valida las pruebas y los hallazgos aplicables; debe corregirlos y resolver sus conversaciones antes de integrar. Una conclusión exitosa del check no equivale por sí sola a ausencia de hallazgos. La revisión del compañero es opcional.
 
 ## 4. Comprobaciones e integración
 
-CI ejecuta únicamente contrato-pr: valida identificador, rama, destino y las excepciones documentales. Este flujo no instala MCP ni levanta bases de datos. Las pruebas funcionales y compilaciones de cada tarea se adjuntan como evidencia y las verifica el compañero; no se certifican automáticamente con este check.
+CI ejecuta únicamente contrato-pr: valida identificador, rama, destino y las excepciones documentales. Este flujo no instala MCP ni levanta bases de datos. Las pruebas funcionales y compilaciones de cada tarea se adjuntan como evidencia y las verifica el responsable; no se certifican automáticamente con este check.
 
-Protecciones previstas: PR obligatorio, cero aprobaciones humanas obligatorias, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. La puerta revision-codex comprueba el resumen nativo del bot sobre el SHA actual; solo permite auto-merge sin hallazgos y con contrato-pr verde.
+Protecciones previstas: PR obligatorio, cero aprobaciones humanas obligatorias, conversaciones resueltas, contrato-pr verde con rama actualizada, sin force push ni borrado de ramas protegidas. La puerta `CodeRabbit` exige el check nativo exitoso del SHA actual. El ruleset activo exige además conversaciones resueltas y contrato-pr verde; el responsable verifica los hallazgos aplicables.
 
-Si CI falla, corregir o documentar un bloqueo real; no desactivar la comprobación. Si Codex encuentra un error, corregir y volver a revisar. Desacuerdos se resuelven con evidencia en el PR. No marcar HECHA automáticamente al fusionar: verificar criterios y cierre humano en el tablero.
+Si CI falla, corregir o documentar un bloqueo real; no desactivar la comprobación. Si CodeRabbit encuentra un error, corregir y volver a revisar. Desacuerdos se resuelven con evidencia en el PR. No marcar HECHA automáticamente al fusionar: verificar criterios y cierre real en el tablero.
 
 Tras completar la revisión automática y comprobar su resultado, usar Squash and merge o habilitar auto-merge para ese PR. Auto-merge espera las reglas de GitHub; no genera código ni resuelve hallazgos por sí mismo. Para una entrega abrir PR desde develop a main con título `[ENTREGA-E00] descripción` y evidencia de la fase.
 
@@ -61,10 +59,10 @@ Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). 
 
 La rama predeterminada es develop; main se conserva para las entregas. Los workflows de eventos y comentarios se cargan desde la rama predeterminada. El anterior pull_request_target no se ejecutaba porque solo existía en develop mientras la predeterminada era main.
 
-El flujo actual responde a la finalización de «Validación del proyecto», a los comentarios del PR y a ejecución manual. Solo ejecuta el script de la rama predeterminada, nunca código del PR con permisos de escritura. Comprueba comentarios del bot chatgpt-codex-connector[bot], tipo Bot y app 1144995, y el bloque estructurado codex-review-state:v1 observado en la integración nativa. Formato desconocido, revisión anterior, resultado incompleto o hallazgos mantienen el PR bloqueado. Si cambia el contrato del bot, adaptar el parser y sus pruebas; no aceptar silencio como aprobación.
+El flujo actual responde a la finalización de «Validación del proyecto», a checks, comentarios del PR y ejecución manual. Solo ejecuta el script de la rama predeterminada, nunca código del PR con permisos de escritura. Comprueba el check nativo `CodeRabbit` de la app 347564 sobre el SHA actual, completado con conclusión `success`. Un check ausente, anterior o incompleto mantiene la espera; no aceptar silencio como aprobación.
 
-Con revisión limpia del SHA actual se habilita auto-merge squash; GitHub espera además contrato-pr y las reglas del repositorio. Las ramas fusionadas se eliminan automáticamente. Borradores y forks no se integran con este flujo. No exige aprobación de David. Si la rama queda desactualizada, actualizarla, repetir checks y obtener revisión del nuevo SHA.
+Con el check CodeRabbit exitoso del SHA actual se habilita auto-merge squash; GitHub espera además contrato-pr, conversaciones resueltas y las demás reglas del repositorio. El responsable verifica los hallazgos aplicables antes de resolverlos. Las ramas fusionadas se eliminan automáticamente. Borradores y forks no se integran con este flujo. No exige aprobación de David. Si la rama queda desactualizada, actualizarla, repetir checks y obtener revisión del nuevo SHA.
 
-Para reevaluar un PR existente: `gh workflow run auto-merge.yml --ref develop -f pr=7` (cambiar el número). Si Codex revisó un SHA anterior, solicitar `@codex review` y esperar la respuesta del commit actual. No repetir comentarios en bucle ni usar --admin. La ejecución manual evalúa, no fabrica un resultado del bot.
+Para reevaluar un PR existente: `gh workflow run auto-merge.yml --ref develop -f pr=7` (cambiar el número). Si falta el check CodeRabbit del SHA actual, solicitar `@coderabbitai full review` una vez y esperar el check correspondiente. No repetir comentarios en bucle ni usar --admin. La ejecución manual evalúa, no fabrica un resultado del bot.
 
 Fuentes: https://github.blog/changelog/2025-11-07-actions-pull_request_target-and-environment-branch-protections-changes/ y https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow
