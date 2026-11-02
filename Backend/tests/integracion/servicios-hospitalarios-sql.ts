@@ -69,6 +69,7 @@ export async function verificarServiciosHospitalarios(pool:PoolSql,contexto:Cont
   await assert.rejects(ejecutar('polizaAfiliar',{...seguro,copagoCentavos:1.5}),{codigo:'SOLICITUD_INVALIDA'});
   const poliza=await ejecutar('polizaAfiliar',seguro);
   assert.equal(poliza.contenido.copagoCentavos,1500);
+  assert.equal(poliza.contenido.vigente,true);
   await assert.rejects(ejecutar('polizaEstado',{versionEsperada:1,estado:'SUSPENDIDA',motivo:'Ajena'},poliza.id,otro.pid),{codigo:'RECURSO_NO_ENCONTRADO'});
   await ejecutar('polizaEstado',{versionEsperada:1,estado:'SUSPENDIDA',motivo:'Suspensión sintética'},poliza.id);
   const compartida=await ejecutar('polizaAfiliar',{...seguro,versionPaciente:await versionPaciente(otro.pid),numeroCertificado:'CERT-2'},undefined,otro.pid);

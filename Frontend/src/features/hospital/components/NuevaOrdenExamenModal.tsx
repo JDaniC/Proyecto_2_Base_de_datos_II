@@ -182,7 +182,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                 {preselectedPacienteNombre || 'Paciente seleccionado'}
               </div>
             ) : (
-              <><input aria-label="Buscar paciente para examen" value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Nombre o documento" /><select
+              <><input aria-label="Buscar paciente para examen" value={busqueda} onChange={e=>{setBusqueda(e.target.value);setPacienteId('');setReferencia(null);setPacientes([]);}} placeholder="Nombre o documento" /><select
                 id="select-paciente-orden"
                 value={pacienteId}
                 onChange={(e) => setPacienteId(e.target.value)}

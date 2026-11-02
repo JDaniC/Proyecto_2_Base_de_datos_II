@@ -415,7 +415,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
         }
       >
         {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
-        <label>Motivo de cancelación<textarea disabled={cancelando||comandoCancelacion.incierto} aria-label="Motivo de cancelación" maxLength={2000} value={motivoCancelacion} onChange={e=>setMotivoCancelacion(e.target.value)} /></label>
+        <label>Motivo de cancelación<textarea disabled={cancelando||comandoCancelacion.incierto} aria-label="Motivo de cancelación" maxLength={1000} value={motivoCancelacion} onChange={e=>setMotivoCancelacion(e.target.value)} /></label>
       </Modal>
 
       {/* Modal Nueva Orden */}

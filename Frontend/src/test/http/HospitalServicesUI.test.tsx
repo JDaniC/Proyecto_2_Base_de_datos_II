@@ -15,6 +15,7 @@ it('búsqueda con un único paciente permite seleccionarlo expresamente y limpia
  const user=userEvent.setup();render(<NuevaOrdenExamenModal isOpen onClose={()=>{}} onOrdenCreada={()=>{}}/>);
  await user.type(screen.getByLabelText('Buscar paciente para examen'),'Único');await screen.findByRole('option',{name:'Paciente Único (EXP)'});
  const select=document.querySelector('#select-paciente-orden') as HTMLSelectElement;expect(select.value).toBe('');await user.selectOptions(select,'paciente');expect(select.value).toBe('paciente');
+ await user.type(screen.getByLabelText('Buscar paciente para examen'),' distinto');expect(select.value).toBe('');
  await user.clear(screen.getByLabelText('Buscar paciente para examen'));await waitFor(()=>expect(screen.queryByRole('option',{name:'Paciente Único (EXP)'})).not.toBeInTheDocument());
 });
 it('un fallo de pólizas se muestra como error con reintento, sin afirmar ausencia de cobertura',async()=>{

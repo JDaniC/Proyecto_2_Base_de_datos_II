@@ -87,8 +87,7 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             especialidades:[m.especialidad??m.especialidadPrincipal,...(m.especialidadesSecundarias??[])].filter(Boolean),
           }));
         setProfesionalesApi(activos);
-        const elegibles=institucionId==='HOSPITAL_GENERAL'&&especialidadFiltro?activos.filter(p=>p.especialidades.includes(especialidadFiltro)):activos;
-        if(!elegibles.some(p=>p.id===profesionalId))setProfesionalId(elegibles[0]?.id??'');
+
       })
       .catch(() => {
         if(cancelado)return;
@@ -98,7 +97,13 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
     return () => {
       cancelado = true;
     };
-  }, [isOpen, mode, institucionId, catalogRepository, profesionalId, especialidadFiltro]);
+  }, [isOpen, mode, institucionId, catalogRepository]);
+
+  useEffect(()=>{
+    if(!isOpen || mode!=='api')return;
+    const elegibles=institucionId==='HOSPITAL_GENERAL'&&especialidadFiltro?profesionalesApi.filter(p=>p.especialidades.includes(especialidadFiltro)):profesionalesApi;
+    setProfesionalId(actual=>elegibles.some(p=>p.id===actual)?actual:elegibles[0]?.id??'');
+  },[isOpen,mode,institucionId,profesionalesApi,especialidadFiltro]);
 
   // Cargar lista de pacientes con expediente activo
   useEffect(() => {

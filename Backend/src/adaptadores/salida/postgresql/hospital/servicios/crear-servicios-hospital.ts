@@ -53,7 +53,7 @@ export function crearServiciosHospital(pool:PoolSql):PuertosServiciosHospital {
           auditoria:[{id,actorId:cuenta.id,caso,recursoId:respuesta.id,fechaHora:fecha,correlacion:contexto.correlacion}],
           resultado:{httpStatus:201,respuesta,correlacionOriginal:contexto.correlacion}};
       });
-      return resultado.respuesta;
+      return proyectar(resultado.respuesta);
     },
   };
 }

@@ -1371,7 +1371,7 @@ export const NewConsultationWizardPage: React.FC = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        + {m.nombre} ({m.concentracion})
+                        + {m.nombre}{m.concentracion ? ` (${m.concentracion})` : ''}
                       </button>
                     ))}
                   </div>
