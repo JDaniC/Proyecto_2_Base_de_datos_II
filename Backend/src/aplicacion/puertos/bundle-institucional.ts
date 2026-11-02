@@ -16,6 +16,7 @@ export type EstadoPersistenciaInicial = 'NO_CONFIGURADA' | 'DISPONIBLE';
 export interface BundleInstitucional {
   readonly responsablesPediatricos?: {porDocumento(documento:import('../../dominio/clinica/paciente.js').Identificacion):Promise<import('../../dominio/clinica/paciente.js').ResponsableDetalle|null>};
   readonly antecedentesPediatricos?: PuertoAntecedentesPediatricos;
+  readonly vacunasPediatricas?: import('./vacunas.js').PuertoVacunasCatalogo & import('./vacunas.js').PuertoEsquemaPaciente & import('./vacunas.js').PuertoAplicacionesVacuna;
   readonly clinica?: PuertosClinicos;
   readonly hospital?: PuertosHospital;
   readonly serviciosHospital?: PuertosServiciosHospital;

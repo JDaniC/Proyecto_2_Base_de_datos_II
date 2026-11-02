@@ -126,10 +126,11 @@ export interface PruebaLaboratorioCatalogo {
 }
 
 export interface VacunaCatalogo {
+  fabricante?: string;
   id: string;
   nombreVacuna: string;
   enfermedadPrevenida: string;
-  viaAdministracion: 'INTRADERMICA' | 'INTRAMUSCULAR' | 'SUBCUTANEA' | 'ORAL';
+  viaAdministracion: 'INTRADERMICA' | 'INTRAMUSCULAR' | 'SUBCUTANEA' | 'ORAL' | 'SIN_DATO';
   esquemaVersion: string;
   dosis: {
     dosisId: string;

@@ -1,3 +1,11 @@
+import { GestionarCatalogoVacunas } from '../aplicacion/casos-uso/pediatria/gestionar-catalogo-vacunas.js';
+import { AsignarEsquemaVacuna } from '../aplicacion/casos-uso/pediatria/asignar-esquema.js';
+import { VacunasController } from '../adaptadores/entrada/http/pediatria/vacunas.controller.js';
+import { ConsultarEsquemaVacunas } from '../aplicacion/casos-uso/pediatria/consultar-esquema-vacunas.js';
+import { ConsultarAplicacionesVacuna } from '../aplicacion/casos-uso/pediatria/consultar-aplicaciones.js';
+import { RegistrarAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/registrar-aplicacion.js';
+import { CorregirAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/corregir-aplicacion.js';
+import { AnularAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/anular-aplicacion.js';
 import { ConsultarResponsable } from '../aplicacion/casos-uso/pediatria/consultar-responsable.js';
 import { ConsultarCrecimiento } from '../aplicacion/casos-uso/pediatria/consultar-crecimiento.js';
 import { AntecedentesController } from '../adaptadores/entrada/http/pediatria/antecedentes.controller.js';
@@ -75,7 +83,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -86,6 +94,14 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide:GestionarCatalogoVacunas,useFactory:()=>new GestionarCatalogoVacunas(dependenciasComandoPorDefecto)},
+        {provide: AsignarEsquemaVacuna,useFactory:()=>new AsignarEsquemaVacuna(dependenciasComandoPorDefecto)},
+        {provide: ConsultarEsquemaVacunas, useFactory: () => new ConsultarEsquemaVacunas()},
+        {provide: ConsultarAplicacionesVacuna, useFactory: () => new ConsultarAplicacionesVacuna()},
+        {provide: RegistrarAplicacionVacuna, useFactory: () => new RegistrarAplicacionVacuna(dependenciasComandoPorDefecto)},
+        {provide: CorregirAplicacionVacuna, useFactory: () => new CorregirAplicacionVacuna(dependenciasComandoPorDefecto)},
+        {provide: AnularAplicacionVacuna, useFactory: () => new AnularAplicacionVacuna(dependenciasComandoPorDefecto)},
+
         {provide: GestionarAntecedentes,useFactory:()=>new GestionarAntecedentes(dependenciasComandoPorDefecto)},
         {provide: ConsultarResponsable,useFactory:()=>new ConsultarResponsable()},
         {provide: ConsultarCrecimiento,useFactory:()=>new ConsultarCrecimiento()},

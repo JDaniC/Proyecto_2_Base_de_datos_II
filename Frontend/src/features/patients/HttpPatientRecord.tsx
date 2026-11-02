@@ -1,3 +1,4 @@
+import { PediatricVaccinesScheduleView } from './components/PediatricVaccinesScheduleView';
 import { PediatricAntecedentesVersionsView } from './components/PediatricAntecedentesVersionsView';
 import { PediatricGuardiansHttpView } from './components/PediatricGuardiansHttpView';
 import { PediatricGrowthHttpView } from './components/PediatricGrowthHttpView';
@@ -244,6 +245,7 @@ const PatientRecord: React.FC = () => {
           </Panel>
         )}
         {sesion?.institucionId==='CENTRO_PEDIATRICO'&&puedeLeer&&Boolean(antecedentes?.versionAntecedentes)&&<PediatricAntecedentesVersionsView key={`versiones/${antecedentes!.versionAntecedentes}`} pacienteId={paciente.id} versionActual={antecedentes!.versionAntecedentes!}/>}
+        {sesion?.institucionId==='CENTRO_PEDIATRICO'&&puedeLeer&&<PediatricVaccinesScheduleView paciente={paciente} onActualizado={async()=>setReintento(n=>n+1)}/>}
         {sesion?.institucionId==='CENTRO_PEDIATRICO'&&puedeLeer&&<PediatricGrowthHttpView pacienteId={paciente.id}/>}
         {sesion?.institucionId==='CENTRO_PEDIATRICO'?<PediatricGuardiansHttpView paciente={paciente} puedeEditar={puedeEditar} onActualizar={async()=>setReintento(x=>x+1)}/>:paciente.responsables && <Panel title="Responsables vinculados" style={{ marginBottom: '24px' }}>
           {paciente.responsables.map((r) => <p key={r.id}>{r.nombre} · {r.parentesco} · {r.telefono}{r.esPrincipal ? ' · Principal' : ''} · {r.autorizaAtencion ? 'Autoriza atención' : 'Sin autorización de atención'}</p>)}

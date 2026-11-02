@@ -27,7 +27,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
   catalogoVacunas,
   onAplicacionRegistrada
 }) => {
-  const { vaccineRepository } = useServices();
+  const { vaccineRepository, mode } = useServices();
   const { sesion } = useAuthSession();
   const institucionId = sesion?.institucionId || 'CENTRO_PEDIATRICO';
 
@@ -49,7 +49,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
   );
   const [lote, setLote] = useState<string>('');
   const [sitioAnatomico, setSitioAnatomico] = useState<string>(
-    vacunaActual?.viaAdministracion === 'ORAL'
+    vacunaActual?.viaAdministracion === 'SIN_DATO' ? '' : vacunaActual?.viaAdministracion === 'ORAL'
       ? 'Vía oral (gotas sublinguales)'
       : 'Cara anterolateral muslo izquierdo'
   );
@@ -70,7 +70,9 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
     const v = catalogoVacunas.find((item) => item.id === nuevaVacunaId);
     if (v && v.dosis.length > 0) {
       setDosisId(v.dosis[0].dosisId);
-      if (v.viaAdministracion === 'ORAL') {
+      if (v.viaAdministracion === 'SIN_DATO') {
+        setSitioAnatomico('');
+      } else if (v.viaAdministracion === 'ORAL') {
         setSitioAnatomico('Vía oral (gotas sublinguales)');
       } else {
         setSitioAnatomico('Cara anterolateral muslo izquierdo');
@@ -100,10 +102,10 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
           vacunaId,
           dosisId,
           fechaAplicacion,
-          horaAplicacion,
+          ...(mode !== 'api' ? {horaAplicacion} : {}),
           lote: lote.trim().toUpperCase(),
           sitioAnatomico,
-          reaccionesInmediatas: reaccionesInmediatas.trim() || undefined,
+          ...(mode !== 'api' ? {reaccionesInmediatas: reaccionesInmediatas.trim() || undefined} : {}),
           observaciones: observaciones.trim() || undefined
         },
         profesionalNombre
@@ -151,7 +153,7 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleVacunaChange(e.target.value)}
               options={catalogoVacunas.map((v) => ({
                 value: v.id,
-                label: `${v.nombreVacuna} (${v.viaAdministracion})`
+                label: `${v.nombreVacuna} (${v.viaAdministracion === 'SIN_DATO' ? 'Vía no registrada' : v.viaAdministracion})`
               }))}
             />
 
@@ -177,13 +179,13 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
               required
             />
 
-            <Input
+            {mode !== 'api' && <Input
               label="Hora de Aplicación *"
               type="time"
               value={horaAplicacion}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHoraAplicacion(e.target.value)}
               required
-            />
+            />}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -209,14 +211,14 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
             />
           </div>
 
-          <div>
+          {mode !== 'api' && <div>
             <Input
               label="Reacciones inmediatas (observación de 15 a 30 min)"
               value={reaccionesInmediatas}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReaccionesInmediatas(e.target.value)}
               placeholder="ej. Tolerancia adecuada, llanto breve sin fiebre ni erupción..."
             />
-          </div>
+          </div>}
 
           <div>
             <label htmlFor="vacuna-observaciones" style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '6px', color: 'var(--color-strong)' }}>

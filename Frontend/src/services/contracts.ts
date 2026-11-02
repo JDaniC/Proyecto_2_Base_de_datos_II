@@ -282,6 +282,7 @@ export interface CatalogRepository {
 }
 
 export interface VaccineRepository {
+  asignarEsquema?(pacienteId:string,vacunaId:string,versionId:string):Promise<void>;
   obtenerAplicaciones(institucionId: InstitucionId, pacienteId: string): Promise<AplicacionVacuna[]>;
   obtenerEsquemaCompletoPaciente(
     institucionId: InstitucionId,

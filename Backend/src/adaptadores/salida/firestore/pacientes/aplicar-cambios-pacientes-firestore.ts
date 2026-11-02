@@ -24,6 +24,21 @@ export async function aplicarCambiosPacientesFirestore(
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
   for (const cambio of cambios) {
+    if(cambio.agregado === 'catalogoVacuna') {
+      const {actual,version}=cambio.nuevoEstado as {actual:import('../../../../dominio/pediatria/vacunas.js').VacunaCatalogo;version:import('../../../../dominio/pediatria/vacunas.js').VersionEsquemaVacuna};
+      const ref=firestore.doc(`vacunas/${actual.id}`);
+      const raiz=validarDocumento(ref.path,{revision:version.version,nombre:actual.nombre,enfermedad_objetivo:actual.enfermedadObjetivo,fabricante:actual.fabricante,version_vigente:actual.versionVigente});
+      if(cambio.tipo==='CREAR')transaction.create(ref,raiz as Record<string,unknown>);else transaction.set(ref,raiz as Record<string,unknown>);
+      const ver=ref.collection('versiones').doc(version.versionId);
+      transaction.create(ver,validarDocumento(ver.path,{revision:1,version:version.version,nombre:version.nombre,enfermedad_objetivo:version.enfermedadObjetivo,fabricante:version.fabricante,fecha_creacion:new Date(version.fechaCreacion),dosis:version.dosis.map(d=>({dosis_id:d.dosisId,numero:d.numero,edad_recomendada_meses:d.edadMesesRecomendada}))}) as Record<string,unknown>);
+      continue;
+    }
+    if(cambio.agregado === 'esquemaVacuna') {
+      const e=cambio.nuevoEstado as {vacunaId:string;versionId:string;actorId:string;fechaAsignacion:string};
+      const ref=firestore.doc(`pacientes/${cambio.recursoId}/esquemas/${e.vacunaId}`);
+      transaction.create(ref,validarDocumento(ref.path,{vacuna_id:e.vacunaId,version_id:e.versionId,actor_id:e.actorId,fecha_asignacion:new Date(e.fechaAsignacion),estado:'ACTIVO',revision:1}) as Record<string,unknown>);
+      continue;
+    }
     if (cambio.agregado === 'antecedentesPediatricos') {
       const r=cambio.nuevoEstado as {actual:AntecedentesPediatricos;anterior:AntecedentesPediatricos;revisionId:string;motivo:string};
       const actual=validarSnapshotAntecedentes(r.actual);
@@ -46,6 +61,58 @@ export async function aplicarCambiosPacientesFirestore(
       const datos={parentesco:r.vinculo.parentesco,es_principal:r.vinculo.esPrincipal,autoriza_atencion:r.vinculo.autorizaAtencion,estado:r.estado,revision:r.version};
       if(cambio.tipo==='CREAR')transaction.create(ref,validarDocumento(ref.path,{...datos,responsable_id:cambio.recursoId,fecha_registro:new Date(comando.instante),actor_id:contexto.cuenta.id}) as Record<string,unknown>);
       else transaction.update(ref,datos);
+      continue;
+    }
+    if (cambio.agregado === 'aplicacionVacuna') {
+      if (cambio.tipo === 'CREAR') {
+        const app = cambio.nuevoEstado as import('../../../../dominio/pediatria/vacunas.js').AplicacionVacuna;
+        const ref = firestore.doc(`aplicaciones_vacuna/${app.id}`);
+        const docData = validarDocumento(ref.path, {
+          paciente_id: app.pacienteId,
+          vacuna_id: app.vacunaId,
+          dosis_id: app.dosisId,
+          version_esquema_id: app.versionEsquemaId,
+          pediatra_id: app.pediatraId,
+          fecha_aplicacion: new Date(app.fechaAplicacion),
+          lote: app.lote,
+          sitio_aplicacion: app.sitioAplicacion,
+          ...(app.observaciones ? {observaciones: app.observaciones} : {}),
+          estado: app.estado,
+          revision: app.version,
+        });
+        transaction.create(ref, docData as Record<string, unknown>);
+      } else if (cambio.tipo === 'ACTUALIZAR') {
+        const r = cambio.nuevoEstado as {
+          actual: import('../../../../dominio/pediatria/vacunas.js').AplicacionVacuna;
+          anterior: import('../../../../dominio/pediatria/vacunas.js').AplicacionVacuna;
+          revisionId: string;
+          motivo: string;
+        };
+        const ref = firestore.doc(`aplicaciones_vacuna/${r.actual.id}`);
+        const updateData: Record<string, unknown> = {
+          lote: r.actual.lote,
+          sitio_aplicacion: r.actual.sitioAplicacion,
+          observaciones: r.actual.observaciones ?? null,
+          estado: r.actual.estado,
+          motivo_anulacion: r.actual.motivoAnulacion ?? null,
+          revision: r.actual.version,
+        };
+        transaction.update(ref, updateData);
+        transaction.create(ref.collection('versiones').doc(r.revisionId), {
+          version: r.anterior.version,
+          actor_id: contexto.cuenta.id,
+          fecha_hora: new Date(comando.instante),
+          motivo: r.motivo,
+          contenido_anterior: {
+            lote: r.anterior.lote,
+            sitio_aplicacion: r.anterior.sitioAplicacion,
+            observaciones: r.anterior.observaciones ?? null,
+            estado: r.anterior.estado,
+            motivo_anulacion: r.anterior.motivoAnulacion ?? null,
+          },
+          revision: 1,
+        });
+      }
       continue;
     }
     if (cambio.agregado === 'eventosHistorial') {

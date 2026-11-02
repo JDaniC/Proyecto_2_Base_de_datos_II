@@ -149,7 +149,7 @@ export const ServiceProvider: React.FC<ServiceProviderProps> = ({
         hospitalizationRepository: customHospitalizationRepository || httpServices.hospitalizationRepository,
         examRepository: customExamRepository || httpServices.examRepository,
         laboratoryRepository: requireApiAdapter(customLaboratoryRepository, 'laboratoryRepository'),
-        vaccineRepository: requireApiAdapter(customVaccineRepository, 'vaccineRepository'),
+        vaccineRepository: customVaccineRepository || httpServices.vaccineRepository,
       };
     }
 

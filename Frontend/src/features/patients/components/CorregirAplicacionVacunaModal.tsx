@@ -24,7 +24,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
   esAnulacion = false,
   onActualizado
 }) => {
-  const { vaccineRepository } = useServices();
+  const { vaccineRepository, mode } = useServices();
   const { sesion } = useAuthSession();
   const institucionId = sesion?.institucionId || 'CENTRO_PEDIATRICO';
 
@@ -59,7 +59,8 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
           institucionId,
           aplicacion.id,
           motivo.trim(),
-          profesionalNombre
+          profesionalNombre,
+          aplicacion.versionRegistro
         );
       } else {
         await vaccineRepository.corregirAplicacion(
@@ -68,11 +69,12 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
           {
             lote: lote.trim().toUpperCase(),
             sitioAnatomico,
-            reaccionesInmediatas: reaccionesInmediatas.trim() || undefined,
+            ...(mode !== 'api' ? {reaccionesInmediatas: reaccionesInmediatas.trim() || undefined} : {}),
             observaciones: observaciones.trim() || undefined,
             motivo: motivo.trim()
           },
-          profesionalNombre
+          profesionalNombre,
+          aplicacion.versionRegistro
         );
       }
 
@@ -129,7 +131,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
                 />
               </div>
 
-              <div className="space-y-1">
+              {mode !== 'api' && <div className="space-y-1">
                 <label className="block text-xs font-medium text-slate-700">
                   Reacciones Inmediatas Post-Vacunales
                 </label>
@@ -137,7 +139,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
                   value={reaccionesInmediatas}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReaccionesInmediatas(e.target.value)}
                 />
-              </div>
+              </div>}
 
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-slate-700">
