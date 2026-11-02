@@ -64,7 +64,7 @@ Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se
 
 ## Política de integración vigente
 
-Por decisión humana del 24/10/2026 no se requieren aprobaciones del compañero para fusionar. Codex es el revisor automático. El responsable valida pruebas y criterios y registra cierre real; puede solicitar revisión cruzada opcional. Esta política sustituye cualquier referencia anterior a revisión humana obligatoria.
+Por decisión humana del 24/10/2026 no se requieren aprobaciones del compañero para fusionar. CodeRabbit es el revisor automático. El responsable valida pruebas y criterios y registra cierre real; puede solicitar revisión cruzada opcional. Esta política sustituye cualquier referencia anterior a revisión humana obligatoria.
 
 ## Cierre de cada chat de ejecución
 
