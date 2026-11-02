@@ -496,7 +496,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--color-strong)' }}>
                         {app.fechaAplicacion}
                         <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                          {app.horaAplicacion || '10:00'}
+                          {app.horaAplicacion || 'Hora no registrada'}
                         </span>
                       </td>
 

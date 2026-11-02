@@ -19,6 +19,22 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    const pedi=cuenta.institucion==='CENTRO_MEDICO_PEDIATRICO';
    const alta=await page.request.post(`${url}/api/v1/pacientes`,{headers,data:{nombres:'Paciente',apellidos:'Clínica Sintética',fecha_nacimiento:pedi?'2020-02-29':'2000-02-29',sexo:'MASCULINO',...(pedi?{responsables:[{nombres:'Madre',apellidos:'Sintética',telefono:'55555555',parentesco:'MADRE',es_principal:true,autoriza_atencion:true,documento:{tipo:'CUI',numero:'1234567890101'}}]}:{})}});
    assert.equal(alta.status(),201,`alta ${cuenta.institucion}`); const paciente=(await alta.json()).data;
+   if(cuenta.institucion==='HOSPITAL_GENERAL'||pedi) {
+    const motivoAgenda=`Agenda institucional ${cuenta.institucion}`;
+    const datosCita={paciente_id:paciente.id,version_paciente:paciente.version,profesional_id:cuenta.profesionalId,fecha:'2026-10-19',hora_inicio:'07:00',duracion_minutos:30,motivo:motivoAgenda};
+    const claveAgenda=randomUUID();
+    const crearAgenda=()=>page.request.post(`${url}/api/v1/citas`,{headers:{...headers,'Idempotency-Key':claveAgenda},data:datosCita});
+    const creada=await crearAgenda();assert.equal(creada.status(),201,await creada.text());const agendada=(await creada.json()).data;
+    const repetida=await crearAgenda();assert.ok([200,201].includes(repetida.status()));assert.equal((await repetida.json()).data.id,agendada.id);
+    await page.goto(`${url}/agenda`);await page.getByText(motivoAgenda,{exact:true}).first().waitFor();
+    await page.reload();await page.getByText(motivoAgenda,{exact:true}).first().waitFor();
+    await page.setViewportSize({width:390,height:844});await page.getByText(motivoAgenda,{exact:true}).first().waitFor();await page.setViewportSize({width:1280,height:720});
+    pass('agenda institucional HTTP persiste tras recarga en móvil/escritorio y reintento no duplica');
+    const cancelada=await page.request.post(`${url}/api/v1/citas/${agendada.id}/cancelacion`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{version_esperada:agendada.version,motivo:'Cancelación sintética de ensayo'}});
+    assert.equal(cancelada.status(),200,await cancelada.text());assert.equal((await cancelada.json()).data.estado,'CANCELADA');
+    const obsoleta=await page.request.post(`${url}/api/v1/citas/${agendada.id}/cancelacion`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{version_esperada:agendada.version,motivo:'Versión anterior sintética'}});
+    assert.equal(obsoleta.status(),409,await obsoleta.text());pass('agenda cancela con versión y rechaza versión obsoleta');
+   }
    let cita;
    if(cuenta.institucion==='CLINICA_ODONTOLOGICA') {
     if(cuenta.secretariaCuenta) {
@@ -165,6 +181,34 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
     await page.waitForURL(new RegExp(`/hospital/hospitalizaciones/${estancia.id}$`));
     await page.getByText('Alta sintética estable',{exact:true}).waitFor();
     pass('listado UI paginado recibe resúmenes y carga detalle clínico bajo demanda');
+
+   }
+   if(pedi) {
+    const {vacunaId,versionId,dosisId}=cuenta.vacuna;
+    for(const ruta of ['/vacunas',`/pacientes/${paciente.id}/aplicaciones-vacuna`,`/pacientes/${paciente.id}/esquemas`]){const r=await page.request.get(`${url}/api/v1${ruta}`,{headers});assert.equal(r.status(),200,`vacunas preflight ${ruta}: ${await r.text()}`);}
+    await page.goto(`${url}/pacientes/${paciente.id}`);
+    await page.getByLabel('Vacuna para asignar').selectOption(vacunaId).catch(async error=>{console.log('VACUNAS_UI',await page.locator('body').innerText());for(const ruta of ['/vacunas',`/pacientes/${paciente.id}/aplicaciones-vacuna`,`/pacientes/${paciente.id}/esquemas`]){const r=await page.request.get(`${url}/api/v1${ruta}`,{headers});console.log('VACUNAS_HTTP',ruta,r.status(),await r.text());}throw error;});
+    const asignada=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith(`/pacientes/${paciente.id}/esquemas`));
+    await page.getByRole('button',{name:'Asignar esquema',exact:true}).click();assert.equal((await asignada).status(),201);
+    await page.reload();await page.getByText('Vacuna E2E sintética',{exact:true}).first().waitFor();pass('vacunas asignación explícita por UI persiste después de recarga');
+    await page.getByRole('button',{name:'Registrar vacuna',exact:true}).click();
+    await page.getByLabel(/Número de Lote del Fabricante/).fill('LOTE-E2E');
+    await page.getByLabel(/Sitio Anatómico de Punción/).selectOption('Cara anterolateral muslo izquierdo');
+    const aplicada=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith(`/pacientes/${paciente.id}/aplicaciones-vacuna`));
+    await page.getByRole('button',{name:'Registrar dosis',exact:true}).click();const res=await aplicada;assert.equal(res.status(),201,await res.text());const appVacuna=(await res.json()).data;
+    await page.getByRole('dialog').waitFor({state:'hidden'});await page.reload();
+    await page.getByRole('button',{name:/Historial/}).first().click();await page.getByText(/Lote: LOTE-E2E/).waitFor();pass('vacunación UI registra dosis y recarga lote persistido');
+    await page.getByTitle('Corregir lote o datos auditados').click();await page.getByLabel(/Número de Lote/).fill('LOTE-RECTIFICADO');await page.getByRole('dialog').locator('textarea').last().fill('Corrección E2E sintética');
+    const corregida=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/correcciones'));
+    await page.getByRole('button',{name:/Guardar Revisión/}).click();const rc=await corregida;assert.equal(rc.status(),200,await rc.text());await page.getByRole('dialog').waitFor({state:'hidden'});await page.getByText(/LOTE-RECTIFICADO/).waitFor();pass('vacunación UI corrige con motivo y revisión observada');
+    const versionNueva=await page.request.post(`${url}/api/v1/vacunas/${vacunaId}/versiones`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{nombre:'Vacuna E2E nueva',enfermedadObjetivo:'Objetivo de ensayo',fabricante:'Fabricante sintético',versionEsquemaAnterior:versionId,dosis:[{dosisId,numero:1,edadMesesRecomendada:1}]}});assert.equal(versionNueva.status(),201,await versionNueva.text());
+    const esquema=(await (await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/esquemas`,{headers})).json()).data;assert.equal(esquema.items[0].versionEsquemaId,versionId);assert.equal(esquema.items[0].edadRecomendadaMeses,0);
+    await page.reload();await page.getByRole('button',{name:/Historial/}).first().click();await page.getByText('Vacuna E2E sintética',{exact:true}).first().waitFor();pass('publicar versión nueva conserva esquema asignado y snapshot histórico');
+    await page.getByTitle('Anular aplicación con motivo formal').click();await page.getByRole('dialog').locator('textarea').last().fill('Anulación E2E sintética');const anulada=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/anulacion'));await page.getByRole('button',{name:'Confirmar Anulación'}).click();const ra=await anulada;assert.equal(ra.status(),200,await ra.text());await page.getByRole('dialog').waitFor({state:'hidden'});
+    await reiniciarBackend();await page.reload();const apps=(await (await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/aplicaciones-vacuna`,{headers})).json()).data;assert.equal(apps.find(a=>a.id===appVacuna.id).estado,'ANULADA');pass('anulación UI preserva historia y estado después de reinicio');
+    await page.getByRole('button',{name:'Registrar vacuna',exact:true}).click();await page.getByLabel(/Número de Lote del Fabricante/).fill('LOTE-NUEVA-ADMINISTRACION');await page.getByLabel(/Sitio Anatómico de Punción/).selectOption('Cara anterolateral muslo izquierdo');
+    const reaplicada=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith(`/pacientes/${paciente.id}/aplicaciones-vacuna`));await page.getByRole('button',{name:'Registrar dosis',exact:true}).click();const rn=await reaplicada;assert.equal(rn.status(),201,await rn.text());const nuevaApp=(await rn.json()).data;assert.equal(nuevaApp.id,appVacuna.id);assert.equal(nuevaApp.version,4);await page.getByRole('dialog').waitFor({state:'hidden'});await page.reload();
+    const vigentes=(await (await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/aplicaciones-vacuna`,{headers})).json()).data;assert.equal(vigentes.filter(a=>a.estado==='APLICADA').length,1);pass('nueva administración explícita tras anular conserva identidad lógica y una sola vigente');
 
    }
    if(pedi)await recorrerPediatria({page,url,paciente,headers,pass,reiniciarBackend});
