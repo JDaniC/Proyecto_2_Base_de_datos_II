@@ -104,7 +104,7 @@ export class RegistrarAplicacionVacuna {
 
       // Regla CA11: Comprobación determinista de aplicación previa
       const aplicacionPrevia = await lector.vacunasPediatricas.obtenerPorId(idApp);
-      if (aplicacionPrevia) {
+      if (aplicacionPrevia?.estado === 'APLICADA') {
         throw new ErrorDominio(
           'DOSIS_DUPLICADA',
           `Regla CA11: La dosis seleccionada ya fue administrada previamente a este menor (lote ${aplicacionPrevia.lote}).`
@@ -129,16 +129,16 @@ export class RegistrarAplicacionVacuna {
         sitioAplicacion: entrada.sitioAnatomico,
         ...(entrada.observaciones ? {observaciones: entrada.observaciones} : {}),
         estado: 'APLICADA',
-        version: versionPositiva(1),
+        version: versionPositiva((aplicacionPrevia?.version ?? 0)+1),
       };
 
       const cambios: import('../../puertos/nucleo.js').CambioPlanificado[] = [
         {
           agregado: 'aplicacionVacuna',
-          tipo: 'CREAR',
+          tipo: aplicacionPrevia ? 'ACTUALIZAR' : 'CREAR',
           recursoId: pid,
-          versionAnterior: null,
-          nuevoEstado: nuevaAplicacion,
+          versionAnterior: aplicacionPrevia ? versionPositiva(aplicacionPrevia.version) : null,
+          nuevoEstado: aplicacionPrevia ? {actual:nuevaAplicacion,anterior:aplicacionPrevia,revisionId:comando.ids.revision!,motivo:'Nueva administración explícita tras anulación'} : nuevaAplicacion,
         },
         {
           agregado: 'eventosHistorial',
@@ -151,7 +151,7 @@ export class RegistrarAplicacionVacuna {
             tipo: 'VACUNA',
             fechaHora: comando.instante,
             recursoId: pid,
-            titulo: `Vacuna aplicada: ${vacuna.nombre}`, 
+            titulo: `Vacuna aplicada: ${esquema.nombre}`.slice(0,200),
 
           },
         },

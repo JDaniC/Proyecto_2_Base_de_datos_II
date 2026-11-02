@@ -90,20 +90,27 @@ export async function aplicarCambiosPacientesFirestore(
         };
         const ref = firestore.doc(`aplicaciones_vacuna/${r.actual.id}`);
         const updateData: Record<string, unknown> = {
+          paciente_id: r.actual.pacienteId,
+          vacuna_id: r.actual.vacunaId,
+          dosis_id: r.actual.dosisId,
+          version_esquema_id: r.actual.versionEsquemaId,
+          pediatra_id: r.actual.pediatraId,
+          fecha_aplicacion: new Date(r.actual.fechaAplicacion),
           lote: r.actual.lote,
           sitio_aplicacion: r.actual.sitioAplicacion,
-          observaciones: r.actual.observaciones ?? null,
+          ...(r.actual.observaciones ? {observaciones:r.actual.observaciones} : {}),
           estado: r.actual.estado,
-          motivo_anulacion: r.actual.motivoAnulacion ?? null,
+          ...(r.actual.motivoAnulacion ? {motivo_anulacion:r.actual.motivoAnulacion} : {}),
           revision: r.actual.version,
         };
-        transaction.update(ref, updateData);
+        transaction.set(ref, validarDocumento(ref.path,updateData) as Record<string,unknown>);
         transaction.create(ref.collection('versiones').doc(r.revisionId), {
           version: r.anterior.version,
           actor_id: contexto.cuenta.id,
           fecha_hora: new Date(comando.instante),
           motivo: r.motivo,
           contenido_anterior: {
+            ...r.anterior,
             lote: r.anterior.lote,
             sitio_aplicacion: r.anterior.sitioAplicacion,
             observaciones: r.anterior.observaciones ?? null,

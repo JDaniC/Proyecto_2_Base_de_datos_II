@@ -95,6 +95,15 @@ test('E04 CA11 vacunas Firestore aislado', {skip: !host}, async t => {
     assert.equal((await db.collection(`aplicaciones_vacuna/${appId}/versiones`).get()).size,2);
     assert.equal((await new ConsultarEsquemaVacunas().ejecutar(contexto,bundle,pacienteId)).dosisAplicadas,0);
     await db.doc(`pacientes/${pacienteId}`).update({estado:'ACTIVO'});
+  });
+  await t.test('nueva administración explícita tras anulación conserva historia y compite por misma dosis',async()=>{
+    const a=p(),b=p(),resultados=await Promise.allSettled([registrar.ejecutar(a),registrar.ejecutar(b)]);
+    assert.equal(resultados.filter(r=>r.status==='fulfilled').length,1);
+    const ganador=resultados[0]!.status==='fulfilled'?a:b;
+    const r=await registrar.ejecutar(ganador);assert.equal(r.respuesta.id,appId);assert.equal(r.respuesta.version,4);assert.equal(r.respuesta.estado,'APLICADA');
+    assert.equal((await db.collection('aplicaciones_vacuna').get()).size,1);
+    const historia=await db.collection(`aplicaciones_vacuna/${appId}/versiones`).get();assert.equal(historia.size,3);
+    assert.ok(historia.docs.some(d=>d.data().contenido_anterior.estado==='ANULADA'&&d.data().contenido_anterior.fechaAplicacion===entrada.fechaAplicacion));
     await assert.rejects(registrar.ejecutar(p()),{codigo:'DOSIS_DUPLICADA'});
   });
   await t.test('dosis ajena, rol vigente y archivo no escriben',async()=>{
