@@ -1,3 +1,4 @@
+import { crearAntecedentesFirestore } from '../pediatria/antecedentes-firestore.js';
 import { crearClinicaFirestore, aplicarCambiosClinicosFirestore, aplicarCambiosAgendaFirestore } from '../consultas/clinica-firestore.js';
 import { crearHistorialFirestore } from '../../historial/historial-firestore.js';
 import type { ClienteFirestore } from '../tipos-firestore.js';
@@ -35,7 +36,8 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
       };
 
       return {
-        clinica: crearClinicaFirestore(cliente.firestore, transaction),
+        antecedentesPediatricos: crearAntecedentesFirestore(cliente.firestore, transaction),
+    clinica: crearClinicaFirestore(cliente.firestore, transaction),
         cuentas: repoCuenta,
         pacientes: repoPacientes,
         identidades: {
@@ -84,6 +86,7 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
 
 export function crearBundlePacientesFirestore(cliente: ClienteFirestore): BundleInstitucional & { cuenta: RepositorioCuenta } {
   return Object.freeze({
+    antecedentesPediatricos: crearAntecedentesFirestore(cliente.firestore),
     clinica: crearClinicaFirestore(cliente.firestore),
     institucion: 'CENTRO_MEDICO_PEDIATRICO',
     estadoPersistencia: 'DISPONIBLE', historial: crearHistorialFirestore(cliente.firestore),

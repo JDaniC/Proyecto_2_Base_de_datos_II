@@ -252,6 +252,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await assert.rejects(prepararAntecedentesPediatricos(db,{despuesDePagina:()=>{interrumpido=true;throw new Error('INTERRUPCION_SINTETICA');}}),/INTERRUPCION_SINTETICA/);
     assert.equal(interrumpido,true);
     assert.equal((await prepararAntecedentesPediatricos(db)).estado,'LISTO');
+    assert.deepEqual(await bundle.antecedentesPediatricos!.porPaciente(pacienteId),{version:0,alergias:[]});
     assert.equal((await prepararAntecedentesPediatricos(db)).estado,'LISTO');
     // Un proyecto separado simula instalación existente con historia sin autor verificable.
     const legado=crearClienteFirestore({emulatorHost:host!,projectId:`demo-legado-${process.pid}`,databaseId:'(default)',institucionalId:'CENTRO_MEDICO_PEDIATRICO'});
@@ -262,6 +263,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
       const datos={revision:1,nombre:'Polen',tipo:'ALERGIA',reaccion:'Sintética',severidad:'LEVE',estado:'ACTIVA',fecha_registro:new Date('2026-01-01')};
       await ldb.doc(`pacientes/${pid}/alergias/${aid}`).set(datos);
       assert.equal((await prepararAntecedentesPediatricos(ldb)).estado,'RECONCILIAR');
+      await assert.rejects(crearBundlePacientesFirestore(legado).antecedentesPediatricos!.porPaciente(pid),{codigo:'PERSISTENCIA_NO_DISPONIBLE'});
       assert.deepEqual((await ldb.doc(`pacientes/${pid}/alergias/${aid}`).get()).data(),(await ldb.doc(`pediatria_respaldo_009/${pid}/alergias/${aid}`).get()).data());
       assert.equal((await prepararAntecedentesPediatricos(ldb)).estado,'RECONCILIAR');
     }finally{await legado.cerrar();}
