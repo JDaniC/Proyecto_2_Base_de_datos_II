@@ -95,7 +95,7 @@ try {
   for (let i = 0; i < 100; i++) { try { if ((await fetch(url)).ok) break; } catch { /* arranque local */ } await new Promise((r) => setTimeout(r, 100)); }
   assert.equal((await fetch(url)).status, 200);
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const resultados = await recorrerClinica({browser,url,cuentas, reiniciarBackend: async () => {await app.close(); app = await iniciarServidor(runtime);}});
+  const resultados = await recorrerClinica({browser,url,cuentas:process.env.CLINICA_UI_SOLO_PEDIATRIA==='1'?cuentas.filter(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO'):cuentas, reiniciarBackend: async () => {await app.close(); app = await iniciarServidor(runtime);}});
   console.log(JSON.stringify(resultados));
   if(process.env.CLINICA_UI_EVIDENCE) await writeFile(process.env.CLINICA_UI_EVIDENCE, JSON.stringify(resultados,null,2));
 } finally {

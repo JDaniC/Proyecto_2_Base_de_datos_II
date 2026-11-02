@@ -100,10 +100,11 @@ try{
   await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','hospital_general','-c','CREATE DATABASE servicios_legado TEMPLATE hospital_general']);
   const legadoSql=sql=>run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_legado','-c',sql]);
   const conteo=await legadoSql('SELECT count(*) FROM hospital_general.orden_examen');
+  const tieneLegado=Number((await legadoSql('SELECT (SELECT count(*) FROM hospital_general.orden_examen)+(SELECT count(*) FROM hospital_general.poliza)+(SELECT count(*) FROM hospital_general.procedimiento_realizado)')).trim())>0;
   await legadoSql('DROP SCHEMA hospital_servicios CASCADE');
   for(let i=0;i<2;i++)await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_legado','-f','/tmp/servicios.sql']);
-  if((await legadoSql('SELECT estado FROM hospital_servicios.modelo')).trim()!=='RECONCILIAR'||conteo!==await legadoSql('SELECT count(*) FROM hospital_general.orden_examen'))throw new Error('LEGADO_SERVICIOS_SIN_GUARDA');
-  console.log('PASS migración 008 legado: RECONCILIAR estable, órdenes existentes conservadas.');
+  if((await legadoSql('SELECT estado FROM hospital_servicios.modelo')).trim()!==(tieneLegado?'RECONCILIAR':'LISTO')||conteo!==await legadoSql('SELECT count(*) FROM hospital_general.orden_examen'))throw new Error('LEGADO_SERVICIOS_SIN_GUARDA');
+  console.log(tieneLegado?'PASS migración 008 legado: RECONCILIAR estable, órdenes existentes conservadas.':'PASS migración 008 sin legado: LISTO estable, no se inventaron órdenes.');
   console.log('PASS migración 008 sobre volumen existente: mismas proyecciones y estado, sin pérdida.');
  }
  const antes=await estadoSql();

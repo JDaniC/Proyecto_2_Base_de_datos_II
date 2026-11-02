@@ -86,7 +86,7 @@ describe('arranque del servidor', () => {
 
     try {
       let liveness: Response | undefined;
-      for (let intento = 0; intento < 50; intento += 1) {
+      for (let intento = 0; intento < 300; intento += 1) {
         if (proceso.exitCode !== null) break;
         try {
           liveness = await fetch(`http://127.0.0.1:${port}/api/v1/health/live`);

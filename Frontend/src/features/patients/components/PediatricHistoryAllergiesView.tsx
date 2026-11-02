@@ -794,6 +794,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                   Reacción Clínica Observada o Reportada *
                 </label>
                 <textarea
+                  aria-label="Reacción clínica de la alergia"
                   rows={3}
                   className="w-full px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-clinic-primary focus:border-clinic-primary outline-none"
                   placeholder="Describa síntomas: tiempo transcurrido desde la exposición, manifestaciones dermatológicas, respiratorias o gastrointestinales..."
