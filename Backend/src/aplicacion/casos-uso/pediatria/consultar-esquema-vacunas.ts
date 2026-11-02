@@ -43,11 +43,16 @@ export class ConsultarEsquemaVacunas {
     const hoy = new Date().toISOString().slice(0, 10);
     const edadMeses = edadMesesEnFecha(paciente.fechaNacimiento, hoy);
 
-    const [catalogoVacunas, esquemasAsignados, aplicaciones] = await Promise.all([
+    // Una lectura fallida no deja sus hermanas activas después de responder HTTP.
+    const lecturas = await Promise.allSettled([
       bundle.vacunasPediatricas.obtenerCatalogo(),
       bundle.vacunasPediatricas.obtenerEsquemas(pid),
       bundle.vacunasPediatricas.obtenerAplicaciones(pid),
     ]);
+
+    const catalogoVacunas = resultadoLectura(lecturas[0]);
+    const esquemasAsignados = resultadoLectura(lecturas[1]);
+    const aplicaciones = resultadoLectura(lecturas[2]);
 
     const aplicacionesVigentes = aplicaciones.filter((a) => a.estado === 'APLICADA');
     const items: ItemEsquemaPaciente[] = [];
@@ -97,4 +102,9 @@ export class ConsultarEsquemaVacunas {
       porcentajeCobertura,
     };
   }
+}
+
+function resultadoLectura<T>(resultado: PromiseSettledResult<T>): T {
+  if(resultado.status === 'rejected')throw resultado.reason;
+  return resultado.value;
 }
