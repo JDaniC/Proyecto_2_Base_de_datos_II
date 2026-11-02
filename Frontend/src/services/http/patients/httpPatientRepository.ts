@@ -34,7 +34,22 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
     if(i!=='CENTRO_PEDIATRICO'||!Number.isSafeInteger(version)||!cambio||!Number.isSafeInteger(cambio.versionAntecedentes)||!cambio.motivo.trim())throw new HttpError({status:400,codigo:'SOLICITUD_INVALIDA',mensaje:'Recarga antecedentes y completa el motivo antes de enviar.'});
     const body={version_paciente:version,version_antecedentes:cambio.versionAntecedentes,motivo:cambio.motivo.trim(),...datos};
     const r=await http.post<AntecedentesPediatricosDto>(`${path(id)}/antecedentes-pediatricos/${accion}`,body,{idempotencyKey:key(`${id}/pediatria/${accion}`,body)});
-    const paciente=mapearPaciente((await http.get<PacienteDto>(path(id))).data);
+    let respuestaPaciente: {data: PacienteDto};
+    try {
+      respuestaPaciente = await http.get<PacienteDto>(path(id));
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 500) {
+        throw new HttpError({
+          status: 503,
+          codigo: '503 PERSISTENCIA_NO_DISPONIBLE',
+          mensaje: 'No se pudo confirmar la respuesta del servidor. Reintenta la misma solicitud.',
+          correlacion: error.correlacion,
+          causa: error,
+        });
+      }
+      throw error;
+    }
+    const paciente = mapearPaciente(respuestaPaciente.data);
     return {paciente,antecedentes:mapearAntecedentesPediatricos(r.data)};
   };
   const methods = {

@@ -238,6 +238,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setProcesando(true);
       try{
         await enviar(intencion.current);
+        setErrorAccion(null);
         setModalAlergiaAbierto(false);
         setModalPerinatalesAbierto(false);
         setEditarHistoria(false);

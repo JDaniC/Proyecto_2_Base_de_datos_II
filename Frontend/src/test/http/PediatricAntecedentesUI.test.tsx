@@ -5,9 +5,10 @@ import {PediatricHistoryAllergiesView} from '../../features/patients/components/
 import type {Paciente,AntecedentesClinicos} from '../../services/types';
 const confirmar=vi.hoisted(()=>vi.fn());
 const historia=vi.hoisted(()=>vi.fn());
-vi.mock('../../app/ServiceContext',()=>({useServices:()=>({mode:'api',patientRepository:{confirmarSinAlergias:confirmar,actualizarHistoriaPediatrica:historia}})}));
+const registrarAlergiaMock=vi.hoisted(()=>vi.fn());
+vi.mock('../../app/ServiceContext',()=>({useServices:()=>({mode:'api',patientRepository:{confirmarSinAlergias:confirmar,actualizarHistoriaPediatrica:historia,registrarAlergia:registrarAlergiaMock}})}));
 vi.mock('../../app/AuthSessionContext',()=>({useAuthSession:()=>({sesion:{nombre:'Pediatra',rolEtiqueta:'Pediatra'}})}));
-afterEach(()=>{cleanup();confirmar.mockReset();historia.mockReset();});
+afterEach(()=>{cleanup();confirmar.mockReset();historia.mockReset();registrarAlergiaMock.mockReset();});
 const paciente={id:'menor',version:4,nombreCompleto:'Menor Sintético',estadoAlergias:'SIN_VERIFICAR',estado:'ACTIVO'} as Paciente;
 const antecedentes:AntecedentesClinicos={versionAntecedentes:2,patologicos:[],quirurgicos:[],familiares:[],medicamentosActuales:[],alergias:[]};
 it('resultado incierto bloquea edición y reintenta exactamente versiones y motivo capturados',async()=>{
@@ -45,14 +46,20 @@ it('rechazo definitivo después de respuesta incierta devuelve el formulario y c
  await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));await screen.findByText('Recarga antecedentes');expect(screen.queryByText('Resultado pendiente de confirmar')).toBeNull();expect(screen.getByLabelText('Motivo del cambio clínico')).toHaveValue('Verificación sintética');
 });
 it('reintento exitoso tras respuesta incierta limpia modales y campos de alergia',async()=>{
- confirmar.mockRejectedValueOnce({status:503,mensaje:'Respuesta perdida'}).mockResolvedValueOnce({antecedentes});
+ registrarAlergiaMock.mockRejectedValueOnce({status:503,mensaje:'Respuesta perdida'}).mockResolvedValueOnce({antecedentes});
  const user=userEvent.setup(),actualizar=vi.fn().mockResolvedValue(undefined);
  render(<PediatricHistoryAllergiesView paciente={paciente} antecedentes={antecedentes} institucionId="CENTRO_PEDIATRICO" onActualizar={actualizar}/>);
  await user.type(screen.getByLabelText('Motivo del cambio clínico'),'Verificación sintética');
- await user.click(screen.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}));
+ await user.click(screen.getByRole('button',{name:'Registrar Alergia Documentada'}));
+ await user.type(screen.getByLabelText(/Sustancia, Medicamento o Alimento/i),'Penicilina sintética');
+ await user.type(screen.getByLabelText('Reacción clínica de la alergia'),'Exantema máculo-papular');
+ await user.click(screen.getByRole('button',{name:'Guardar Alergia'}));
  await screen.findByText('Resultado pendiente de confirmar');
  await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));
  await waitFor(()=>expect(actualizar).toHaveBeenCalledTimes(1));
  expect(screen.queryByText('Resultado pendiente de confirmar')).toBeNull();
  expect(screen.queryByRole('dialog')).toBeNull();
+ await user.click(screen.getByRole('button',{name:'Registrar Alergia Documentada'}));
+ expect(screen.getByLabelText(/Sustancia, Medicamento o Alimento/i)).toHaveValue('');
+ expect(screen.getByLabelText('Reacción clínica de la alergia')).toHaveValue('');
 });

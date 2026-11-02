@@ -32,6 +32,12 @@
 - **Condición inicial:** El botón de reintento de respuesta incierta no cerraba modales ni reseteaba los campos de alergia al tener éxito.
 - **Corrección aplicada:** Se invocan los setters de limpieza (`setModalAlergiaAbierto(false)`, etc.) en la rama exitosa de reintento, cubierto por regresión automatizada.
 
+### HALLAZGO-06: Preservación de mutación ante error 500 en refresco post-commit y limpieza de error en reintento (Resuelto)
+- **Severidad:** MINOR
+- **Archivo/Línea:** `Frontend/src/services/http/patients/httpPatientRepository.ts:33-39`, `Frontend/src/features/patients/components/PediatricHistoryAllergiesView.tsx:240`, `Frontend/src/test/http/PediatricAntecedentesUI.test.tsx:47-65`
+- **Condición inicial:** Un fallo 500 en el refresco GET de paciente tras el POST de mutación se propagaba como 500 en vez de 503 recuperable, y `errorAccion` permanecía activo tras un reintento exitoso en la vista de alergias.
+- **Corrección aplicada:** Se capturó específicamente `HttpError` con status 500 en el GET de refresco convirtiéndolo a 503 reintentable (`PERSISTENCIA_NO_DISPONIBLE`), se limpió `errorAccion` a `null` al confirmar éxito del reintento en UI, y se actualizó la prueba de regresión para cubrir el flujo completo de `registrarAlergia` validando que los campos queden limpios al reabrir el formulario.
+
 ## 2. Resumen de Pruebas Ejecutadas y Estado Final
 - Pruebas Backend Unitarias/Runtime: 308 PASS (0 FAIL)
 - Pruebas Backend Contratos: 32 PASS (0 FAIL)
