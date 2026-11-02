@@ -14,7 +14,7 @@ export function PediatricGuardiansHttpView({paciente,puedeEditar,onActualizar}:{
  const [error,setError]=useState<string>(),[ocupado,setOcupado]=useState(false),[incierto,setIncierto]=useState(false);
  const pendiente=useRef<(()=>Promise<void>)|undefined>(undefined);
  const abrir=(a:Accion,r?:ResponsablePediatrico)=>{setAccion(a);setSeleccion(r);setEncontrado(undefined);setNombres(r?.nombres??'');setApellidos(r?.apellidos??'');setTelefono(r?.telefono??'');setParentesco(r?.parentesco??'');setPrincipal(r?.esPrincipal??false);setAutoriza(r?.autorizaAtencion??false);setNumero('');setMotivo('');setError(undefined);};
- const enviar=async(op:()=>Promise<void>)=>{setOcupado(true);setError(undefined);pendiente.current=op;try{await op();pendiente.current=undefined;setIncierto(false);setAccion(undefined);await onActualizar();}catch(e){setError(getErrorMessage(e,'No se pudo confirmar el cambio.'));if([0,503,504].includes((e as {status:number}).status))setIncierto(true);}finally{setOcupado(false);}};
+ const enviar=async(op:()=>Promise<void>)=>{setOcupado(true);setError(undefined);pendiente.current=op;try{await op();pendiente.current=undefined;setIncierto(false);setAccion(undefined);await onActualizar();}catch(e){setError(getErrorMessage(e,'No se pudo confirmar el cambio.'));const dudoso=[0,503,504].includes((e as {status?:number}|null)?.status as number);setIncierto(dudoso);if(!dudoso)pendiente.current=undefined;}finally{setOcupado(false);}};
  const guardar=()=>{
   if(!accion||!patientRepository.gestionarResponsablePediatrico)return;
   const datos:Record<string,unknown>={version_paciente:paciente.version};
@@ -25,7 +25,7 @@ export function PediatricGuardiansHttpView({paciente,puedeEditar,onActualizar}:{
   if(accion==='baja')Object.assign(datos,{version_vinculo:seleccion?.versionVinculo,motivo});
   if(accion==='vinculacion'){
    if(!encontrado){setError('Busca y selecciona al responsable antes de vincular.');return;}
-   rid=encontrado.responsable.id;Object.assign(datos,{version_responsable:encontrado.responsable.version,...(encontrado.version_vinculo?{version_vinculo:encontrado.version_vinculo}:{}),parentesco,es_principal:principal,autoriza_atencion:autoriza});
+   rid=encontrado.responsable.id;Object.assign(datos,{version_responsable:encontrado.responsable.version,...(encontrado.versionVinculo?{version_vinculo:encontrado.versionVinculo}:{}),parentesco,es_principal:principal,autoriza_atencion:autoriza});
   }
   const a=accion;void enviar(()=>patientRepository.gestionarResponsablePediatrico!(paciente.id,a,datos,rid));
  };

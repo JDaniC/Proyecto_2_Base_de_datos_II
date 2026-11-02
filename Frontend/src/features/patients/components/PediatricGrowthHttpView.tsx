@@ -23,7 +23,7 @@ export function PediatricGrowthHttpView({pacienteId}:{pacienteId:string}){
   </form>
   {error?<Alert variant="danger">{error} <Button onClick={()=>setIntento(x=>x+1)}>Reintentar</Button></Alert>:datos===null?<p>Cargando mediciones…</p>:<>
    <div style={{overflowX:'auto'}}><table><thead><tr>{['Consulta','Edad (meses)','Peso (kg)','Talla (cm)','Perímetro cefálico (cm)','IMC (kg/m²)'].map(t=><th key={t}>{t}</th>)}</tr></thead><tbody>
-    {datos.map(m=><tr key={m.consulta_id}><td><Link to={`/pacientes/${pacienteId}/consultas/${m.consulta_id}`}>{m.fecha} · v{m.version_consulta}</Link></td><td>{m.edad_meses??'Sin fecha de nacimiento'}</td><td>{m.peso_kg??'Sin dato'}</td><td>{m.talla_cm??'Sin dato'}</td><td>{m.perimetro_cefalico_cm??'Sin dato'}</td><td>{m.imc??'No calculable'}</td></tr>)}
+    {datos.map(m=><tr key={m.consultaId}><td><Link to={`/pacientes/${pacienteId}/consultas/${m.consultaId}`}>{m.fecha} · v{m.versionConsulta}</Link></td><td>{m.edadMeses??'Sin fecha de nacimiento'}</td><td>{m.pesoKg??'Sin dato'}</td><td>{m.tallaCm??'Sin dato'}</td><td>{m.perimetroCefalicoCm??'Sin dato'}</td><td>{m.imc??'No calculable'}</td></tr>)}
    </tbody></table></div>{!datos.length&&<p>No hay consultas en este intervalo.</p>}
    <p>El IMC es un cálculo aritmético. No se muestran curvas ni interpretaciones clínicas automáticas.</p>
    <Button variant="secondary" disabled={!cursor} onClick={()=>setCursor(undefined)}>Primera página</Button>{' '}<Button disabled={!siguiente} onClick={()=>setCursor(siguiente)}>Siguiente</Button>

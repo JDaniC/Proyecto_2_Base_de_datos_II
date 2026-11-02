@@ -32,3 +32,10 @@ it('historia persistida se presenta sin sustituirla por listas vacías',async()=
  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({data:{version:4,alergias:[],historia}}),{status:200})));
  const a=await createHttpPatientRepository(new HttpClient()).obtenerAntecedentes!('CENTRO_PEDIATRICO','menor');expect(a.patologicos).toEqual(historia.patologicos);expect(a.familiares).toEqual(historia.familiares);
 });
+
+it('repositorio traduce mediciones y versión de vínculo a los tipos de presentación',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({data:[{consulta_id:'consulta',version_consulta:2,fecha:'2026-11-01',fecha_hora:'2026-11-01T12:00:00Z',profesional:'Pediatra',edad_meses:12,peso_kg:10,talla_cm:null,perimetro_cefalico_cm:null,imc:null}],meta:{siguiente_cursor:'cursor'}}),{status:200})).mockResolvedValueOnce(new Response(JSON.stringify({data:{responsable:{id:'responsable',nombre:'Ana',version:2},version_vinculo:3,activo:false}}),{status:200}));
+ vi.stubGlobal('fetch',fetch);const r=createHttpPatientRepository(new HttpClient());
+ const pagina=await r.obtenerCrecimientoPediatrico!('menor',{});expect(pagina.elementos[0]).toMatchObject({consultaId:'consulta',versionConsulta:2,edadMeses:12,pesoKg:10,tallaCm:null,imc:null});expect(pagina.elementos[0]).not.toHaveProperty('consulta_id');expect(pagina.siguienteCursor).toBe('cursor');
+ const responsable=await r.buscarResponsablePediatrico!('menor','CUI','1234567890101');expect(responsable.versionVinculo).toBe(3);expect(responsable).not.toHaveProperty('version_vinculo');
+});

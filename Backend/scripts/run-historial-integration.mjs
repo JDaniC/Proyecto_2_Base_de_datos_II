@@ -34,6 +34,7 @@ async function estadoSql(){
  const my=await run('docker',[...compose,'exec','-T','mysql','sh','-c',`MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot -N -B -e "SELECT COUNT(*),SHA2(GROUP_CONCAT(CAST(contenido AS CHAR) ORDER BY id),256) FROM clinica_historial.eventos"`]);
  return {pg,my};
 }
+let errorPrincipal;
 try{
  console.log('Preparando cuatro motores aislados:',proyecto);
  await run('python3',[join(root,'Database/docker/preparar.py'),'--secrets-dir',secretos]);
@@ -113,7 +114,7 @@ try{
  if(JSON.stringify(antes)!==JSON.stringify(despues)) throw new Error('MIGRACION_CAMBIO_EVENTOS');
  await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);
  console.log('PASS SQL: migraciones reejecutadas sobre datos existentes sin eliminar eventos.');
-}finally{
- try {await run('docker',[...compose,'down','--volumes','--timeout','30']);}
+}catch(error){errorPrincipal=error;throw error;}finally{
+ try {await run('docker',[...compose,'down','--volumes','--timeout','30']);}catch(error){if(!errorPrincipal)throw error;console.error('Limpieza aislada pendiente:',error.message);}
  finally {await rm(temporal,{recursive:true,force:true});}
 }

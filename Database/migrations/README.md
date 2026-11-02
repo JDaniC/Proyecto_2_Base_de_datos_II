@@ -216,3 +216,14 @@ componentes SQL emitidos originalmente son historia inmutable. Leer la versión
 vigente por los puertos clínicos o snapshot_actual, nunca mezclarla con los
 componentes iniciales. Detalle y justificación: DEC18 y
 Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md.
+
+## 009 · Antecedentes pediátricos (E04-P2-01)
+
+Aplicar `prepararAntecedentesPediatricos(db)` de
+[009_antecedentes_pediatricos.mjs](009_antecedentes_pediatricos.mjs) después de
+004/006 también en instalación nueva, con escritores detenidos y sin migradores
+simultáneos. Instrucciones completas en [009_antecedentes_pediatricos.md](009_antecedentes_pediatricos.md).
+El manifiesto independiente exige LISTO para habilitar la extensión. Legado sin
+procedencia se respalda íntegro y conserva RECONCILIAR; no se convierte en ausencia
+verificada de alergias ni se inventan fechas/autores. Reejecutar retoma cursor sin
+eliminar datos; revertir el servidor conserva respaldos y versiones.

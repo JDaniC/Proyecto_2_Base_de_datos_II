@@ -27,14 +27,14 @@ export function validarPerinatales(entrada: unknown): Perinatales {
       throw solicitudInvalida('Dato perinatal fuera del rango admitido.',campo);
     }
   }
-  if(e.tipoParto!==undefined&&!['PARTO_VAGINAL','CESAREA','PARTO_INSTRUMENTADO'].includes(String(e.tipoParto)))throw solicitudInvalida('Tipo de parto no admitido.','tipoParto');
+  if(e.tipoParto!==undefined&&(typeof e.tipoParto!=='string'||!['PARTO_VAGINAL','CESAREA','PARTO_INSTRUMENTADO'].includes(e.tipoParto)))throw solicitudInvalida('Tipo de parto no admitido.','tipoParto');
   if(e.complicacionesPerinatales!==undefined)textoClinico(e.complicacionesPerinatales,'complicacionesPerinatales',4000,true);
   return {...e} as Perinatales;
 }
 
 export function validarAlergia(entrada: unknown) {
   const e=objetoCerrado(entrada,['sustancia','severidad','reaccion']);
-  if(!['LEVE','MODERADA','SEVERA'].includes(String(e.severidad)))throw solicitudInvalida('Severidad no admitida.','severidad');
+  if(typeof e.severidad!=='string'||!['LEVE','MODERADA','SEVERA'].includes(e.severidad))throw solicitudInvalida('Severidad no admitida.','severidad');
   return {sustancia:textoClinico(e.sustancia,'sustancia',200).trim(),severidad:e.severidad as 'LEVE'|'MODERADA'|'SEVERA',reaccion:textoClinico(e.reaccion,'reaccion',4000).trim()};
 }
 

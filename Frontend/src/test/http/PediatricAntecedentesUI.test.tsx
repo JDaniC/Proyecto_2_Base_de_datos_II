@@ -38,3 +38,9 @@ it('cancelar historia no escribe; guardar envía listas explícitas, versiones y
  await waitFor(()=>expect(actualizar).toHaveBeenCalledTimes(1));
  expect(historia).toHaveBeenCalledWith('CENTRO_PEDIATRICO','menor',{patologicos:['Asma sintética'],quirurgicos:[],familiares:[],medicamentosActuales:[]},4,{versionAntecedentes:2,motivo:'Registro sintético'});
 });
+it('rechazo definitivo después de respuesta incierta devuelve el formulario y conserva el motivo',async()=>{
+ confirmar.mockRejectedValueOnce({status:503,mensaje:'Respuesta perdida'}).mockRejectedValueOnce({status:409,mensaje:'Recarga antecedentes'});
+ const user=userEvent.setup();render(<PediatricHistoryAllergiesView paciente={paciente} antecedentes={antecedentes} institucionId="CENTRO_PEDIATRICO" onActualizar={vi.fn()}/>);
+ await user.type(screen.getByLabelText('Motivo del cambio clínico'),'Verificación sintética');await user.click(screen.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}));await screen.findByText('Resultado pendiente de confirmar');
+ await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));await screen.findByText('Recarga antecedentes');expect(screen.queryByText('Resultado pendiente de confirmar')).toBeNull();expect(screen.getByLabelText('Motivo del cambio clínico')).toHaveValue('Verificación sintética');
+});

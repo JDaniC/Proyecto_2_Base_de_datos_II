@@ -3542,7 +3542,7 @@
       "signos_vitales": {
         "peso_kg": 35,
         "talla_cm": 140,
-        "presion_sistolica": 120
+        "presion_sistolica": 120.0
       },
       "diagnosticos": [
         {

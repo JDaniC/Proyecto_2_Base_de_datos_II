@@ -58,7 +58,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const enviar=async(op:()=>Promise<unknown>)=>{
     intencion.current=op;
     try {const r=await op();setIncierto(false);intencion.current=null;return r;}
-    catch(e){if([0,503,504].includes((e as {status:number}).status))setIncierto(true);throw e;}
+    catch(e){const dudoso=[0,503,504].includes((e as {status?:number}|null)?.status as number);setIncierto(dudoso);if(!dudoso)intencion.current=null;throw e;}
   };
 
   const [modalAlergiaAbierto, setModalAlergiaAbierto] = useState(false);

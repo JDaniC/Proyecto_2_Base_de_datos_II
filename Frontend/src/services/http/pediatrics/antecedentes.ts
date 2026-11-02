@@ -1,4 +1,4 @@
-import type { AntecedentesClinicos } from '../../types';
+import type { AntecedentesClinicos,SnapshotAntecedentesPediatricos } from '../../types';
 import { HttpClient } from '../httpClient';
 export interface AntecedentesPediatricosDto {
   version:number;
@@ -15,4 +15,8 @@ export function mapearAntecedentesPediatricos(dto:AntecedentesPediatricosDto):An
 }
 export async function leerAntecedentesPediatricos(http:HttpClient,id:string){
   return mapearAntecedentesPediatricos((await http.get<AntecedentesPediatricosDto>(`/pacientes/${encodeURIComponent(id)}/antecedentes-pediatricos`)).data);
+}
+
+export function mapearSnapshotHistorico(dto:AntecedentesPediatricosDto):SnapshotAntecedentesPediatricos {
+ return {version:dto.version,alergias:dto.alergias.map(a=>({...a})),...(dto.historia?{historia:{patologicos:[...dto.historia.patologicos],quirurgicos:[...dto.historia.quirurgicos],familiares:[...dto.historia.familiares],medicamentosActuales:[...dto.historia.medicamentosActuales]}}:{}),...(dto.perinatales?{perinatales:{...dto.perinatales}}:{}),...(dto.verificacionSinAlergias?{verificacionSinAlergias:{...dto.verificacionSinAlergias}}:{})};
 }

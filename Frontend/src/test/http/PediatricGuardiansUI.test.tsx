@@ -28,3 +28,10 @@ it('error de crecimiento no se representa como ausencia de mediciones',async()=>
  const user=userEvent.setup();render(<MemoryRouter><PediatricGrowthHttpView pacienteId="menor"/></MemoryRouter>);
  await screen.findByText(/Servicio caído/);expect(screen.queryByText('No hay consultas en este intervalo.')).toBeNull();await user.click(screen.getByRole('button',{name:'Reintentar'}));await screen.findByText('No hay consultas en este intervalo.');
 });
+it('reintento con rechazo definitivo libera cancelar y editar',async()=>{
+ gestionar.mockRejectedValueOnce({status:503,mensaje:'Respuesta perdida'}).mockRejectedValueOnce({status:409,mensaje:'Recarga el expediente'});
+ const user=userEvent.setup();render(<PediatricGuardiansHttpView paciente={paciente} puedeEditar onActualizar={vi.fn()}/>);
+ await user.click(screen.getByRole('button',{name:'Editar contacto de Ana Sintética'}));await user.click(screen.getByRole('button',{name:'Guardar responsable'}));await screen.findByText(/Resultado pendiente/);
+ await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));await screen.findByText('Recarga el expediente');expect(screen.queryByText(/Resultado pendiente/)).toBeNull();
+ await user.click(screen.getByRole('button',{name:'Cancelar'}));expect(screen.queryByRole('dialog')).toBeNull();
+});

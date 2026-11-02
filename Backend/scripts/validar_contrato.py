@@ -54,10 +54,11 @@ def validate_artifacts():
     operations = {op['operationId']: op for item in spec['paths'].values()
                   for method, op in item.items() if method in {'get', 'post', 'patch', 'put', 'delete'}}
     require(len(operations) == sum(len(item) for item in spec['paths'].values()), 'operationId duplicado')
-    fixtures = [case for archivo in ('contrato-v1.json', 'hospital-v1.json', 'hospital-servicios-v1.json')
+    fixtures = [case for archivo in ('contrato-v1.json', 'hospital-v1.json', 'hospital-servicios-v1.json', 'pediatria-respuestas-v1.json')
                 for case in json.loads((DOCS / 'fixtures' / archivo).read_text(), parse_float=Decimal)]
     ids = set()
     request_coverage = set()
+    response_coverage = set()
     for case in fixtures:
         require(case['id'] not in ids, 'Fixture duplicado: ' + case['id'])
         ids.add(case['id'])
@@ -77,6 +78,11 @@ def validate_artifacts():
             require(op['requestBody']['content']['application/json']['schema']['$ref'].endswith('/' + target),
                     'Fixture no corresponde al request: ' + case['id'])
             request_coverage.add((case['operationId'], case['valid']))
+        if 'responseOperationId' in case:
+            name = case['responseOperationId']
+            target_ref = operations[name]['responses'][case['status']]['content']['application/json']['schema']['$ref']
+            require(target_ref.endswith('/' + target), 'Fixture no corresponde a respuesta: ' + case['id'])
+            response_coverage.add((name, case['status'], case['valid']))
         if 'queryOperationId' in case:
             op = operations[case['queryOperationId']]
             require(op['x-query-schema']['$ref'] == '#/components/schemas/' + target,
@@ -97,6 +103,10 @@ def validate_artifacts():
                 'Errores incompletos: ' + name)
         if 'requestBody' in op:
             require({(name, True), (name, False)} <= request_coverage, 'Faltan ejemplos request: ' + name)
+        if name.startswith('pediatria') or name == 'catalogoOdontologia':
+            for status in ('200', '201'):
+                if status in op['responses']:
+                    require({(name, status, True), (name, status, False)} <= response_coverage, 'Faltan ejemplos respuesta: ' + name)
         require('x-permisos' in op and op['x-instituciones'], 'Política ausente: ' + name)
     # Trazabilidad exhaustiva contra las firmas de presentación actuales.
     source = (ROOT / 'Frontend/src/services/contracts.ts').read_text()

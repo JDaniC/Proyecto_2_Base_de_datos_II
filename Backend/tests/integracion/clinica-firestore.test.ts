@@ -325,6 +325,8 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     let cursor=primera.meta.siguiente_cursor;
     while(cursor){const pagina=await servicio.ejecutar(contexto,bundle,pacienteId,{limite:1,cursor});for(const m of pagina.data){assert.equal(ids.has(m.consulta_id),false);ids.add(m.consulta_id);}cursor=pagina.meta.siguiente_cursor;}
     assert.ok(ids.size>=1);
+    const asc=await servicio.ejecutar(contexto,bundle,pacienteId,{limite:100,orden:'ASC'}),desc=await servicio.ejecutar(contexto,bundle,pacienteId,{limite:100,orden:'DESC'});
+    assert.deepEqual(desc.data.map(x=>x.consulta_id),asc.data.map(x=>x.consulta_id).reverse());
     assert.deepEqual((await servicio.ejecutar(contexto,bundle,pacienteId,{desde:'2099-01-01T00:00:00Z'})).data,[]);
     if(primera.meta.siguiente_cursor)await assert.rejects(servicio.ejecutar(contexto,bundle,pacienteId,{limite:2,cursor:primera.meta.siguiente_cursor}),{codigo:'SOLICITUD_INVALIDA'});
   });

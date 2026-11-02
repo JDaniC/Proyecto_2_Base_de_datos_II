@@ -241,7 +241,7 @@
     "responsable": "E04-P2-01",
     "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:97`",
-    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias/confirmar-sin-alergias`",
+    "propuesta_inventario": "POST /api/v1/pacientes/{pacienteId}/antecedentes-pediatricos/sin-alergias",
     "operationId": "pediatriaSinAlergias"
   },
   {
@@ -251,7 +251,7 @@
     "responsable": "E04-P2-01",
     "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:124`",
-    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias`",
+    "propuesta_inventario": "POST /api/v1/pacientes/{pacienteId}/antecedentes-pediatricos/alergias",
     "operationId": "pediatriaAlergiaCrear"
   },
   {
@@ -261,7 +261,7 @@
     "responsable": "E04-P2-01",
     "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:154`",
-    "propuesta_inventario": "`DELETE /api/v1/pediatria/pacientes/{pacienteId}/alergias?sustancia={sustancia}`",
+    "propuesta_inventario": "POST /api/v1/pacientes/{pacienteId}/antecedentes-pediatricos/alergias/baja",
     "operationId": "pediatriaAlergiaBaja"
   },
   {
@@ -271,8 +271,11 @@
     "responsable": "E04-P2-01",
     "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:184`",
-    "propuesta_inventario": "`PUT /api/v1/pediatria/pacientes/{pacienteId}/antecedentes-perinatales`",
-    "operationId": "pediatriaPerinatales"
+    "propuesta_inventario": "POST /api/v1/pacientes/{pacienteId}/antecedentes-pediatricos/perinatales",
+    "operationId": "pediatriaPerinatales",
+    "operationIds_adicionales": [
+      "pediatriaRectificar"
+    ]
   },
   {
     "metodo": "AppointmentRepository.obtenerCitas",
@@ -1087,7 +1090,7 @@
     "destino": "EXTENSION_PEDIATRIA",
     "operationId": "pediatriaResponsableBuscar",
     "responsable": "E04-P2-01",
-    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+    "regla": "Lectura HTTP exclusiva de pediatría con autoridad verificada; sin versión esperada ni clave idempotente. Crecimiento paginado por consulta y fecha."
   },
   {
     "metodo": "PatientRepository.gestionarResponsablePediatrico",
@@ -1095,7 +1098,13 @@
     "destino": "EXTENSION_PEDIATRIA",
     "operationId": "pediatriaResponsableCrear",
     "responsable": "E04-P2-01",
-    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
+    "operationIds_adicionales": [
+      "pediatriaResponsableContacto",
+      "pediatriaResponsableVinculo",
+      "pediatriaResponsableVincular",
+      "pediatriaResponsableBaja"
+    ]
   },
   {
     "metodo": "PatientRepository.obtenerCrecimientoPediatrico",
@@ -1103,7 +1112,7 @@
     "destino": "EXTENSION_PEDIATRIA",
     "operationId": "pediatriaCrecimientoLeer",
     "responsable": "E04-P2-01",
-    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+    "regla": "Lectura HTTP exclusiva de pediatría con autoridad verificada; sin versión esperada ni clave idempotente. Crecimiento paginado por consulta y fecha."
   },
   {
     "metodo": "PatientRepository.actualizarHistoriaPediatrica",
@@ -1111,7 +1120,10 @@
     "destino": "EXTENSION_PEDIATRIA",
     "operationId": "pediatriaHistoria",
     "responsable": "E04-P2-01",
-    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
+    "operationIds_adicionales": [
+      "pediatriaRectificar"
+    ]
   },
   {
     "metodo": "PatientRepository.obtenerVersionAntecedentesPediatricos",
