@@ -28,6 +28,15 @@ export class ResponsablesController {
     return this.ejecutar('vinculo',contexto,bundle,pacienteId,id,clave,entrada,res);
   }
 
+  @Post(':id/vinculacion')
+  @HttpCode(200)
+  @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})
+  vincular(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,
+    @Param('pacienteId') pacienteId:string,@Param('id') id:string,@Headers('idempotency-key') clave:string,
+    @Body() entrada:unknown,@Res({passthrough:true}) res:Response) {
+    return this.ejecutar('vincular',contexto,bundle,pacienteId,id,clave,entrada,res);
+  }
+
   @Post(':id/baja')
   @HttpCode(200)
   @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})
@@ -37,7 +46,7 @@ export class ResponsablesController {
     return this.ejecutar('baja',contexto,bundle,pacienteId,id,clave,entrada,res);
   }
 
-  private async ejecutar(accion:'contacto'|'vinculo'|'baja',contexto:ContextoAutenticado,bundle:BundleInstitucional,
+  private async ejecutar(accion:'contacto'|'vinculo'|'baja'|'vincular',contexto:ContextoAutenticado,bundle:BundleInstitucional,
     pacienteId:string,id:string,clave:string,entrada:unknown,res:Response) {
     const r=await this.gestionar.ejecutar(accion,{contexto,bundle,id:uuidPublico(pacienteId),claveIdempotencia:uuidPublico(clave),entrada},id);
     res.status(r.httpStatus);

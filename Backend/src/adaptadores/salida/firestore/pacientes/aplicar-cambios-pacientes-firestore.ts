@@ -29,7 +29,10 @@ export async function aplicarCambiosPacientesFirestore(
     }
     if (cambio.agregado === 'vinculoPediatrico') {
       const r = cambio.nuevoEstado as {pacienteId:string;vinculo:{parentesco:string;esPrincipal:boolean;autorizaAtencion:boolean};estado:string;version:number};
-      transaction.update(firestore.doc(`pacientes/${r.pacienteId}/responsables/${cambio.recursoId}`), {parentesco:r.vinculo.parentesco,es_principal:r.vinculo.esPrincipal,autoriza_atencion:r.vinculo.autorizaAtencion,estado:r.estado,revision:r.version});
+      const ref=firestore.doc(`pacientes/${r.pacienteId}/responsables/${cambio.recursoId}`);
+      const datos={parentesco:r.vinculo.parentesco,es_principal:r.vinculo.esPrincipal,autoriza_atencion:r.vinculo.autorizaAtencion,estado:r.estado,revision:r.version};
+      if(cambio.tipo==='CREAR')transaction.create(ref,validarDocumento(ref.path,{...datos,responsable_id:cambio.recursoId,fecha_registro:new Date(comando.instante),actor_id:contexto.cuenta.id}) as Record<string,unknown>);
+      else transaction.update(ref,datos);
       continue;
     }
     if (cambio.agregado === 'eventosHistorial') {
