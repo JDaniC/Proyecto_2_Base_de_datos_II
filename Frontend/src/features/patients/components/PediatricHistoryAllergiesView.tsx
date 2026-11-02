@@ -1,7 +1,7 @@
 import { getDisplayLabel } from '../../../services/displayLabels';
 import { Modal } from '../../../design-system/components/Modal';
 import { getErrorMessage } from '../../../services/errors';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -46,7 +46,20 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   soloLectura = false
 }) => {
   const { sesion } = useAuthSession();
-  const { patientRepository } = useServices();
+  const { patientRepository, mode } = useServices();
+  const [motivoCambio,setMotivoCambio]=useState('');
+  const [incierto,setIncierto]=useState(false);
+  const intencion=useRef<(()=>Promise<unknown>)|null>(null);
+  const contextoCambio=()=>{
+    if(mode!=='api')return undefined;
+    if(antecedentes.versionAntecedentes===undefined||!paciente.version||!motivoCambio.trim())throw new Error('Completa el motivo y recarga los antecedentes antes de enviar.');
+    return {versionAntecedentes:antecedentes.versionAntecedentes,motivo:motivoCambio.trim()};
+  };
+  const enviar=async(op:()=>Promise<unknown>)=>{
+    intencion.current=op;
+    try {const r=await op();setIncierto(false);intencion.current=null;return r;}
+    catch(e){if([0,503,504].includes((e as {status:number}).status))setIncierto(true);throw e;}
+  };
 
   const [modalAlergiaAbierto, setModalAlergiaAbierto] = useState(false);
   const [modalPerinatalesAbierto, setModalPerinatalesAbierto] = useState(false);
@@ -96,7 +109,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setProcesando(true);
       setErrorAccion(null);
       if (patientRepository.confirmarSinAlergias) {
-        await patientRepository.confirmarSinAlergias(institucionId, paciente.id, nombreProfesional);
+        const cambio=contextoCambio();
+        await enviar(()=>patientRepository.confirmarSinAlergias!(institucionId, paciente.id, nombreProfesional,paciente.version,cambio));
       }
       await onActualizar();
     } catch (err: unknown) {
@@ -123,7 +137,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setProcesando(true);
       setErrorAccion(null);
       if (patientRepository.registrarAlergia) {
-        await patientRepository.registrarAlergia(
+        const cambio=contextoCambio();
+        await enviar(()=>patientRepository.registrarAlergia!(
           institucionId,
           paciente.id,
           {
@@ -131,8 +146,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
             severidad,
             reaccion: reaccion.trim()
           },
-          nombreProfesional
-        );
+          nombreProfesional,paciente.version,cambio
+        ));
       }
       setSustancia('');
       setSeveridad('MODERADA');
@@ -153,7 +168,9 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setProcesando(true);
       setErrorAccion(null);
       if (patientRepository.eliminarAlergia) {
-        await patientRepository.eliminarAlergia(institucionId, paciente.id, sustanciaEliminar);
+        const cambio=contextoCambio();
+        const alergiaId=antecedentes.alergias.find(a=>a.sustancia===sustanciaEliminar)?.id;
+        await enviar(()=>patientRepository.eliminarAlergia!(institucionId,paciente.id,sustanciaEliminar,paciente.version,cambio&&{...cambio,alergiaId}));
       }
       await onActualizar();
       setAlergiaParaEliminar(null);
@@ -183,7 +200,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       };
 
       if (patientRepository.actualizarPerinatales) {
-        await patientRepository.actualizarPerinatales(institucionId, paciente.id, dto);
+        const cambio=contextoCambio();
+        await enviar(()=>patientRepository.actualizarPerinatales!(institucionId,paciente.id,dto,paciente.version,cambio));
       }
       setModalPerinatalesAbierto(false);
       await onActualizar();
@@ -197,9 +215,16 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
 
   const perinatales = antecedentes.perinatales;
 
+  if(incierto)return <Alert variant="warning" title="Resultado pendiente de confirmar">
+    Los datos enviados permanecen conservados. Reintenta la misma solicitud.
+    {errorAccion && <p>{errorAccion}</p>}
+    <Button loading={procesando} onClick={async()=>{if(!intencion.current)return;setProcesando(true);try{await enviar(intencion.current);await onActualizar();}catch(e){setErrorAccion(getErrorMessage(e,'No se pudo confirmar la operación.'));}finally{setProcesando(false);}}}>Reintentar misma solicitud</Button>
+  </Alert>;
+
   return (
-    <fieldset disabled={soloLectura} style={{border:0,padding:0,margin:0,minWidth:0}}>
+    <fieldset disabled={soloLectura||procesando} style={{border:0,padding:0,margin:0,minWidth:0}}>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {mode==='api' && !soloLectura && <label>Motivo del cambio clínico <input aria-label="Motivo del cambio clínico" value={motivoCambio} onChange={e=>setMotivoCambio(e.target.value)} maxLength={1000} /></label>}
       {/* Alerta transversal de error */}
       {errorAccion && (
         <Alert variant="danger" title="Atención">
@@ -704,7 +729,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
         </>}
       >
         {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
-        <p>Se eliminará el registro de alergia a <strong>{alergiaParaEliminar}</strong>. Confirma que el dato es incorrecto antes de continuar.</p>
+        <p>Se dará de baja el registro vigente, conservando su historia, de alergia a <strong>{alergiaParaEliminar}</strong>. Confirma que el dato es incorrecto antes de continuar.</p>
       </Modal>
 
       {modalAlergiaAbierto && (

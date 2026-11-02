@@ -170,7 +170,7 @@ const PatientRecord: React.FC = () => {
         {hospital&&tab==='seguros'&&(puedeLeer||puedeEditar)&&<PatientInsurancesView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} pacienteDpi={paciente.tipoIdentificacion==='CUI'?paciente.numeroIdentificacion??'':''} pacienteTelefono={paciente.telefono??''} pacienteNombres={paciente.nombres} pacienteApellidos={paciente.apellidos} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {sesion?.institucionId==='CENTRO_PEDIATRICO' && puedeLeer && <Panel title="Antecedentes pediátricos">
           {errorAntecedentes ? <Alert variant="danger" title="No se pudieron cargar antecedentes">{errorAntecedentes}<Button onClick={()=>setReintento(n=>n+1)}>Reintentar</Button></Alert>
-          : antecedentes && <PediatricHistoryAllergiesView soloLectura paciente={paciente} antecedentes={antecedentes} institucionId={sesion.institucionId} onActualizar={async()=>{setReintento(n=>n+1);}} />}
+          : antecedentes && <PediatricHistoryAllergiesView soloLectura={!puedeRegistrarClinica||paciente.estado==='ARCHIVADO'} paciente={{...paciente,estadoAlergias:antecedentes.alergias.length?'CON_ALERGIAS':antecedentes.verificacionAlergias?'SIN_ALERGIAS_CONOCIDAS':'SIN_VERIFICAR'}} antecedentes={antecedentes} institucionId={sesion.institucionId} onActualizar={async()=>{setReintento(n=>n+1);}} />}
         </Panel>}
         {hospital&&general&&puedeLeer&&<HospitalAntecedentesView pacienteId={paciente.id} editable={puedeRegistrarClinica&&paciente.estado==='ACTIVO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {puedeLeer && esOdontologia && (
