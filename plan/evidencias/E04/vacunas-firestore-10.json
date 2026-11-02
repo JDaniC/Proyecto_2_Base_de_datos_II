@@ -1,0 +1,30 @@
+{
+  "tarea": "E04-P2-02",
+  "fecha": "2026-11-02",
+  "zona": "America/Guatemala",
+  "commit_base_verificado": "7873dd28db3b33a7f8bf7591765db9729a8afc32",
+  "comando": "cd Backend && node scripts/run-vacunas-firestore-integration.mjs",
+  "entorno": "Firestore y Auth emulados, proyecto demo y puertos loopback aislados, datos sintéticos",
+  "resultado": "PASS",
+  "exit_code": 0,
+  "tests": 10,
+  "pass": 10,
+  "fail": 0,
+  "skipped": 0,
+  "duracion_ms": 7182.325166,
+  "alcance": [
+    "Asignación explícita e idempotente de esquema",
+    "Versión asignada exacta tras cambio de catálogo",
+    "Rechazo de fecha futura, anterior al nacimiento y edad anterior a dosis asignada",
+    "Rollback de aplicación, operación y auditoría ante fallo de cronología",
+    "Carrera: única aplicación lógica, reintento estable y rechazo de duplicado vigente",
+    "Corrección y anulación versionadas con expediente archivado, conservando historia",
+    "Nueva administración explícita tras anulación: carrera, reintento, misma identidad, versión 4 y tres snapshots previos completos",
+    "Rechazo de dosis ajena, autorización vigente insuficiente y nueva administración con paciente archivado",
+    "Alta administrativa de catálogo, versiones inmutables y rechazo de versión obsoleta"
+  ],
+  "limites": [
+    "Pruebas de casos de uso con adaptador Firestore; no acredita UI ni producción Firestore",
+    "Regresión adicional composición corregida después de esta ejecución: npm run build:test y node --test dist-test/tests/unitarios/pediatria-composicion.test.js, 1/1 PASS; la corrida UI posterior acredita composición HTTP"
+  ]
+}
