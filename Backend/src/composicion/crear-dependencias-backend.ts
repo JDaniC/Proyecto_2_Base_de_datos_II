@@ -1,3 +1,4 @@
+import { crearServiciosHospital } from '../adaptadores/salida/postgresql/hospital/servicios/crear-servicios-hospital.js';
 import { crearHistorialSql } from '../adaptadores/salida/historial/historial-sql.js';
 import { randomUUID } from 'node:crypto';
 import { applicationDefault, deleteApp, initializeApp, type App } from 'firebase-admin/app';
@@ -131,6 +132,7 @@ export async function crearDependenciasBackend(
         historial: crearHistorialSql(postgresql, 'postgresql'),
         clinica: crearClinicaPostgresql(postgresql),
         hospital: crearHospitalPostgresql(postgresql),
+        serviciosHospital: crearServiciosHospital(postgresql),
         uow: crearUnidadDeTrabajoPacientesPostgresql(postgresql),
       },
       CLINICA_ODONTOLOGICA: {

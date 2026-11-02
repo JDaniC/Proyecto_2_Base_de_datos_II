@@ -674,6 +674,8 @@ export interface PaginaHistorial {
 }
 
 export interface TitularSeguro {
+  nombres?: string;
+  apellidos?: string;
   nombreCompleto: string;
   parentesco: 'TITULAR' | 'PADRE' | 'MADRE' | 'CONYUGE' | 'HIJO' | 'OTRO';
   numeroIdentificacion: string;
@@ -702,6 +704,7 @@ export interface PolizaSeguroPaciente {
 }
 
 export interface AfiliarPolizaDTO {
+  versionPaciente?: number;
   aseguradoraId: string;
   planId: string;
   numeroPoliza: string;
@@ -733,6 +736,9 @@ export type PrioridadOrdenExamen = 'RUTINA' | 'URGENTE' | 'STAT';
 export type EstadoOrdenExamen = 'SOLICITADA' | 'EN_PROCESO' | 'COMPLETADA' | 'CANCELADA';
 
 export interface ItemOrdenExamen {
+  parametros?: PruebaLaboratorioCatalogo['parametros'];
+  metodoAnalitico?: string;
+  versionResultado?: number;
   id: string;
   pruebaId: string;
   codigoPrueba: string;
@@ -744,6 +750,8 @@ export interface ItemOrdenExamen {
 }
 
 export interface OrdenExamenHospital {
+  version?: number;
+  consultaId?: string;
   id: string;
   codigoLegible: string; // e.g. ORD-HOSP-2026-0041
   institucionId: InstitucionId;
@@ -774,6 +782,8 @@ export interface ParametroResultado {
 }
 
 export interface ResultadoExamenHospital {
+  version?: number;
+  corrigeId?: string;
   id: string;
   ordenId: string;
   codigoOrden: string;
@@ -793,6 +803,9 @@ export interface ResultadoExamenHospital {
 }
 
 export interface CrearOrdenExamenDTO {
+  consultaId?: string;
+  versionConsulta?: number;
+  versionPaciente?: number;
   pacienteId: string;
   medicoSolicitanteId: string;
   medicoSolicitanteNombre?: string;
@@ -805,6 +818,10 @@ export interface CrearOrdenExamenDTO {
 }
 
 export interface RegistrarResultadoExamenDTO {
+  pacienteId?: string;
+  versionEsperada?: number;
+  versionResultado?: number;
+  motivoCorreccion?: string;
   ordenId: string;
   pruebaId: string;
   responsableAnalisis: string;
@@ -985,6 +1002,10 @@ export interface NotaEvolucionItem {
 }
 
 export interface ProcedimientoHospitalarioItem {
+  consultaId?: string;
+  versionConsulta?: number;
+  versionPaciente?: number;
+  procedimientoId?: string;
   id: string;
   nombre: string;
   codigo?: string;
@@ -1511,3 +1532,13 @@ export interface ReferenciaLaboratorio {
 }
 
 export interface PaginaHospitalizaciones { items: HospitalizacionItem[]; pagina: number; hayMas: boolean; }
+
+export interface PaginaServiciosHospital<T> { items: T[]; pagina: number; hayMas: boolean; }
+export interface ConsultaPaginaHospital { pagina: number; limite: number; }
+export interface CatalogoHospitalDTO {
+  examenes: PruebaLaboratorioCatalogo[];
+  aseguradoras: AseguradoraCatalogo[];
+  procedimientos: {id:string;nombre:string;descripcion?:string;activo:boolean}[];
+  especialidades: {id:string;nombre:string;descripcion?:string}[];
+  medicamentos: {id:string;nombre:string;presentacion?:string;unidad?:string}[];
+}

@@ -1,6 +1,7 @@
+import {useConfirmedCommand} from './useConfirmedCommand';
 import { getDisplayLabel } from '../../../services/displayLabels';
 import { getErrorMessage } from '../../../services/errors';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileCheck2,
   AlertCircle
@@ -31,7 +32,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
   onResultadoRegistrado
 }) => {
   const { sesion } = useAuthSession();
-  const { examRepository, catalogRepository } = useServices();
+  const { mode, examRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [catalogoPruebas, setCatalogoPruebas] = useState<PruebaLaboratorioCatalogo[]>([]);
@@ -39,14 +40,16 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
   const [valoresParametros, setValoresParametros] = useState<Record<string, { valor: string; alerta: AlertaParametro }>>({});
   const [interpretacion, setInterpretacion] = useState('');
   const [observacionesTecnicas, setObservacionesTecnicas] = useState('');
-  const [responsableAnalisis, setResponsableAnalisis] = useState('Licda. Sofia Morales (Química Bióloga)');
-  const [colegiado, setColegiado] = useState('QB-1940');
+  const [responsableAnalisis, setResponsableAnalisis] = useState(sesion?.nombre??'');
+  const [colegiado, setColegiado] = useState('');
+  const [motivoCorreccion,setMotivoCorreccion]=useState('');
+  const comando=useConfirmedCommand<RegistrarResultadoExamenDTO>();
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      catalogRepository.obtenerPruebasLaboratorio(institucionId).then(setCatalogoPruebas);
+      if(mode!=='api')catalogRepository.obtenerPruebasLaboratorio(institucionId).then(setCatalogoPruebas).catch(e=>setError(getErrorMessage(e,'No se pudo leer el catálogo.')));
       setError(null);
       setInterpretacion('');
       setObservacionesTecnicas('');
@@ -54,7 +57,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
   }, [isOpen, catalogRepository, institucionId]);
 
   // Obtener items pendientes de la orden
-  const itemsPendientes = orden?.items.filter((it) => it.estado === 'PENDIENTE') || [];
+  const itemsPendientes = useMemo(()=>orden?.estado==='CANCELADA'?[]:(orden?.items??[]),[orden]);
 
   useEffect(() => {
     if (itemsPendientes.length > 0 && !pruebaIdSeleccionada) {
@@ -63,7 +66,8 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
   }, [itemsPendientes, pruebaIdSeleccionada]);
 
   // Cuando cambia la prueba seleccionada, inicializar los valores de los parámetros
-  const pruebaActual = catalogoPruebas.find((p) => p.id === pruebaIdSeleccionada);
+  const itemActual=itemsPendientes.find(i=>i.pruebaId===pruebaIdSeleccionada);
+  const pruebaActual = useMemo(()=>mode==='api'&&itemActual?{parametros:itemActual.parametros??[]}:catalogoPruebas.find(p=>p.id===pruebaIdSeleccionada),[mode,itemActual,catalogoPruebas,pruebaIdSeleccionada]);
 
   useEffect(() => {
     if (pruebaActual) {
@@ -125,6 +129,8 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
     try {
       const dto: RegistrarResultadoExamenDTO = {
         ordenId: orden.id,
+        pacienteId:orden.pacienteId,versionEsperada:orden.version,
+        ...(itemActual?.estado==='COMPLETADO'?{motivoCorreccion:motivoCorreccion.trim(),versionResultado:itemActual.versionResultado}:{}),
         pruebaId: pruebaIdSeleccionada,
         responsableAnalisis: responsableAnalisis.trim(),
         colegiadoResponsable: colegiado.trim() || undefined,
@@ -137,10 +143,12 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
         }))
       };
 
-      await (examRepository as any).registrarResultado(institucionId, dto, catalogoPruebas);
+      await examRepository.registrarResultado(institucionId, comando.preparar(dto), catalogoPruebas);
+      comando.limpiar();
       onResultadoRegistrado();
       onClose();
     } catch (err: any) {
+      comando.error(err);
       setError(getErrorMessage(err, 'Error registrando resultados de laboratorio.'));
     } finally {
       setGuardando(false);
@@ -177,6 +185,9 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
           </div>
         )}
 
+        {comando.incierto&&<p>Confirmación pendiente. Reintenta la misma solicitud.</p>}
+        <fieldset disabled={guardando||comando.incierto} style={{border:0,padding:0,display:'contents'}}>
+        {itemActual?.estado==='COMPLETADO'&&<label>Motivo de corrección <textarea required maxLength={2000} value={motivoCorreccion} onChange={e=>setMotivoCorreccion(e.target.value)}/></label>}
         {/* Resumen de orden y selección de examen */}
         <div
           style={{
@@ -358,6 +369,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
             <input
               id="input-responsable-resultado"
               type="text"
+              readOnly={mode==='api'}
               value={responsableAnalisis}
               onChange={(e) => setResponsableAnalisis(e.target.value)}
               required
@@ -381,6 +393,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
             <input
               id="input-colegiado-resultado"
               type="text"
+              readOnly={mode==='api'}
               value={colegiado}
               onChange={(e) => setColegiado(e.target.value)}
               style={{
@@ -394,6 +407,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
           </div>
         </div>
 
+        </fieldset>
         {/* Botones de acción */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
           <Button variant="secondary" onClick={onClose} disabled={guardando}>
@@ -406,7 +420,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
             aria-label="Confirmar registro de resultados"
             leftIcon={<FileCheck2 size={16} />}
           >
-            {guardando ? 'Validando y guardando...' : 'Guardar y Validar Resultado'}
+            {guardando ? 'Validando y guardando...' : itemActual?.estado==='COMPLETADO'?'Emitir corrección':'Guardar y Validar Resultado'}
           </Button>
         </div>
       </form>

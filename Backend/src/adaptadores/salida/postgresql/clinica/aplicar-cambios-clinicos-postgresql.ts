@@ -1,3 +1,4 @@
+import { ampliarAntecedentesHospital } from './antecedentes-hospital-postgresql.js';
 import { corregirConsultaSql } from '../../sql/corregir-consulta-sql.js';
 import { aplicarEstadoHistorialSql } from '../../sql/aplicar-estado-historial-sql.js';
 import type { CambioPlanificado, ComandoEstable } from '../../../../aplicacion/puertos/nucleo.js';
@@ -338,7 +339,7 @@ export async function aplicarCambiosClinicosPostgresql(
 ): Promise<void> {
   for (const c of cambios.filter(c => c.agregado === 'estadoHistorial')) await aplicarEstadoHistorialSql(executor, 'postgresql', c);
   const esClinico = (c: CambioPlanificado) =>
-    c.agregado === 'citas' || c.agregado === 'consultas' || c.agregado === 'eventosHistorial' ||
+    c.agregado === 'antecedentes' || c.agregado === 'citas' || c.agregado === 'consultas' || c.agregado === 'eventosHistorial' ||
     (c.agregado === 'pacientes' && c.tipo === 'AVANZAR_REVISION');
   const dePacientes = cambios.filter((c) => !esClinico(c) && c.agregado !== 'estadoHistorial');
   if (dePacientes.length > 0) {
@@ -347,6 +348,9 @@ export async function aplicarCambiosClinicosPostgresql(
   for (const cambio of cambios) {
     if (!esClinico(cambio)) continue;
     switch (cambio.agregado) {
+      case 'antecedentes':
+        await ampliarAntecedentesHospital(executor,cambio);
+        break;
       case 'pacientes':
         await avanzarRevisionPaciente(executor, cambio);
         break;

@@ -1,3 +1,4 @@
+import type { PuertosServiciosHospital } from './servicios-hospitalarios.js';
 import type { RepositorioHistorialLectura } from './historial.js';
 import type { Institucion } from '../../dominio/compartido/institucion.js';
 import type {
@@ -14,6 +15,7 @@ export type EstadoPersistenciaInicial = 'NO_CONFIGURADA' | 'DISPONIBLE';
 export interface BundleInstitucional {
   readonly clinica?: PuertosClinicos;
   readonly hospital?: PuertosHospital;
+  readonly serviciosHospital?: PuertosServiciosHospital;
   readonly institucion: Institucion;
   readonly estadoPersistencia: EstadoPersistenciaInicial;
   readonly cuenta?: RepositorioCuenta;

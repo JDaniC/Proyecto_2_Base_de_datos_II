@@ -1,3 +1,5 @@
+import { ServiciosHospitalarios } from '../aplicacion/casos-uso/hospital/servicios-hospitalarios.js';
+import { ServiciosHospitalariosController } from '../adaptadores/entrada/http/hospital/servicios-hospitalarios.controller.js';
 import { CambiarEstadoHistorial } from '../aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import { AtencionClinica } from '../aplicacion/casos-uso/consultas/atencion-clinica.js';
 import { ConsultarConsulta } from '../aplicacion/casos-uso/consultas/consultar-consulta.js';
@@ -66,7 +68,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -87,6 +89,7 @@ export class AppModule {
         { provide: ActualizarAntecedentesClinicos, useFactory: () => new ActualizarAntecedentesClinicos(dependenciasComandoPorDefecto) },
         { provide: ConsultarCatalogosClinicos, useFactory: () => new ConsultarCatalogosClinicos() },
         { provide: ConsultarHospitalizaciones, useFactory: () => new ConsultarHospitalizaciones() },
+        { provide: ServiciosHospitalarios, useFactory: () => new ServiciosHospitalarios() },
         { provide: GestionarHospitalizaciones, useFactory: () => new GestionarHospitalizaciones() },
         {
           provide: BUNDLES_INSTITUCIONALES,

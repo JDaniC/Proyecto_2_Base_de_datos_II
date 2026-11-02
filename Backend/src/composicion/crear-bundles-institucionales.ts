@@ -1,3 +1,4 @@
+import type { PuertosServiciosHospital } from '../aplicacion/puertos/servicios-hospitalarios.js';
 import type { RepositorioHistorialLectura } from '../aplicacion/puertos/historial.js';
 import type { Institucion } from '../dominio/compartido/institucion.js';
 import type {
@@ -16,6 +17,7 @@ import type { PuertosHospital } from '../aplicacion/puertos/hospital.js';
 export interface RepositoriosInstitucion {
   readonly clinica?: PuertosClinicos;
   readonly hospital?: PuertosHospital;
+  readonly serviciosHospital?: PuertosServiciosHospital;
   readonly cuenta: RepositorioCuenta;
   readonly profesionales?: RepositorioProfesional;
   readonly pacientes?: RepositorioPacienteLectura;
@@ -44,6 +46,7 @@ export function crearBundlesInstitucionales(
       ...(repos?.uow ? { uow: repos.uow } : {}),
       ...(repos?.clinica ? { clinica: repos.clinica } : {}),
       ...(repos?.hospital ? { hospital: repos.hospital } : {}),
+      ...(repos?.serviciosHospital ? { serviciosHospital: repos.serviciosHospital } : {}),
     });
   });
 

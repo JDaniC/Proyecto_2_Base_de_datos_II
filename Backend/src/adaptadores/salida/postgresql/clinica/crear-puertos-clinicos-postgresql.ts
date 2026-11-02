@@ -1,3 +1,4 @@
+import { crearAntecedentesHospital } from './antecedentes-hospital-postgresql.js';
 import type { PuertosClinicos } from '../../../../aplicacion/puertos/clinica.js';
 import type { UUID } from '../../../../dominio/compartido/uuid.js';
 import type { ProfesionalClinico } from '../../../../dominio/clinica/consulta.js';
@@ -51,6 +52,7 @@ export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): 
 export function crearPuertosClinicosPostgresql(ejecutor: EjecutorSql): PuertosClinicos {
   return {
     pacientes: new RepositorioPacientesPostgresql(ejecutor),
+    antecedentes: crearAntecedentesHospital(ejecutor),
     profesionales: crearRepositorioProfesionalesPostgresql(ejecutor),
     consultas: new RepositorioConsultasPostgresql(ejecutor),
     citas: new RepositorioCitasPostgresql(ejecutor),

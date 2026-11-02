@@ -1,3 +1,4 @@
+import { verificarServiciosHospitalarios } from './servicios-hospitalarios-sql.js';
 import { GestionarHospitalizaciones } from '../../src/aplicacion/casos-uso/hospital/gestionar-hospitalizaciones.js';
 import { ConsultarHospitalizaciones } from '../../src/aplicacion/casos-uso/hospital/consultar-hospitalizaciones.js';
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
@@ -389,6 +390,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     await verificarFlujoDentalDosRolesMysql(pool, bundle, clinica, pacientes, profesionalId);
   } else if (dialecto === 'postgresql') {
     await verificarHospitalizacionesPostgresql(pool, bundle, profesionalId, contexto);
+    await verificarServiciosHospitalarios(pool, contexto);
   }
 }
 
@@ -508,7 +510,7 @@ async function verificarHospitalizacionesPostgresql(
     comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id, nuevaCamaId: cama2Id,
     fechaInicio: new Date().toISOString(), versionEsperada: ingreso.version,
   }, medicoUuid));
-  assert.deepEqual(await hospital.hospitalizaciones.porId(ingreso.id), ingreso);
+  assert.deepEqual(JSON.parse(JSON.stringify(await hospital.hospitalizaciones.porId(ingreso.id))), JSON.parse(JSON.stringify(ingreso)));
   await assert.rejects(hospital.hospitalizaciones.asignarCama({
     comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id, nuevaCamaId: cama2Id,
     fechaInicio: '2000-01-01T00:00:00.000Z', versionEsperada: ingreso.version,

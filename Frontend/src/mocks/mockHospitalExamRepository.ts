@@ -1,3 +1,4 @@
+import type { PaginaServiciosHospital, ConsultaPaginaHospital } from '../services/types';
 import { HospitalExamRepository } from '../services/contracts';
 import {
   InstitucionId,
@@ -217,7 +218,7 @@ export class MockHospitalExamRepository implements HospitalExamRepository {
     }
   }
 
-  async listarOrdenes(
+  private async listarOrdenesSinPagina(
     _institucionId: InstitucionId,
     filtroEstado?: string
   ): Promise<OrdenExamenHospital[]> {
@@ -237,7 +238,7 @@ export class MockHospitalExamRepository implements HospitalExamRepository {
     return orden ? { ...orden } : null;
   }
 
-  async obtenerOrdenesPorPaciente(
+  private async obtenerOrdenesPorPacienteSinPagina(
     _institucionId: InstitucionId,
     pacienteId: string
   ): Promise<OrdenExamenHospital[]> {
@@ -305,7 +306,7 @@ export class MockHospitalExamRepository implements HospitalExamRepository {
     return orden;
   }
 
-  async obtenerResultadosPorOrden(
+  private async obtenerResultadosPorOrdenSinPagina(
     _institucionId: InstitucionId,
     ordenId: string
   ): Promise<ResultadoExamenHospital[]> {
@@ -322,7 +323,7 @@ export class MockHospitalExamRepository implements HospitalExamRepository {
     return r ? { ...r } : null;
   }
 
-  async obtenerResultadosPorPaciente(
+  private async obtenerResultadosPorPacienteSinPagina(
     _institucionId: InstitucionId,
     pacienteId: string
   ): Promise<ResultadoExamenHospital[]> {
@@ -394,5 +395,28 @@ export class MockHospitalExamRepository implements HospitalExamRepository {
 
     this.guardarEnStorage();
     return nuevoResultado;
+  }
+  async listarOrdenes(institucionId: InstitucionId, filtroEstado?: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<OrdenExamenHospital>> {
+    const todos = await this.listarOrdenesSinPagina(institucionId, filtroEstado);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
+  }
+
+  async obtenerOrdenesPorPaciente(institucionId: InstitucionId, pacienteId: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<OrdenExamenHospital>> {
+    const todos = await this.obtenerOrdenesPorPacienteSinPagina(institucionId, pacienteId);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
+  }
+
+  async obtenerResultadosPorOrden(institucionId: InstitucionId, ordenId: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<ResultadoExamenHospital>> {
+    const todos = await this.obtenerResultadosPorOrdenSinPagina(institucionId, ordenId);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
+  }
+
+  async obtenerResultadosPorPaciente(institucionId: InstitucionId, pacienteId: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<ResultadoExamenHospital>> {
+    const todos = await this.obtenerResultadosPorPacienteSinPagina(institucionId, pacienteId);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
   }
 }

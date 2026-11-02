@@ -1,3 +1,5 @@
+import {useConfirmedCommand} from './useConfirmedCommand';
+import {ReferenciaAtencion,type ReferenciaAtencionValor} from './ReferenciaAtencion';
 import { getErrorMessage } from '../../../services/errors';
 import React, { useState, useEffect } from 'react';
 import {
@@ -32,9 +34,12 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
   preselectedPacienteNombre
 }) => {
   const { sesion } = useAuthSession();
-  const { examRepository, catalogRepository, patientRepository } = useServices();
+  const { mode, examRepository, catalogRepository, patientRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
+  const comando=useConfirmedCommand<CrearOrdenExamenDTO>();
+  const [referencia, setReferencia] = useState<ReferenciaAtencionValor|null>(null);
+  const [busqueda, setBusqueda] = useState('');
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [pacienteId, setPacienteId] = useState(preselectedPacienteId || '');
   const [prioridad, setPrioridad] = useState<PrioridadOrdenExamen>('RUTINA');
@@ -48,26 +53,23 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       // Cargar catálogo de pruebas de laboratorio
-      catalogRepository.obtenerPruebasLaboratorio(institucionId).then(setPruebasCatalogo);
+      catalogRepository.obtenerPruebasLaboratorio(institucionId).then(ps=>setPruebasCatalogo(ps.filter(p=>p.estado==='ACTIVO'))).catch(()=>setError('No se pudo cargar el catálogo de exámenes.'));
 
-      // Si no hay paciente preseleccionado, cargar lista de pacientes
-      if (!preselectedPacienteId) {
-        patientRepository.buscar(institucionId, { q: '', limite: 50 }).then((res) => {
-          setPacientes(res.items);
-          if (res.items.length > 0 && !pacienteId) {
-            setPacienteId(res.items[0].id);
-          }
-        });
-      } else {
-        setPacienteId(preselectedPacienteId);
-      }
+      if (preselectedPacienteId) setPacienteId(preselectedPacienteId);
 
       setError(null);
       setMotivoClinico('');
       setDiagnosticoCIE10('');
       setPruebasSeleccionadas([]);
     }
-  }, [isOpen, preselectedPacienteId, catalogRepository, patientRepository, institucionId, pacienteId]);
+  }, [isOpen, preselectedPacienteId, catalogRepository, patientRepository, institucionId]);
+
+  useEffect(() => {
+    if (!isOpen || preselectedPacienteId || !busqueda.trim()) return;
+    let vigente=true;
+    const timer=setTimeout(()=>{patientRepository.buscar(institucionId,{q:busqueda.trim()}).then(r=>{if(vigente)setPacientes(r.items.filter(p=>p.estado==='ACTIVO'));}).catch(()=>{if(vigente)setError('No se pudo buscar pacientes.');});},250);
+    return()=>{vigente=false;clearTimeout(timer);};
+  },[isOpen,preselectedPacienteId,busqueda,patientRepository,institucionId]);
 
   const handleTogglePrueba = (id: string) => {
     setPruebasSeleccionadas((prev) =>
@@ -92,10 +94,12 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
       return;
     }
 
+    if (mode==='api' && !referencia) { setError('Seleccione una consulta del paciente.'); return; }
     setGuardando(true);
     try {
       const dto: CrearOrdenExamenDTO = {
         pacienteId,
+        ...(referencia??{}),
         medicoSolicitanteId: sesion?.cuentaId || 'med-01',
         medicoSolicitanteNombre: sesion ? `${sesion.nombre} (${sesion.rolEtiqueta})` : 'Dra. Elena Morales (Colegiado 8892)',
         prioridad,
@@ -104,10 +108,12 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
         pruebasIds: pruebasSeleccionadas
       };
 
-      await (examRepository as any).crearOrden(institucionId, dto, pruebasCatalogo);
+      await examRepository.crearOrden(institucionId, comando.preparar(dto), pruebasCatalogo);
+      comando.limpiar();
       onOrdenCreada();
       onClose();
     } catch (err: any) {
+      comando.error(err);
       setError(getErrorMessage(err, 'Error al emitir la orden médica de examen.'));
     } finally {
       setGuardando(false);
@@ -149,6 +155,8 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
           </div>
         )}
 
+{comando.incierto&&<p>Confirmación pendiente. Reintenta la misma solicitud.</p>}
+        <fieldset disabled={guardando||comando.incierto} style={{border:0,padding:0,display:'contents'}}>
         {/* Paciente y Prioridad */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
           <div>
@@ -173,7 +181,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                 {preselectedPacienteNombre || 'Paciente seleccionado'}
               </div>
             ) : (
-              <select
+              <><input aria-label="Buscar paciente para examen" value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Nombre o documento" /><select
                 id="select-paciente-orden"
                 value={pacienteId}
                 onChange={(e) => setPacienteId(e.target.value)}
@@ -191,7 +199,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                     {p.nombres} {p.apellidos} ({p.codigoLegible})
                   </option>
                 ))}
-              </select>
+              </select></>
             )}
           </div>
 
@@ -221,6 +229,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
           </div>
         </div>
 
+        {mode==='api' && pacienteId && <ReferenciaAtencion pacienteId={pacienteId} onCambio={setReferencia} disabled={guardando} />}
         {/* Motivo y Diagnóstico Presuntivo */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
           <div>
@@ -349,6 +358,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
           </div>
         </div>
 
+        </fieldset>
         {/* Botones de acción */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
           <Button variant="secondary" onClick={onClose} disabled={guardando}>

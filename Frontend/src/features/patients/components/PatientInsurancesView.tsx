@@ -1,3 +1,5 @@
+import {Modal} from '../../../design-system/components/Modal';
+import { HospitalPageControls } from '../../hospital/components/HospitalPageControls';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ShieldCheck,
@@ -22,6 +24,9 @@ import {
 
 interface PatientInsurancesViewProps {
   pacienteId: string;
+  pacienteNombres?: string;
+  pacienteApellidos?: string;
+  onActualizado?: ()=>void;
   pacienteNombre: string;
   pacienteDpi: string;
   pacienteTelefono: string;
@@ -30,6 +35,9 @@ interface PatientInsurancesViewProps {
 
 export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
   pacienteId,
+  pacienteNombres,
+  pacienteApellidos,
+  onActualizado,
   pacienteNombre,
   pacienteDpi,
   pacienteTelefono,
@@ -39,6 +47,12 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
   const { patientRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
+  const [errorLectura,setErrorLectura]=useState('');
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
+  const [cambioEstado,setCambioEstado]=useState<{id:string;estado:'ACTIVA'|'VENCIDA'|'SUSPENDIDA';version?:number}|null>(null);
+  const [motivoEstado,setMotivoEstado]=useState('');
+  const [errorEstado,setErrorEstado]=useState('');
   const [loading, setLoading] = useState(true);
   const [polizas, setPolizas] = useState<PolizaSeguroPaciente[]>([]);
   const [aseguradoras, setAseguradoras] = useState<AseguradoraCatalogo[]>([]);
@@ -47,19 +61,21 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
 
   const cargarDatos = useCallback(async () => {
     setLoading(true);
+    setErrorLectura('');
     try {
       const [polRes, asegRes] = await Promise.all([
-        patientRepository.obtenerPolizasSeguro(institucionId, pacienteId),
+        patientRepository.obtenerPolizasSeguro(institucionId, pacienteId, { pagina, limite: 25 }),
         catalogRepository.obtenerAseguradoras(institucionId)
       ]);
-      setPolizas(polRes);
+      setPolizas(polRes.items);
+      setHayMas(polRes.hayMas);
       setAseguradoras(asegRes);
     } catch {
       // Fallback
     } finally {
       setLoading(false);
     }
-  }, [institucionId, pacienteId, patientRepository, catalogRepository]);
+  }, [institucionId, pacienteId, patientRepository, catalogRepository, pagina]);
 
   useEffect(() => {
     cargarDatos();
@@ -69,18 +85,18 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
     await patientRepository.afiliarPolizaSeguro(institucionId, pacienteId, dto);
     setNotificacion('Póliza de seguro afiliada exitosamente.');
     await cargarDatos();
+    onActualizado?.();
     setTimeout(() => setNotificacion(null), 3500);
   };
 
   const handleCambiarEstado = async (polizaId: string, nuevoEstado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA') => {
-    await patientRepository.cambiarEstadoPoliza(institucionId, pacienteId, polizaId, nuevoEstado);
-    setNotificacion(`Póliza actualizada a estado ${nuevoEstado}.`);
-    await cargarDatos();
-    setTimeout(() => setNotificacion(null), 3500);
+    setCambioEstado({id:polizaId,estado:nuevoEstado,version:polizas.find(p=>p.id===polizaId)?.version});setMotivoEstado('');setErrorEstado('');
   };
 
   const activas = polizas.filter((p) => p.estadoVigencia === 'ACTIVA').length;
   const mejorCobertura = polizas.reduce((max, p) => (p.estadoVigencia === 'ACTIVA' && p.porcentajeCobertura > max ? p.porcentajeCobertura : max), 0);
+
+  if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarDatos()}>Reintentar consulta</Button></div>;
 
   if (loading) {
     return (
@@ -324,6 +340,9 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
         <AfiliarPolizaModal
           isOpen={modalAbierto}
           onClose={() => setModalAbierto(false)}
+          pacienteId={pacienteId}
+          pacienteNombres={pacienteNombres}
+          pacienteApellidos={pacienteApellidos}
           pacienteNombre={pacienteNombre}
           pacienteDpi={pacienteDpi}
           pacienteTelefono={pacienteTelefono}
@@ -331,6 +350,14 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
           onConfirm={handleAfiliarPoliza}
         />
       )}
+      {cambioEstado&&<Modal isOpen onClose={()=>setCambioEstado(null)} title="Cambiar estado de cobertura">
+        <form onSubmit={async e=>{e.preventDefault();try{await patientRepository.cambiarEstadoPoliza(institucionId,pacienteId,cambioEstado.id,cambioEstado.estado,cambioEstado.version,motivoEstado);setCambioEstado(null);await cargarDatos();onActualizado?.();}catch{setErrorEstado('No se pudo cambiar el estado. Reintente la misma solicitud o vuelva a cargar la póliza.');}}}>
+          {errorEstado&&<div role="alert">{errorEstado}</div>}
+          <label>Motivo del cambio<textarea aria-label="Motivo del cambio de cobertura" value={motivoEstado} onChange={e=>setMotivoEstado(e.target.value)} required maxLength={1000}/></label>
+          <Button type="submit">Confirmar estado de cobertura</Button>
+        </form>
+      </Modal>}
+      <HospitalPageControls etiqueta="Pólizas" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />
     </div>
   );
 };

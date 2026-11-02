@@ -1,3 +1,4 @@
+import { HospitalPageControls } from './components/HospitalPageControls';
 import { Alert } from '../../design-system/components/Alert';
 import { getErrorMessage } from '../../services/errors';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -31,6 +32,9 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [ordenes, setOrdenes] = useState<OrdenExamenHospital[]>([]);
+  const [errorLectura,setErrorLectura]=useState('');
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filtroTexto, setFiltroTexto] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<string>('TODAS');
@@ -43,19 +47,22 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const [notificacion, setNotificacion] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [ordenParaCancelar, setOrdenParaCancelar] = useState<OrdenExamenHospital | null>(null);
+  const [motivoCancelacion,setMotivoCancelacion]=useState('');
   const [cancelando, setCancelando] = useState(false);
 
   const cargarOrdenes = useCallback(async () => {
     setLoading(true);
+    setErrorLectura('');
     try {
-      const data = await examRepository.listarOrdenes(institucionId, filtroEstado);
-      setOrdenes(data);
+      const data = await examRepository.listarOrdenes(institucionId, filtroEstado, { pagina, limite: 25 });
+      setOrdenes(data.items);
+      setHayMas(data.hayMas);
     } catch {
-      setOrdenes([]);
+      setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
       setLoading(false);
     }
-  }, [institucionId, filtroEstado, examRepository]);
+  }, [institucionId, filtroEstado, examRepository, pagina]);
 
   useEffect(() => {
     cargarOrdenes();
@@ -66,7 +73,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
     setCancelando(true);
     setErrorAccion(null);
     try {
-      await examRepository.cancelarOrden(institucionId, ordenParaCancelar.id, 'Cancelada por el médico solicitante.');
+      await examRepository.cancelarOrden(institucionId, ordenParaCancelar.id, motivoCancelacion.trim(), ordenParaCancelar.version);
       setNotificacion(`Orden ${ordenParaCancelar.codigoLegible} cancelada.`);
       setOrdenParaCancelar(null);
       await cargarOrdenes();
@@ -353,7 +360,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
                         Ver Detalle y Resultados
                       </Button>
 
-                      {ord.items.some((it) => it.estado === 'PENDIENTE') && (
+                      {ord.estado !== 'CANCELADA' && (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -369,7 +376,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => { setErrorAccion(null); setOrdenParaCancelar(ord); }}
+                          onClick={() => { setErrorAccion(null); setMotivoCancelacion(''); setOrdenParaCancelar(ord); }}
                           title="Cancelar orden médica"
                           style={{ color: '#dc2626' }}
                         >
@@ -393,12 +400,12 @@ export const HospitalExamOrdersPage: React.FC = () => {
         footer={
           <>
             <Button variant="secondary" disabled={cancelando} onClick={() => setOrdenParaCancelar(null)}>Volver</Button>
-            <Button variant="danger" loading={cancelando} onClick={handleCancelarOrden}>Cancelar orden</Button>
+            <Button variant="danger" disabled={!motivoCancelacion.trim()} loading={cancelando} onClick={handleCancelarOrden}>Cancelar orden</Button>
           </>
         }
       >
         {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
-        <p>Se cancelarán los exámenes pendientes de esta orden. Confirma que deseas continuar.</p>
+        <label>Motivo de cancelación<textarea aria-label="Motivo de cancelación" maxLength={2000} value={motivoCancelacion} onChange={e=>setMotivoCancelacion(e.target.value)} /></label>
       </Modal>
 
       {/* Modal Nueva Orden */}
@@ -431,6 +438,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
           setTimeout(() => setNotificacion(null), 3500);
         }}
       />
+      <HospitalPageControls etiqueta="Ordenes" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />
     </div>
   );
 };
