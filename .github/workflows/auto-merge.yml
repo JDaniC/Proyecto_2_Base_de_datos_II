@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows: [Validación del proyecto]
     types: [completed]
+  check_run:
+    types: [completed]
   issue_comment:
     types: [created, edited, deleted]
   workflow_dispatch:
@@ -25,7 +27,7 @@ concurrency:
 
 jobs:
   evaluar:
-    name: Verificar Codex y activar integración
+    name: Verificar CodeRabbit y activar integración
     if: >-
       github.event_name != 'issue_comment' ||
       github.event.issue.pull_request != null

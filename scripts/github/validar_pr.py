@@ -41,4 +41,4 @@ if __name__ == "__main__":
     paths = subprocess.check_output(["git", "diff", "--name-only", "-z", pr["base"]["sha"] + "..." + pr["head"]["sha"]]).decode().strip("\0").split("\0")
     board = Path("plan/06_TABLERO.md")
     validar(pr["title"], pr["head"]["ref"], pr["base"]["ref"], paths, board.read_text() if board.exists() else "")
-    print("PASS: contrato del PR; el ejecutor verifica alcance y evidencia, con revisión automática de Codex")
+    print("PASS: contrato del PR; el ejecutor verifica alcance y evidencia, con revisión automática de CodeRabbit")
