@@ -34,7 +34,7 @@ import { GestionarHospitalizaciones } from '../aplicacion/casos-uso/hospital/ges
 import { HospitalController } from '../adaptadores/entrada/http/hospital/hospital.controller.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
 import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catalogos.controller.js';
-import { DynamicModule, Module, type OnModuleDestroy } from '@nestjs/common';
+import { DynamicModule, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-bundles-configurados.js';
 import { CerrarSesion } from '../aplicacion/casos-uso/cuentas/cerrar-sesion.js';
@@ -69,9 +69,10 @@ export interface DependenciasAplicacion {
   readonly cerrarRecursos?: () => Promise<void>;
 }
 
-class LimpiadorRecursos implements OnModuleDestroy {
+class LimpiadorRecursos implements OnApplicationShutdown {
   constructor(private readonly cerrar: () => Promise<void>) {}
-  onModuleDestroy(): Promise<void> { return this.cerrar(); }
+  // Nest ya cerró HTTP y drenó sus solicitudes antes de liberar pools y SDKs.
+  onApplicationShutdown(): Promise<void> { return this.cerrar(); }
 }
 
 const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({

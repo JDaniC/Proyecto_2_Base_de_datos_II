@@ -118,8 +118,16 @@ try {
   };
   app = await iniciarBackendAislado();
   if(process.env.CLINICA_UI_SMOKE_REINICIOS==='1') {
-    for(let i=0;i<2;i++){await app.close();app=await iniciarBackendAislado();}
-    console.log('PASS backend en proceso separado: arranque y dos reinicios completos.');
+    const tokenResponse=await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-smoke`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:pediCuenta.email,password:pediCuenta.password,returnSecureToken:true})});
+    assert.equal(tokenResponse.status,200);const {idToken}=await tokenResponse.json();
+    const headers={authorization:`Bearer ${idToken}`,'content-type':'application/json','Idempotency-Key':randomUUID()};
+    const base=`http://127.0.0.1:${runtime.PORT}/api/v1`;
+    const alta=await fetch(`${base}/pacientes`,{method:'POST',headers,body:JSON.stringify({nombres:'Menor',apellidos:'Smoke sintético',fecha_nacimiento:'2020-02-29',sexo:'MASCULINO',responsables:[{nombres:'Madre',apellidos:'Smoke sintética',telefono:'55555555',parentesco:'MADRE',es_principal:true,autoriza_atencion:true,documento:{tipo:'CUI',numero:'1234567890101'}}]})});assert.equal(alta.status,201,await alta.clone().text());const {data:menor}=await alta.json();
+    for(let i=0;i<2;i++){
+      await Promise.all(Array.from({length:4},()=>['/vacunas',`/pacientes/${menor.id}/esquemas`,`/pacientes/${menor.id}`].map(async path=>{const response=await fetch(`${base}${path}`,{headers});assert.equal(response.status,200,await response.text());})).flat());
+      await app.close();app=await iniciarBackendAislado();
+    }
+    console.log('PASS backend en proceso separado: consultas HTTP Firestore concurrentes y dos reinicios completos.');
   } else {
   const frontPort = await puerto();
   vite = spawn(process.execPath, ['../Frontend/node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(frontPort), '--strictPort'], { cwd: new URL('../../Frontend', import.meta.url), env: { ...process.env, VITE_SERVICE_MODE: 'api', VITE_BACKEND_TARGET: `http://127.0.0.1:${port}`, VITE_FIREBASE_AUTH_EMULATOR_URL: `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}` }, stdio: 'ignore' });
