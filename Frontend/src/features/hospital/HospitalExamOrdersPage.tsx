@@ -1,3 +1,4 @@
+import {useConfirmedCommand} from './components/useConfirmedCommand';
 import { HospitalPageControls } from './components/HospitalPageControls';
 import { Alert } from '../../design-system/components/Alert';
 import { getErrorMessage } from '../../services/errors';
@@ -47,6 +48,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const [notificacion, setNotificacion] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [ordenParaCancelar, setOrdenParaCancelar] = useState<OrdenExamenHospital | null>(null);
+  const comandoCancelacion=useConfirmedCommand<{id:string;motivo:string;version?:number}>();
   const [motivoCancelacion,setMotivoCancelacion]=useState('');
   const [cancelando, setCancelando] = useState(false);
 
@@ -73,12 +75,15 @@ export const HospitalExamOrdersPage: React.FC = () => {
     setCancelando(true);
     setErrorAccion(null);
     try {
-      await examRepository.cancelarOrden(institucionId, ordenParaCancelar.id, motivoCancelacion.trim(), ordenParaCancelar.version);
+      const dto=comandoCancelacion.preparar({id:ordenParaCancelar.id,motivo:motivoCancelacion.trim(),version:ordenParaCancelar.version});
+      await examRepository.cancelarOrden(institucionId, dto.id, dto.motivo, dto.version);
+      comandoCancelacion.limpiar();
       setNotificacion(`Orden ${ordenParaCancelar.codigoLegible} cancelada.`);
       setOrdenParaCancelar(null);
       await cargarOrdenes();
       setTimeout(() => setNotificacion(null), 3500);
     } catch (err: unknown) {
+      comandoCancelacion.error(err);
       setErrorAccion(getErrorMessage(err, 'No se pudo cancelar la orden. Inténtalo de nuevo.'));
     } finally {
       setCancelando(false);
@@ -395,18 +400,18 @@ export const HospitalExamOrdersPage: React.FC = () => {
 
       <Modal
         isOpen={Boolean(ordenParaCancelar)}
-        onClose={() => { if (!cancelando) setOrdenParaCancelar(null); }}
+        onClose={() => { if (!cancelando&&!comandoCancelacion.incierto) setOrdenParaCancelar(null); }}
         title="Cancelar orden de examen"
         description={ordenParaCancelar?.codigoLegible}
         footer={
           <>
-            <Button variant="secondary" disabled={cancelando} onClick={() => setOrdenParaCancelar(null)}>Volver</Button>
+            <Button variant="secondary" disabled={cancelando||comandoCancelacion.incierto} onClick={() => setOrdenParaCancelar(null)}>Volver</Button>
             <Button variant="danger" disabled={!motivoCancelacion.trim()} loading={cancelando} onClick={handleCancelarOrden}>Cancelar orden</Button>
           </>
         }
       >
         {errorAccion && <Alert variant="danger" style={{ marginBottom: '16px' }}>{errorAccion}</Alert>}
-        <label>Motivo de cancelación<textarea aria-label="Motivo de cancelación" maxLength={2000} value={motivoCancelacion} onChange={e=>setMotivoCancelacion(e.target.value)} /></label>
+        <label>Motivo de cancelación<textarea disabled={cancelando||comandoCancelacion.incierto} aria-label="Motivo de cancelación" maxLength={2000} value={motivoCancelacion} onChange={e=>setMotivoCancelacion(e.target.value)} /></label>
       </Modal>
 
       {/* Modal Nueva Orden */}

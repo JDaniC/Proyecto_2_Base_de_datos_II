@@ -24,6 +24,7 @@ export async function verificarServiciosHospitalarios(pool:PoolSql,contexto:Cont
   const ejecutar=async(accion:AccionServicioHospital,datos:Record<string,unknown>,id?:string,pid=p.pid,clave=randomUUID())=>servicio.ejecutar(contexto,bundle,accion,pid,id,datos,clave);
   const catalogo=await servicio.catalogos(contexto,bundle);
   assert.equal(catalogo.examenes!.length,2);
+  assert.equal(typeof catalogo.examenes![0]!.version,'number');
   const examen=catalogo.examenes!.find(x=>String(x.nombre).startsWith('Hemograma'))!,extra=catalogo.examenes!.find(x=>String(x.nombre).startsWith('Glucosa'))!;
   const parametro=(examen.parametros as Record<string,unknown>[])[0]!,ajeno=(extra.parametros as Record<string,unknown>[])[0]!;
   const entradaOrden=async()=>({consultaId:p.cid,versionConsulta:1,versionPaciente:await versionPaciente(),pruebasIds:[examen.id],prioridad:'RUTINA',motivoClinico:'Evaluación sintética'});

@@ -2861,7 +2861,7 @@ components:
         nombre: &hsSchemas004
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         unidadMedida: &hsSchemas005
           type: string
@@ -2935,7 +2935,7 @@ components:
         nombre:
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         seccion:
           type: string
@@ -3082,7 +3082,7 @@ components:
         nombrePrueba:
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         seccion:
           type: string
@@ -3153,13 +3153,13 @@ components:
         aseguradoraNombre:
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         planId: *hsSchemas002
         planNombre:
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         numeroPoliza:
           type: string
@@ -3258,7 +3258,7 @@ components:
               nombre:
                 type: string
                 minLength: 1
-                maxLength: 150
+                maxLength: 200
                 pattern: \S
               seccion:
                 type: string
@@ -3291,7 +3291,7 @@ components:
               nombre:
                 type: string
                 minLength: 1
-                maxLength: 150
+                maxLength: 200
                 pattern: \S
               telefonoAutorizaciones:
                 anyOf:
@@ -3317,7 +3317,7 @@ components:
                     nombrePlan:
                       type: string
                       minLength: 1
-                      maxLength: 150
+                      maxLength: 200
                       pattern: \S
                     porcentajeCobertura:
                       anyOf:
@@ -3346,7 +3346,7 @@ components:
               nombre:
                 type: string
                 minLength: 1
-                maxLength: 150
+                maxLength: 200
                 pattern: \S
               descripcion:
                 anyOf:
@@ -3368,7 +3368,7 @@ components:
               nombre:
                 type: string
                 minLength: 1
-                maxLength: 150
+                maxLength: 200
                 pattern: \S
               descripcion:
                 anyOf:
@@ -3390,7 +3390,7 @@ components:
               nombre:
                 type: string
                 minLength: 1
-                maxLength: 150
+                maxLength: 200
                 pattern: \S
               presentacion:
                 anyOf:
@@ -3573,7 +3573,7 @@ components:
         nombre:
           type: string
           minLength: 1
-          maxLength: 150
+          maxLength: 200
           pattern: \S
         fechaHora: *hsSchemas008
         profesionalId: *hsSchemas002

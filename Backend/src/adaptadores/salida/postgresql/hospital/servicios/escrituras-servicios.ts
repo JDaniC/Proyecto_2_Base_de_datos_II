@@ -52,7 +52,7 @@ export async function aplicar(sql:EjecutorSql,contexto:ContextoAutenticado,s:Sol
       const pruebas=e.pruebasIds as string[];
       const items:Record<string,unknown>[]=[];
       for(let i=0;i<pruebas.length;i++){
-        const r=await sql.consultar(`SELECT em.id_examen,em.id_publico,em.nombre,em.tipo,ce.metodo,ce.tipo_muestra FROM examen_medico em JOIN hospital_servicios.catalogo_examen ce USING(id_examen) WHERE em.id_publico=$1 AND ce.activo FOR SHARE OF em`,[pruebas[i]]);
+        const r=await sql.consultar(`SELECT em.id_examen,em.id_publico,em.nombre,COALESCE(em.tipo,'') AS tipo,ce.metodo,ce.tipo_muestra FROM examen_medico em JOIN hospital_servicios.catalogo_examen ce USING(id_examen) WHERE em.id_publico=$1 AND ce.activo FOR SHARE OF em`,[pruebas[i]]);
         const examen=r.filas[0];if(!examen)invalida('Examen de catálogo no disponible.');
         const ps=await sql.consultar(`SELECT p.id_publico AS "parametroId",p.nombre,u.id_publico AS "unidadId",COALESCE(u.codigo,'') AS "unidadMedida",ep.referencia AS "rangoReferencia"
           FROM hospital_servicios.examen_parametro ep JOIN parametro_examen p USING(id_parametro) LEFT JOIN unidad_medida u USING(id_unidad)
@@ -113,7 +113,7 @@ async function afiliar(sql:EjecutorSql,s:SolicitudServicioHospital,estable:Estad
   const cat=await sql.consultar(`SELECT p.id_plan,p.nombre_plan,p.moneda,p.porcentaje_cobertura,(p.monto_maximo_cobertura*100)::bigint AS limite,
     a.nombre AS aseguradora FROM plan_seguro p JOIN aseguradora a USING(id_aseguradora)
     WHERE p.id_publico=$1 AND a.id_publico=$2 AND p.estado='ACTIVO' AND a.estado='ACTIVA' FOR SHARE OF p,a`,[e.planId,e.aseguradoraId]);
-  const plan=cat.filas[0];if(!plan||plan.moneda!=='GTQ')invalida('Plan/aseguradora no activos o moneda no compatible.');
+  const plan=cat.filas[0];if(!plan||plan.moneda!=='GTQ'||plan.porcentaje_cobertura===null)invalida('Plan/aseguradora no activos o moneda no compatible.');
   const titular=await sql.consultar('SELECT * FROM titular_seguro WHERE cui=$1 FOR UPDATE',[t.numeroIdentificacion]);
   let idTitular= titular.filas[0]?.id_titular;
   if(idTitular){const f=titular.filas[0]!;if(f.primer_nombre!==t.nombres||f.primer_apellido!==t.apellidos||f.telefono!==t.telefonoContacto)invalida('El titular existente tiene otros datos. Debe reconciliarse sin sobrescribir su identidad.');}

@@ -47,18 +47,22 @@ export async function listar(sql:EjecutorSql,tipo:TipoServicioHospital,f:FiltroS
 }
 export async function catalogos(sql:EjecutorSql) {
   await preparado(sql);
-  const examenes=await sql.consultar(`SELECT e.id_publico AS id,e.nombre,e.tipo AS seccion,e.revision AS version,c.activo AS activo,
+  const examenes=await sql.consultar(`SELECT e.id_publico AS id,e.nombre,COALESCE(e.tipo,'') AS seccion,e.revision AS version,c.activo AS activo,
     c.metodo AS "metodoAnalitico",c.tipo_muestra AS "tipoMuestra",c.tiempo_horas AS "tiempoEntregaHoras",
     COALESCE((SELECT jsonb_agg(jsonb_build_object('parametroId',p.id_publico,'nombre',p.nombre,'unidadMedida',COALESCE(u.codigo,''),'rangoReferencia',ep.referencia) ORDER BY p.id_publico)
       FROM hospital_servicios.examen_parametro ep JOIN parametro_examen p USING(id_parametro) LEFT JOIN unidad_medida u USING(id_unidad)
       WHERE ep.id_examen=e.id_examen AND ep.activo),'[]'::jsonb) AS parametros
-    FROM examen_medico e JOIN hospital_servicios.catalogo_examen c USING(id_examen) ORDER BY e.nombre LIMIT 100`);
+    FROM examen_medico e JOIN hospital_servicios.catalogo_examen c USING(id_examen) ORDER BY e.nombre LIMIT 101`);
   const aseguradoras=await sql.consultar(`SELECT a.id_publico AS id,a.nombre,a.telefono AS "telefonoAutorizaciones",a.estado,
     COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id_publico,'nombrePlan',p.nombre_plan,'porcentajeCobertura',p.porcentaje_cobertura,
       'activo',p.estado='ACTIVO','moneda',p.moneda,'limiteCentavos',(p.monto_maximo_cobertura*100)::bigint) ORDER BY p.id_publico)
-      FROM plan_seguro p WHERE p.id_aseguradora=a.id_aseguradora),'[]'::jsonb) AS planes FROM aseguradora a ORDER BY a.nombre LIMIT 100`);
-  const procedimientos=await sql.consultar(`SELECT p.id_publico AS id,p.nombre,p.descripcion,c.activo FROM procedimiento p JOIN hospital_servicios.catalogo_procedimiento c USING(id_procedimiento) ORDER BY p.nombre LIMIT 100`);
-  const especialidades=await sql.consultar('SELECT id_publico AS id,nombre,descripcion FROM especialidad ORDER BY nombre LIMIT 100');
-  const medicamentos=await sql.consultar(`SELECT m.id_publico AS id,m.nombre,m.presentacion,u.codigo AS unidad FROM medicamento m LEFT JOIN unidad_medida u ON u.id_unidad=m.id_unidad_base ORDER BY m.nombre LIMIT 100`);
-  return {examenes:examenes.filas,aseguradoras:aseguradoras.filas,procedimientos:procedimientos.filas,especialidades:especialidades.filas,medicamentos:medicamentos.filas};
+      FROM plan_seguro p WHERE p.id_aseguradora=a.id_aseguradora),'[]'::jsonb) AS planes FROM aseguradora a ORDER BY a.nombre LIMIT 101`);
+  const procedimientos=await sql.consultar(`SELECT p.id_publico AS id,p.nombre,p.descripcion,c.activo FROM procedimiento p JOIN hospital_servicios.catalogo_procedimiento c USING(id_procedimiento) ORDER BY p.nombre LIMIT 101`);
+  const especialidades=await sql.consultar('SELECT id_publico AS id,nombre,descripcion FROM especialidad ORDER BY nombre LIMIT 101');
+  const medicamentos=await sql.consultar(`SELECT m.id_publico AS id,m.nombre,m.presentacion,u.codigo AS unidad FROM medicamento m LEFT JOIN unidad_medida u ON u.id_unidad=m.id_unidad_base ORDER BY m.nombre LIMIT 101`);
+  const grupos=[examenes.filas,aseguradoras.filas,procedimientos.filas,especialidades.filas,medicamentos.filas];
+  if(grupos.some(g=>g.length>100)||examenes.filas.some(e=>(e.parametros as unknown[]).length>100)||aseguradoras.filas.some(a=>(a.planes as unknown[]).length>100))throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Catálogo extenso requiere preparación paginada.');
+  const respuesta={examenes:examenes.filas.map(e=>({...e,version:versionPositiva(Number(e.version))})),aseguradoras:aseguradoras.filas,procedimientos:procedimientos.filas,especialidades:especialidades.filas,medicamentos:medicamentos.filas};
+  if(Buffer.byteLength(JSON.stringify(respuesta),'utf8')>240000)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Catálogo excesivo.');
+  return respuesta;
 }
