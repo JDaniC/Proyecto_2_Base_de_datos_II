@@ -51,27 +51,28 @@ export class ServiciosHospitalarios {
     const e = objetoCerrado(entrada,CAMPOS[accion]);
     if (['ordenCrear','polizaAfiliar','procedimientoRegistrar'].includes(accion)) versionPositiva(e.versionPaciente);
     else versionPositiva(e.versionEsperada);
-    if (accion==='ordenCrear' || accion==='procedimientoRegistrar') { uuidPublico(e.consultaId); versionPositiva(e.versionConsulta); }
+    if (accion==='ordenCrear' || accion==='procedimientoRegistrar') { e.consultaId=uuidPublico(e.consultaId); versionPositiva(e.versionConsulta); }
     switch (accion) {
       case 'ordenCrear':
         enumerado(e,'prioridad',['RUTINA','URGENTE','STAT']); texto(e,'motivoClinico',2000); texto(e,'diagnosticoPresuntivoCIE10',20,true);
         if (!Array.isArray(e.pruebasIds) || e.pruebasIds.length < 1 || e.pruebasIds.length > 100 || new Set(e.pruebasIds).size !== e.pruebasIds.length) throw new ErrorDominio('SOLICITUD_INVALIDA','Seleccione de 1 a 100 exámenes distintos.');
-        e.pruebasIds.forEach(id => uuidPublico(id)); break;
+        e.pruebasIds=e.pruebasIds.map(id=>uuidPublico(id));
+        if(new Set(e.pruebasIds as string[]).size!==(e.pruebasIds as string[]).length)throw new ErrorDominio('SOLICITUD_INVALIDA','Los exámenes deben ser distintos.'); break;
       case 'ordenCancelar': texto(e,'motivo',1000); break;
       case 'resultadoRegistrar':
-        uuidPublico(e.pruebaId); texto(e,'interpretacionClinica',10000); texto(e,'observacionesTecnicas',2000,true); texto(e,'motivoCorreccion',1000,true);
+        e.pruebaId=uuidPublico(e.pruebaId); texto(e,'interpretacionClinica',10000); texto(e,'observacionesTecnicas',2000,true); texto(e,'motivoCorreccion',1000,true);
         if (e.versionResultado !== undefined) versionPositiva(e.versionResultado);
         if (!Array.isArray(e.parametros) || !e.parametros.length || e.parametros.length>100) throw new ErrorDominio('SOLICITUD_INVALIDA','Parámetros inválidos.');
-        for (const p of e.parametros) { const v=objetoCerrado(p,['parametroId','valorMedido','alerta']); uuidPublico(v.parametroId); texto(v,'valorMedido',1000); enumerado(v,'alerta',['NORMAL','ELEVADO','DISMINUIDO','CRITICO']); } break;
+        for (const p of e.parametros) { const v=objetoCerrado(p,['parametroId','valorMedido','alerta']); v.parametroId=uuidPublico(v.parametroId); texto(v,'valorMedido',1000); enumerado(v,'alerta',['NORMAL','ELEVADO','DISMINUIDO','CRITICO']); } break;
       case 'polizaAfiliar': {
-        uuidPublico(e.aseguradoraId); uuidPublico(e.planId); texto(e,'numeroPoliza',80); texto(e,'numeroCertificado',80); texto(e,'observaciones',2000,true);
+        e.aseguradoraId=uuidPublico(e.aseguradoraId); e.planId=uuidPublico(e.planId); texto(e,'numeroPoliza',80); texto(e,'numeroCertificado',80); texto(e,'observaciones',2000,true);
         const desde=fechaCivil(e.vigenciaDesde), hasta=fechaCivil(e.vigenciaHasta);
         if (desde>hasta) throw new ErrorDominio('SOLICITUD_INVALIDA','Vigencia inválida.');
         if (!Number.isSafeInteger(e.copagoCentavos) || Number(e.copagoCentavos)<0 || Number(e.copagoCentavos)>100000000) throw new ErrorDominio('SOLICITUD_INVALIDA','Dinero debe expresarse en centavos enteros GTQ.');
         const t=objetoCerrado(e.titular,['nombres','apellidos','numeroIdentificacion','telefonoContacto','parentesco']); texto(t,'nombres',80); texto(t,'apellidos',80); texto(t,'numeroIdentificacion',20); texto(t,'telefonoContacto',30); if(typeof t.numeroIdentificacion!=='string'||!/^\d{13}$/.test(t.numeroIdentificacion)) throw new ErrorDominio('SOLICITUD_INVALIDA','El CUI del titular debe contener 13 dígitos.'); enumerado(t,'parentesco',['TITULAR','PADRE','MADRE','CONYUGE','HIJO','OTRO']); break;
       }
       case 'polizaEstado': enumerado(e,'estado',['ACTIVA','VENCIDA','SUSPENDIDA']); texto(e,'motivo',1000); break;
-      case 'procedimientoRegistrar': uuidPublico(e.procedimientoId); texto(e,'resultado',10000); texto(e,'observaciones',2000,true); break;
+      case 'procedimientoRegistrar': e.procedimientoId=uuidPublico(e.procedimientoId); texto(e,'resultado',10000); texto(e,'observaciones',2000,true); break;
     }
     return puerto.ejecutar(contexto,{accion,pacienteId:uuidPublico(pacienteId),...(recursoId ? {recursoId:uuidPublico(recursoId)} : {}),datos:e,clave:uuidPublico(clave,'Idempotency-Key')});
   }

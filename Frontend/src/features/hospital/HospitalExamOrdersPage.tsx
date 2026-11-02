@@ -2,7 +2,7 @@ import {useConfirmedCommand} from './components/useConfirmedCommand';
 import { HospitalPageControls } from './components/HospitalPageControls';
 import { Alert } from '../../design-system/components/Alert';
 import { getErrorMessage } from '../../services/errors';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -34,6 +34,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
 
   const [ordenes, setOrdenes] = useState<OrdenExamenHospital[]>([]);
   const [errorLectura,setErrorLectura]=useState('');
+  const lectura=useRef(0);
   const [pagina, setPagina] = useState(1);
   const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -53,16 +54,19 @@ export const HospitalExamOrdersPage: React.FC = () => {
   const [cancelando, setCancelando] = useState(false);
 
   const cargarOrdenes = useCallback(async () => {
+    const turno=++lectura.current;
     setLoading(true);
     setErrorLectura('');
     try {
       const data = await examRepository.listarOrdenes(institucionId, filtroEstado, { pagina, limite: 25 });
+      if(turno!==lectura.current)return;
       setOrdenes(data.items);
       setHayMas(data.hayMas);
     } catch {
+      if(turno!==lectura.current)return;
       setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
-      setLoading(false);
+      if(turno===lectura.current)setLoading(false);
     }
   }, [institucionId, filtroEstado, examRepository, pagina]);
 

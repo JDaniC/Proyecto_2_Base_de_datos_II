@@ -65,7 +65,8 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
   }, [isOpen, preselectedPacienteId, catalogRepository, patientRepository, institucionId]);
 
   useEffect(() => {
-    if (!isOpen || preselectedPacienteId || !busqueda.trim()) return;
+    if (!isOpen || preselectedPacienteId) return;
+    if(!busqueda.trim()){setPacientes([]);setPacienteId('');return;}
     let vigente=true;
     const timer=setTimeout(()=>{patientRepository.buscar(institucionId,{q:busqueda.trim()}).then(r=>{if(vigente)setPacientes(r.items.filter(p=>p.estado==='ACTIVO'));}).catch(()=>{if(vigente)setError('No se pudo buscar pacientes.');});},250);
     return()=>{vigente=false;clearTimeout(timer);};
@@ -194,6 +195,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
                   fontSize: '13px'
                 }}
               >
+                <option value="">Seleccione un paciente</option>
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.nombres} {p.apellidos} ({p.codigoLegible})

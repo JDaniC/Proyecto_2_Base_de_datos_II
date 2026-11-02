@@ -29,12 +29,13 @@ export async function verificarServiciosHospitalarios(pool:PoolSql,contexto:Cont
   const parametro=(examen.parametros as Record<string,unknown>[])[0]!,ajeno=(extra.parametros as Record<string,unknown>[])[0]!;
   const entradaOrden=async()=>({consultaId:p.cid,versionConsulta:1,versionPaciente:await versionPaciente(),pruebasIds:[examen.id],prioridad:'RUTINA',motivoClinico:'Evaluación sintética'});
   await assert.rejects(ejecutar('ordenCrear',{...await entradaOrden(),consultaId:otro.cid}),{codigo:'REFERENCIA_INCOMPATIBLE'});
+  await assert.rejects(ejecutar('ordenCrear',{...await entradaOrden(),pruebasIds:[String(examen.id),String(examen.id).toUpperCase()]}),{codigo:'SOLICITUD_INVALIDA'});
   const body=await entradaOrden(),key=randomUUID();
   const orden=await ejecutar('ordenCrear',body,undefined,p.pid,key);
   assert.deepEqual(await ejecutar('ordenCrear',body,undefined,p.pid,key),orden);
   await assert.rejects(ejecutar('ordenCrear',{...body,motivoClinico:'Otra intención'},undefined,p.pid,key),{codigo:'CLAVE_REUTILIZADA'});
   assert.equal(orden.contenido.medicoSolicitanteId,contexto.cuenta.profesional!.id);
-  const emitir={versionEsperada:orden.version,pruebaId:examen.id,parametros:[{parametroId:parametro.parametroId,valorMedido:'13.5',alerta:'NORMAL'}],interpretacionClinica:'Interpretación sintética'};
+  const emitir={versionEsperada:orden.version,pruebaId:String(examen.id).toUpperCase(),parametros:[{parametroId:String(parametro.parametroId).toUpperCase(),valorMedido:'13.5',alerta:'NORMAL'}],interpretacionClinica:'Interpretación sintética'};
   await assert.rejects(ejecutar('resultadoRegistrar',{...emitir,parametros:[{parametroId:ajeno.parametroId,valorMedido:'1',alerta:'NORMAL'}]},orden.id),{codigo:'REFERENCIA_INCOMPATIBLE'});
   assert.equal(Number((await pool.consultar('SELECT count(*) AS total FROM resultado_examen')).filas[0]!.total),0);
   const resultado=await ejecutar('resultadoRegistrar',emitir,orden.id);

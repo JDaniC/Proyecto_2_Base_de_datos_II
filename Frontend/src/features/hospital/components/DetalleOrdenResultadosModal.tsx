@@ -1,5 +1,5 @@
 import { HospitalPageControls } from './HospitalPageControls';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Clock,
   FlaskConical,
@@ -35,6 +35,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [errorLectura,setErrorLectura]=useState('');
+  const lectura=useRef(0);
   const [pagina, setPagina] = useState(1);
   const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,16 +44,19 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
 
   const cargarResultados = useCallback(async () => {
     if (!orden) return;
+    const turno=++lectura.current;
     setLoading(true);
     setErrorLectura('');
     try {
       const data = await examRepository.obtenerResultadosPorOrden(institucionId, orden.id, { pagina, limite: 25 });
+      if(turno!==lectura.current)return;
       setResultados(data.items);
       setHayMas(data.hayMas);
     } catch {
+      if(turno!==lectura.current)return;
       setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
-      setLoading(false);
+      if(turno===lectura.current)setLoading(false);
     }
   }, [institucionId, orden, examRepository, pagina]);
 
@@ -62,7 +66,9 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
     }
   }, [isOpen, orden, cargarResultados]);
 
-  if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarResultados()}>Reintentar consulta</Button></div>;
+
+
+  useEffect(()=>{setPagina(1);setSelecciones({});setErrorLectura('');return()=>{lectura.current++;};},[orden?.id,isOpen]);
 
   if (!orden) return null;
 
@@ -113,6 +119,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
       maxWidth="850px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {errorLectura&&<div role="alert">{errorLectura}<Button onClick={()=>void cargarResultados()}>Reintentar consulta</Button></div>}
         {/* Cabecera de la Orden Médica */}
         <div
           style={{
@@ -194,7 +201,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
             )}
           </div>
 
-          {loading ? (
+          {errorLectura?null:loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <SkeletonLoader variant="rectangular" height="120px" />
               <SkeletonLoader variant="rectangular" height="120px" />

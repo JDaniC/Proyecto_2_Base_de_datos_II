@@ -74,7 +74,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
       setHayMas(polRes.hayMas);
       setAseguradoras(asegRes);
     } catch {
-      // Fallback
+      setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
       setLoading(false);
     }
