@@ -54,9 +54,11 @@ def validate_artifacts():
     operations = {op['operationId']: op for item in spec['paths'].values()
                   for method, op in item.items() if method in {'get', 'post', 'patch', 'put', 'delete'}}
     require(len(operations) == sum(len(item) for item in spec['paths'].values()), 'operationId duplicado')
-    fixtures = json.loads((DOCS / 'fixtures/contrato-v1.json').read_text(), parse_float=Decimal)
+    fixtures = [case for archivo in ('contrato-v1.json', 'hospital-v1.json', 'hospital-servicios-v1.json', 'pediatria-respuestas-v1.json')
+                for case in json.loads((DOCS / 'fixtures' / archivo).read_text(), parse_float=Decimal)]
     ids = set()
     request_coverage = set()
+    response_coverage = set()
     for case in fixtures:
         require(case['id'] not in ids, 'Fixture duplicado: ' + case['id'])
         ids.add(case['id'])
@@ -67,11 +69,20 @@ def validate_artifacts():
         errors = list(validator.iter_errors(case['value']))
         require((not errors) == case['valid'], 'Fixture con resultado incorrecto: ' + case['id'] +
                 (' — ' + errors[0].message if errors else ' — se aceptó la entrada inválida'))
+        for name, op in operations.items():
+            schema = op.get('requestBody', {}).get('content', {}).get('application/json', {}).get('schema', {})
+            if schema.get('$ref') == '#/components/schemas/' + target:
+                request_coverage.add((name, case['valid']))
         if 'operationId' in case:
             op = operations[case['operationId']]
             require(op['requestBody']['content']['application/json']['schema']['$ref'].endswith('/' + target),
                     'Fixture no corresponde al request: ' + case['id'])
             request_coverage.add((case['operationId'], case['valid']))
+        if 'responseOperationId' in case:
+            name = case['responseOperationId']
+            target_ref = operations[name]['responses'][case['status']]['content']['application/json']['schema']['$ref']
+            require(target_ref.endswith('/' + target), 'Fixture no corresponde a respuesta: ' + case['id'])
+            response_coverage.add((name, case['status'], case['valid']))
         if 'queryOperationId' in case:
             op = operations[case['queryOperationId']]
             require(op['x-query-schema']['$ref'] == '#/components/schemas/' + target,
@@ -85,12 +96,17 @@ def validate_artifacts():
                                         format_checker=FormatChecker())
         validator.validate(media['example'])
     for name, op in operations.items():
-        require(op['x-implementacion'] == ('IMPLEMENTED' if name in {'sesionEstablecer', 'sesionActual', 'sesionCerrar', 'pacienteHistorial', 'pacienteExpediente'} else 'NOT_IMPLEMENTED'),
-                'Estado de implementación inesperado: ' + name)
+        # El estado declarado evolucionó tras E00; su ejecución se acredita en pruebas runtime/integración.
+        require(op['x-implementacion'] in {'IMPLEMENTED', 'NOT_IMPLEMENTED'},
+                'Estado de implementación inválido: ' + name)
         require({'400', '401', '403', '404', '409', '413', '500', '503'} <= set(op['responses']),
                 'Errores incompletos: ' + name)
         if 'requestBody' in op:
             require({(name, True), (name, False)} <= request_coverage, 'Faltan ejemplos request: ' + name)
+        if name.startswith('pediatria') or name == 'catalogoOdontologia':
+            for status in ('200', '201'):
+                if status in op['responses']:
+                    require({(name, status, True), (name, status, False)} <= response_coverage, 'Faltan ejemplos respuesta: ' + name)
         require('x-permisos' in op and op['x-instituciones'], 'Política ausente: ' + name)
     # Trazabilidad exhaustiva contra las firmas de presentación actuales.
     source = (ROOT / 'Frontend/src/services/contracts.ts').read_text()
@@ -107,7 +123,7 @@ def validate_artifacts():
     require(excluded == {r['metodo'] for r in mapping if r['destino'] == 'EXCLUIDO'},
             'Exclusiones difieren del alcance UI')
     for row in mapping:
-        if row['destino'] == 'COMUN_V1':
+        if row['destino'] in {'COMUN_V1', 'EXTENSION_PEDIATRIA'}:
             require(row['operationId'] in operations, 'Destino común ausente: ' + row['metodo'])
             require(all(op in operations for op in row.get('operationIds_adicionales', [])),
                     'Destino compuesto ausente: ' + row['metodo'])

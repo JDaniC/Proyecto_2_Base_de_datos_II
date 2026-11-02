@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+export async function recorrerPediatria({page,url,paciente,headers,pass,reiniciarBackend}){
+ const go=async()=>{await page.goto(`${url}/pacientes/${paciente.id}`);await page.getByText('Crecimiento desde consultas',{exact:true}).waitFor();};
+ const post=async(suffix,accion)=>{const espera=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith(suffix));await accion();const r=await espera;assert.ok([200,201].includes(r.status()),await r.text());const data=(await r.json()).data;await page.waitForLoadState('networkidle');return data;};
+ const lectura=await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/antecedentes-pediatricos`,{headers});assert.equal(lectura.status(),200,await lectura.text());
+ await go();await page.getByText('No calculable',{exact:true}).waitFor();pass('crecimiento HTTP desde consulta sin talla muestra IMC no calculable');
+ await page.getByLabel('Motivo del cambio clínico').fill('Verificación sintética').catch(async e=>{console.log('FICHA_PEDIATRICA_SINTETICA',await page.locator('body').innerText());throw e;});
+ await post('/sin-alergias',()=>page.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}).click());
+ await page.getByText(/Sin Alergias Conocidas/i).first().waitFor();pass('verificación de alergias se confirma por HTTP y persiste');
+ await page.getByLabel('Motivo del cambio clínico').fill('Historia sintética');
+ await page.getByRole('button',{name:'Actualizar historia clínica'}).click();await page.getByLabel('Patológicos',{exact:true}).fill('Asma sintética de ensayo');
+ await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+ const antes=await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/antecedentes-pediatricos`,{headers});assert.equal((await antes.json()).data.historia,undefined);pass('cancelar historia no escribe datos');
+ await page.getByRole('button',{name:'Actualizar historia clínica'}).click();
+ const historia=await post('/historia',()=>page.getByRole('button',{name:'Guardar historia'}).click());assert.equal(historia.historia.patologicos[0],'Asma sintética de ensayo');
+ await page.getByText('Asma sintética de ensayo',{exact:true}).waitFor();pass('historia clínica UI se conserva tras escritura real');
+ await page.getByLabel('Motivo del cambio clínico').fill('Alergia sintética');await page.getByRole('button',{name:'Registrar Nueva Alergia'}).click();
+ await page.getByRole('dialog').getByRole('textbox').first().fill('Polen de ensayo');await page.getByLabel('Reacción clínica de la alergia').fill('Reacción sintética');
+ const alergia=await post('/alergias',()=>page.getByRole('button',{name:'Guardar Alergia',exact:true}).click());assert.equal(alergia.alergias[0].activa,true);await page.getByText('Polen de ensayo',{exact:true}).waitFor();pass('registro de alergia por HTTP conserva autoría e invalida verificación negativa previa');
+ await page.getByLabel('Motivo del cambio clínico').fill('Baja sintética');await page.getByTitle('Eliminar alergia',{exact:true}).click();
+ await post('/alergias/baja',()=>page.getByRole('button',{name:'Eliminar registro',exact:true}).click());
+ const historica=await page.request.get(`${url}/api/v1/pacientes/${paciente.id}/antecedentes-pediatricos`,{headers});assert.equal((await historica.json()).data.alergias[0].activa,false);pass('baja lógica desde UI conserva alergia histórica');
+ await page.getByLabel('Motivo del cambio clínico').fill('Perinatales sintéticos');await page.getByRole('button',{name:'Editar Antecedentes Perinatales'}).click();await page.getByLabel('Apgar 1 min').fill('0');
+ await post('/perinatales',()=>page.getByRole('dialog').getByRole('button',{name:/Guardar/}).click());pass('perinatales explícitos preservan Apgar cero');
+ const principal=paciente.responsables[0].responsable;
+ await page.getByRole('button',{name:`Editar contacto de ${principal.nombre}`}).click();await page.getByLabel('Teléfono del responsable').fill('55551111');
+ await post('/contacto',()=>page.getByRole('button',{name:'Guardar responsable'}).click());await page.getByText(/55551111/).first().waitFor();
+ const menor2=await page.request.post(`${url}/api/v1/pacientes`,{headers:{...headers,'Idempotency-Key':randomUUID()},data:{nombres:'Hermano',apellidos:'Sintético',fecha_nacimiento:'2023-01-01',sexo:'MASCULINO',responsables:[{responsable_id:principal.id,version_responsable:principal.version+1,parentesco:'MADRE',es_principal:true,autoriza_atencion:false}]}});assert.equal(menor2.status(),201,await menor2.text());const segundo=(await menor2.json()).data;
+ assert.equal(segundo.responsables[0].responsable.telefono,'55551111');assert.equal(segundo.responsables[0].vinculo.autoriza_atencion,false);pass('contacto compartido en dos menores y autorización independiente');
+ await page.getByRole('button',{name:`Dar de baja a ${principal.nombre}`}).click();await page.getByLabel('Motivo de baja').fill('Baja imposible');
+ const rechazo=page.waitForResponse(r=>r.url().endsWith('/baja')&&r.request().method()==='POST');await page.getByRole('button',{name:'Guardar responsable'}).click();assert.equal((await rechazo).status(),409);await page.getByRole('button',{name:'Cancelar',exact:true}).click();pass('último principal rechazado también por API desde el formulario');
+ await reiniciarBackend();await go();await page.getByText('Asma sintética de ensayo',{exact:true}).waitFor();await page.getByText(/55551111/).first().waitFor();pass('historia y contacto persisten tras reinicio y recarga');
+ await page.setViewportSize({width:390,height:844});await page.getByText('Crecimiento desde consultas',{exact:true}).waitFor();await page.setViewportSize({width:1280,height:720});pass('ficha pediátrica disponible en móvil y escritorio');
+}

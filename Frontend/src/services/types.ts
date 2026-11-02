@@ -457,6 +457,7 @@ export interface VerificacionAlergias {
 }
 
 export interface AlergiaRegistro {
+  id?: string;
   sustancia: string;
   severidad: 'LEVE' | 'MODERADA' | 'SEVERA';
   reaccion: string;
@@ -464,6 +465,8 @@ export interface AlergiaRegistro {
 }
 
 export interface AntecedentesClinicos {
+  versionAntecedentes?: number;
+  historiaRegistrada?: boolean;
   patologicos: string[];
   quirurgicos: string[];
   familiares: string[];
@@ -643,7 +646,8 @@ export type TipoEventoHistorial =
   | 'EXAMEN'
   | 'ORDEN_LAB'
   | 'VACUNA'
-  | 'CRECIMIENTO';
+  | 'CRECIMIENTO'
+  | 'ANTECEDENTE';
 
 export interface EventoHistorial {
   id: string;
@@ -1542,4 +1546,26 @@ export interface CatalogoHospitalDTO {
   procedimientos: {id:string;nombre:string;descripcion?:string;activo:boolean}[];
   especialidades: {id:string;nombre:string;descripcion?:string}[];
   medicamentos: {id:string;nombre:string;presentacion?:string;unidad?:string}[];
+}
+
+export interface MedicionPediatrica {
+  consultaId:string;versionConsulta:number;fecha:string;fechaHora:string;profesionalNombre:string;
+  edadMeses:number|null;pesoKg:number|null;tallaCm:number|null;perimetroCefalicoCm:number|null;imc:number|null;
+}
+
+export interface ResponsableEncontrado {
+ responsable:{id:string;nombres:string;apellidos:string;nombre:string;telefono:string;version:number;documento?:{tipo:string;numero:string}};
+ versionVinculo?:number;activo?:boolean;
+}
+
+export interface SnapshotAntecedentesPediatricos {
+ version:number;
+ alergias:Array<{id:string;sustancia:string;severidad:'LEVE'|'MODERADA'|'SEVERA';reaccion:string;activa:boolean;fechaHora:string;actorId:string}>;
+ perinatales?:AntecedentesPerinatales;
+ historia?:Pick<AntecedentesClinicos,'patologicos'|'quirurgicos'|'familiares'|'medicamentosActuales'>;
+ verificacionSinAlergias?:{actorId:string;fechaHora:string};
+}
+export interface RevisionAntecedentesPediatricos {
+ anterior:SnapshotAntecedentesPediatricos;actual:SnapshotAntecedentesPediatricos;
+ motivo:string;fechaHora:string;actorId:string;
 }

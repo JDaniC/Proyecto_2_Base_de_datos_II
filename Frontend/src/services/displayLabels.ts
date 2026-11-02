@@ -27,7 +27,7 @@ const LABELS: Record<string, string> = {
   MEDICO: 'Médico', SECRETARIA: 'Secretaría', ADMIN_INSTITUCIONAL: 'Administrador institucional',
   ODONTOLOGO: 'Odontólogo', PEDIATRA: 'Pediatra', ANALISTA_LABORATORIO: 'Analista de laboratorio',
   VALIDADOR_LABORATORIO: 'Validador de laboratorio', MEDICO_LABORATORIO: 'Médico de laboratorio',
-  ORDEN_LAB: 'Orden de laboratorio', HOSPITALIZACION: 'Hospitalización', CRECIMIENTO: 'Crecimiento',
+  ORDEN_LAB: 'Orden de laboratorio', HOSPITALIZACION: 'Hospitalización', CRECIMIENTO: 'Crecimiento', ANTECEDENTE: 'Antecedentes',
   CONSULTA: 'Consulta', RECETA: 'Receta', DIAGNOSTICO: 'Diagnóstico', ARCHIVO: 'Archivo', REACTIVACION: 'Reactivación',
   EXAMEN: 'Examen', VACUNA: 'Vacuna',
 };

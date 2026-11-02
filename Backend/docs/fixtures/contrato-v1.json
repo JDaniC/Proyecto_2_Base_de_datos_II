@@ -4920,5 +4920,332 @@
       }
     },
     "valid": false
+  },
+  {
+    "id": "pediatriaAlergiaCrear-valido",
+    "schema": "PediatriaAlergiaCrearEntrada",
+    "operationId": "pediatriaAlergiaCrear",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "alergia": {
+        "sustancia": "Polen sintético",
+        "severidad": "LEVE",
+        "reaccion": "Reacción sintética"
+      }
+    }
+  },
+  {
+    "id": "pediatriaAlergiaCrear-autor-cliente",
+    "schema": "PediatriaAlergiaCrearEntrada",
+    "operationId": "pediatriaAlergiaCrear",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "alergia": {
+        "sustancia": "Polen sintético",
+        "severidad": "LEVE",
+        "reaccion": "Reacción sintética"
+      },
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaAlergiaBaja-valido",
+    "schema": "PediatriaAlergiaBajaEntrada",
+    "operationId": "pediatriaAlergiaBaja",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "alergia_id": "00000000-0000-4000-8000-000000000091"
+    }
+  },
+  {
+    "id": "pediatriaAlergiaBaja-autor-cliente",
+    "schema": "PediatriaAlergiaBajaEntrada",
+    "operationId": "pediatriaAlergiaBaja",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "alergia_id": "00000000-0000-4000-8000-000000000091",
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaSinAlergias-valido",
+    "schema": "PediatriaSinAlergiasEntrada",
+    "operationId": "pediatriaSinAlergias",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético"
+    }
+  },
+  {
+    "id": "pediatriaSinAlergias-autor-cliente",
+    "schema": "PediatriaSinAlergiasEntrada",
+    "operationId": "pediatriaSinAlergias",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaHistoria-valido",
+    "schema": "PediatriaHistoriaEntrada",
+    "operationId": "pediatriaHistoria",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "historia": {
+        "patologicos": [
+          "Antecedente sintético"
+        ],
+        "quirurgicos": [],
+        "familiares": [],
+        "medicamentosActuales": []
+      }
+    }
+  },
+  {
+    "id": "pediatriaHistoria-autor-cliente",
+    "schema": "PediatriaHistoriaEntrada",
+    "operationId": "pediatriaHistoria",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "historia": {
+        "patologicos": [
+          "Antecedente sintético"
+        ],
+        "quirurgicos": [],
+        "familiares": [],
+        "medicamentosActuales": []
+      },
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaPerinatales-valido",
+    "schema": "PediatriaPerinatalesEntrada",
+    "operationId": "pediatriaPerinatales",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "perinatales": {
+        "apgar1Minuto": 0
+      }
+    }
+  },
+  {
+    "id": "pediatriaPerinatales-autor-cliente",
+    "schema": "PediatriaPerinatalesEntrada",
+    "operationId": "pediatriaPerinatales",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 0,
+      "motivo": "Registro sintético",
+      "perinatales": {
+        "apgar1Minuto": 0
+      },
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaRectificar-valido",
+    "schema": "PediatriaRectificarEntrada",
+    "operationId": "pediatriaRectificar",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 1,
+      "motivo": "Registro sintético",
+      "historia": {
+        "patologicos": [
+          "Antecedente sintético"
+        ],
+        "quirurgicos": [],
+        "familiares": [],
+        "medicamentosActuales": []
+      }
+    }
+  },
+  {
+    "id": "pediatriaRectificar-autor-cliente",
+    "schema": "PediatriaRectificarEntrada",
+    "operationId": "pediatriaRectificar",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_antecedentes": 1,
+      "motivo": "Registro sintético",
+      "historia": {
+        "patologicos": [
+          "Antecedente sintético"
+        ],
+        "quirurgicos": [],
+        "familiares": [],
+        "medicamentosActuales": []
+      },
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-valido",
+    "schema": "PediatriaResponsableCrearEntrada",
+    "operationId": "pediatriaResponsableCrear",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "nombres": "Madre",
+      "apellidos": "Sintética",
+      "telefono": "55555555",
+      "documento": {
+        "tipo": "CUI",
+        "numero": "1234567890101"
+      },
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-autor-cliente",
+    "schema": "PediatriaResponsableCrearEntrada",
+    "operationId": "pediatriaResponsableCrear",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "nombres": "Madre",
+      "apellidos": "Sintética",
+      "telefono": "55555555",
+      "documento": {
+        "tipo": "CUI",
+        "numero": "1234567890101"
+      },
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false,
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaResponsableContacto-valido",
+    "schema": "PediatriaResponsableContactoEntrada",
+    "operationId": "pediatriaResponsableContacto",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_responsable": 1,
+      "telefono": "55555555"
+    }
+  },
+  {
+    "id": "pediatriaResponsableContacto-autor-cliente",
+    "schema": "PediatriaResponsableContactoEntrada",
+    "operationId": "pediatriaResponsableContacto",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_responsable": 1,
+      "telefono": "55555555",
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaResponsableVinculo-valido",
+    "schema": "PediatriaResponsableVinculoEntrada",
+    "operationId": "pediatriaResponsableVinculo",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_vinculo": 1,
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false
+    }
+  },
+  {
+    "id": "pediatriaResponsableVinculo-autor-cliente",
+    "schema": "PediatriaResponsableVinculoEntrada",
+    "operationId": "pediatriaResponsableVinculo",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_vinculo": 1,
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false,
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaResponsableVincular-valido",
+    "schema": "PediatriaResponsableVincularEntrada",
+    "operationId": "pediatriaResponsableVincular",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_responsable": 1,
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false
+    }
+  },
+  {
+    "id": "pediatriaResponsableVincular-autor-cliente",
+    "schema": "PediatriaResponsableVincularEntrada",
+    "operationId": "pediatriaResponsableVincular",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_responsable": 1,
+      "parentesco": "MADRE",
+      "es_principal": true,
+      "autoriza_atencion": false,
+      "actor": "cliente"
+    }
+  },
+  {
+    "id": "pediatriaResponsableBaja-valido",
+    "schema": "PediatriaResponsableBajaEntrada",
+    "operationId": "pediatriaResponsableBaja",
+    "valid": true,
+    "value": {
+      "version_paciente": 1,
+      "version_vinculo": 1,
+      "motivo": "Baja sintética"
+    }
+  },
+  {
+    "id": "pediatriaResponsableBaja-autor-cliente",
+    "schema": "PediatriaResponsableBajaEntrada",
+    "operationId": "pediatriaResponsableBaja",
+    "valid": false,
+    "value": {
+      "version_paciente": 1,
+      "version_vinculo": 1,
+      "motivo": "Baja sintética",
+      "actor": "cliente"
+    }
   }
 ]

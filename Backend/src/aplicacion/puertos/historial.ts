@@ -1,7 +1,7 @@
 import type { FuenteHistorial, LimiteHistorial } from '../casos-uso/historiales/mezclar-eventos.js';
 import type { Institucion } from '../../dominio/compartido/institucion.js';
 export const TIPOS_EVENTO = ['CONSULTA', 'DIAGNOSTICO', 'TRATAMIENTO', 'RECETA', 'ARCHIVO', 'REACTIVACION',
-  'HOSPITALIZACION', 'EXAMEN', 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB', 'VACUNA', 'CRECIMIENTO'] as const;
+  'HOSPITALIZACION', 'EXAMEN', 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB', 'VACUNA', 'CRECIMIENTO', 'ANTECEDENTE'] as const;
 export type TipoEventoHistorial = typeof TIPOS_EVENTO[number];
 export interface EventoHistorial {
   readonly id: string;
@@ -34,6 +34,6 @@ export function tiposInstitucion(institucion: Institucion): readonly TipoEventoH
   const comunes: TipoEventoHistorial[] = ['CONSULTA', 'DIAGNOSTICO', 'TRATAMIENTO', 'RECETA', 'ARCHIVO'];
   if (institucion === 'HOSPITAL_GENERAL') return [...comunes, 'HOSPITALIZACION', 'EXAMEN'];
   if (institucion === 'LABORATORIO_CLINICO') return [...comunes, 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB'];
-  if (institucion === 'CENTRO_MEDICO_PEDIATRICO') return [...comunes, 'REACTIVACION', 'VACUNA', 'CRECIMIENTO'];
+  if (institucion === 'CENTRO_MEDICO_PEDIATRICO') return [...comunes, 'REACTIVACION', 'VACUNA', 'CRECIMIENTO', 'ANTECEDENTE'];
   return comunes;
 }

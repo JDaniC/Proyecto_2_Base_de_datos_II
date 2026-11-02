@@ -1,3 +1,10 @@
+import { ConsultarResponsable } from '../aplicacion/casos-uso/pediatria/consultar-responsable.js';
+import { ConsultarCrecimiento } from '../aplicacion/casos-uso/pediatria/consultar-crecimiento.js';
+import { AntecedentesController } from '../adaptadores/entrada/http/pediatria/antecedentes.controller.js';
+import { GestionarAntecedentes } from '../aplicacion/casos-uso/pediatria/gestionar-antecedentes.js';
+import { ConsultarAntecedentes } from '../aplicacion/casos-uso/pediatria/consultar-antecedentes.js';
+import { ResponsablesController } from '../adaptadores/entrada/http/pediatria/responsables.controller.js';
+import { GestionarResponsable } from '../aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { ServiciosHospitalarios } from '../aplicacion/casos-uso/hospital/servicios-hospitalarios.js';
 import { ServiciosHospitalariosController } from '../adaptadores/entrada/http/hospital/servicios-hospitalarios.controller.js';
 import { CambiarEstadoHistorial } from '../aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
@@ -68,7 +75,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -79,6 +86,11 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide: GestionarAntecedentes,useFactory:()=>new GestionarAntecedentes(dependenciasComandoPorDefecto)},
+        {provide: ConsultarResponsable,useFactory:()=>new ConsultarResponsable()},
+        {provide: ConsultarCrecimiento,useFactory:()=>new ConsultarCrecimiento()},
+        {provide: ConsultarAntecedentes,useFactory:()=>new ConsultarAntecedentes()},
+        { provide: GestionarResponsable, useFactory: () => new GestionarResponsable(dependenciasComandoPorDefecto) },
         {provide: CambiarEstadoHistorial, useFactory: () => new CambiarEstadoHistorial(dependenciasComandoPorDefecto)},
         { provide: AtencionClinica, useFactory: () => new AtencionClinica(dependenciasComandoPorDefecto) },
         { provide: GestionarCitas, useFactory: () => new GestionarCitas(dependenciasComandoPorDefecto) },

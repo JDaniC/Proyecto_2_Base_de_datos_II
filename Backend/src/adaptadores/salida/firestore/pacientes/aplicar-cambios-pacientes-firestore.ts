@@ -1,3 +1,5 @@
+import { validarSnapshotAntecedentes } from '../pediatria/antecedentes-firestore.js';
+import type { AntecedentesPediatricos } from '../../../../aplicacion/puertos/pediatria.js';
 import { validarEventoHistorial } from '../../historial/proyeccion-historial.js';
 import { normalizarInstante } from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
@@ -22,6 +24,30 @@ export async function aplicarCambiosPacientesFirestore(
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
   for (const cambio of cambios) {
+    if (cambio.agregado === 'antecedentesPediatricos') {
+      const r=cambio.nuevoEstado as {actual:AntecedentesPediatricos;anterior:AntecedentesPediatricos;revisionId:string;motivo:string};
+      const actual=validarSnapshotAntecedentes(r.actual);
+      if(actual.version!==r.anterior.version+1)throw new Error('VERSION_ANTECEDENTES_INCOMPATIBLE');
+      const ref=firestore.doc(`pediatria_antecedentes/${cambio.recursoId}`);
+      transaction.set(ref,actual as unknown as Record<string,unknown>);
+      transaction.create(ref.collection('versiones').doc(r.revisionId),{version:r.anterior.version,anterior:r.anterior,actual,actorId:contexto.cuenta.id,fechaHora:comando.instante,motivo:r.motivo});
+      continue;
+    }
+    if (cambio.agregado === 'responsableContacto') {
+      const {actual:r,anterior}=cambio.nuevoEstado as {actual:ResponsableDetalle;anterior:ResponsableDetalle};
+      const ref=firestore.doc(`responsables/${r.id}`);
+      transaction.update(ref, {nombres:r.nombres,apellidos:r.apellidos,telefono:r.telefono,revision:r.version});
+      transaction.create(ref.collection('historia_contacto').doc(comando.id),{anterior,actual:r,actorId:contexto.cuenta.id,fechaHora:comando.instante});
+      continue;
+    }
+    if (cambio.agregado === 'vinculoPediatrico') {
+      const r = cambio.nuevoEstado as {pacienteId:string;vinculo:{parentesco:string;esPrincipal:boolean;autorizaAtencion:boolean};estado:string;version:number};
+      const ref=firestore.doc(`pacientes/${r.pacienteId}/responsables/${cambio.recursoId}`);
+      const datos={parentesco:r.vinculo.parentesco,es_principal:r.vinculo.esPrincipal,autoriza_atencion:r.vinculo.autorizaAtencion,estado:r.estado,revision:r.version};
+      if(cambio.tipo==='CREAR')transaction.create(ref,validarDocumento(ref.path,{...datos,responsable_id:cambio.recursoId,fecha_registro:new Date(comando.instante),actor_id:contexto.cuenta.id}) as Record<string,unknown>);
+      else transaction.update(ref,datos);
+      continue;
+    }
     if (cambio.agregado === 'eventosHistorial') {
       const {pacienteId, ...entrada} = cambio.nuevoEstado as Record<string, unknown>;
       const e = validarEventoHistorial(entrada, 'CENTRO_MEDICO_PEDIATRICO');

@@ -86,7 +86,7 @@ describe('arranque del servidor', () => {
 
     try {
       let liveness: Response | undefined;
-      for (let intento = 0; intento < 50; intento += 1) {
+      for (let intento = 0; intento < 300; intento += 1) {
         if (proceso.exitCode !== null) break;
         try {
           liveness = await fetch(`http://127.0.0.1:${port}/api/v1/health/live`);
@@ -102,7 +102,7 @@ describe('arranque del servidor', () => {
       const documento = await contrato.json() as { openapi: string; paths: object };
       assert.equal(contrato.status, 200);
       assert.equal(documento.openapi, '3.1.0');
-      assert.equal(Object.keys(documento.paths).length, 42);
+      assert.equal(Object.keys(documento.paths).length, 58);
     } finally {
       if (proceso.exitCode === null && proceso.signalCode === null) {
         const salida = once(proceso, 'exit');

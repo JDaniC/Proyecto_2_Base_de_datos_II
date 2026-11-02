@@ -1,0 +1,847 @@
+[
+  {
+    "id": "pediatriaAntecedentesLeer-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaAntecedentesLeer",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaAntecedentesLeer-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaAntecedentesLeer",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaAntecedentesVersion-respuesta-200-valida",
+    "schema": "RespuestaRevisionAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaAntecedentesVersion",
+    "status": "200",
+    "value": {
+      "data": {
+        "anterior": {
+          "version": 0,
+          "alergias": []
+        },
+        "actual": {
+          "version": 1,
+          "alergias": [
+            {
+              "id": "00000000-0000-4000-8000-000000000091",
+              "sustancia": "Polen sintético",
+              "severidad": "LEVE",
+              "reaccion": "Reacción sintética",
+              "activa": true,
+              "actorId": "00000000-0000-4000-8000-000000000091",
+              "fechaHora": "2026-11-02T12:00:00Z"
+            }
+          ],
+          "actorId": "00000000-0000-4000-8000-000000000091",
+          "fechaHora": "2026-11-02T12:00:00Z"
+        },
+        "motivo": "Registro sintético",
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaAntecedentesVersion-respuesta-200-campo-extra",
+    "schema": "RespuestaRevisionAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaAntecedentesVersion",
+    "status": "200",
+    "value": {
+      "data": {
+        "anterior": {
+          "version": 0,
+          "alergias": []
+        },
+        "actual": {
+          "version": 1,
+          "alergias": [
+            {
+              "id": "00000000-0000-4000-8000-000000000091",
+              "sustancia": "Polen sintético",
+              "severidad": "LEVE",
+              "reaccion": "Reacción sintética",
+              "activa": true,
+              "actorId": "00000000-0000-4000-8000-000000000091",
+              "fechaHora": "2026-11-02T12:00:00Z"
+            }
+          ],
+          "actorId": "00000000-0000-4000-8000-000000000091",
+          "fechaHora": "2026-11-02T12:00:00Z"
+        },
+        "motivo": "Registro sintético",
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaCrecimientoLeer-respuesta-200-valida",
+    "schema": "RespuestaCrecimientoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaCrecimientoLeer",
+    "status": "200",
+    "value": {
+      "data": [
+        {
+          "consulta_id": "00000000-0000-4000-8000-000000000091",
+          "version_consulta": 1,
+          "fecha": "2026-11-01",
+          "fecha_hora": "2026-11-02T12:00:00Z",
+          "profesional": "Pediatra sintético",
+          "edad_meses": 12,
+          "peso_kg": 10,
+          "talla_cm": null,
+          "perimetro_cefalico_cm": null,
+          "imc": null
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaCrecimientoLeer-respuesta-200-campo-extra",
+    "schema": "RespuestaCrecimientoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaCrecimientoLeer",
+    "status": "200",
+    "value": {
+      "data": [
+        {
+          "consulta_id": "00000000-0000-4000-8000-000000000091",
+          "version_consulta": 1,
+          "fecha": "2026-11-01",
+          "fecha_hora": "2026-11-02T12:00:00Z",
+          "profesional": "Pediatra sintético",
+          "edad_meses": 12,
+          "peso_kg": 10,
+          "talla_cm": null,
+          "perimetro_cefalico_cm": null,
+          "imc": null
+        }
+      ],
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaAlergiaCrear-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaAlergiaCrear",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaAlergiaCrear-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaAlergiaCrear",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaAlergiaBaja-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaAlergiaBaja",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaAlergiaBaja-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaAlergiaBaja",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaSinAlergias-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaSinAlergias",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaSinAlergias-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaSinAlergias",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaHistoria-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaHistoria",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaHistoria-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaHistoria",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaPerinatales-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaPerinatales",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaPerinatales-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaPerinatales",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaRectificar-respuesta-200-valida",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": true,
+    "responseOperationId": "pediatriaRectificar",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaRectificar-respuesta-200-campo-extra",
+    "schema": "RespuestaAntecedentesPediatricos",
+    "valid": false,
+    "responseOperationId": "pediatriaRectificar",
+    "status": "200",
+    "value": {
+      "data": {
+        "version": 1,
+        "alergias": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "sustancia": "Polen sintético",
+            "severidad": "LEVE",
+            "reaccion": "Reacción sintética",
+            "activa": true,
+            "actorId": "00000000-0000-4000-8000-000000000091",
+            "fechaHora": "2026-11-02T12:00:00Z"
+          }
+        ],
+        "actorId": "00000000-0000-4000-8000-000000000091",
+        "fechaHora": "2026-11-02T12:00:00Z"
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableBuscar-respuesta-200-valida",
+    "schema": "RespuestaResponsablePediatricoEncontrado",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableBuscar",
+    "status": "200",
+    "value": {
+      "data": {
+        "responsable": {
+          "id": "00000000-0000-4000-8000-000000000091",
+          "nombres": "Madre",
+          "apellidos": "Sintética",
+          "nombre": "Madre Sintética",
+          "telefono": "55555555",
+          "version": 1,
+          "documento": {
+            "tipo": "CUI",
+            "numero": "1234567890101"
+          }
+        },
+        "version_vinculo": 1,
+        "activo": false
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableBuscar-respuesta-200-campo-extra",
+    "schema": "RespuestaResponsablePediatricoEncontrado",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableBuscar",
+    "status": "200",
+    "value": {
+      "data": {
+        "responsable": {
+          "id": "00000000-0000-4000-8000-000000000091",
+          "nombres": "Madre",
+          "apellidos": "Sintética",
+          "nombre": "Madre Sintética",
+          "telefono": "55555555",
+          "version": 1,
+          "documento": {
+            "tipo": "CUI",
+            "numero": "1234567890101"
+          }
+        },
+        "version_vinculo": 1,
+        "activo": false
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-respuesta-200-valida",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableCrear",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-respuesta-200-campo-extra",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableCrear",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-respuesta-201-valida",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableCrear",
+    "status": "201",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableCrear-respuesta-201-campo-extra",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableCrear",
+    "status": "201",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableContacto-respuesta-200-valida",
+    "schema": "RespuestaContactoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableContacto",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "nombres": "Madre",
+        "apellidos": "Sintética",
+        "nombre": "Madre Sintética",
+        "telefono": "55555555",
+        "version": 1,
+        "documento": {
+          "tipo": "CUI",
+          "numero": "1234567890101"
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableContacto-respuesta-200-campo-extra",
+    "schema": "RespuestaContactoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableContacto",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "nombres": "Madre",
+        "apellidos": "Sintética",
+        "nombre": "Madre Sintética",
+        "telefono": "55555555",
+        "version": 1,
+        "documento": {
+          "tipo": "CUI",
+          "numero": "1234567890101"
+        }
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableVinculo-respuesta-200-valida",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableVinculo",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableVinculo-respuesta-200-campo-extra",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableVinculo",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableVincular-respuesta-200-valida",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableVincular",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableVincular-respuesta-200-campo-extra",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableVincular",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "pediatriaResponsableBaja-respuesta-200-valida",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": true,
+    "responseOperationId": "pediatriaResponsableBaja",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "pediatriaResponsableBaja-respuesta-200-campo-extra",
+    "schema": "RespuestaVinculoPediatrico",
+    "valid": false,
+    "responseOperationId": "pediatriaResponsableBaja",
+    "status": "200",
+    "value": {
+      "data": {
+        "id": "00000000-0000-4000-8000-000000000091",
+        "activo": true
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  },
+  {
+    "id": "catalogoOdontologia-respuesta-200-valida",
+    "schema": "RespuestaCatalogoOdontologia",
+    "valid": true,
+    "responseOperationId": "catalogoOdontologia",
+    "status": "200",
+    "value": {
+      "data": {
+        "diagnosticos": [
+          {
+            "id": "cie-sint",
+            "codigo": "SINT",
+            "nombre": "Diagnóstico sintético"
+          }
+        ],
+        "procedimientos": [],
+        "medicamentos": []
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      }
+    }
+  },
+  {
+    "id": "catalogoOdontologia-respuesta-200-campo-extra",
+    "schema": "RespuestaCatalogoOdontologia",
+    "valid": false,
+    "responseOperationId": "catalogoOdontologia",
+    "status": "200",
+    "value": {
+      "data": {
+        "diagnosticos": [
+          {
+            "id": "cie-sint",
+            "codigo": "SINT",
+            "nombre": "Diagnóstico sintético"
+          }
+        ],
+        "procedimientos": [],
+        "medicamentos": []
+      },
+      "meta": {
+        "correlacion": "00000000-0000-4000-8000-000000000091"
+      },
+      "autor_cliente": "No admitido"
+    }
+  }
+]

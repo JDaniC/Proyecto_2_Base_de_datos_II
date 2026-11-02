@@ -122,3 +122,19 @@ fechas civiles y copago cero. General permite ampliar antecedentes y alergias co
 severidad/reacción explícitas. Las listas usan páginas y hayMas del servidor.
 La migración 008 debe estar LISTO; un error de preparación no habilita simulación.
 Ver [contrato y preparación](../Backend/docs/servicios-hospitalarios-v1.md).
+
+### Pediatría HTTP · responsables, antecedentes y crecimiento
+
+La ficha usa responsables compartidos con búsqueda exacta por documento, alta,
+edición del contacto común y vínculos por menor. Principalidad y autorización
+son decisiones independientes; la baja conserva historia y exige otro principal.
+Los formularios capturan versiones observadas y conservan la misma intención al
+reintentar una respuesta incierta, sin asumir éxito ni cambiar el cuerpo enviado.
+
+Alergias, perinatales e historia general usan `antecedentes-pediatricos`; requieren
+la preparación 009 LISTO. Las versiones se consultan bajo demanda con motivo y
+snapshot anterior/actual. Un expediente archivado permite rectificar antecedentes
+ya existentes con autorización clínica y motivo; no habilita nuevas atenciones.
+El crecimiento se pagina por fecha desde consultas vigentes; sus correcciones
+se realizan en la revisión de consulta. Sin talla/peso suficiente no hay IMC,
+y la interfaz no ofrece curvas ni interpretación clínica automática.

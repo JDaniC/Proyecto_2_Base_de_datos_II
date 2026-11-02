@@ -1,3 +1,7 @@
+import { mapearSnapshotHistorico, mapearAntecedentesPediatricos, type AntecedentesPediatricosDto } from '../pediatrics/antecedentes';
+import type { ContextoCambioPediatrico } from '../../contracts';
+import type { AlergiaRegistro, AntecedentesPerinatales } from '../../types';
+import { leerAntecedentesPediatricos } from '../pediatrics/antecedentes';
 import { patientHospitalMethods } from '../hospital/patientHospitalMethods';
 import { stableCommandKeys } from '../stableCommand';
 import type { PatientRepository } from '../../contracts';
@@ -26,8 +30,39 @@ interface AntecedentesDto {
 export function createHttpPatientRepository(http: HttpClient): PatientRepository {
   const path = (id: string) => `/pacientes/${encodeURIComponent(id)}`;
   const key = stableCommandKeys();
+  const mutarPediatria = async (i:InstitucionId,id:string,accion:string,datos:object,version:number|undefined,cambio:ContextoCambioPediatrico|undefined) => {
+    if(i!=='CENTRO_PEDIATRICO'||!Number.isSafeInteger(version)||!cambio||!Number.isSafeInteger(cambio.versionAntecedentes)||!cambio.motivo.trim())throw new HttpError({status:400,codigo:'SOLICITUD_INVALIDA',mensaje:'Recarga antecedentes y completa el motivo antes de enviar.'});
+    const body={version_paciente:version,version_antecedentes:cambio.versionAntecedentes,motivo:cambio.motivo.trim(),...datos};
+    const r=await http.post<AntecedentesPediatricosDto>(`${path(id)}/antecedentes-pediatricos/${accion}`,body,{idempotencyKey:key(`${id}/pediatria/${accion}`,body)});
+    let respuestaPaciente: {data: PacienteDto};
+    try {
+      respuestaPaciente = await http.get<PacienteDto>(path(id));
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 500) {
+        throw new HttpError({
+          status: 503,
+          codigo: '503 PERSISTENCIA_NO_DISPONIBLE',
+          mensaje: 'No se pudo confirmar la respuesta del servidor. Reintenta la misma solicitud.',
+          correlacion: error.correlacion,
+          causa: error,
+        });
+      }
+      throw error;
+    }
+    const paciente = mapearPaciente(respuestaPaciente.data);
+    return {paciente,antecedentes:mapearAntecedentesPediatricos(r.data)};
+  };
   const methods = {
     ...patientHospitalMethods(http),
+    confirmarSinAlergias:(i:InstitucionId,id:string,_autor:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'sin-alergias',{},v,c),
+    registrarAlergia:(i:InstitucionId,id:string,a:AlergiaRegistro,_autor?:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias',{alergia:{sustancia:a.sustancia,severidad:a.severidad,reaccion:a.reaccion}},v,c),
+    eliminarAlergia:(i:InstitucionId,id:string,_sustancia:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias/baja',{alergia_id:c?.alergiaId},v,c),
+    async obtenerVersionAntecedentesPediatricos(id:string,version:number){const {data:r}=await http.get<{anterior:AntecedentesPediatricosDto;actual:AntecedentesPediatricosDto;motivo:string;fechaHora:string;actorId:string}>(`${path(id)}/antecedentes-pediatricos/versiones/${version}`);return {anterior:mapearSnapshotHistorico(r.anterior),actual:mapearSnapshotHistorico(r.actual),motivo:r.motivo,fechaHora:r.fechaHora,actorId:r.actorId};},
+    async buscarResponsablePediatrico(id:string,tipo:string,numero:string){const {data:r}=await http.get<{responsable:import('../../types').ResponsableEncontrado['responsable'];version_vinculo?:number;activo?:boolean}>(`${path(id)}/responsables/buscar`,{query:{tipo,numero}});return {responsable:{...r.responsable},versionVinculo:r.version_vinculo,activo:r.activo};},
+    async gestionarResponsablePediatrico(id:string,accion:'crear'|'contacto'|'vinculo'|'baja'|'vinculacion',datos:Record<string,unknown>,responsableId?:string){const url=accion==='crear'?`${path(id)}/responsables`:`${path(id)}/responsables/${encodeURIComponent(responsableId??'')}/${accion}`;await http.post(url,datos,{idempotencyKey:key(url,datos)});},
+    async obtenerCrecimientoPediatrico(id:string,query:{desde?:string;hasta?:string;cursor?:string;limite?:number}){const r=await http.get<Array<{consulta_id:string;version_consulta:number;fecha:string;fecha_hora:string;profesional:string;edad_meses:number|null;peso_kg:number|null;talla_cm:number|null;perimetro_cefalico_cm:number|null;imc:number|null}>>(`${path(id)}/antecedentes-pediatricos/crecimiento`,{query});return {elementos:r.data.map(m=>({consultaId:m.consulta_id,versionConsulta:m.version_consulta,fecha:m.fecha,fechaHora:m.fecha_hora,profesionalNombre:m.profesional,edadMeses:m.edad_meses,pesoKg:m.peso_kg,tallaCm:m.talla_cm,perimetroCefalicoCm:m.perimetro_cefalico_cm,imc:m.imc})),siguienteCursor:r.meta?.siguiente_cursor};},
+    async actualizarHistoriaPediatrica(i:InstitucionId,id:string,historia:Pick<AntecedentesClinicos,'patologicos'|'quirurgicos'|'familiares'|'medicamentosActuales'>,v?:number,c?:ContextoCambioPediatrico){return (await mutarPediatria(i,id,c?.rectificacion?'rectificaciones':'historia',{historia},v,c)).antecedentes;},
+    async actualizarPerinatales(i:InstitucionId,id:string,p:AntecedentesPerinatales,v?:number,c?:ContextoCambioPediatrico){return (await mutarPediatria(i,id,c?.rectificacion?'rectificaciones':'perinatales',{perinatales:p},v,c)).antecedentes;},
     async archivar(_i: InstitucionId, id: string, causa: string, motivo: string, versionEsperada?: number) {
       const body = {causa, motivo, version_esperada: versionEsperada};
       return mapearPaciente((await http.post<PacienteDto>(`${path(id)}/archivo`, body, {idempotencyKey: key(`${id}/archivo`, body)})).data);
@@ -65,6 +100,7 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
       return { eventos: res.data.eventos.map(mapearEvento), siguienteCursor: res.meta.siguiente_cursor };
     },
     async obtenerAntecedentes(_institucion: InstitucionId, id: string): Promise<AntecedentesClinicos> {
+      if(_institucion==='CENTRO_PEDIATRICO')return leerAntecedentesPediatricos(http,id);
       const res = await http.get<AntecedentesDto>(`${path(id)}/antecedentes`);
       return {
         patologicos: res.data.patologicos ?? [],
