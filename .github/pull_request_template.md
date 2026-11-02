@@ -9,9 +9,9 @@ Comandos, resultados y entorno; éxito, fallo y excepción. Enlazar evidencia sa
 Distinguir motor real, emulador y mock. Indicar bloqueos y requisitos pendientes.
 
 ## Revisión
-- [ ] Se revisaron los hallazgos de Codex sobre la versión actual.
+- [ ] Se revisaron los hallazgos de CodeRabbit sobre la versión actual.
 - [ ] El responsable verificó criterios, alcance y evidencia.
 - [ ] No hay secretos ni datos clínicos reales.
 - [ ] El tablero refleja el estado real; HECHA requiere cierre con evidencia verificada por el responsable.
 
-Revisión automática: Codex. La participación del compañero es opcional.
+Revisión automática: CodeRabbit. La participación del compañero es opcional.

@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows: [Validación del proyecto]
     types: [completed]
+  check_run:
+    types: [completed]
   issue_comment:
     types: [created, edited, deleted]
   workflow_dispatch:
@@ -20,12 +22,12 @@ permissions:
   statuses: write
 
 concurrency:
-  group: auto-merge-${{ github.event.issue.number || github.event.workflow_run.head_branch || inputs.pr || 'todos' }}
+  group: auto-merge-${{ github.event.check_run.pull_requests[0].number || github.event.issue.number || github.event.workflow_run.head_branch || inputs.pr || 'todos' }}
   cancel-in-progress: false
 
 jobs:
   evaluar:
-    name: Verificar Codex y activar integración
+    name: Verificar CodeRabbit y activar integración
     if: >-
       github.event_name != 'issue_comment' ||
       github.event.issue.pull_request != null
