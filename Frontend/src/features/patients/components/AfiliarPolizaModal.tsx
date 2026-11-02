@@ -1,3 +1,5 @@
+import {useConfirmedCommand} from '../../hospital/components/useConfirmedCommand';
+import {useServices} from '../../../app/ServiceContext';
 import { getErrorMessage } from '../../../services/errors';
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertCircle } from 'lucide-react';
@@ -8,6 +10,9 @@ import { AseguradoraCatalogo, AfiliarPolizaDTO } from '../../../services/types';
 interface AfiliarPolizaModalProps {
   isOpen: boolean;
   onClose: () => void;
+  pacienteId?: string;
+  pacienteNombres?: string;
+  pacienteApellidos?: string;
   pacienteNombre: string;
   pacienteDpi: string;
   pacienteTelefono: string;
@@ -18,12 +23,20 @@ interface AfiliarPolizaModalProps {
 export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
   isOpen,
   onClose,
+  pacienteId,
+  pacienteNombres,
+  pacienteApellidos,
   pacienteNombre,
   pacienteDpi,
   pacienteTelefono,
   aseguradoras,
   onConfirm
 }) => {
+  const {mode,patientRepository}=useServices();
+  const comando=useConfirmedCommand<AfiliarPolizaDTO>();
+  const [versionPaciente,setVersionPaciente]=useState<number>();
+  const [titularApellidos,setTitularApellidos]=useState(pacienteApellidos??'');
+  useEffect(()=>{if(isOpen&&mode==='api'&&pacienteId){let vigente=true;patientRepository.obtenerPorId('HOSPITAL_GENERAL',pacienteId).then(p=>{if(vigente)setVersionPaciente(p?.version);}).catch(()=>setError('No se pudo cargar la versión del paciente.'));return()=>{vigente=false;};}},[isOpen,mode,pacienteId,patientRepository]);
   const [aseguradoraId, setAseguradoraId] = useState<string>('');
   const [planId, setPlanId] = useState<string>('');
   const [numeroPoliza, setNumeroPoliza] = useState('');
@@ -38,7 +51,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
 
   // Titular
   const [esTitular, setEsTitular] = useState(true);
-  const [titularNombre, setTitularNombre] = useState(pacienteNombre);
+  const [titularNombre, setTitularNombre] = useState(mode==='api'?(pacienteNombres??''):pacienteNombre);
   const [titularParentesco, setTitularParentesco] = useState<'TITULAR' | 'PADRE' | 'MADRE' | 'CONYUGE' | 'HIJO' | 'OTRO'>('TITULAR');
   const [titularDpi, setTitularDpi] = useState(pacienteDpi);
   const [titularTelefono, setTitularTelefono] = useState(pacienteTelefono);
@@ -73,7 +86,8 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
     const checked = e.target.checked;
     setEsTitular(checked);
     if (checked) {
-      setTitularNombre(pacienteNombre);
+      setTitularNombre(mode==='api'?(pacienteNombres??''):pacienteNombre);
+      setTitularApellidos(pacienteApellidos??'');
       setTitularParentesco('TITULAR');
       setTitularDpi(pacienteDpi);
       setTitularTelefono(pacienteTelefono);
@@ -97,31 +111,36 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
       setError('Debe ingresar el número de certificado.');
       return;
     }
-    if (!titularNombre.trim() || !titularDpi.trim()) {
+    if (!titularNombre.trim() || !titularDpi.trim() || (mode==='api' && (!titularApellidos.trim() || !versionPaciente))) {
       setError('Debe completar los datos del titular de la póliza.');
       return;
     }
 
     setGuardando(true);
     try {
-      await onConfirm({
+      await onConfirm(comando.preparar({
+        versionPaciente,
         aseguradoraId,
         planId,
         numeroPoliza: numeroPoliza.trim(),
         numeroCertificado: numeroCertificado.trim(),
         vigenciaDesde,
         vigenciaHasta,
-        copagoConsultaGTQ: parseFloat(copagoConsulta) || 50,
+        copagoConsultaGTQ: Number(copagoConsulta),
         titular: {
-          nombreCompleto: titularNombre.trim(),
+          nombreCompleto: mode==='api'?`${titularNombre.trim()} ${titularApellidos.trim()}`:titularNombre.trim(),
+          nombres: titularNombre.trim(),
+          apellidos: titularApellidos.trim(),
           parentesco: esTitular ? 'TITULAR' : titularParentesco,
           numeroIdentificacion: titularDpi.trim(),
           telefonoContacto: titularTelefono.trim()
         },
         observaciones: observaciones.trim() || undefined
-      });
+      }));
+      comando.limpiar();
       onClose();
     } catch (err: unknown) {
+      comando.error(err);
       setError(getErrorMessage(err, 'Error al afiliar la póliza'));
     } finally {
       setGuardando(false);
@@ -131,11 +150,13 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={()=>{if(!guardando&&!comando.incierto)onClose();}}
       title="Afiliar Póliza de Seguro Médico"
       maxWidth="620px"
     >
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {comando.incierto&&<div role="alert">Resultado pendiente de confirmar. Reintente la misma solicitud.</div>}
+        <fieldset disabled={comando.incierto||guardando} style={{border:0,padding:0,display:'contents'}}>
         {error && (
           <div
             style={{
@@ -368,14 +389,14 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 htmlFor="input-titular-nombre"
                 style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '4px' }}
               >
-                Nombre Completo del Titular *
+                {mode==='api'?'Nombres del titular *':'Nombre Completo del Titular *'}
               </label>
               <input
                 id="input-titular-nombre"
                 type="text"
                 value={titularNombre}
                 onChange={(e) => setTitularNombre(e.target.value)}
-                disabled={esTitular}
+                disabled={esTitular && mode!=='api'}
                 required
                 style={{
                   width: '100%',
@@ -387,6 +408,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
               />
             </div>
 
+            {mode==='api'&&<label>Apellidos del titular *<input aria-label="Apellidos del titular" value={titularApellidos} onChange={e=>setTitularApellidos(e.target.value)} required maxLength={80}/></label>}
             <div>
               <label
                 htmlFor="select-titular-parentesco"
@@ -398,7 +420,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 id="select-titular-parentesco"
                 value={titularParentesco}
                 onChange={(e) => setTitularParentesco(e.target.value as any)}
-                disabled={esTitular}
+                disabled={esTitular && mode!=='api'}
                 style={{
                   width: '100%',
                   padding: '8px 10px',
@@ -428,7 +450,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 type="text"
                 value={titularDpi}
                 onChange={(e) => setTitularDpi(e.target.value)}
-                disabled={esTitular}
+                disabled={esTitular && mode!=='api'}
                 required
                 style={{
                   width: '100%',
@@ -452,7 +474,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
                 type="text"
                 value={titularTelefono}
                 onChange={(e) => setTitularTelefono(e.target.value)}
-                disabled={esTitular}
+                disabled={esTitular && mode!=='api'}
                 style={{
                   width: '100%',
                   padding: '8px 10px',
@@ -488,8 +510,9 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
           />
         </div>
 
+        </fieldset>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-          <Button variant="secondary" onClick={onClose} disabled={guardando}>
+          <Button variant="secondary" onClick={onClose} disabled={guardando||comando.incierto}>
             Cancelar
           </Button>
           <Button

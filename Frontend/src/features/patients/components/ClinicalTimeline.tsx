@@ -235,6 +235,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos, ser
                       <span style={{ display: 'inline-flex' }}>{getIconoEvento(evento.tipoEvento)}</span>
                       <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-strong)' }}>
                         {evento.titulo}
+                        {evento.tipoEvento === 'EXAMEN' && pacienteId && <Link style={{marginLeft:12}} to={`/pacientes/${pacienteId}?tab=examenes`}>Ver exámenes</Link>}
                         {evento.tipoEvento === 'HOSPITALIZACION' && evento.recursoId && <Link style={{marginLeft: 12}} to={`/hospital/hospitalizaciones/${evento.recursoId}`}>Ver hospitalización</Link>}
                         {pacienteId && evento.consultaId && <Link style={{marginLeft: 12}} to={`/pacientes/${pacienteId}/consultas/${evento.consultaId}`}>Ver atención</Link>}
                       </span>

@@ -1,6 +1,10 @@
+import { PatientExamsView } from './components/PatientExamsView';
+import { PatientInsurancesView } from './components/PatientInsurancesView';
+import { PatientProceduresView } from './components/PatientProceduresView';
+import { HospitalAntecedentesView } from './components/HospitalAntecedentesView';
 import { ArchivePatientModal } from './components/ArchivePatientModal';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useServices } from '../../app/ServiceContext';
 import { useAuthSession } from '../../app/AuthSessionContext';
 import type { AntecedentesClinicos, ExpedienteCompleto, FiltrosHistorial, Paciente } from '../../services/types';
@@ -25,6 +29,10 @@ const PatientRecord: React.FC = () => {
   const { sesion } = useAuthSession();
   const { patientRepository } = useServices();
   const navigate = useNavigate();
+  const [search,setSearch]=useSearchParams();
+  const tab=search.get('tab')??'general';
+  const hospital=sesion?.institucionId==='HOSPITAL_GENERAL';
+  const general=!hospital||!['examenes','seguros','procedimientos'].includes(tab);
   const [archivoAbierto, setArchivoAbierto] = useState(false);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [expediente, setExpediente] = useState<ExpedienteCompleto | null>(null);
@@ -153,6 +161,13 @@ const PatientRecord: React.FC = () => {
           {paciente.contactoEmergencia && <p>Contacto de emergencia: {paciente.contactoEmergencia.nombre} · {paciente.contactoEmergencia.parentesco} · {paciente.contactoEmergencia.telefono}</p>}
           {paciente.estado === 'ARCHIVADO' && <p>Archivo: {paciente.causaArchivo ? getDisplayLabel(paciente.causaArchivo) : 'Sin dato'} · {paciente.motivoArchivo}</p>}
         </Panel>
+        {hospital && <nav aria-label="Secciones del expediente" style={{display:'flex',gap:12,marginBottom:24}}>
+          {['general',...(puedeLeer?['examenes','procedimientos']:[]),...(puedeLeer||puedeEditar?['seguros']:[])].map(t=><Button key={t} variant={tab===t?'primary':'secondary'} onClick={()=>setSearch({tab:t})}>{({general:'General',examenes:'Exámenes',seguros:'Seguros',procedimientos:'Procedimientos'} as Record<string,string>)[t]}</Button>)}
+        </nav>}
+        {hospital&&tab==='examenes'&&puedeLeer&&<PatientExamsView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
+        {hospital&&tab==='procedimientos'&&puedeLeer&&<PatientProceduresView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
+        {hospital&&tab==='seguros'&&(puedeLeer||puedeEditar)&&<PatientInsurancesView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} pacienteDpi={paciente.tipoIdentificacion==='CUI'?paciente.numeroIdentificacion??'':''} pacienteTelefono={paciente.telefono??''} pacienteNombres={paciente.nombres} pacienteApellidos={paciente.apellidos} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
+        {hospital&&general&&puedeLeer&&<HospitalAntecedentesView pacienteId={paciente.id} editable={puedeRegistrarClinica&&paciente.estado==='ACTIVO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {puedeLeer && esOdontologia && (
           <Panel title="Antecedentes clínicos odontológicos" style={{ marginBottom: '24px' }}>
             {errorAntecedentes && <Alert variant="danger" title="Error en antecedentes">{errorAntecedentes}</Alert>}
@@ -223,14 +238,14 @@ const PatientRecord: React.FC = () => {
         {paciente.responsables && <Panel title="Responsables vinculados" style={{ marginBottom: '24px' }}>
           {paciente.responsables.map((r) => <p key={r.id}>{r.nombre} · {r.parentesco} · {r.telefono}{r.esPrincipal ? ' · Principal' : ''} · {r.autorizaAtencion ? 'Autoriza atención' : 'Sin autorización de atención'}</p>)}
         </Panel>}
-        {puedeLeer && expediente ? <Panel title="Actividad e historial">
+        {general && (puedeLeer && expediente ? <Panel title="Actividad e historial">
           <ClinicalTimeline eventos={expediente.eventos} servidor={{ orden: filtros.orden ?? 'ASC', tipo: filtros.tipo, cambiar: (orden, tipo) => { setPrevios([]); setFiltros({ orden, tipo, limite: 20 }); } }} />
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
             <span>Página {previos.length + 1} · {expediente.eventos.length} eventos</span>
             <Button variant="secondary" disabled={!previos.length} onClick={() => { const copia = [...previos]; const cursor = copia.pop(); setPrevios(copia); setFiltros({ ...filtros, cursor }); }}>Anterior</Button>
             <Button variant="secondary" disabled={!expediente.siguienteCursor} onClick={() => { setPrevios([...previos, filtros.cursor]); setFiltros({ ...filtros, cursor: expediente.siguienteCursor }); }}>Siguiente</Button>
           </div>
-        </Panel> : <Alert variant="info" title="Perfil administrativo">Tu cuenta permite consultar los datos administrativos del paciente.</Alert>}
+        </Panel> : <Alert variant="info" title="Perfil administrativo">Tu cuenta permite consultar los datos administrativos del paciente.</Alert>)}
       </>}
   </div>;
 };

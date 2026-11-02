@@ -110,3 +110,15 @@ inicio. Los formularios de traslado/egreso usan hora local de Guatemala con
 precisión suficiente para estancias recién ingresadas. La historia enlaza el
 detalle hospitalario. Exámenes/pólizas siguen la tarea E04-P1-03; no se habilita
 mantenimiento administrativo de camas ni médicos.
+
+
+### Servicios hospitalarios E04-P1-03
+
+La ficha HTTP de Hospital General incorpora Exámenes, Procedimientos y Seguros.
+Órdenes y procedimientos seleccionan una consulta real del paciente; el servidor
+firma con el médico vigente. Resultados conservan emisiones y admiten corrección
+con motivo/versiones. Coberturas conservan titular con nombres/apellidos explícitos,
+fechas civiles y copago cero. General permite ampliar antecedentes y alergias con
+severidad/reacción explícitas. Las listas usan páginas y hayMas del servidor.
+La migración 008 debe estar LISTO; un error de preparación no habilita simulación.
+Ver [contrato y preparación](../Backend/docs/servicios-hospitalarios-v1.md).

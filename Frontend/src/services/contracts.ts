@@ -16,6 +16,8 @@
  */
 import {
   ReferenciaLaboratorio,
+  PaginaServiciosHospital,
+  ConsultaPaginaHospital,
   CategoriaReferenciaLab,
   CuentaDemo,
   SesionUsuario,
@@ -40,6 +42,7 @@ import {
   CrearCitaDTO,
   ReprogramacionRegistro,
   CatalogoOdontologiaDTO,
+  CatalogoHospitalDTO,
   RegistroConsultaCompletaDTO,
   DetalleConsultaCompleta,
   UsuarioInstitucional,
@@ -145,10 +148,10 @@ export interface PatientRepository {
     pacienteId: string,
     receta: { emitidaPor: string; rolEmisor: string; medicamentos: RecetaMedicamentoItem[] }
   ): Promise<RecetaHistorial>;
-  obtenerPolizasSeguro(institucionId: InstitucionId, pacienteId: string): Promise<PolizaSeguroPaciente[]>;
+  obtenerPolizasSeguro(institucionId: InstitucionId, pacienteId: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<PolizaSeguroPaciente>>;
   afiliarPolizaSeguro(institucionId: InstitucionId, pacienteId: string, dto: AfiliarPolizaDTO): Promise<PolizaSeguroPaciente>;
-  cambiarEstadoPoliza(institucionId: InstitucionId, pacienteId: string, polizaId: string, estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA', versionEsperada?: number): Promise<PolizaSeguroPaciente>;
-  obtenerProcedimientosPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ProcedimientoHospitalarioItem[]>;
+  cambiarEstadoPoliza(institucionId: InstitucionId, pacienteId: string, polizaId: string, estado: 'ACTIVA' | 'VENCIDA' | 'SUSPENDIDA', versionEsperada?: number, motivo?: string): Promise<PolizaSeguroPaciente>;
+  obtenerProcedimientosPaciente(institucionId: InstitucionId, pacienteId: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<ProcedimientoHospitalarioItem>>;
   registrarProcedimientoPaciente(institucionId: InstitucionId, pacienteId: string, proc: Omit<ProcedimientoHospitalarioItem, 'id'>): Promise<ProcedimientoHospitalarioItem>;
   agregarResponsable(institucionId: InstitucionId, pacienteId: string, resp: Omit<ResponsablePediatrico, 'id'>): Promise<ResponsablePediatrico>;
   actualizarResponsable(institucionId: InstitucionId, pacienteId: string, responsableId: string, cambios: Partial<Omit<ResponsablePediatrico, 'id'>>, versionEsperada?: number): Promise<ResponsablePediatrico>;
@@ -236,6 +239,7 @@ export interface UserRepository {
 }
 
 export interface CatalogRepository {
+  obtenerCatalogoHospital?(institucionId: InstitucionId): Promise<CatalogoHospitalDTO>;
   obtenerReferenciasLaboratorio(institucionId: InstitucionId, categoria: CategoriaReferenciaLab): Promise<ReferenciaLaboratorio[]>;
   guardarReferenciaLaboratorio(institucionId: InstitucionId, referencia: Omit<ReferenciaLaboratorio, 'id'> & { id?: string }, versionEsperada?: number): Promise<ReferenciaLaboratorio>;
   obtenerMedicos(institucionId: InstitucionId): Promise<MedicoCatalogo[]>;
@@ -328,17 +332,17 @@ export interface HospitalizationRepository {
 }
 
 export interface HospitalExamRepository {
-  listarOrdenes(institucionId: InstitucionId, filtroEstado?: string): Promise<OrdenExamenHospital[]>;
+  listarOrdenes(institucionId: InstitucionId, filtroEstado?: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<OrdenExamenHospital>>;
   /** @remarks Sin llamada directa en UI actual: el detalle usa la orden ya cargada en listado/expediente. */
   obtenerOrdenPorId(institucionId: InstitucionId, id: string): Promise<OrdenExamenHospital | null>;
-  obtenerOrdenesPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<OrdenExamenHospital[]>;
+  obtenerOrdenesPorPaciente(institucionId: InstitucionId, pacienteId: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<OrdenExamenHospital>>;
   crearOrden(institucionId: InstitucionId, dto: CrearOrdenExamenDTO, catalogoPruebas?: PruebaLaboratorioCatalogo[]): Promise<OrdenExamenHospital>;
   cancelarOrden(institucionId: InstitucionId, ordenId: string, motivo: string, versionEsperada?: number): Promise<OrdenExamenHospital>;
-  obtenerResultadosPorOrden(institucionId: InstitucionId, ordenId: string): Promise<ResultadoExamenHospital[]>;
+  obtenerResultadosPorOrden(institucionId: InstitucionId, ordenId: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<ResultadoExamenHospital>>;
   /** @remarks Sin llamada directa en UI actual: los resultados se consultan por orden (`obtenerResultadosPorOrden`). */
   obtenerResultadoPorId(institucionId: InstitucionId, resultadoId: string): Promise<ResultadoExamenHospital | null>;
   /** @remarks Sin llamada directa en UI actual: `PatientExamsView` consulta `obtenerOrdenesPorPaciente` y luego `obtenerResultadosPorOrden`. */
-  obtenerResultadosPorPaciente(institucionId: InstitucionId, pacienteId: string): Promise<ResultadoExamenHospital[]>;
+  obtenerResultadosPorPaciente(institucionId: InstitucionId, pacienteId: string, pagina?: ConsultaPaginaHospital): Promise<PaginaServiciosHospital<ResultadoExamenHospital>>;
   registrarResultado(institucionId: InstitucionId, dto: RegistrarResultadoExamenDTO, catalogoPruebas?: PruebaLaboratorioCatalogo[]): Promise<ResultadoExamenHospital>;
 }
 

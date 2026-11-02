@@ -1,3 +1,4 @@
+import type { PaginaServiciosHospital, ConsultaPaginaHospital } from '../services/types';
 import { PatientRepository } from '../services/contracts';
 import {
   DetalleConsultaCompleta,
@@ -565,7 +566,7 @@ export class MockPatientRepository implements PatientRepository {
     return nueva;
   }
 
-  async obtenerPolizasSeguro(
+  private async obtenerPolizasSeguroSinPagina(
     _institucionId: InstitucionId,
     pacienteId: string
   ): Promise<PolizaSeguroPaciente[]> {
@@ -622,7 +623,7 @@ export class MockPatientRepository implements PatientRepository {
     return pol;
   }
 
-  async obtenerProcedimientosPaciente(
+  private async obtenerProcedimientosPacienteSinPagina(
     _institucionId: InstitucionId,
     pacienteId: string
   ): Promise<ProcedimientoHospitalarioItem[]> {
@@ -922,5 +923,16 @@ export class MockPatientRepository implements PatientRepository {
     this.antecedentesPorPaciente[pacienteId].perinatales = { ...perinatales };
     this.guardarEnStorage();
     return this.antecedentesPorPaciente[pacienteId];
+  }
+  async obtenerPolizasSeguro(institucionId: InstitucionId, pacienteId: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<PolizaSeguroPaciente>> {
+    const todos = await this.obtenerPolizasSeguroSinPagina(institucionId, pacienteId);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
+  }
+
+  async obtenerProcedimientosPaciente(institucionId: InstitucionId, pacienteId: string, consulta: ConsultaPaginaHospital = { pagina: 1, limite: 25 }): Promise<PaginaServiciosHospital<ProcedimientoHospitalarioItem>> {
+    const todos = await this.obtenerProcedimientosPacienteSinPagina(institucionId, pacienteId);
+    const inicio = (consulta.pagina - 1) * consulta.limite;
+    return { items: todos.slice(inicio, inicio + consulta.limite), pagina: consulta.pagina, hayMas: inicio + consulta.limite < todos.length };
   }
 }

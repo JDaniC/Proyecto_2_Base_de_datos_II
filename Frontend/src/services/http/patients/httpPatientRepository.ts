@@ -1,3 +1,4 @@
+import { patientHospitalMethods } from '../hospital/patientHospitalMethods';
 import { stableCommandKeys } from '../stableCommand';
 import type { PatientRepository } from '../../contracts';
 import type {
@@ -26,6 +27,7 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
   const path = (id: string) => `/pacientes/${encodeURIComponent(id)}`;
   const key = stableCommandKeys();
   const methods = {
+    ...patientHospitalMethods(http),
     async archivar(_i: InstitucionId, id: string, causa: string, motivo: string, versionEsperada?: number) {
       const body = {causa, motivo, version_esperada: versionEsperada};
       return mapearPaciente((await http.post<PacienteDto>(`${path(id)}/archivo`, body, {idempotencyKey: key(`${id}/archivo`, body)})).data);

@@ -136,3 +136,17 @@ el comparativo: Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md. Verificación:
 corrección/retirada de receta y lectura de versiones anteriores en cuatro
 motores, migración explícita 007 para instalaciones existentes. Es una decisión
 del proyecto, no retroalimentación docente.
+
+
+### DEC19 · Servicios hospitalarios especializados, E04-P1-03 (01/11/2026)
+
+Se mantienen relaciones normalizadas de órdenes, detalles/resultados/parámetros,
+procedimientos y seguros del modelo hospitalario. La migración aditiva 008 guarda
+configuración de referencias y snapshots de presentación en hospital_servicios;
+no cambia inicializadores ni M01–M09. UoW confirma relaciones, snapshot, revisión,
+operación y auditoría juntos. Corrección emite otra versión; estado de afiliación
+es local al paciente, sin suspender la póliza compartida. Antecedentes hospitalarios
+v1 amplían historia; no borran ni reinterpretan filas previas. El legado especializado
+sin procedencia/snapshots queda RECONCILIAR hasta conciliación administrativa
+verificable, sin habilitación automática ni datos inferidos. Fuente y reproducción:
+Backend/docs/servicios-hospitalarios-v1.md. Decisión del proyecto, no observación docente.

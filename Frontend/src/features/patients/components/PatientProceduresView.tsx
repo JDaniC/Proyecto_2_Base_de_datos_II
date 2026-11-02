@@ -1,3 +1,7 @@
+import {useConfirmedCommand} from '../../hospital/components/useConfirmedCommand';
+import {ReferenciaAtencion,type ReferenciaAtencionValor} from '../../hospital/components/ReferenciaAtencion';
+import type {CatalogoHospitalDTO} from '../../../services/types';
+import { HospitalPageControls } from '../../hospital/components/HospitalPageControls';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity,
@@ -18,17 +22,22 @@ interface PatientProceduresViewProps {
   pacienteId: string;
   pacienteNombre: string;
   esArchivado?: boolean;
+  onActualizado?: ()=>void;
 }
 
 export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
   pacienteId,
   pacienteNombre,
-  esArchivado = false
+  esArchivado = false,
+  onActualizado
 }) => {
   const { sesion } = useAuthSession();
-  const { patientRepository } = useServices();
+  const { mode, patientRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
+  const [errorLectura,setErrorLectura]=useState('');
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [procedimientos, setProcedimientos] = useState<ProcedimientoHospitalarioItem[]>([]);
   const [filtroOrigen, setFiltroOrigen] = useState<'TODOS' | 'HOSPITALIZACION' | 'CONSULTA'>('TODOS');
@@ -36,6 +45,11 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
   const [notificacion, setNotificacion] = useState<string | null>(null);
 
   // Form state
+  const comando=useConfirmedCommand<Omit<ProcedimientoHospitalarioItem,'id'>>();
+  const [referencia,setReferencia] = useState<ReferenciaAtencionValor|null>(null);
+  const [catalogo,setCatalogo] = useState<CatalogoHospitalDTO['procedimientos']>([]);
+  const [procedimientoId,setProcedimientoId] = useState('');
+  const [errorRegistro,setErrorRegistro] = useState('');
   const [nombre, setNombre] = useState('');
   const [codigo, setCodigo] = useState('');
   const [resultado, setResultado] = useState('');
@@ -45,35 +59,43 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
 
   const cargarProcedimientos = useCallback(async () => {
     setLoading(true);
+    setErrorLectura('');
     try {
-      const data = await patientRepository.obtenerProcedimientosPaciente(institucionId, pacienteId);
-      setProcedimientos(data);
+      const data = await patientRepository.obtenerProcedimientosPaciente(institucionId, pacienteId, { pagina, limite: 25 });
+      setProcedimientos(data.items);
+      setHayMas(data.hayMas);
     } catch {
-      setProcedimientos([]);
+      setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
       setLoading(false);
     }
-  }, [institucionId, pacienteId, patientRepository]);
+  }, [institucionId, pacienteId, patientRepository, pagina]);
 
   useEffect(() => {
     cargarProcedimientos();
   }, [cargarProcedimientos]);
 
+  useEffect(()=>{if(mode==='api'&&modalAbierto)catalogRepository.obtenerCatalogoHospital?.(institucionId).then(c=>setCatalogo(c.procedimientos.filter(p=>p.activo))).catch(()=>setErrorRegistro('No se pudo cargar el catálogo de procedimientos.'));},[mode,modalAbierto,catalogRepository,institucionId]);
   const handleRegistrar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !resultado.trim()) return;
+    if ((!nombre.trim()&&mode!=='api') || !resultado.trim()) return;
+    if(mode==='api'&&(!referencia||!procedimientoId)){setErrorRegistro('Seleccione consulta y procedimiento de catálogo.');return;}
+    setErrorRegistro('');
 
     setGuardando(true);
     try {
-      await patientRepository.registrarProcedimientoPaciente(institucionId, pacienteId, {
-        nombre: nombre.trim(),
+      await patientRepository.registrarProcedimientoPaciente(institucionId, pacienteId, comando.preparar({
+        nombre: catalogo.find(p=>p.id===procedimientoId)?.nombre??nombre.trim(),
+        procedimientoId,
+        ...(referencia??{}),
         codigo: codigo.trim() || undefined,
         fechaHora: new Date().toISOString(),
         profesionalNombre: profesional.trim(),
         resultado: resultado.trim(),
         observaciones: observaciones.trim() || undefined,
         origen: 'CONSULTA'
-      });
+      }));
+      comando.limpiar();
 
       setNotificacion('Procedimiento clínico registrado exitosamente.');
       setModalAbierto(false);
@@ -82,7 +104,9 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
       setResultado('');
       setObservaciones('');
       await cargarProcedimientos();
+      onActualizado?.();
       setTimeout(() => setNotificacion(null), 3500);
+    } catch (error) { comando.error(error);setErrorRegistro('No se pudo registrar. Revise las versiones y reintente la misma solicitud.');
     } finally {
       setGuardando(false);
     }
@@ -95,6 +119,8 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
 
   const totalHosp = procedimientos.filter((p) => p.origen === 'HOSPITALIZACION').length;
   const totalCons = procedimientos.filter((p) => p.origen === 'CONSULTA').length;
+
+  if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarProcedimientos()}>Reintentar consulta</Button></div>;
 
   if (loading) {
     return (
@@ -154,7 +180,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           variant="primary"
           onClick={() => setModalAbierto(true)}
           leftIcon={<Plus size={16} />}
-          disabled={esArchivado}
+          disabled={esArchivado||!sesion?.permisos.includes('consultas.registrar')}
           title={esArchivado ? 'Expediente archivado: no se pueden registrar nuevos procedimientos' : undefined}
         >
           Registrar Procedimiento
@@ -298,11 +324,18 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
       {/* Modal Registrar Procedimiento */}
       <Modal
         isOpen={modalAbierto}
-        onClose={() => setModalAbierto(false)}
+        onClose={() => {if(!guardando&&!comando.incierto)setModalAbierto(false);}}
         title="Registrar Procedimiento Clínico Realizado"
         maxWidth="600px"
       >
         <form onSubmit={handleRegistrar} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {errorRegistro&&<div role="alert">{errorRegistro}</div>}
+            {comando.incierto&&<p>Confirmación pendiente. Reintenta la misma solicitud.</p>}
+          <fieldset disabled={guardando||comando.incierto} style={{border:0,padding:0,display:'contents'}}>
+          {mode==='api'&&<>
+              <ReferenciaAtencion pacienteId={pacienteId} onCambio={setReferencia} disabled={guardando}/>
+              <label>Procedimiento de catálogo<select aria-label="Procedimiento de catálogo" value={procedimientoId} onChange={e=>setProcedimientoId(e.target.value)} required><option value="">Seleccione un procedimiento</option>{catalogo.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}</select></label>
+            </>}
           <div>
             <label
               htmlFor="proc-modal-paciente"
@@ -337,7 +370,8 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
               <input
                 id="proc-modal-nombre"
                 type="text"
-                value={nombre}
+                value={mode==='api'?(catalogo.find(p=>p.id===procedimientoId)?.nombre??''):nombre}
+                  readOnly={mode==='api'}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ejemplo: Toracocentesis, Biopsia cutánea..."
                 required
@@ -361,6 +395,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
               <input
                 id="proc-modal-codigo"
                 type="text"
+                disabled={mode==='api'}
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
                 placeholder="Ejemplo: QXR-01, PROC-MED-04"
@@ -385,7 +420,8 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
             <input
               id="proc-modal-profesional"
               type="text"
-              value={profesional}
+              value={mode==='api'?(sesion?.nombre??''):profesional}
+                  readOnly={mode==='api'}
               onChange={(e) => setProfesional(e.target.value)}
               required
               style={{
@@ -445,8 +481,9 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
             />
           </div>
 
+          </fieldset>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <Button variant="secondary" onClick={() => setModalAbierto(false)} disabled={guardando}>
+            <Button variant="secondary" onClick={() => setModalAbierto(false)} disabled={guardando||comando.incierto}>
               Cancelar
             </Button>
             <Button
@@ -460,6 +497,7 @@ export const PatientProceduresView: React.FC<PatientProceduresViewProps> = ({
           </div>
         </form>
       </Modal>
+      <HospitalPageControls etiqueta="Procedimientos" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />
     </div>
   );
 };

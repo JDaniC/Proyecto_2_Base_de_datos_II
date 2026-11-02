@@ -100,12 +100,14 @@ describe('Adaptador HTTP de pacientes E02', () => {
     expect(res?.eventos[0]).toMatchObject({ consultaId: id, recursoId: clave, versionConsulta: 7, profesional: '' }); expect(res?.siguienteCursor).toBe('cursor-expediente');
     expect(fetchMock.mock.calls[0][0]).toContain('/expediente?orden=DESC&tipo=RECETA&cursor=previo');
   });
-  it('historial usa su propio endpoint/cursor y operaciones futuras rechazan sin tráfico', async () => {
+  it('historial usa su propio endpoint/cursor y pólizas su página especializada', async () => {
     fetchMock.mockResolvedValue(respuesta({ paciente_id: id, version: 3, estado: 'ACTIVO', eventos: [] }, 'cursor-historial'));
     const repo = createHttpPatientRepository(http());
     expect(await repo.obtenerHistorial?.('HOSPITAL_GENERAL', id, { limite: 1, orden: 'ASC', cursor: 'opaco' })).toEqual({ eventos: [], siguienteCursor: 'cursor-historial' });
     expect(fetchMock.mock.calls[0][0]).toContain(`/${id}/historial?`);
-    await expect(repo.obtenerPolizasSeguro('HOSPITAL_GENERAL', id)).rejects.toMatchObject({ status: 501 }); expect(fetchMock).toHaveBeenCalledTimes(1);
+    fetchMock.mockResolvedValue(respuesta({items:[],pagina:2,hayMas:false}));
+    expect(await repo.obtenerPolizasSeguro('HOSPITAL_GENERAL', id,{pagina:2,limite:1})).toEqual({items:[],pagina:2,hayMas:false});
+    expect(fetchMock.mock.calls[1][0]).toContain(`/hospital/pacientes/${id}/polizas?pagina=2&limite=1`);
   });
   it.each([401, 403, 409, 503])('propaga error %s sin fallback', async (status) => {
     fetchMock.mockResolvedValue(fallo('PRUEBA', status));

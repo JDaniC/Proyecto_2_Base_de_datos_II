@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { HospitalPageControls } from './HospitalPageControls';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Clock,
   FlaskConical,
@@ -33,27 +34,41 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
   const { examRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
+  const [errorLectura,setErrorLectura]=useState('');
+  const lectura=useRef(0);
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selecciones,setSelecciones]=useState<Record<string,string>>({});
   const [resultados, setResultados] = useState<ResultadoExamenHospital[]>([]);
 
   const cargarResultados = useCallback(async () => {
     if (!orden) return;
+    const turno=++lectura.current;
     setLoading(true);
+    setErrorLectura('');
     try {
-      const data = await examRepository.obtenerResultadosPorOrden(institucionId, orden.id);
-      setResultados(data);
+      const data = await examRepository.obtenerResultadosPorOrden(institucionId, orden.id, { pagina, limite: 25 });
+      if(turno!==lectura.current)return;
+      setResultados(data.items);
+      setHayMas(data.hayMas);
     } catch {
-      setResultados([]);
+      if(turno!==lectura.current)return;
+      setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
-      setLoading(false);
+      if(turno===lectura.current)setLoading(false);
     }
-  }, [institucionId, orden, examRepository]);
+  }, [institucionId, orden, examRepository, pagina]);
 
   useEffect(() => {
     if (isOpen && orden) {
       cargarResultados();
     }
   }, [isOpen, orden, cargarResultados]);
+
+
+
+  useEffect(()=>{setPagina(1);setSelecciones({});setErrorLectura('');return()=>{lectura.current++;};},[orden?.id,isOpen]);
 
   if (!orden) return null;
 
@@ -104,6 +119,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
       maxWidth="850px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {errorLectura&&<div role="alert">{errorLectura}<Button onClick={()=>void cargarResultados()}>Reintentar consulta</Button></div>}
         {/* Cabecera de la Orden Médica */}
         <div
           style={{
@@ -170,7 +186,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-strong)', margin: 0 }}>
               Exámenes Solicitados y Resultados Analíticos
             </h3>
-            {orden.items.some((it) => it.estado === 'PENDIENTE') && onAbrirRegistrarResultado && (
+            {orden.estado !== 'CANCELADA' && onAbrirRegistrarResultado && (
               <Button
                 size="sm"
                 variant="primary"
@@ -180,12 +196,12 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
                   onAbrirRegistrarResultado(orden);
                 }}
               >
-                Registrar Resultados de Laboratorio
+                Registrar o corregir resultados
               </Button>
             )}
           </div>
 
-          {loading ? (
+          {errorLectura?null:loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <SkeletonLoader variant="rectangular" height="120px" />
               <SkeletonLoader variant="rectangular" height="120px" />
@@ -193,7 +209,8 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {orden.items.map((item) => {
-                const resultado = resultados.find((r) => r.pruebaId === item.pruebaId);
+                const versiones=resultados.filter(r=>r.pruebaId===item.pruebaId).sort((a,b)=>(b.version??1)-(a.version??1));
+                const resultado=versiones.find(r=>r.id===selecciones[item.pruebaId])??versiones[0];
 
                 return (
                   <div
@@ -240,6 +257,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
                       </div>
                     </div>
 
+                    {versiones.length>0&&<label>Versión emitida <select aria-label={`Versión de ${item.nombre}`} value={resultado?.id??''} onChange={e=>setSelecciones(s=>({...s,[item.pruebaId]:e.target.value}))}>{versiones.map(r=><option key={r.id} value={r.id}>Versión {r.version??1} · {r.fechaEmision}</option>)}</select></label>}
                     {/* Contenido del resultado */}
                     {item.estado === 'COMPLETADO' && resultado ? (
                       <div style={{ padding: '16px' }}>
@@ -349,6 +367,7 @@ export const DetalleOrdenResultadosModal: React.FC<DetalleOrdenResultadosModalPr
           </Button>
         </div>
       </div>
+      <HospitalPageControls etiqueta="Resultados" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />
     </Modal>
   );
 };

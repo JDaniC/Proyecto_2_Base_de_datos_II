@@ -1,3 +1,4 @@
+import { createHttpExamRepository } from './hospital/httpExamRepository';
 import {
   AuthRepository,
   DashboardRepository,
@@ -82,7 +83,7 @@ export function createHttpServices(options: HttpServiceFactoryOptions = {}): Htt
     catalogRepository: createHttpCatalogRepository(httpClient),
     auditRepository: requireApiAdapter<AuditRepository>(undefined, 'auditRepository'),
     hospitalizationRepository: createHttpHospitalizationRepository(httpClient),
-    examRepository: requireApiAdapter<HospitalExamRepository>(undefined, 'examRepository'),
+    examRepository: createHttpExamRepository(httpClient),
     laboratoryRepository: requireApiAdapter<LaboratoryRepository>(undefined, 'laboratoryRepository'),
     vaccineRepository: requireApiAdapter<VaccineRepository>(undefined, 'vaccineRepository'),
   };

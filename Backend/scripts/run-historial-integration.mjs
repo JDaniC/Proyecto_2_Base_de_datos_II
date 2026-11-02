@@ -55,9 +55,29 @@ try{
  try{await run('docker',[...compose,'exec','-T','mysql','sh','-c','MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot < /tmp/historial-parcial.sql']);}catch{falloEsperado=true;}
  if(!falloEsperado)throw new Error('FALLO_MYSQL_NO_INYECTADO');
  await migrarSql();
- if(clinicaUi) for(const [servicio,archivo] of [['postgres','007_correcciones_postgresql.sql'],['mysql','007_correcciones_mysql.sql']]) {
+ if(clinicaUi) for(const [servicio,archivo] of [['postgres','007_correcciones_postgresql.sql'],['mysql','007_correcciones_mysql.sql'],['postgres','008_servicios_hospital_postgresql.sql']]) {
   await run('docker',[...compose,'cp',join(root,'Database/migrations',archivo),`${servicio}:/tmp/clinica.sql`]);
   await run('docker',[...compose,'exec','-T',servicio,'sh','-c',servicio==='postgres'?'psql -X -v ON_ERROR_STOP=1 -U postgres_admin -d hospital_general -f /tmp/clinica.sql':'MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot < /tmp/clinica.sql']);
+ }
+ if(clinicaUi){
+  const pg=sql=>run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','hospital_general','-c',sql]);
+  // Un volumen existente con clínica común conserva datos; abortar la extensión revierte todo su DDL.
+  const prueba=join(temporal,'servicios-fallo.sql');
+  await writeFile(prueba,(await readFile(join(root,'Database/migrations/008_servicios_hospital_postgresql.sql'),'utf8')).replace('COMMIT;','SELECT 1/0;\nCOMMIT;'));
+  await pg('CREATE DATABASE servicios_recuperacion TEMPLATE hospital_general');
+  await run('docker',[...compose,'cp',prueba,'postgres:/tmp/servicios-fallo.sql']);
+  // Base clonada: solo se retira la extensión vacía de este clon de prueba, nunca datos clínicos.
+  await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_recuperacion','-c','DROP SCHEMA hospital_servicios CASCADE']);
+  let interrumpida=false;
+  try{await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_recuperacion','-f','/tmp/servicios-fallo.sql']);}catch{interrumpida=true;}
+  if(!interrumpida)throw new Error('FALLO_SERVICIOS_NO_INYECTADO');
+  const ausente=await run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-U','postgres_admin','-d','servicios_recuperacion','-c',"SELECT to_regnamespace('hospital_servicios')"]);
+  if(ausente.trim())throw new Error('ROLLBACK_SERVICIOS_INCOMPLETO');
+  await run('docker',[...compose,'cp',join(root,'Database/migrations/008_servicios_hospital_postgresql.sql'),'postgres:/tmp/servicios.sql']);
+  for(let i=0;i<2;i++)await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_recuperacion','-f','/tmp/servicios.sql']);
+  const listo=await pg('SELECT estado FROM hospital_servicios.modelo');
+  if(listo.trim()!=='LISTO')throw new Error('SERVICIOS_NUEVOS_NO_LISTOS');
+  console.log('PASS migración 008: instalación, rollback DDL y recuperación reejecutable sobre clon aislado.');
  }
  console.log('PASS preparación SQL: rollback PostgreSQL y recuperación MySQL tras interrupción.');
  Object.assign(entorno,{PG_TEST_PORT:entorno.POSTGRES_PORT,PG_TEST_SECRET_FILE:join(secretos,'postgres_app_password'),MYSQL_TEST_PORT:entorno.MYSQL_PORT,MYSQL_TEST_SECRET_FILE:join(secretos,'mysql_app_password'),MONGO_TEST_PORT:entorno.MONGO_PORT,MONGO_TEST_SECRET_FILE:join(secretos,'mongo_app_password'),MONGO_ADMIN_TEST_SECRET_FILE:join(secretos,'mongo_admin_password')});
@@ -71,6 +91,21 @@ try{
  for(const n of ['auth','firestore','hub','logging'])if(conf.emulators[n])conf.emulators[n].port=Number(await puerto());
  const config=join(temporal,'firebase.json');await writeFile(config,JSON.stringify(conf));
  console.log(await run('firebase',['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/${clinicaUi ? 'clinica-ui-integration' : pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`],{cwd:backend, timeout: pacientesUi ? 600000 : 300000}));
+ if(clinicaUi){
+  const estado=async()=>await run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-U','postgres_admin','-d','hospital_general','-c',"SELECT count(*)::text||':'||md5(string_agg(contenido::text,'' ORDER BY id)) FROM hospital_servicios.recursos"]);
+  const antesServicios=await estado();
+  await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','hospital_general','-f','/tmp/servicios.sql']);
+  if(antesServicios!==await estado())throw new Error('MIGRACION_008_CAMBIO_DATOS');
+  // Un legado especializado sin snapshots no se habilita mediante reaplicación.
+  await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','hospital_general','-c','CREATE DATABASE servicios_legado TEMPLATE hospital_general']);
+  const legadoSql=sql=>run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_legado','-c',sql]);
+  const conteo=await legadoSql('SELECT count(*) FROM hospital_general.orden_examen');
+  await legadoSql('DROP SCHEMA hospital_servicios CASCADE');
+  for(let i=0;i<2;i++)await run('docker',[...compose,'exec','-T','postgres','psql','-X','-v','ON_ERROR_STOP=1','-U','postgres_admin','-d','servicios_legado','-f','/tmp/servicios.sql']);
+  if((await legadoSql('SELECT estado FROM hospital_servicios.modelo')).trim()!=='RECONCILIAR'||conteo!==await legadoSql('SELECT count(*) FROM hospital_general.orden_examen'))throw new Error('LEGADO_SERVICIOS_SIN_GUARDA');
+  console.log('PASS migración 008 legado: RECONCILIAR estable, órdenes existentes conservadas.');
+  console.log('PASS migración 008 sobre volumen existente: mismas proyecciones y estado, sin pérdida.');
+ }
  const antes=await estadoSql();
  await migrarSql();
  const despues=await estadoSql();

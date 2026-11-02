@@ -33,6 +33,7 @@ try {
   for (const [servicio, archivo] of [
     ['postgres', '004_historial_postgresql.sql'],
     ['postgres', '007_correcciones_postgresql.sql'],
+    ['postgres', '008_servicios_hospital_postgresql.sql'],
     ['mysql', '004_historial_mysql.sql'],
     ['mysql', '007_correcciones_mysql.sql'],
   ]) {

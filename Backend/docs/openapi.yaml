@@ -1852,6 +1852,764 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/HospitalProcedimiento"
+  /hospital/servicios/catalogos:
+    get:
+      operationId: hospitalServiciosCatalogos
+      summary: hospitalServiciosCatalogos
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - pacientes.administrar
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters: []
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalCatalogos'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-permisos-modo: ALGUNO
+  /hospital/examenes/ordenes:
+    get:
+      operationId: hospitalOrdenes
+      summary: hospitalOrdenes
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pagina
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 40000
+          default: 1
+      - name: limite
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: pacienteId
+        in: query
+        schema: &hsPaths001
+          $ref: '#/components/schemas/UUID'
+      - name: estado
+        in: query
+        schema:
+          type: string
+          enum:
+          - SOLICITADA
+          - EN_PROCESO
+          - COMPLETADA
+          - CANCELADA
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospitalOrden'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /hospital/examenes/ordenes/{id}:
+    get:
+      operationId: hospitalOrden
+      summary: hospitalOrden
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pacienteId
+        in: query
+        schema: *hsPaths001
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalOrden'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /hospital/examenes/ordenes/{id}/resultados:
+    get:
+      operationId: hospitalResultadosOrden
+      summary: hospitalResultadosOrden
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pagina
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 40000
+          default: 1
+      - name: limite
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: pacienteId
+        in: query
+        schema: *hsPaths001
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospitalResultado'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /hospital/examenes/resultados/{id}:
+    get:
+      operationId: hospitalResultado
+      summary: hospitalResultado
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pacienteId
+        in: query
+        schema: *hsPaths001
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalResultado'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /hospital/pacientes/{pacienteId}/resultados:
+    get:
+      operationId: hospitalResultadosPaciente
+      summary: hospitalResultadosPaciente
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pagina
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 40000
+          default: 1
+      - name: limite
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospitalResultado'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /hospital/pacientes/{pacienteId}/examenes/ordenes:
+    post:
+      operationId: hospitalOrdenCrear
+      summary: hospitalOrdenCrear
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      - consultas.registrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalOrden'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalOrdenCrear'
+  /hospital/pacientes/{pacienteId}/examenes/ordenes/{id}/cancelacion:
+    post:
+      operationId: hospitalOrdenCancelar
+      summary: hospitalOrdenCancelar
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      - consultas.registrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalOrden'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalOrdenCancelar'
+  /hospital/pacientes/{pacienteId}/examenes/ordenes/{id}/resultados:
+    post:
+      operationId: hospitalResultadoEmitir
+      summary: hospitalResultadoEmitir
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      - consultas.registrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalResultado'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalResultadoEmitir'
+  /hospital/pacientes/{pacienteId}/polizas:
+    get:
+      operationId: hospitalPolizas
+      summary: hospitalPolizas
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - pacientes.administrar
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pagina
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 40000
+          default: 1
+      - name: limite
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: estado
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVA
+          - VENCIDA
+          - SUSPENDIDA
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospitalPoliza'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      x-permisos-modo: ALGUNO
+    post:
+      operationId: hospitalPolizaAfiliar
+      summary: hospitalPolizaAfiliar
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - pacientes.administrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalPoliza'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalPolizaAfiliar'
+  /hospital/pacientes/{pacienteId}/polizas/{id}/estado:
+    post:
+      operationId: hospitalPolizaEstado
+      summary: hospitalPolizaEstado
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - pacientes.administrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: id
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalPoliza'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalPolizaEstado'
+  /hospital/pacientes/{pacienteId}/procedimientos:
+    get:
+      operationId: hospitalProcedimientos
+      summary: hospitalProcedimientos
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: pagina
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 40000
+          default: 1
+      - name: limite
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      responses:
+        '200':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospitalProcedimiento'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: hospitalProcedimientoRegistrar
+      summary: hospitalProcedimientoRegistrar
+      tags:
+      - hospital
+      description: E04-P1-03. Institución y autor de token verificado y cuenta local. UoW por comando, revisión, auditoría
+        y respuesta idempotente atómicas. Resultados emitidos inmutables; corrección agrega versión. Migración 008
+        LISTO requerida. Catálogos administrativos de lectura.
+      x-permisos:
+      - historial.leer
+      - consultas.registrar
+      x-instituciones:
+      - HOSPITAL_GENERAL
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - name: pacienteId
+        in: path
+        required: true
+        schema: *hsPaths001
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema: *hsPaths001
+      responses:
+        '201':
+          description: Respuesta confirmada; repetición conserva cuerpo y código originales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaHospitalProcedimiento'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '500':
+          $ref: '#/components/responses/Error500'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalProcedimientoRegistrar'
 components:
   securitySchemes:
     FirebaseBearer:
@@ -1861,6 +2619,990 @@ components:
       description: Verificación de firma/emisor/audiencia/vencimiento/revocación más cuenta local/roles actuales.
         Sin autoridad enviada por cliente.
   schemas:
+    HospitalOrdenCrear:
+      type: object
+      additionalProperties: false
+      required:
+      - consultaId
+      - versionConsulta
+      - versionPaciente
+      - pruebasIds
+      - prioridad
+      - motivoClinico
+      properties:
+        consultaId: &hsSchemas002
+          $ref: '#/components/schemas/UUID'
+        versionConsulta: &hsSchemas001
+          type: integer
+          minimum: 1
+        versionPaciente: *hsSchemas001
+        pruebasIds:
+          type: array
+          maxItems: 100
+          items: *hsSchemas002
+          minItems: 1
+          uniqueItems: true
+        prioridad:
+          type: string
+          enum:
+          - RUTINA
+          - URGENTE
+          - STAT
+        motivoClinico:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        diagnosticoPresuntivoCIE10:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: \S
+    HospitalOrdenCancelar:
+      type: object
+      additionalProperties: false
+      required:
+      - versionEsperada
+      - motivo
+      properties:
+        versionEsperada: *hsSchemas001
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+    HospitalParametroEntrada:
+      type: object
+      additionalProperties: false
+      required:
+      - parametroId
+      - valorMedido
+      - alerta
+      properties:
+        parametroId: *hsSchemas002
+        valorMedido:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        alerta: &hsSchemas007
+          type: string
+          enum:
+          - NORMAL
+          - ELEVADO
+          - DISMINUIDO
+          - CRITICO
+    HospitalResultadoEmitir:
+      type: object
+      additionalProperties: false
+      required:
+      - versionEsperada
+      - pruebaId
+      - parametros
+      - interpretacionClinica
+      properties:
+        versionEsperada: *hsSchemas001
+        pruebaId: *hsSchemas002
+        parametros:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/HospitalParametroEntrada'
+          minItems: 1
+        interpretacionClinica:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: \S
+        observacionesTecnicas:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        motivoCorreccion:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        versionResultado: *hsSchemas001
+    HospitalTitularEntrada:
+      type: object
+      additionalProperties: false
+      required:
+      - nombres
+      - apellidos
+      - numeroIdentificacion
+      - telefonoContacto
+      - parentesco
+      properties:
+        nombres: &hsSchemas010
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        apellidos: &hsSchemas011
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        numeroIdentificacion: &hsSchemas012
+          type: string
+          pattern: ^\d{13}$
+        telefonoContacto: &hsSchemas013
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: \S
+        parentesco: &hsSchemas014
+          type: string
+          enum:
+          - TITULAR
+          - PADRE
+          - MADRE
+          - CONYUGE
+          - HIJO
+          - OTRO
+    HospitalPolizaAfiliar:
+      type: object
+      additionalProperties: false
+      required:
+      - versionPaciente
+      - aseguradoraId
+      - planId
+      - numeroPoliza
+      - numeroCertificado
+      - vigenciaDesde
+      - vigenciaHasta
+      - titular
+      - copagoCentavos
+      properties:
+        versionPaciente: *hsSchemas001
+        aseguradoraId: *hsSchemas002
+        planId: *hsSchemas002
+        numeroPoliza:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        numeroCertificado:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        vigenciaDesde: &hsSchemas003
+          type: string
+          format: date
+        vigenciaHasta: *hsSchemas003
+        titular:
+          $ref: '#/components/schemas/HospitalTitularEntrada'
+        copagoCentavos:
+          type: integer
+          minimum: 0
+          maximum: 100000000
+        observaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+    HospitalPolizaEstado:
+      type: object
+      additionalProperties: false
+      required:
+      - versionEsperada
+      - estado
+      - motivo
+      properties:
+        versionEsperada: *hsSchemas001
+        estado:
+          type: string
+          enum:
+          - ACTIVA
+          - VENCIDA
+          - SUSPENDIDA
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+    HospitalProcedimientoRegistrar:
+      type: object
+      additionalProperties: false
+      required:
+      - consultaId
+      - versionConsulta
+      - versionPaciente
+      - procedimientoId
+      - resultado
+      properties:
+        consultaId: *hsSchemas002
+        versionConsulta: *hsSchemas001
+        versionPaciente: *hsSchemas001
+        procedimientoId: *hsSchemas002
+        resultado:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: \S
+        observaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+    HospitalParametroCatalogo:
+      type: object
+      additionalProperties: false
+      required:
+      - parametroId
+      - nombre
+      - unidadMedida
+      - rangoReferencia
+      properties:
+        parametroId: *hsSchemas002
+        nombre: &hsSchemas004
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        unidadMedida: &hsSchemas005
+          type: string
+        rangoReferencia: &hsSchemas006
+          type: string
+    HospitalParametroSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+      - parametroId
+      - nombre
+      - unidadMedida
+      - rangoReferencia
+      - unidadId
+      properties:
+        parametroId: *hsSchemas002
+        nombre: *hsSchemas004
+        unidadMedida: *hsSchemas005
+        rangoReferencia: *hsSchemas006
+        unidadId:
+          anyOf:
+          - *hsSchemas002
+          - type: 'null'
+    HospitalParametroResultado:
+      type: object
+      additionalProperties: false
+      required:
+      - parametroId
+      - nombre
+      - unidadMedida
+      - rangoReferencia
+      - unidadId
+      - valorMedido
+      - alerta
+      properties:
+        parametroId: *hsSchemas002
+        nombre: *hsSchemas004
+        unidadMedida: *hsSchemas005
+        rangoReferencia: *hsSchemas006
+        unidadId:
+          anyOf:
+          - *hsSchemas002
+          - type: 'null'
+        valorMedido:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        alerta: *hsSchemas007
+    HospitalOrdenItem:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - pruebaId
+      - codigoPrueba
+      - nombre
+      - seccion
+      - metodoAnalitico
+      - tipoMuestra
+      - parametros
+      - estado
+      properties:
+        id: *hsSchemas002
+        pruebaId: *hsSchemas002
+        codigoPrueba:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: \S
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        seccion:
+          type: string
+        metodoAnalitico:
+          type: string
+        tipoMuestra:
+          type: string
+        parametros:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/HospitalParametroSnapshot'
+        estado:
+          type: string
+          enum:
+          - PENDIENTE
+          - COMPLETADO
+        resultadoId: *hsSchemas002
+        versionResultado: *hsSchemas001
+    HospitalOrden:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - version
+      - pacienteId
+      - pacienteNombre
+      - pacienteDpi
+      - consultaId
+      - medicoSolicitanteId
+      - medicoSolicitanteNombre
+      - medicoColegiado
+      - codigoLegible
+      - institucionId
+      - fechaSolicitud
+      - estado
+      - prioridad
+      - motivoClinico
+      - items
+      properties:
+        id: *hsSchemas002
+        version: *hsSchemas001
+        pacienteId: *hsSchemas002
+        pacienteNombre:
+          type: string
+          minLength: 1
+          maxLength: 400
+          pattern: \S
+        pacienteDpi:
+          type: string
+        consultaId: *hsSchemas002
+        medicoSolicitanteId: *hsSchemas002
+        medicoSolicitanteNombre:
+          type: string
+          minLength: 1
+          maxLength: 400
+          pattern: \S
+        medicoColegiado:
+          anyOf:
+          - type: string
+          - type: 'null'
+        codigoLegible:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: \S
+        institucionId:
+          type: string
+          enum:
+          - HOSPITAL_GENERAL
+        fechaSolicitud: &hsSchemas008
+          type: string
+          format: date-time
+        estado:
+          type: string
+          enum:
+          - SOLICITADA
+          - EN_PROCESO
+          - COMPLETADA
+          - CANCELADA
+        prioridad:
+          type: string
+          enum:
+          - RUTINA
+          - URGENTE
+          - STAT
+        motivoClinico:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/HospitalOrdenItem'
+        diagnosticoPresuntivoCIE10:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: \S
+        motivoCancelacion:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+    HospitalResultado:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - version
+      - pacienteId
+      - pacienteNombre
+      - ordenId
+      - codigoOrden
+      - pruebaId
+      - nombrePrueba
+      - seccion
+      - metodoAnalitico
+      - fechaEmision
+      - responsableId
+      - responsableAnalisis
+      - colegiadoResponsable
+      - estado
+      - parametros
+      - interpretacionClinica
+      properties:
+        id: *hsSchemas002
+        version: *hsSchemas001
+        pacienteId: *hsSchemas002
+        pacienteNombre:
+          type: string
+          minLength: 1
+          maxLength: 400
+          pattern: \S
+        ordenId: *hsSchemas002
+        codigoOrden:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: \S
+        pruebaId: *hsSchemas002
+        nombrePrueba:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        seccion:
+          type: string
+        metodoAnalitico:
+          type: string
+        fechaEmision: *hsSchemas008
+        responsableId: *hsSchemas002
+        responsableAnalisis:
+          type: string
+          minLength: 1
+          maxLength: 400
+          pattern: \S
+        colegiadoResponsable:
+          anyOf:
+          - type: string
+          - type: 'null'
+        estado:
+          type: string
+          enum:
+          - VALIDADO
+        parametros:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/HospitalParametroResultado'
+        interpretacionClinica:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: \S
+        observacionesTecnicas:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        corrigeId: *hsSchemas002
+        motivoCorreccion:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+    HospitalPoliza:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - version
+      - pacienteId
+      - aseguradoraId
+      - aseguradoraNombre
+      - planId
+      - planNombre
+      - numeroPoliza
+      - numeroCertificado
+      - vigenciaDesde
+      - vigenciaHasta
+      - estadoVigencia
+      - porcentajeCobertura
+      - moneda
+      - copagoCentavos
+      - limiteMaximoAnualCentavos
+      - titular
+      properties:
+        id: *hsSchemas002
+        version: *hsSchemas001
+        pacienteId: *hsSchemas002
+        aseguradoraId: *hsSchemas002
+        aseguradoraNombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        planId: *hsSchemas002
+        planNombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        numeroPoliza:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        numeroCertificado:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: \S
+        vigenciaDesde: *hsSchemas003
+        vigenciaHasta: *hsSchemas003
+        estadoVigencia:
+          type: string
+          enum:
+          - ACTIVA
+          - VENCIDA
+          - SUSPENDIDA
+        porcentajeCobertura:
+          type: number
+          minimum: 0
+          maximum: 100
+        moneda:
+          type: string
+          enum:
+          - GTQ
+        copagoCentavos: &hsSchemas009
+          type: integer
+          minimum: 0
+        limiteMaximoAnualCentavos:
+          anyOf:
+          - *hsSchemas009
+          - type: 'null'
+        titular:
+          type: object
+          additionalProperties: false
+          required:
+          - nombres
+          - apellidos
+          - numeroIdentificacion
+          - telefonoContacto
+          - parentesco
+          - nombreCompleto
+          properties:
+            nombres: *hsSchemas010
+            apellidos: *hsSchemas011
+            numeroIdentificacion: *hsSchemas012
+            telefonoContacto: *hsSchemas013
+            parentesco: *hsSchemas014
+            nombreCompleto:
+              type: string
+              minLength: 1
+              maxLength: 200
+              pattern: \S
+        observaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        motivoEstado:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+        vigente: &hsSchemas015
+          type: boolean
+    HospitalCatalogos:
+      type: object
+      additionalProperties: false
+      required:
+      - examenes
+      - aseguradoras
+      - procedimientos
+      - especialidades
+      - medicamentos
+      properties:
+        examenes:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - nombre
+            - seccion
+            - version
+            - activo
+            - metodoAnalitico
+            - tipoMuestra
+            - tiempoEntregaHoras
+            - parametros
+            properties:
+              id: *hsSchemas002
+              nombre:
+                type: string
+                minLength: 1
+                maxLength: 200
+                pattern: \S
+              seccion:
+                type: string
+              version: *hsSchemas001
+              activo: *hsSchemas015
+              metodoAnalitico:
+                type: string
+              tipoMuestra:
+                type: string
+              tiempoEntregaHoras: *hsSchemas009
+              parametros:
+                type: array
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/HospitalParametroCatalogo'
+        aseguradoras:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - nombre
+            - telefonoAutorizaciones
+            - estado
+            - planes
+            properties:
+              id: *hsSchemas002
+              nombre:
+                type: string
+                minLength: 1
+                maxLength: 200
+                pattern: \S
+              telefonoAutorizaciones:
+                anyOf:
+                - type: string
+                - type: 'null'
+              estado:
+                type: string
+              planes:
+                type: array
+                maxItems: 100
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - id
+                  - nombrePlan
+                  - porcentajeCobertura
+                  - activo
+                  - moneda
+                  - limiteCentavos
+                  properties:
+                    id: *hsSchemas002
+                    nombrePlan:
+                      type: string
+                      minLength: 1
+                      maxLength: 200
+                      pattern: \S
+                    porcentajeCobertura:
+                      anyOf:
+                      - type: number
+                      - type: 'null'
+                    activo: *hsSchemas015
+                    moneda:
+                      type: string
+                    limiteCentavos:
+                      anyOf:
+                      - *hsSchemas009
+                      - type: 'null'
+        procedimientos:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - nombre
+            - descripcion
+            - activo
+            properties:
+              id: *hsSchemas002
+              nombre:
+                type: string
+                minLength: 1
+                maxLength: 200
+                pattern: \S
+              descripcion:
+                anyOf:
+                - type: string
+                - type: 'null'
+              activo: *hsSchemas015
+        especialidades:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - nombre
+            - descripcion
+            properties:
+              id: *hsSchemas002
+              nombre:
+                type: string
+                minLength: 1
+                maxLength: 200
+                pattern: \S
+              descripcion:
+                anyOf:
+                - type: string
+                - type: 'null'
+        medicamentos:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - id
+            - nombre
+            - presentacion
+            - unidad
+            properties:
+              id: *hsSchemas002
+              nombre:
+                type: string
+                minLength: 1
+                maxLength: 200
+                pattern: \S
+              presentacion:
+                anyOf:
+                - type: string
+                - type: 'null'
+              unidad:
+                anyOf:
+                - type: string
+                - type: 'null'
+    RespuestaHospitalOrden:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/HospitalOrden'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PaginaHospitalOrden:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - items
+          - pagina
+          - hayMas
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/HospitalOrden'
+            pagina: *hsSchemas001
+            hayMas: *hsSchemas015
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RespuestaHospitalResultado:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/HospitalResultado'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PaginaHospitalResultado:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - items
+          - pagina
+          - hayMas
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/HospitalResultado'
+            pagina: *hsSchemas001
+            hayMas: *hsSchemas015
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RespuestaHospitalPoliza:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/HospitalPoliza'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PaginaHospitalPoliza:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - items
+          - pagina
+          - hayMas
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/HospitalPoliza'
+            pagina: *hsSchemas001
+            hayMas: *hsSchemas015
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RespuestaHospitalProcedimiento:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/HospitalProcedimientoServicio'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PaginaHospitalProcedimiento:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+          - items
+          - pagina
+          - hayMas
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/HospitalProcedimientoServicio'
+            pagina: *hsSchemas001
+            hayMas: *hsSchemas015
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RespuestaHospitalCatalogos:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/HospitalCatalogos'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    HospitalProcedimientoServicio:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - version
+      - pacienteId
+      - nombre
+      - fechaHora
+      - profesionalNombre
+      - resultado
+      - origen
+      - origenReferencia
+      properties:
+        id: *hsSchemas002
+        version: *hsSchemas001
+        pacienteId: *hsSchemas002
+        consultaId: *hsSchemas002
+        procedimientoId: *hsSchemas002
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+        fechaHora: *hsSchemas008
+        profesionalId: *hsSchemas002
+        profesionalNombre:
+          type: string
+          minLength: 1
+          maxLength: 400
+          pattern: \S
+        resultado:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: \S
+        observaciones:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: \S
+        origen:
+          type: string
+          enum:
+          - CONSULTA
+          - HOSPITALIZACION
+        origenReferencia: *hsSchemas002
+        codigo:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
     HospitalIngreso:
       type: object
       additionalProperties: false

@@ -11,6 +11,7 @@ export interface ProfesionalHistorico {
 }
 export interface ProfesionalClinico extends ProfesionalHistorico {
   readonly activo: boolean;
+  readonly especialidades?: readonly string[];
   /** Laboratorio: únicamente solicitante médico individual, nunca institución. */
   readonly tipo?: 'INDIVIDUAL' | 'INSTITUCIONAL';
 }

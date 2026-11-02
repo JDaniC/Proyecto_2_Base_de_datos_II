@@ -1,3 +1,4 @@
+import { HospitalPageControls } from '../../hospital/components/HospitalPageControls';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   FlaskConical,
@@ -26,17 +27,22 @@ interface PatientExamsViewProps {
   pacienteId: string;
   pacienteNombre: string;
   esArchivado?: boolean;
+  onActualizado?: ()=>void;
 }
 
 export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
   pacienteId,
   pacienteNombre,
-  esArchivado = false
+  esArchivado = false,
+  onActualizado
 }) => {
   const { sesion } = useAuthSession();
   const { examRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
+  const [errorLectura,setErrorLectura]=useState('');
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ordenes, setOrdenes] = useState<OrdenExamenHospital[]>([]);
   const [modalNuevaOrdenAbierto, setModalNuevaOrdenAbierto] = useState(false);
@@ -46,15 +52,17 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
 
   const cargarDatos = useCallback(async () => {
     setLoading(true);
+    setErrorLectura('');
     try {
-      const data = await examRepository.obtenerOrdenesPorPaciente(institucionId, pacienteId);
-      setOrdenes(data);
+      const data = await examRepository.obtenerOrdenesPorPaciente(institucionId, pacienteId, { pagina, limite: 25 });
+      setOrdenes(data.items);
+      setHayMas(data.hayMas);
     } catch {
-      setOrdenes([]);
+      setErrorLectura('No se pudo consultar la información. Reintente la carga.');
     } finally {
       setLoading(false);
     }
-  }, [institucionId, pacienteId, examRepository]);
+  }, [institucionId, pacienteId, examRepository, pagina]);
 
   useEffect(() => {
     cargarDatos();
@@ -83,6 +91,8 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
         return <Badge variant="primary">Solicitada</Badge>;
     }
   };
+
+  if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarDatos()}>Reintentar consulta</Button></div>;
 
   if (loading) {
     return (
@@ -142,7 +152,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
           variant="primary"
           onClick={() => setModalNuevaOrdenAbierto(true)}
           leftIcon={<Plus size={16} />}
-          disabled={esArchivado}
+          disabled={esArchivado||!sesion?.permisos.includes('consultas.registrar')}
           title={esArchivado ? 'Expediente archivado: no se pueden solicitar nuevos exámenes' : undefined}
         >
           Solicitar Examen
@@ -186,7 +196,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
                     Ver Resultados
                   </Button>
 
-                  {ord.items.some((it) => it.estado === 'PENDIENTE') && (
+                  {sesion?.permisos.includes('consultas.registrar') && ord.estado !== 'CANCELADA' && (
                     <Button
                       size="sm"
                       variant="secondary"
@@ -245,6 +255,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
         onOrdenCreada={async () => {
           setNotificacion('Orden médica de examen emitida exitosamente.');
           await cargarDatos();
+          onActualizado?.();
           setTimeout(() => setNotificacion(null), 3500);
         }}
       />
@@ -265,9 +276,11 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
         onResultadoRegistrado={async () => {
           setNotificacion('Resultados de examen registrados y validados exitosamente.');
           await cargarDatos();
+          onActualizado?.();
           setTimeout(() => setNotificacion(null), 3500);
         }}
       />
+      <HospitalPageControls etiqueta="Exámenes" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />
     </div>
   );
 };
