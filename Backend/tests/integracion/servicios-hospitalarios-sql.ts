@@ -81,6 +81,16 @@ export async function verificarServiciosHospitalarios(pool:PoolSql,contexto:Cont
   await assert.rejects(pool.consultar('UPDATE hospital_servicios.catalogo_procedimiento SET activo=false'), {code:'42501'});
   const inactivo=catalogo.procedimientos!.find(p=>p.activo===false)!;
   await assert.rejects(ejecutar('procedimientoRegistrar',{versionPaciente:await versionPaciente(),consultaId:p.cid,versionConsulta:1,procedimientoId:inactivo.id,resultado:'No debe registrarse'}),{codigo:'REFERENCIA_INCOMPATIBLE'});
+  const ordenRollback=await ejecutar('ordenCrear',await entradaOrden());
+  const resultadosAntes=Number((await pool.consultar('SELECT count(*) AS n FROM resultado_examen')).filas[0]!.n);
+  const detallesAntes=Number((await pool.consultar('SELECT count(*) AS n FROM resultado_detalle')).filas[0]!.n);
+  for(const prefijo of ['INSERT INTO resultado_detalle','INSERT INTO auditoria']){
+    const fallo:PoolSql={...pool,adquirir:async()=>{const c=await pool.adquirir();return {...c,consultar:async(sql,args)=>{if(sql.startsWith(prefijo))throw new Error('FALLO_RESULTADO_SINTETICO');return c.consultar(sql,args);}};}};
+    await assert.rejects(servicio.ejecutar(contexto,{...bundle,serviciosHospital:crearServiciosHospital(fallo)},'resultadoRegistrar',p.pid,ordenRollback.id,{...emitir,versionEsperada:1},randomUUID()));
+    assert.equal(Number((await pool.consultar('SELECT count(*) AS n FROM resultado_examen')).filas[0]!.n),resultadosAntes);
+    assert.equal(Number((await pool.consultar('SELECT count(*) AS n FROM resultado_detalle')).filas[0]!.n),detallesAntes);
+    assert.equal((await servicio.porId(contexto,bundle,'orden',ordenRollback.id)).version,1);
+  }
   const pendiente=await ejecutar('ordenCrear',await entradaOrden());
   await pool.consultar("UPDATE historial_clinico SET estado_historial='ARCHIVADO',causa_baja='OTRA_ADMINISTRATIVA',motivo_baja='Ensayo sintético',fecha_baja=CURRENT_TIMESTAMP,actor_baja=$2 WHERE id_paciente=(SELECT id_paciente FROM paciente WHERE id_publico=$1)",[p.pid,contexto.cuenta.id]);
   await assert.rejects(ejecutar('ordenCrear',await entradaOrden()),{codigo:'ESTADO_INVALIDO'});

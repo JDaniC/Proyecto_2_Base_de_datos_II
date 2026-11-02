@@ -94,6 +94,13 @@ export async function aplicar(sql:EjecutorSql,contexto:ContextoAutenticado,s:Sol
     }
     case 'polizaAfiliar': respuesta=await afiliar(sql,s,estable,paciente);break;
     case 'polizaEstado': {
+      if(e.estado==='ACTIVA'){
+        const vigente=await sql.consultar(`SELECT pp.id_paciente_poliza FROM paciente_poliza pp JOIN poliza p USING(id_poliza)
+          JOIN plan_seguro ps USING(id_plan) JOIN aseguradora a USING(id_aseguradora)
+          WHERE pp.id_publico=$1 AND p.estado='ACTIVA' AND ps.estado='ACTIVO' AND a.estado='ACTIVA' FOR SHARE OF p,ps,a`,[s.recursoId]);
+        if(!vigente.filas.length)invalida('La póliza, plan o aseguradora ya no están activos.');
+      }
+
       const datos={...previa!.contenido,version:previa!.version+1,estadoVigencia:e.estado,motivoEstado:e.motivo};
       await sql.consultar("UPDATE paciente_poliza SET estado_afiliacion=$2,revision=revision+1 WHERE id_publico=$1",[s.recursoId,e.estado==='ACTIVA'?'ACTIVA':'INACTIVA']);
       respuesta=await guardar(sql,'poliza',s.pacienteId,datos,estable);break;

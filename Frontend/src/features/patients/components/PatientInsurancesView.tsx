@@ -1,3 +1,4 @@
+import {useConfirmedCommand} from '../../hospital/components/useConfirmedCommand';
 import {Modal} from '../../../design-system/components/Modal';
 import { HospitalPageControls } from '../../hospital/components/HospitalPageControls';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -52,6 +53,8 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
   const [hayMas, setHayMas] = useState(false);
   const [cambioEstado,setCambioEstado]=useState<{id:string;estado:'ACTIVA'|'VENCIDA'|'SUSPENDIDA';version?:number}|null>(null);
   const [motivoEstado,setMotivoEstado]=useState('');
+  const comandoEstado=useConfirmedCommand<{id:string;estado:'ACTIVA'|'VENCIDA'|'SUSPENDIDA';version?:number;motivo:string}>();
+  const [cambiando,setCambiando]=useState(false);
   const [errorEstado,setErrorEstado]=useState('');
   const [loading, setLoading] = useState(true);
   const [polizas, setPolizas] = useState<PolizaSeguroPaciente[]>([]);
@@ -93,8 +96,8 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
     setCambioEstado({id:polizaId,estado:nuevoEstado,version:polizas.find(p=>p.id===polizaId)?.version});setMotivoEstado('');setErrorEstado('');
   };
 
-  const activas = polizas.filter((p) => p.estadoVigencia === 'ACTIVA').length;
-  const mejorCobertura = polizas.reduce((max, p) => (p.estadoVigencia === 'ACTIVA' && p.porcentajeCobertura > max ? p.porcentajeCobertura : max), 0);
+  const activas = polizas.filter((p) => p.estadoVigencia === 'ACTIVA' && p.vigente !== false).length;
+  const mejorCobertura = polizas.reduce((max, p) => (p.estadoVigencia === 'ACTIVA' && p.vigente !== false && p.porcentajeCobertura > max ? p.porcentajeCobertura : max), 0);
 
   if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarDatos()}>Reintentar consulta</Button></div>;
 
@@ -157,7 +160,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
           variant="primary"
           onClick={() => setModalAbierto(true)}
           leftIcon={<Plus size={16} />}
-          disabled={esArchivado}
+          disabled={esArchivado||!sesion?.permisos.includes('pacientes.administrar')}
           title={esArchivado ? 'Expediente archivado: no se pueden afiliar nuevas pólizas' : undefined}
         >
           Afiliar Póliza
@@ -207,7 +210,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {polizas.map((pol) => {
-            const esActiva = pol.estadoVigencia === 'ACTIVA';
+            const esActiva = pol.estadoVigencia === 'ACTIVA' && pol.vigente !== false;
             return (
               <Panel key={pol.id}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -229,7 +232,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
                           {pol.aseguradoraNombre}
                         </span>
                         <Badge variant={esActiva ? 'success' : pol.estadoVigencia === 'VENCIDA' ? 'neutral' : 'danger'}>
-                          {pol.estadoVigencia}
+                          {pol.estadoVigencia==='ACTIVA'&&pol.vigente===false?'Fuera de vigencia':pol.estadoVigencia}
                         </Badge>
                       </div>
                       <div style={{ fontSize: '13px', color: 'var(--color-primary)', fontWeight: 600, marginTop: '2px' }}>
@@ -238,7 +241,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      {esActiva ? (
+                      {sesion?.permisos.includes('pacientes.administrar') && (esActiva ? (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -254,7 +257,7 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
                         >
                           Reactivar Póliza
                         </Button>
-                      )}
+                      ))}
                     </div>
                   </div>
 
@@ -350,11 +353,11 @@ export const PatientInsurancesView: React.FC<PatientInsurancesViewProps> = ({
           onConfirm={handleAfiliarPoliza}
         />
       )}
-      {cambioEstado&&<Modal isOpen onClose={()=>setCambioEstado(null)} title="Cambiar estado de cobertura">
-        <form onSubmit={async e=>{e.preventDefault();try{await patientRepository.cambiarEstadoPoliza(institucionId,pacienteId,cambioEstado.id,cambioEstado.estado,cambioEstado.version,motivoEstado);setCambioEstado(null);await cargarDatos();onActualizado?.();}catch{setErrorEstado('No se pudo cambiar el estado. Reintente la misma solicitud o vuelva a cargar la póliza.');}}}>
+      {cambioEstado&&<Modal isOpen onClose={()=>{if(!cambiando&&!comandoEstado.incierto)setCambioEstado(null);}} title="Cambiar estado de cobertura">
+        <form onSubmit={async e=>{e.preventDefault();setCambiando(true);try{const dto=comandoEstado.preparar({...cambioEstado,motivo:motivoEstado});await patientRepository.cambiarEstadoPoliza(institucionId,pacienteId,dto.id,dto.estado,dto.version,dto.motivo);comandoEstado.limpiar();setCambioEstado(null);await cargarDatos();onActualizado?.();}catch(err){comandoEstado.error(err);setErrorEstado('No se pudo cambiar el estado. Reintente la misma solicitud o vuelva a cargar la póliza.');}finally{setCambiando(false);}}}>
           {errorEstado&&<div role="alert">{errorEstado}</div>}
-          <label>Motivo del cambio<textarea aria-label="Motivo del cambio de cobertura" value={motivoEstado} onChange={e=>setMotivoEstado(e.target.value)} required maxLength={1000}/></label>
-          <Button type="submit">Confirmar estado de cobertura</Button>
+          <label>Motivo del cambio<textarea disabled={cambiando||comandoEstado.incierto} aria-label="Motivo del cambio de cobertura" value={motivoEstado} onChange={e=>setMotivoEstado(e.target.value)} required maxLength={1000}/></label>
+          <Button type="submit" disabled={cambiando}>Confirmar estado de cobertura</Button>
         </form>
       </Modal>}
       <HospitalPageControls etiqueta="Pólizas" pagina={pagina} hayMas={hayMas} pendiente={loading} onPagina={setPagina} />

@@ -1,0 +1,10 @@
+{
+  "base": "develop 0271e5d",
+  "base_fail": 131,
+  "base_pass": 126,
+  "actual_fail": 131,
+  "actual_pass": 132,
+  "fallos_nuevos": [],
+  "fallos_retirados": [],
+  "comparacion": "Conjunto exacto de los 131 nombres FAIL, sin diferencias; logs locales saneados /tmp/hospital-front-all.log y /tmp/e04-p1-03-front-all.log"
+}

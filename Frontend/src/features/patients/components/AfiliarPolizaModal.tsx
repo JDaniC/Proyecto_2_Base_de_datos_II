@@ -150,7 +150,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={()=>{if(!guardando&&!comando.incierto)onClose();}}
       title="Afiliar Póliza de Seguro Médico"
       maxWidth="620px"
     >
@@ -512,7 +512,7 @@ export const AfiliarPolizaModal: React.FC<AfiliarPolizaModalProps> = ({
 
         </fieldset>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-          <Button variant="secondary" onClick={onClose} disabled={guardando}>
+          <Button variant="secondary" onClick={onClose} disabled={guardando||comando.incierto}>
             Cancelar
           </Button>
           <Button

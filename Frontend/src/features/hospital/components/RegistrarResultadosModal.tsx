@@ -51,10 +51,12 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
     if (isOpen) {
       if(mode!=='api')catalogRepository.obtenerPruebasLaboratorio(institucionId).then(setCatalogoPruebas).catch(e=>setError(getErrorMessage(e,'No se pudo leer el catálogo.')));
       setError(null);
+      setPruebaIdSeleccionada('');
+      setMotivoCorreccion('');
       setInterpretacion('');
       setObservacionesTecnicas('');
     }
-  }, [isOpen, catalogRepository, institucionId]);
+  }, [isOpen, orden?.id, catalogRepository, institucionId, mode]);
 
   // Obtener items pendientes de la orden
   const itemsPendientes = useMemo(()=>orden?.estado==='CANCELADA'?[]:(orden?.items??[]),[orden]);
@@ -160,7 +162,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={()=>{if(!guardando&&!comando.incierto)onClose();}}
       title={`Registrar Resultados de Laboratorio — Orden ${orden.codigoLegible}`}
       maxWidth="750px"
     >
@@ -410,7 +412,7 @@ export const RegistrarResultadosModal: React.FC<RegistrarResultadosModalProps> =
         </fieldset>
         {/* Botones de acción */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-          <Button variant="secondary" onClick={onClose} disabled={guardando}>
+          <Button variant="secondary" onClick={onClose} disabled={guardando||comando.incierto}>
             Cancelar
           </Button>
           <Button

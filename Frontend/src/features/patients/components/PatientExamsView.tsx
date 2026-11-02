@@ -152,7 +152,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
           variant="primary"
           onClick={() => setModalNuevaOrdenAbierto(true)}
           leftIcon={<Plus size={16} />}
-          disabled={esArchivado}
+          disabled={esArchivado||!sesion?.permisos.includes('consultas.registrar')}
           title={esArchivado ? 'Expediente archivado: no se pueden solicitar nuevos exámenes' : undefined}
         >
           Solicitar Examen
@@ -196,7 +196,7 @@ export const PatientExamsView: React.FC<PatientExamsViewProps> = ({
                     Ver Resultados
                   </Button>
 
-                  {ord.estado !== 'CANCELADA' && (
+                  {sesion?.permisos.includes('consultas.registrar') && ord.estado !== 'CANCELADA' && (
                     <Button
                       size="sm"
                       variant="secondary"

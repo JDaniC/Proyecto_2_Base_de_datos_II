@@ -1,3 +1,4 @@
+import {recorrerServiciosHospital} from './hospital-servicios-e2e.mjs';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -98,6 +99,7 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    await page.getByRole('button',{name:/Guardar nueva revisión/}).click(); await page.getByRole('dialog').waitFor({state:'hidden',timeout:5000}).catch(async e=>{console.log('MODAL_UI',await page.getByRole('dialog').innerText());console.log('CAMPOS_INVALIDOS',await page.locator(':invalid').evaluateAll(xs=>xs.map(x=>({id:x.id,message:x.validationMessage}))));throw e;}); pass('corrección conserva consulta y crea versión');
    await page.getByLabel('Versión de la atención').selectOption('1'); await page.getByText('Control clínico sintético',{exact:true}).first().waitFor(); pass('lectura de versión original');
    if (cuenta.institucion === 'HOSPITAL_GENERAL') {
+    await recorrerServiciosHospital({page,url,paciente,consulta:final,headers,pass,reiniciarBackend});
     await page.goto(`${url}/hospital/hospitalizaciones/nueva`);
     await page.getByRole('textbox', { name: 'Buscar paciente para ingreso' }).fill('Paciente');
     await page.locator('#paciente-select').selectOption(paciente.id);

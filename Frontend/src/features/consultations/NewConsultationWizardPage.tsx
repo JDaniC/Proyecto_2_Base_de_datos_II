@@ -99,8 +99,15 @@ export const NewConsultationWizardPage: React.FC = () => {
     mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : TRATAMIENTOS_SUGERIDOS_ODONTOLOGIA
   );
   const [medicamentosSugeridos, setMedicamentosSugeridos] = useState(
-    mode === 'api' && institucionId === 'CLINICA_ODONTOLOGICA' ? [] : MEDICAMENTOS_SUGERIDOS
+    mode === 'api' && ['CLINICA_ODONTOLOGICA','HOSPITAL_GENERAL'].includes(institucionId) ? [] : MEDICAMENTOS_SUGERIDOS
   );
+
+  useEffect(()=>{
+    if(mode!=='api'||institucionId!=='HOSPITAL_GENERAL')return;
+    let vivo=true;
+    catalogRepository.obtenerCatalogoHospital?.(institucionId).then(c=>{if(vivo)setMedicamentosSugeridos(c.medicamentos.map(m=>({nombre:m.nombre,presentacion:m.presentacion??'',concentracion:'',dosis:'',unidad:m.unidad??'',via:'',frecuencia:'',duracion:''})));}).catch(()=>{if(vivo)setErrorCatalogo('No se pudo leer el catálogo hospitalario de medicamentos.');});
+    return()=>{vivo=false;};
+  },[mode,institucionId,catalogRepository]);
 
   // Paso del Stepper (1 a 5)
   const [paso, setPaso] = useState<1 | 2 | 3 | 4 | 5>(1);

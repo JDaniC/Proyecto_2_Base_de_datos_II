@@ -27,9 +27,9 @@ export function HospitalAntecedentesView({pacienteId,editable,onActualizado}:{pa
       }catch(err){comando.error(err);setError(getErrorMessage(err,'No se pudo guardar el antecedente.'));}finally{setPendiente(false);}}}>
         {comando.incierto&&<p>La confirmación está pendiente. Reintenta la misma solicitud.</p>}
         <fieldset disabled={pendiente||comando.incierto} style={{border:0,padding:0,display:'grid',gap:12}}>
-          <label>Tipo de antecedente <select value={tipo} onChange={e=>setTipo(e.target.value as typeof tipo)}><option value="patologicos">Patológico</option><option value="quirurgicos">Quirúrgico</option><option value="familiares">Familiar</option><option value="medicamentosActuales">Medicamento actual</option><option value="alergias">Alergia</option></select></label>
+          <label>Tipo de antecedente <select aria-label="Tipo de antecedente" value={tipo} onChange={e=>setTipo(e.target.value as typeof tipo)}><option value="patologicos">Patológico</option><option value="quirurgicos">Quirúrgico</option><option value="familiares">Familiar</option><option value="medicamentosActuales">Medicamento actual</option><option value="alergias">Alergia</option></select></label>
           <label>Descripción <input required maxLength={tipo==='alergias'?150:2000} value={texto} onChange={e=>setTexto(e.target.value)}/></label>
-          {tipo==='alergias'&&<><label>Severidad <select value={severidad} onChange={e=>setSeveridad(e.target.value as typeof severidad)}><option>LEVE</option><option>MODERADA</option><option>SEVERA</option></select></label><label>Reacción <input required maxLength={500} value={reaccion} onChange={e=>setReaccion(e.target.value)}/></label></>}
+          {tipo==='alergias'&&<><label>Severidad <select aria-label="Severidad" value={severidad} onChange={e=>setSeveridad(e.target.value as typeof severidad)}><option>LEVE</option><option>MODERADA</option><option>SEVERA</option></select></label><label>Reacción <input required maxLength={500} value={reaccion} onChange={e=>setReaccion(e.target.value)}/></label></>}
         </fieldset><Button type="submit" disabled={pendiente||!texto.trim()}>{pendiente?'Guardando…':'Agregar antecedente'}</Button>
       </form>}
     </>}

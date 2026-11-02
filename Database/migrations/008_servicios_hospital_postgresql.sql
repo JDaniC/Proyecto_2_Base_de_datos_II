@@ -66,4 +66,5 @@ INSERT INTO especialidad(nombre,descripcion) VALUES('Medicina General','Referenc
 GRANT USAGE ON SCHEMA hospital_servicios TO hospital_app;
 GRANT SELECT ON ALL TABLES IN SCHEMA hospital_servicios TO hospital_app;
 GRANT INSERT,UPDATE ON hospital_servicios.recursos TO hospital_app;
+INSERT INTO medicamento(id_publico,nombre,presentacion,descripcion) VALUES ('08000000-0000-4000-8000-000000000051','Medicamento académico','Presentación académica','Referencia sintética; dosificación siempre explícita del profesional') ON CONFLICT DO NOTHING;
 COMMIT;

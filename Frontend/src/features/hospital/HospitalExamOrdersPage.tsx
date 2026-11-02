@@ -129,6 +129,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
     }
   };
 
+  if(errorLectura)return <div role="alert">{errorLectura}<Button onClick={()=>void cargarOrdenes()}>Reintentar consulta</Button></div>;
   return (
     <div style={{ width: '100%', minWidth: 0, maxWidth: '1400px', margin: '0 auto' }}>
       {/* Notificación flotante */}
@@ -257,7 +258,7 @@ export const HospitalExamOrdersPage: React.FC = () => {
           <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginLeft: '8px' }}>Estado:</span>
           <select
             value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
+            onChange={(e) => {setPagina(1);setFiltroEstado(e.target.value);}}
             aria-label="Filtro de Estado"
             style={{
               padding: '8px 12px',

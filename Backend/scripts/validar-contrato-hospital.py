@@ -8,7 +8,7 @@ from openapi_spec_validator import validate_spec
 base = Path(__file__).resolve().parents[1]
 spec = yaml.safe_load((base / 'docs/openapi.yaml').read_text())
 validate_spec(spec)
-fixtures = json.loads((base / 'docs/fixtures/hospital-v1.json').read_text())
+fixtures = json.loads((base / 'docs/fixtures/hospital-v1.json').read_text()) + json.loads((base / 'docs/fixtures/hospital-servicios-v1.json').read_text())
 for case in fixtures:
     validator = Draft202012Validator(
         {'components': spec['components'], '$ref': '#/components/schemas/' + case['schema']},

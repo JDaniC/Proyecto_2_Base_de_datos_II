@@ -19,12 +19,13 @@ export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): 
         const resultado = await ejecutor.consultar<Record<string, unknown>>(
           `SELECT id_publico,
                   CONCAT_WS(' ', primer_nombre, segundo_nombre, primer_apellido, segundo_apellido) AS nombre,
-                  numero_colegiado AS colegiado, entidad_colegiacion, (estado = 'ACTIVO') AS activo
+                  numero_colegiado AS colegiado, entidad_colegiacion, (estado = 'ACTIVO') AS activo,
+                  ARRAY(SELECT e.nombre FROM personal_especialidad pe JOIN especialidad e USING(id_especialidad) WHERE pe.id_personal=personal_medico.id_personal ORDER BY e.nombre) AS especialidades
              FROM personal_medico WHERE id_publico = $1`,
           [id],
         );
         const fila = resultado.filas[0];
-        return fila ? profesionalClinicoSql(fila, 'MEDICO') : null;
+        return fila ? ({...profesionalClinicoSql(fila, 'MEDICO'),especialidades:fila.especialidades as string[]}) : null;
       } catch (error) {
         if (error instanceof ErrorDominio) throw error;
         throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No fue posible consultar el profesional.');
@@ -35,11 +36,12 @@ export function crearRepositorioProfesionalesPostgresql(ejecutor: EjecutorSql): 
         const resultado = await ejecutor.consultar<Record<string, unknown>>(
           `SELECT id_publico,
                   CONCAT_WS(' ', primer_nombre, segundo_nombre, primer_apellido, segundo_apellido) AS nombre,
-                  numero_colegiado AS colegiado, entidad_colegiacion, (estado = 'ACTIVO') AS activo
+                  numero_colegiado AS colegiado, entidad_colegiacion, (estado = 'ACTIVO') AS activo,
+                  ARRAY(SELECT e.nombre FROM personal_especialidad pe JOIN especialidad e USING(id_especialidad) WHERE pe.id_personal=personal_medico.id_personal ORDER BY e.nombre) AS especialidades
              FROM personal_medico
             ORDER BY primer_nombre ASC, primer_apellido ASC`,
         );
-        return Object.freeze(resultado.filas.map((fila) => profesionalClinicoSql(fila, 'MEDICO')));
+        return Object.freeze(resultado.filas.map((fila) => ({...profesionalClinicoSql(fila, 'MEDICO'),especialidades:fila.especialidades as string[]})));
       } catch (error) {
         if (error instanceof ErrorDominio) throw error;
         throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'No fue posible listar profesionales.');

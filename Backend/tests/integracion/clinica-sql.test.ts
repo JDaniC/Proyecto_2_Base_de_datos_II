@@ -391,6 +391,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
   } else if (dialecto === 'postgresql') {
     await verificarHospitalizacionesPostgresql(pool, bundle, profesionalId, contexto);
     await verificarServiciosHospitalarios(pool, contexto);
+    await verificarAntecedentesHospital(pool,bundle,contexto);
   }
 }
 
@@ -875,4 +876,22 @@ async function verificarFlujoDentalDosRolesMysql(
   const citaFinal = await lecturaCitas.porId(ctxOdontologo, bundle, citaCreada.respuesta.id);
   assert.equal(citaFinal.estado, 'ATENDIDA');
   assert.equal(citaFinal.secretaria_gestora, 'Laura Gómez');
+}
+
+async function verificarAntecedentesHospital(pool:PoolSql,bundle:BundleInstitucional,contexto:ReturnType<typeof crearContextoAutenticado>){
+  const id=uuidPublico(randomUUID());
+  await pool.consultar("INSERT INTO paciente(id_publico,primer_nombre,primer_apellido) VALUES($1,'Antecedentes','Sintético')",[id]);
+  await pool.consultar('INSERT INTO historial_clinico(id_paciente,numero_historial) SELECT id_paciente,$2 FROM paciente WHERE id_publico=$1',[id,randomUUID().slice(0,20)]);
+  const caso=new ActualizarAntecedentesClinicos(dependencias),leer=new ConsultarAntecedentesClinicos();
+  const entrada={version_esperada:1,patologicos:['Condición sintética'],quirurgicos:[],familiares:[],medicamentos_actuales:[],alergias:[{sustancia:'Sustancia sintética',severidad:'SEVERA',reaccion:'Reacción explícita'}]};
+  const parametros={contexto,bundle,id,entrada,claveIdempotencia:uuidPublico(randomUUID())};
+  const primero=await caso.ejecutar(parametros);
+  assert.deepEqual(JSON.parse(JSON.stringify((await caso.ejecutar(parametros)).respuesta)),JSON.parse(JSON.stringify(primero.respuesta)));
+  const actual=await leer.ejecutar(contexto,bundle,id);
+  assert.equal(actual.alergias[0]!.severidad,'SEVERA');assert.equal(actual.registros.length,2);
+  await assert.rejects(caso.ejecutar({...parametros,claveIdempotencia:uuidPublico(randomUUID()),entrada:{...entrada,version_esperada:2,patologicos:[]}}),{codigo:'SOLICITUD_INVALIDA'});
+  assert.equal((await leer.ejecutar(contexto,bundle,id)).registros.length,2);
+  const segundo=await caso.ejecutar({...parametros,claveIdempotencia:uuidPublico(randomUUID()),entrada:{...entrada,version_esperada:2,familiares:['Historia familiar sintética']}});
+  assert.equal(segundo.respuesta.registros.length,3);
+  assert.deepEqual(segundo.respuesta.registros.slice(0,1),actual.registros.slice(0,1));
 }

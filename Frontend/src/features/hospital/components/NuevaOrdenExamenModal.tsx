@@ -130,7 +130,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={()=>{if(!guardando&&!comando.incierto)onClose();}}
       title="Nueva Solicitud / Orden de Examen Hospitalario"
       maxWidth="700px"
     >
@@ -361,7 +361,7 @@ export const NuevaOrdenExamenModal: React.FC<NuevaOrdenExamenModalProps> = ({
         </fieldset>
         {/* Botones de acción */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-          <Button variant="secondary" onClick={onClose} disabled={guardando}>
+          <Button variant="secondary" onClick={onClose} disabled={guardando||comando.incierto}>
             Cancelar
           </Button>
           <Button

@@ -88,7 +88,7 @@ export interface AseguradoraCatalogo {
     id: string;
     nombrePlan: string;
     porcentajeCobertura: number;
-    deducibleBaseGTQ: number;
+    deducibleBaseGTQ?: number;
     activo: boolean;
   }[];
   telefonoAutorizaciones: string;
@@ -683,6 +683,7 @@ export interface TitularSeguro {
 }
 
 export interface PolizaSeguroPaciente {
+  vigente?: boolean;
   id: string;
   pacienteId: string;
   aseguradoraId: string;

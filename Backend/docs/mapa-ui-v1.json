@@ -146,47 +146,52 @@
   {
     "metodo": "PatientRepository.obtenerPolizasSeguro",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:52`",
-    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`"
+    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`",
+    "operationId": "hospitalPolizas"
   },
   {
     "metodo": "PatientRepository.afiliarPolizaSeguro",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:69`",
-    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`"
+    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro`",
+    "operationId": "hospitalPolizaAfiliar"
   },
   {
     "metodo": "PatientRepository.cambiarEstadoPoliza",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:76`",
-    "propuesta_inventario": "`PATCH /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro/{polizaId}`"
+    "propuesta_inventario": "`PATCH /api/v1/hospital/pacientes/{pacienteId}/polizas-seguro/{polizaId}`",
+    "operationId": "hospitalPolizaEstado"
   },
   {
     "metodo": "PatientRepository.obtenerProcedimientosPaciente",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientProceduresView.tsx:49`",
-    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/procedimientos`"
+    "propuesta_inventario": "`GET /api/v1/hospital/pacientes/{pacienteId}/procedimientos`",
+    "operationId": "hospitalProcedimientos"
   },
   {
     "metodo": "PatientRepository.registrarProcedimientoPaciente",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientProceduresView.tsx:68`",
-    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/procedimientos`"
+    "propuesta_inventario": "`POST /api/v1/hospital/pacientes/{pacienteId}/procedimientos`",
+    "operationId": "hospitalProcedimientoRegistrar"
   },
   {
     "metodo": "PatientRepository.agregarResponsable",
@@ -449,11 +454,12 @@
   {
     "metodo": "CatalogRepository.obtenerAseguradoras",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientInsurancesView.tsx:53`",
-    "propuesta_inventario": "`GET /api/v1/hospital/catalogos/aseguradoras`"
+    "propuesta_inventario": "`GET /api/v1/hospital/catalogos/aseguradoras`",
+    "operationId": "hospitalServiciosCatalogos"
   },
   {
     "metodo": "CatalogRepository.obtenerProcedimientosOdontologicos",
@@ -472,11 +478,12 @@
   {
     "metodo": "CatalogRepository.obtenerPruebasLaboratorio",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/laboratory/NewOrderPage.tsx:61`, `features/admin/CatalogosManagementPage.tsx:46`, `features/hospital/components/NuevaOrdenExamenModal.tsx:51`, `features/hospital/components/RegistrarResultadosModal.tsx:49`",
-    "propuesta_inventario": "`GET /api/v1/catalogos/pruebas-laboratorio`"
+    "propuesta_inventario": "`GET /api/v1/catalogos/pruebas-laboratorio`",
+    "operationId": "hospitalServiciosCatalogos"
   },
   {
     "metodo": "CatalogRepository.crearPruebaLaboratorio",
@@ -708,77 +715,86 @@
   {
     "metodo": "HospitalExamRepository.listarOrdenes",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/hospital/HospitalExamOrdersPage.tsx:51`",
-    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?estado={filtroEstado}`"
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?estado={filtroEstado}`",
+    "operationId": "hospitalOrdenes"
   },
   {
     "metodo": "HospitalExamRepository.obtenerOrdenPorId",
-    "categoria": "SIN_USO_DIRECTO_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+    "categoria": "VIGENTE_UI",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
+    "operationId": "hospitalOrden"
   },
   {
     "metodo": "HospitalExamRepository.obtenerOrdenesPorPaciente",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/patients/components/PatientExamsView.tsx:50`",
-    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?pacienteId={pacienteId}`"
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes?pacienteId={pacienteId}`",
+    "operationId": "hospitalOrdenes"
   },
   {
     "metodo": "HospitalExamRepository.crearOrden",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/hospital/components/NuevaOrdenExamenModal.tsx:107`",
-    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes`"
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes`",
+    "operationId": "hospitalOrdenCrear"
   },
   {
     "metodo": "HospitalExamRepository.cancelarOrden",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/hospital/HospitalExamOrdersPage.tsx:69`",
-    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/cancelacion`"
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/cancelacion`",
+    "operationId": "hospitalOrdenCancelar"
   },
   {
     "metodo": "HospitalExamRepository.obtenerResultadosPorOrden",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/hospital/components/DetalleOrdenResultadosModal.tsx:43`",
-    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`"
+    "propuesta_inventario": "`GET /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`",
+    "operationId": "hospitalResultadosOrden"
   },
   {
     "metodo": "HospitalExamRepository.obtenerResultadoPorId",
-    "categoria": "SIN_USO_DIRECTO_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+    "categoria": "VIGENTE_UI",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
+    "operationId": "hospitalResultado"
   },
   {
     "metodo": "HospitalExamRepository.obtenerResultadosPorPaciente",
-    "categoria": "SIN_USO_DIRECTO_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+    "categoria": "VIGENTE_UI",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
+    "operationId": "hospitalResultadosPaciente"
   },
   {
     "metodo": "HospitalExamRepository.registrarResultado",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P1-03 / E05-P1-01",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "HOSPITAL_V1",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión.",
     "fuente_ui": "`features/hospital/components/RegistrarResultadosModal.tsx:140`",
-    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`"
+    "propuesta_inventario": "`POST /api/v1/hospital/examenes/ordenes/{ordenId}/resultados`",
+    "operationId": "hospitalResultadoEmitir"
   },
   {
     "metodo": "LaboratoryRepository.obtenerBandeja",
@@ -1052,5 +1068,13 @@
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:275`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/anulacion`"
+  },
+  {
+    "metodo": "CatalogRepository.obtenerCatalogoHospital",
+    "categoria": "VIGENTE_UI",
+    "destino": "HOSPITAL_V1",
+    "operationId": "hospitalServiciosCatalogos",
+    "responsable": "E04-P1-03",
+    "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión."
   }
 ]

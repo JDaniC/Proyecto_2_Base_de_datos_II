@@ -28,7 +28,7 @@ export class ServiciosHospitalarios {
     const permisos = contexto.cuenta.permisos;
     if (administrativo ? !(permisos.includes('pacientes.administrar') || (!escritura && permisos.includes('historial.leer'))) :
       !(permisos.includes('historial.leer') && (!escritura || permisos.includes('consultas.registrar')))) throw new ErrorDominio('SIN_PERMISO', 'No dispone del permiso institucional requerido.');
-    if (escritura && !administrativo && !contexto.cuenta.profesional?.activo) throw new ErrorDominio('SIN_PERMISO', 'Se requiere médico activo.');
+    if (escritura && !administrativo && (!contexto.cuenta.profesional?.activo||!contexto.cuenta.roles.includes('MEDICO'))) throw new ErrorDominio('SIN_PERMISO', 'Se requiere médico activo.');
     if (!bundle.serviciosHospital) throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'Extensión hospitalaria no preparada.');
     return bundle.serviciosHospital;
   }

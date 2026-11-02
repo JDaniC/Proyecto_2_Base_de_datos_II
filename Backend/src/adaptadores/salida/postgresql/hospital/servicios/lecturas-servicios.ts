@@ -4,6 +4,11 @@ import { uuidPublico, type UUID } from '../../../../../dominio/compartido/uuid.j
 import { versionPositiva } from '../../../../../dominio/compartido/version.js';
 import { ErrorDominio } from '../../../../../dominio/compartido/error-dominio.js';
 
+export function hoyHospital(){
+  const partes=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Guatemala',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const v=(t:string)=>partes.find(p=>p.type===t)!.value;
+  return `${v('year')}-${v('month')}-${v('day')}`;
+}
 export async function preparado(sql: EjecutorSql) {
   const r=await sql.consultar<{version:number;estado:string}>(`SELECT s.version,CASE WHEN h.estado='LISTO' AND h.version=1 THEN s.estado ELSE 'RECONCILIAR' END AS estado FROM hospital_servicios.modelo s CROSS JOIN hospital_historial.modelo h WHERE s.id=1 AND h.id=1`);
   if (r.filas[0]?.version!==1 || r.filas[0]?.estado!=='LISTO') throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Servicios hospitalarios requieren preparación o reconciliación.');
@@ -18,7 +23,7 @@ export async function porId(sql:EjecutorSql,tipo:TipoServicioHospital,id:UUID,pa
   const r=await sql.consultar('SELECT * FROM hospital_servicios.recursos WHERE tipo=$1 AND id=$2'+(pacienteId?' AND paciente_id=$3':''),pacienteId?[tipo,id,pacienteId]:[tipo,id]);
   return r.filas[0] ? registro(r.filas[0]) : null;
 }
-export async function listar(sql:EjecutorSql,tipo:TipoServicioHospital,f:FiltroServiciosHospital) {
+export async function listar(sql:EjecutorSql,tipo:TipoServicioHospital,f:FiltroServiciosHospital,hoy=hoyHospital()) {
   await preparado(sql);
   if(tipo==='procedimiento'&&f.pacienteId){
     const r=await sql.consultar(`SELECT * FROM (
@@ -35,7 +40,7 @@ export async function listar(sql:EjecutorSql,tipo:TipoServicioHospital,f:FiltroS
   const args:unknown[]=[tipo], filtros=['tipo=$1'];
   if(f.pacienteId){args.push(f.pacienteId);filtros.push(`paciente_id=$${args.length}`);}
   if(f.ordenId){args.push(f.ordenId);filtros.push(`orden_id=$${args.length}`);}
-  if(f.estado){args.push(f.estado);filtros.push(`${tipo==='poliza'?"CASE WHEN contenido->>'estadoVigencia'='ACTIVA' AND contenido->>'vigenciaHasta'<to_char(CURRENT_TIMESTAMP AT TIME ZONE 'America/Guatemala','YYYY-MM-DD') THEN 'VENCIDA' ELSE contenido->>'estadoVigencia' END":"contenido->>'estado'"}=$${args.length}`);}
+  if(f.estado){if(tipo==='poliza')args.push(hoy);args.push(f.estado);filtros.push(`${tipo==='poliza'?`CASE WHEN contenido->>'estadoVigencia'='ACTIVA' AND contenido->>'vigenciaHasta'<$${args.length-1} THEN 'VENCIDA' ELSE contenido->>'estadoVigencia' END`:"contenido->>'estado'"}=$${args.length}`);}
   args.push(f.limite+1,(f.pagina-1)*f.limite);
   const r=await sql.consultar(`SELECT * FROM hospital_servicios.recursos WHERE ${filtros.join(' AND ')} ORDER BY fecha_hora DESC,id DESC LIMIT $${args.length-1} OFFSET $${args.length}`,args);
   return r.filas.map(registro);
