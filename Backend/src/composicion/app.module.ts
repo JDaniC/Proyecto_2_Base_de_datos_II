@@ -1,3 +1,5 @@
+import { ResponsablesController } from '../adaptadores/entrada/http/pediatria/responsables.controller.js';
+import { GestionarResponsable } from '../aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { ServiciosHospitalarios } from '../aplicacion/casos-uso/hospital/servicios-hospitalarios.js';
 import { ServiciosHospitalariosController } from '../adaptadores/entrada/http/hospital/servicios-hospitalarios.controller.js';
 import { CambiarEstadoHistorial } from '../aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
@@ -68,7 +70,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -79,6 +81,7 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        { provide: GestionarResponsable, useFactory: () => new GestionarResponsable(dependenciasComandoPorDefecto) },
         {provide: CambiarEstadoHistorial, useFactory: () => new CambiarEstadoHistorial(dependenciasComandoPorDefecto)},
         { provide: AtencionClinica, useFactory: () => new AtencionClinica(dependenciasComandoPorDefecto) },
         { provide: GestionarCitas, useFactory: () => new GestionarCitas(dependenciasComandoPorDefecto) },
