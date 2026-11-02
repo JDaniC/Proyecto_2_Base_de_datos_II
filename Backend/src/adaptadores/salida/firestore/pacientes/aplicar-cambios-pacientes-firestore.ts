@@ -22,6 +22,16 @@ export async function aplicarCambiosPacientesFirestore(
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
   for (const cambio of cambios) {
+    if (cambio.agregado === 'responsableContacto') {
+      const r = cambio.nuevoEstado as ResponsableDetalle;
+      transaction.update(firestore.doc(`responsables/${r.id}`), {telefono:r.telefono,revision:r.version});
+      continue;
+    }
+    if (cambio.agregado === 'vinculoPediatrico') {
+      const r = cambio.nuevoEstado as {pacienteId:string;vinculo:{parentesco:string;esPrincipal:boolean;autorizaAtencion:boolean};estado:string;version:number};
+      transaction.update(firestore.doc(`pacientes/${r.pacienteId}/responsables/${cambio.recursoId}`), {parentesco:r.vinculo.parentesco,es_principal:r.vinculo.esPrincipal,autoriza_atencion:r.vinculo.autorizaAtencion,estado:r.estado,revision:r.version});
+      continue;
+    }
     if (cambio.agregado === 'eventosHistorial') {
       const {pacienteId, ...entrada} = cambio.nuevoEstado as Record<string, unknown>;
       const e = validarEventoHistorial(entrada, 'CENTRO_MEDICO_PEDIATRICO');
