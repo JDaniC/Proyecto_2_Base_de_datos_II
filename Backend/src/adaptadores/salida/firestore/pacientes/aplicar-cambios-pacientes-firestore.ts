@@ -1,3 +1,5 @@
+import { validarSnapshotAntecedentes } from '../pediatria/antecedentes-firestore.js';
+import type { AntecedentesPediatricos } from '../../../../aplicacion/puertos/pediatria.js';
 import { validarEventoHistorial } from '../../historial/proyeccion-historial.js';
 import { normalizarInstante } from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
@@ -22,6 +24,15 @@ export async function aplicarCambiosPacientesFirestore(
   cambios: readonly CambioPlanificado[],
 ): Promise<void> {
   for (const cambio of cambios) {
+    if (cambio.agregado === 'antecedentesPediatricos') {
+      const r=cambio.nuevoEstado as {actual:AntecedentesPediatricos;anterior:AntecedentesPediatricos;revisionId:string;motivo:string};
+      const actual=validarSnapshotAntecedentes(r.actual);
+      if(actual.version!==r.anterior.version+1)throw new Error('VERSION_ANTECEDENTES_INCOMPATIBLE');
+      const ref=firestore.doc(`pediatria_antecedentes/${cambio.recursoId}`);
+      transaction.set(ref,actual as unknown as Record<string,unknown>);
+      transaction.create(ref.collection('versiones').doc(r.revisionId),{version:r.anterior.version,anterior:r.anterior,actual,actorId:contexto.cuenta.id,fechaHora:comando.instante,motivo:r.motivo});
+      continue;
+    }
     if (cambio.agregado === 'responsableContacto') {
       const r = cambio.nuevoEstado as ResponsableDetalle;
       transaction.update(firestore.doc(`responsables/${r.id}`), {telefono:r.telefono,revision:r.version});

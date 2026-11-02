@@ -1,3 +1,4 @@
+import { GestionarAntecedentes } from '../../src/aplicacion/casos-uso/pediatria/gestionar-antecedentes.js';
 import { GestionarResponsable } from '../../src/aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import assert from 'node:assert/strict';
@@ -267,6 +268,20 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
       assert.deepEqual((await ldb.doc(`pacientes/${pid}/alergias/${aid}`).get()).data(),(await ldb.doc(`pediatria_respaldo_009/${pid}/alergias/${aid}`).get()).data());
       assert.equal((await prepararAntecedentesPediatricos(ldb)).estado,'RECONCILIAR');
     }finally{await legado.cerrar();}
+  });
+
+  await t.test('E04 antecedentes: alergia histórica, baja y perinatales con replay',async()=>{
+    const menor=(await new RegistrarPaciente(deps).ejecutar({contexto,bundle,claveIdempotencia:id(),entrada:{nombres:'Antecedentes',apellidos:'Sintéticos',fecha_nacimiento:'2024-02-29',sexo:'MASCULINO',responsables:[{responsable_id:responsableId,version_responsable:2,parentesco:'MADRE',es_principal:true,autoriza_atencion:true}]}})).respuesta;
+    const pid=uuidPublico(menor.id),servicio=new GestionarAntecedentes(deps),clave=id();
+    const entrada={version_paciente:1,version_antecedentes:0,motivo:'Registro sintético',alergia:{sustancia:'Polen',severidad:'LEVE',reaccion:'Erupción sintética'}};
+    const a=await servicio.ejecutar('alergia',{contexto,bundle,id:pid,claveIdempotencia:clave,entrada});
+    assert.deepEqual((await servicio.ejecutar('alergia',{contexto,bundle,id:pid,claveIdempotencia:clave,entrada})).respuesta,a.respuesta);
+    await assert.rejects(servicio.ejecutar('sinAlergias',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{version_paciente:2,version_antecedentes:1,motivo:'Confirmación imposible'}}),{codigo:'ESTADO_INVALIDO'});
+    await servicio.ejecutar('bajaAlergia',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{version_paciente:2,version_antecedentes:1,motivo:'Rectificación sintética',alergia_id:a.respuesta.alergias[0]!.id}});
+    const p=await servicio.ejecutar('perinatales',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{version_paciente:3,version_antecedentes:2,motivo:'Datos perinatales',perinatales:{apgar1Minuto:0,pesoNacimientoGramos:3000}}});
+    assert.equal(p.respuesta.version,3);assert.equal(p.respuesta.alergias[0]!.activa,false);
+    assert.equal((await db.collection(`pediatria_antecedentes/${pid}/versiones`).get()).size,3);
+    assert.equal((await bundle.antecedentesPediatricos!.porPaciente(pid)).perinatales!.apgar1Minuto,0);
   });
 
 });
