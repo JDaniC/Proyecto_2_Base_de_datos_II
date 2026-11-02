@@ -15,3 +15,8 @@ La automatización valida el check nativo de esa app y del commit actual; result
 anteriores, cancelados o ausentes no habilitan integración automática.
 Los borradores y tareas sin implementación no se integran como trabajo terminado.
 Ante falta de revisión se registra el estado, sin inventar aprobación ni evidencia.
+
+Verificación remota 01/11/2026: ruleset 25800933 activo para develop/main,
+`required_review_thread_resolution: true`, cero aprobaciones humanas obligatorias.
+Un check CodeRabbit success puede coexistir con hallazgos; resolver las conversaciones
+y validar los criterios sigue siendo obligatorio antes de integrar.
