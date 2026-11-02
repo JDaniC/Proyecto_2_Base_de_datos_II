@@ -16,7 +16,7 @@ export class GestionarResponsable {
     if(p.contexto.cuenta.institucion !== 'CENTRO_MEDICO_PEDIATRICO' || p.bundle.institucion !== 'CENTRO_MEDICO_PEDIATRICO') throw new ErrorDominio('SIN_PERMISO','Operación exclusiva de pediatría.');
     validarPermiso(p.contexto.cuenta,'pacientes.administrar');
     const pacienteId=uuidPublico(p.id), referencia=accion==='crear'?null:uuidPublico(responsableId);
-    const e=objetoCerrado(p.entrada,accion==='crear'?['version_paciente','nombres','apellidos','telefono','documento','parentesco','es_principal','autoriza_atencion']:accion==='contacto'?['version_paciente','version_responsable','telefono']:accion==='baja'?['version_paciente','version_vinculo','motivo']:['version_paciente','version_vinculo','version_responsable','parentesco','es_principal','autoriza_atencion']);
+    const e=objetoCerrado(p.entrada,accion==='crear'?['version_paciente','nombres','apellidos','telefono','documento','parentesco','es_principal','autoriza_atencion']:accion==='contacto'?['version_paciente','version_responsable','telefono','nombres','apellidos']:accion==='baja'?['version_paciente','version_vinculo','motivo']:['version_paciente','version_vinculo','version_responsable','parentesco','es_principal','autoriza_atencion']);
     const comando=await prepararComandoEstable(p.claveIdempotencia,`pediatria.responsable.${accion}`,{pacienteId,id:referencia,e},['revision','auditoria','responsable'],this.deps);
     const id=referencia??comando.ids.responsable!;
     if(!p.bundle.uow)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Persistencia no disponible.');
@@ -60,8 +60,9 @@ export class GestionarResponsable {
       let cambio;
       if(accion==='contacto'){
         exigirVersion(vinculo.responsable.version,e.version_responsable);
-        const actual={...vinculo.responsable,telefono:textoClinico(e.telefono,'telefono',30),version:siguienteVersion(vinculo.responsable.version)};
-        respuesta=actual;cambio={agregado:'responsableContacto',tipo:'ACTUALIZAR',recursoId:id,versionAnterior:vinculo.responsable.version,nuevoEstado:actual};
+        const nombres=e.nombres===undefined?vinculo.responsable.nombres:textoClinico(e.nombres,'nombres',200).trim(),apellidos=e.apellidos===undefined?vinculo.responsable.apellidos:textoClinico(e.apellidos,'apellidos',200).trim();
+        const actual={...vinculo.responsable,nombres,apellidos,nombre:`${nombres} ${apellidos}`,telefono:textoClinico(e.telefono,'telefono',30),version:siguienteVersion(vinculo.responsable.version)};
+        respuesta=actual;cambio={agregado:'responsableContacto',tipo:'ACTUALIZAR',recursoId:id,versionAnterior:vinculo.responsable.version,nuevoEstado:{actual,anterior:vinculo.responsable}};
       }else{
         exigirVersion(vinculo.versionVinculo,e.version_vinculo);
         if(accion==='vinculo'&&(typeof e.es_principal!=='boolean'||typeof e.autoriza_atencion!=='boolean'))throw new ErrorDominio('SOLICITUD_INVALIDA','Las decisiones del vínculo deben ser booleanas.');

@@ -13,6 +13,7 @@ export interface AntecedentesPediatricos {
   readonly actorId?:UUID;readonly fechaHora?:string;
 }
 export interface PuertoAntecedentesPediatricos {
+  porVersion?(pacienteId:UUID,version:number):Promise<{anterior:AntecedentesPediatricos;actual:AntecedentesPediatricos;motivo:string;actorId:UUID;fechaHora:string}|null>;
   /** Exige preparación 009 LISTO, no transforma legado sin procedencia. */
   porPaciente(pacienteId:UUID):Promise<AntecedentesPediatricos>;
 }

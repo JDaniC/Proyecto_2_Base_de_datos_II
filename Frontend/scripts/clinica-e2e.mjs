@@ -1,3 +1,4 @@
+import { recorrerPediatria } from './pediatria-e2e.mjs';
 import {recorrerServiciosHospital} from './hospital-servicios-e2e.mjs';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
@@ -166,6 +167,7 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
     pass('listado UI paginado recibe resúmenes y carga detalle clínico bajo demanda');
 
    }
+   if(pedi)await recorrerPediatria({page,url,paciente,headers,pass,reiniciarBackend});
    await page.goto(`${url}/pacientes/${paciente.id}`); await page.getByRole('button',{name:'Archivar expediente'}).click(); await page.locator('textarea').fill('Archivo sintético');
    await page.getByRole('button',{name:/Confirmar archivo/i}).click(); await page.getByText('Expediente archivado',{exact:true}).waitFor(); pass('archivo conserva eventos y consultas');
    await reiniciarBackend(); await page.reload(); await page.getByText('Expediente archivado',{exact:true}).waitFor(); await page.getByRole('link',{name:'Ver atención'}).first().click(); await page.getByRole('button',{name:'Imprimir Receta Médica'}).waitFor(); pass('historia y receta conservadas tras reinicio');

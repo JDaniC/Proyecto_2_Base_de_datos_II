@@ -466,6 +466,7 @@ export interface AlergiaRegistro {
 
 export interface AntecedentesClinicos {
   versionAntecedentes?: number;
+  historiaRegistrada?: boolean;
   patologicos: string[];
   quirurgicos: string[];
   familiares: string[];
@@ -1545,4 +1546,14 @@ export interface CatalogoHospitalDTO {
   procedimientos: {id:string;nombre:string;descripcion?:string;activo:boolean}[];
   especialidades: {id:string;nombre:string;descripcion?:string}[];
   medicamentos: {id:string;nombre:string;presentacion?:string;unidad?:string}[];
+}
+
+export interface MedicionPediatrica {
+  consulta_id:string;version_consulta:number;fecha:string;fecha_hora:string;profesional:string;
+  edad_meses:number|null;peso_kg:number|null;talla_cm:number|null;perimetro_cefalico_cm:number|null;imc:number|null;
+}
+
+export interface ResponsableEncontrado {
+ responsable:{id:string;nombres:string;apellidos:string;nombre:string;telefono:string;version:number;documento?:{tipo:string;numero:string}};
+ version_vinculo?:number;activo?:boolean;
 }

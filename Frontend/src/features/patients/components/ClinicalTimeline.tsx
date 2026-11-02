@@ -100,7 +100,7 @@ export const ClinicalTimeline: React.FC<ClinicalTimelineProps> = ({ eventos, ser
             Filtrar evento:
           </span>
           {servidor ? <select aria-label="Tipo de evento" value={filtroTipo} onChange={(e) => servidor.cambiar(orden, e.target.value === 'TODOS' ? undefined : e.target.value as TipoEventoHistorial)}>
-            {['TODOS', 'CONSULTA', 'DIAGNOSTICO', 'TRATAMIENTO', 'RECETA', 'ARCHIVO', 'REACTIVACION', 'HOSPITALIZACION', 'EXAMEN', 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB', 'VACUNA', 'CRECIMIENTO'].map((tipo) => <option key={tipo} value={tipo}>{tipo === 'TODOS' ? 'Todos' : getDisplayLabel(tipo)}</option>)}
+            {['TODOS', 'CONSULTA', 'DIAGNOSTICO', 'TRATAMIENTO', 'RECETA', 'ARCHIVO', 'REACTIVACION', 'HOSPITALIZACION', 'EXAMEN', 'ORDEN_LAB', 'RESULTADO_LAB', 'INFORME_LAB', 'VACUNA', 'CRECIMIENTO', 'ANTECEDENTE'].map((tipo) => <option key={tipo} value={tipo}>{tipo === 'TODOS' ? 'Todos' : getDisplayLabel(tipo)}</option>)}
           </select> : (['TODOS', 'CONSULTA', 'RECETA', 'DIAGNOSTICO'] as const).map((tipo) => (
             <button
               key={tipo}

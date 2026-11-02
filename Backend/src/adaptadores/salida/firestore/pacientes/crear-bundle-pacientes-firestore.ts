@@ -86,6 +86,7 @@ export function crearUnidadDeTrabajoPacientesFirestore(cliente: ClienteFirestore
 
 export function crearBundlePacientesFirestore(cliente: ClienteFirestore): BundleInstitucional & { cuenta: RepositorioCuenta } {
   return Object.freeze({
+    responsablesPediatricos: {async porDocumento(documento: {tipo:string;numero:string}){const repo=new RepositorioPacientesFirestore(cliente.firestore,cliente.firestore);const id=await repo.titularIdentidad(documento);return id?repo.porIdResponsable(id):null;}},
     antecedentesPediatricos: crearAntecedentesFirestore(cliente.firestore),
     clinica: crearClinicaFirestore(cliente.firestore),
     institucion: 'CENTRO_MEDICO_PEDIATRICO',

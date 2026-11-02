@@ -237,38 +237,42 @@
   {
     "metodo": "PatientRepository.confirmarSinAlergias",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "EXTENSION_PEDIATRIA",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:97`",
-    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias/confirmar-sin-alergias`"
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias/confirmar-sin-alergias`",
+    "operationId": "pediatriaSinAlergias"
   },
   {
     "metodo": "PatientRepository.registrarAlergia",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "EXTENSION_PEDIATRIA",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:124`",
-    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias`"
+    "propuesta_inventario": "`POST /api/v1/pediatria/pacientes/{pacienteId}/alergias`",
+    "operationId": "pediatriaAlergiaCrear"
   },
   {
     "metodo": "PatientRepository.eliminarAlergia",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "EXTENSION_PEDIATRIA",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:154`",
-    "propuesta_inventario": "`DELETE /api/v1/pediatria/pacientes/{pacienteId}/alergias?sustancia={sustancia}`"
+    "propuesta_inventario": "`DELETE /api/v1/pediatria/pacientes/{pacienteId}/alergias?sustancia={sustancia}`",
+    "operationId": "pediatriaAlergiaBaja"
   },
   {
     "metodo": "PatientRepository.actualizarPerinatales",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E04-P2-01 / E04-P2-02 / E04-P2-03",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "destino": "EXTENSION_PEDIATRIA",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación.",
     "fuente_ui": "`features/patients/components/PediatricHistoryAllergiesView.tsx:184`",
-    "propuesta_inventario": "`PUT /api/v1/pediatria/pacientes/{pacienteId}/antecedentes-perinatales`"
+    "propuesta_inventario": "`PUT /api/v1/pediatria/pacientes/{pacienteId}/antecedentes-perinatales`",
+    "operationId": "pediatriaPerinatales"
   },
   {
     "metodo": "AppointmentRepository.obtenerCitas",
@@ -1076,5 +1080,61 @@
     "operationId": "hospitalServiciosCatalogos",
     "responsable": "E04-P1-03",
     "regla": "Hospital HTTP real; sin autoridad cliente ni fallback. Otras instituciones no habilitadas por esta extensión."
+  },
+  {
+    "metodo": "PatientRepository.buscarResponsablePediatrico",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PEDIATRIA",
+    "operationId": "pediatriaResponsableBuscar",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+  },
+  {
+    "metodo": "PatientRepository.gestionarResponsablePediatrico",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PEDIATRIA",
+    "operationId": "pediatriaResponsableCrear",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+  },
+  {
+    "metodo": "PatientRepository.obtenerCrecimientoPediatrico",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PEDIATRIA",
+    "operationId": "pediatriaCrecimientoLeer",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+  },
+  {
+    "metodo": "PatientRepository.actualizarHistoriaPediatrica",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PEDIATRIA",
+    "operationId": "pediatriaHistoria",
+    "responsable": "E04-P2-01",
+    "regla": "HTTP exclusivo de pediatría con autoridad verificada, versión esperada e idempotencia. Lecturas paginadas; no fallback a simulación."
+  },
+  {
+    "metodo": "PatientRepository.obtenerVersionAntecedentesPediatricos",
+    "categoria": "VIGENTE_UI",
+    "destino": "EXTENSION_PEDIATRIA",
+    "operationId": "pediatriaAntecedentesVersion",
+    "responsable": "E04-P2-01",
+    "regla": "Versión histórica explícita con snapshot anterior/actual, motivo y autoría verificada."
+  },
+  {
+    "metodo": "CatalogRepository.obtenerCatalogoOdontologia",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "catalogoOdontologia",
+    "responsable": "E04-P1-01",
+    "regla": "Lectura HTTP existente; se repara omisión del mapa detectada al validar cierre E04."
+  },
+  {
+    "metodo": "AppointmentRepository.obtenerRevisiones",
+    "categoria": "VIGENTE_UI",
+    "destino": "COMUN_V1",
+    "operationId": "citaRevisiones",
+    "responsable": "E04-P1-01",
+    "regla": "Lectura HTTP existente; se repara omisión del mapa detectada al validar cierre E04."
   }
 ]

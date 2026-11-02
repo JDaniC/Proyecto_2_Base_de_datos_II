@@ -53,7 +53,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const contextoCambio=()=>{
     if(mode!=='api')return undefined;
     if(antecedentes.versionAntecedentes===undefined||!paciente.version||!motivoCambio.trim())throw new Error('Completa el motivo y recarga los antecedentes antes de enviar.');
-    return {versionAntecedentes:antecedentes.versionAntecedentes,motivo:motivoCambio.trim()};
+    return {versionAntecedentes:antecedentes.versionAntecedentes,motivo:motivoCambio.trim(),...(paciente.estado==='ARCHIVADO'?{rectificacion:true}:{})};
   };
   const enviar=async(op:()=>Promise<unknown>)=>{
     intencion.current=op;
@@ -104,8 +104,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const [apgar5, setApgar5] = useState<string>(
     perinatalesActuales.apgar5Minutos?.toString() || ''
   );
-  const [tipoParto, setTipoParto] = useState<TipoParto>(
-    perinatalesActuales.tipoParto || 'PARTO_VAGINAL'
+  const [tipoParto, setTipoParto] = useState<TipoParto|''>(
+    perinatalesActuales.tipoParto || ''
   );
   const [lactanciaMeses, setLactanciaMeses] = useState<string>(
     perinatalesActuales.lactanciaMaternaExclusivaMeses?.toString() || ''
@@ -204,13 +204,13 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       setProcesando(true);
       setErrorAccion(null);
       const dto: AntecedentesPerinatales = {
-        edadGestacionalSemanas: edadGestacional ? parseInt(edadGestacional, 10) : undefined,
+        edadGestacionalSemanas: edadGestacional ? Number(edadGestacional) : undefined,
         pesoNacimientoGramos: pesoNacimiento ? parseInt(pesoNacimiento, 10) : undefined,
         tallaNacimientoCm: tallaNacimiento ? parseFloat(tallaNacimiento) : undefined,
         apgar1Minuto: apgar1 ? parseInt(apgar1, 10) : undefined,
         apgar5Minutos: apgar5 ? parseInt(apgar5, 10) : undefined,
-        tipoParto,
-        lactanciaMaternaExclusivaMeses: lactanciaMeses ? parseInt(lactanciaMeses, 10) : undefined,
+        tipoParto:tipoParto||undefined,
+        lactanciaMaternaExclusivaMeses: lactanciaMeses ? Number(lactanciaMeses) : undefined,
         complicacionesPerinatales: complicaciones.trim() || undefined
       };
 
@@ -247,6 +247,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
         </Alert>
       )}
 
+      <fieldset disabled={paciente.estado==='ARCHIVADO'} style={{border:0,padding:0,minWidth:0}}>
       {/* SECCIÓN 1: ESTADO DE ALERGIAS Y ADVERTENCIA PRIORITARIA */}
       <Panel
         title="Estado Clínico de Alergias y Reacciones Adversas"
@@ -489,6 +490,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
         </div>
       </Panel>
 
+      </fieldset>
       {/* SECCIÓN 2: ANTECEDENTES PERINATALES */}
       <Panel
         title="Antecedentes Perinatales y del Nacimiento"
@@ -497,20 +499,21 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
           <Button
             variant="secondary"
             size="sm"
+            disabled={paciente.estado==='ARCHIVADO'&&!antecedentes.perinatales}
             onClick={() => {
               setEdadGestacional(perinatales?.edadGestacionalSemanas?.toString() || '');
               setPesoNacimiento(perinatales?.pesoNacimientoGramos?.toString() || '');
               setTallaNacimiento(perinatales?.tallaNacimientoCm?.toString() || '');
               setApgar1(perinatales?.apgar1Minuto?.toString() || '');
               setApgar5(perinatales?.apgar5Minutos?.toString() || '');
-              setTipoParto(perinatales?.tipoParto || 'PARTO_VAGINAL');
+              setTipoParto(perinatales?.tipoParto || '');
               setLactanciaMeses(perinatales?.lactanciaMaternaExclusivaMeses?.toString() || '');
               setComplicaciones(perinatales?.complicacionesPerinatales || '');
               setModalPerinatalesAbierto(true);
             }}
           >
             <Edit2 size={15} style={{ marginRight: '6px' }} />
-            Editar Antecedentes Perinatales
+            {paciente.estado==='ARCHIVADO'?'Rectificar Antecedentes Perinatales':'Editar Antecedentes Perinatales'}
           </Button>
         }
       >
@@ -642,7 +645,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
         </div>
       </Panel>
 
-      {mode==='api'&&!soloLectura&&<Button variant="secondary" onClick={()=>setEditarHistoria(true)}>Actualizar historia clínica</Button>}
+      {mode==='api'&&!soloLectura&&(paciente.estado==='ACTIVO'||antecedentes.historiaRegistrada)&&<Button variant="secondary" onClick={()=>setEditarHistoria(true)}>{paciente.estado==='ARCHIVADO'?'Rectificar historia clínica':'Actualizar historia clínica'}</Button>}
       <Modal isOpen={editarHistoria} onClose={()=>{if(!procesando)setEditarHistoria(false);}} title="Actualizar historia clínica" footer={<>
         <Button variant="secondary" disabled={procesando} onClick={()=>setEditarHistoria(false)}>Cancelar</Button>
         <Button loading={procesando} onClick={guardarHistoria}>Guardar historia</Button>
@@ -881,6 +884,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                     setTipoParto(e.target.value as TipoParto)
                   }
                   options={[
+                    { value: '', label: 'Sin dato registrado' },
                     { value: 'PARTO_VAGINAL', label: 'Vaginal Eutócico' },
                     { value: 'CESAREA', label: 'Cesárea' },
                     { value: 'PARTO_INSTRUMENTADO', label: 'Parto Instrumentado' }

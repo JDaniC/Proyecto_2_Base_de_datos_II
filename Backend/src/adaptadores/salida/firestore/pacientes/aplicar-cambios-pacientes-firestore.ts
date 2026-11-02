@@ -34,8 +34,10 @@ export async function aplicarCambiosPacientesFirestore(
       continue;
     }
     if (cambio.agregado === 'responsableContacto') {
-      const r = cambio.nuevoEstado as ResponsableDetalle;
-      transaction.update(firestore.doc(`responsables/${r.id}`), {telefono:r.telefono,revision:r.version});
+      const {actual:r,anterior}=cambio.nuevoEstado as {actual:ResponsableDetalle;anterior:ResponsableDetalle};
+      const ref=firestore.doc(`responsables/${r.id}`);
+      transaction.update(ref, {nombres:r.nombres,apellidos:r.apellidos,telefono:r.telefono,revision:r.version});
+      transaction.create(ref.collection('historia_contacto').doc(comando.id),{anterior,actual:r,actorId:contexto.cuenta.id,fechaHora:comando.instante});
       continue;
     }
     if (cambio.agregado === 'vinculoPediatrico') {

@@ -1,4 +1,5 @@
-import { Body, Controller, Headers, HttpCode, Param, Post, Res } from '@nestjs/common';
+import { ConsultarResponsable } from '../../../../aplicacion/casos-uso/pediatria/consultar-responsable.js';
+import { Body, Get, Query, Controller, Headers, HttpCode, Param, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { Bundle, Contexto, RequiereAcceso } from '../decoradores-auth.js';
 import type { ContextoAutenticado } from '../../../../aplicacion/puertos/contexto-autenticado.js';
@@ -8,8 +9,11 @@ import { GestionarResponsable } from '../../../../aplicacion/casos-uso/pediatria
 
 @Controller('pacientes/:pacienteId/responsables')
 export class ResponsablesController {
-  constructor(private readonly gestionar: GestionarResponsable) {}
+  constructor(private readonly gestionar: GestionarResponsable,private readonly consultar:ConsultarResponsable) {}
 
+  @Get('buscar')
+  @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})
+  buscar(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('pacienteId') id:string,@Query() query:unknown){return this.consultar.ejecutar(contexto,bundle,id,query);}
   @Post('')
   @HttpCode(201)
   @RequiereAcceso({permisos:['pacientes.administrar'],capacidad:'PACIENTES'})

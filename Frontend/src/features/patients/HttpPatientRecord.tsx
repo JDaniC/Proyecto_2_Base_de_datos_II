@@ -1,3 +1,6 @@
+import { PediatricAntecedentesVersionsView } from './components/PediatricAntecedentesVersionsView';
+import { PediatricGuardiansHttpView } from './components/PediatricGuardiansHttpView';
+import { PediatricGrowthHttpView } from './components/PediatricGrowthHttpView';
 import { PediatricHistoryAllergiesView } from './components/PediatricHistoryAllergiesView';
 import { PatientExamsView } from './components/PatientExamsView';
 import { PatientInsurancesView } from './components/PatientInsurancesView';
@@ -170,7 +173,7 @@ const PatientRecord: React.FC = () => {
         {hospital&&tab==='seguros'&&(puedeLeer||puedeEditar)&&<PatientInsurancesView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} pacienteDpi={paciente.tipoIdentificacion==='CUI'?paciente.numeroIdentificacion??'':''} pacienteTelefono={paciente.telefono??''} pacienteNombres={paciente.nombres} pacienteApellidos={paciente.apellidos} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {sesion?.institucionId==='CENTRO_PEDIATRICO' && puedeLeer && <Panel title="Antecedentes pediátricos">
           {errorAntecedentes ? <Alert variant="danger" title="No se pudieron cargar antecedentes">{errorAntecedentes}<Button onClick={()=>setReintento(n=>n+1)}>Reintentar</Button></Alert>
-          : antecedentes && <PediatricHistoryAllergiesView soloLectura={!puedeRegistrarClinica||paciente.estado==='ARCHIVADO'} paciente={{...paciente,estadoAlergias:antecedentes.alergias.length?'CON_ALERGIAS':antecedentes.verificacionAlergias?'SIN_ALERGIAS_CONOCIDAS':'SIN_VERIFICAR'}} antecedentes={antecedentes} institucionId={sesion.institucionId} onActualizar={async()=>{setReintento(n=>n+1);}} />}
+          : antecedentes && <PediatricHistoryAllergiesView soloLectura={!puedeRegistrarClinica} paciente={{...paciente,estadoAlergias:antecedentes.alergias.length?'CON_ALERGIAS':antecedentes.verificacionAlergias?'SIN_ALERGIAS_CONOCIDAS':'SIN_VERIFICAR'}} antecedentes={antecedentes} institucionId={sesion.institucionId} onActualizar={async()=>{setReintento(n=>n+1);}} />}
         </Panel>}
         {hospital&&general&&puedeLeer&&<HospitalAntecedentesView pacienteId={paciente.id} editable={puedeRegistrarClinica&&paciente.estado==='ACTIVO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {puedeLeer && esOdontologia && (
@@ -240,7 +243,9 @@ const PatientRecord: React.FC = () => {
             </div>
           </Panel>
         )}
-        {paciente.responsables && <Panel title="Responsables vinculados" style={{ marginBottom: '24px' }}>
+        {sesion?.institucionId==='CENTRO_PEDIATRICO'&&puedeLeer&&Boolean(antecedentes?.versionAntecedentes)&&<PediatricAntecedentesVersionsView key={`versiones/${antecedentes!.versionAntecedentes}`} pacienteId={paciente.id} versionActual={antecedentes!.versionAntecedentes!}/>}
+        {sesion?.institucionId==='CENTRO_PEDIATRICO'&&puedeLeer&&<PediatricGrowthHttpView pacienteId={paciente.id}/>}
+        {sesion?.institucionId==='CENTRO_PEDIATRICO'?<PediatricGuardiansHttpView paciente={paciente} puedeEditar={puedeEditar} onActualizar={async()=>setReintento(x=>x+1)}/>:paciente.responsables && <Panel title="Responsables vinculados" style={{ marginBottom: '24px' }}>
           {paciente.responsables.map((r) => <p key={r.id}>{r.nombre} · {r.parentesco} · {r.telefono}{r.esPrincipal ? ' · Principal' : ''} · {r.autorizaAtencion ? 'Autoriza atención' : 'Sin autorización de atención'}</p>)}
         </Panel>}
         {general && (puedeLeer && expediente ? <Panel title="Actividad e historial">

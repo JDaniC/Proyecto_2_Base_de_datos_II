@@ -129,7 +129,7 @@ export interface DashboardRepository {
   obtenerDashboard(institucionId: InstitucionId, rolId: RolId): Promise<DashboardData>;
 }
 
-export interface ContextoCambioPediatrico { versionAntecedentes: number; motivo: string; alergiaId?: string; }
+export interface ContextoCambioPediatrico { versionAntecedentes: number; motivo: string; rectificacion?:boolean; alergiaId?: string; }
 
 export interface PatientRepository {
   buscar(institucionId: InstitucionId, query: BuscarPacientesQuery): Promise<ResultadoPaginadoPacientes>;
@@ -165,6 +165,10 @@ export interface PatientRepository {
   confirmarSinAlergias?(institucionId: InstitucionId, pacienteId: string, verificadoPor: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
   registrarAlergia?(institucionId: InstitucionId, pacienteId: string, alergia: AlergiaRegistro, verificadoPor?: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
   eliminarAlergia?(institucionId: InstitucionId, pacienteId: string, sustancia: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  obtenerVersionAntecedentesPediatricos?(pacienteId:string,version:number):Promise<{anterior:import('./http/pediatrics/antecedentes').AntecedentesPediatricosDto;actual:import('./http/pediatrics/antecedentes').AntecedentesPediatricosDto;motivo:string;fechaHora:string;actorId:string}>;
+  buscarResponsablePediatrico?(pacienteId:string,tipo:string,numero:string):Promise<import('./types').ResponsableEncontrado>;
+  gestionarResponsablePediatrico?(pacienteId:string,accion:'crear'|'contacto'|'vinculo'|'baja'|'vinculacion',datos:Record<string,unknown>,responsableId?:string):Promise<void>;
+  obtenerCrecimientoPediatrico?(pacienteId:string,query:{desde?:string;hasta?:string;cursor?:string;limite?:number}):Promise<{elementos:import('./types').MedicionPediatrica[];siguienteCursor?:string}>;
   actualizarHistoriaPediatrica?(institucionId: InstitucionId, pacienteId: string, historia: Pick<AntecedentesClinicos, 'patologicos'|'quirurgicos'|'familiares'|'medicamentosActuales'>, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<AntecedentesClinicos>;
   actualizarPerinatales?(institucionId: InstitucionId, pacienteId: string, perinatales: AntecedentesPerinatales, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<AntecedentesClinicos>;
 }

@@ -1,3 +1,5 @@
+import { ConsultarResponsable } from '../aplicacion/casos-uso/pediatria/consultar-responsable.js';
+import { ConsultarCrecimiento } from '../aplicacion/casos-uso/pediatria/consultar-crecimiento.js';
 import { AntecedentesController } from '../adaptadores/entrada/http/pediatria/antecedentes.controller.js';
 import { GestionarAntecedentes } from '../aplicacion/casos-uso/pediatria/gestionar-antecedentes.js';
 import { ConsultarAntecedentes } from '../aplicacion/casos-uso/pediatria/consultar-antecedentes.js';
@@ -85,6 +87,8 @@ export class AppModule {
       module: AppModule,
       providers: [
         {provide: GestionarAntecedentes,useFactory:()=>new GestionarAntecedentes(dependenciasComandoPorDefecto)},
+        {provide: ConsultarResponsable,useFactory:()=>new ConsultarResponsable()},
+        {provide: ConsultarCrecimiento,useFactory:()=>new ConsultarCrecimiento()},
         {provide: ConsultarAntecedentes,useFactory:()=>new ConsultarAntecedentes()},
         { provide: GestionarResponsable, useFactory: () => new GestionarResponsable(dependenciasComandoPorDefecto) },
         {provide: CambiarEstadoHistorial, useFactory: () => new CambiarEstadoHistorial(dependenciasComandoPorDefecto)},

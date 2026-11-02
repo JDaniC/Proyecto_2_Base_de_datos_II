@@ -103,7 +103,21 @@ export function crearClinicaFirestore(db: Firestore, transaction?: Transaction):
         });
       },
     },
-    consultas: {porId, async porVersion(id,version) {
+    consultas: {porId, async listarPorPaciente(pid,rango,p,ambito) {
+      await preparar();
+      const scope=JSON.stringify(['crecimiento-v1',ambito,pid,rango,p.orden]);
+      const codec=new CursorHistorialCifrado();const cursor=p.cursor?codec.decodificar(p.cursor,scope):undefined;
+      const dir=p.orden==='DESC'?'desc':'asc';
+      let q:Query=db.collection('consultas').where('paciente_id','==',pid);
+      if(rango.desde)q=q.where('fecha_hora','>=',new Date(rango.desde));
+      if(rango.hasta)q=q.where('fecha_hora','<',new Date(rango.hasta));
+      q=q.orderBy('fecha_hora',dir).orderBy(FieldPath.documentId(),dir);
+      if(cursor)q=q.startAfter(new Date(cursor.fechaHora),cursor.id);
+      const docs=await query(q.limit(p.limite+1));
+      const elementos=docs.docs.slice(0,p.limite).map(d=>mapearConsultaFirestore(d.id,d.data()));
+      const ultima=elementos.at(-1);
+      return {elementos,...(docs.size>p.limite&&ultima?{siguienteCursor:codec.codificar(scope,{fechaHora:ultima.fecha_hora,id:ultima.id})}:{})};
+    }, async porVersion(id,version) {
       const actual = await porId(id); if (!actual || actual.version === version) return actual;
       const s = await get(db.doc(`consultas/${id}/snapshots_v1/${version}`)); if (!s.exists) return null;
       const c = mapearConsultaFirestore(id,s.data()!);

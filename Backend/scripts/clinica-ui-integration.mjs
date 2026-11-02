@@ -1,3 +1,4 @@
+import { prepararAntecedentesPediatricos } from '../../Database/migrations/009_antecedentes_pediatricos.mjs';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -70,7 +71,7 @@ async function crearCuenta(institucion, secretaria = false) {
 }
 try {
   await mongo.connect();
-  await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico')); await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore);
+  await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico')); await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore); await prepararAntecedentesPediatricos(firestore);
   for (const institucion of instituciones) cuentas.push(await crearCuenta(institucion));
   const hospitalCuenta = cuentas.find(c => c.institucion === 'HOSPITAL_GENERAL');
   const habitacion = await pg.consultar(`INSERT INTO habitacion(numero,piso,tipo) VALUES($1,'1','Medicina General') RETURNING id_habitacion`, [`UI-${randomUUID().slice(0,8)}`]);

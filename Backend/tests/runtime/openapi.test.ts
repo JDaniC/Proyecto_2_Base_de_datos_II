@@ -6,11 +6,11 @@ import { describe, it } from 'node:test';
 import { leerContratoOpenApi } from '../../src/composicion/leer-contrato-openapi.js';
 
 describe('contrato OpenAPI de arranque', () => {
-  it('lee el contrato canónico con las 42 rutas, incluida la extensión hospitalaria v1', () => {
+  it('lee el contrato canónico con las 58 rutas, incluidas las extensiones hospitalaria y pediátrica v1', () => {
     const contrato = leerContratoOpenApi(resolve(process.cwd(), 'docs/openapi.yaml'));
 
     assert.equal(contrato.openapi, '3.1.0');
-    assert.equal(Object.keys(contrato.paths).length, 42);
+    assert.equal(Object.keys(contrato.paths).length, 58);
     assert.equal(contrato.servers?.[0]?.url, '/api/v1');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.get), 'IMPLEMENTED');

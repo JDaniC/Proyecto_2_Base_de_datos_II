@@ -1,3 +1,4 @@
+import { ConsultarCrecimiento } from '../../src/aplicacion/casos-uso/pediatria/consultar-crecimiento.js';
 import { GestionarAntecedentes } from '../../src/aplicacion/casos-uso/pediatria/gestionar-antecedentes.js';
 import { GestionarResponsable } from '../../src/aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
@@ -245,6 +246,16 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await cmd('vincular',responsableId,{version_paciente:4,version_responsable:2,version_vinculo:2,parentesco:'MADRE',es_principal:false,autoriza_atencion:true});
     assert.equal((await db.doc(`pacientes/${pid}/responsables/${responsableId}`).get()).get('revision'),3);
     assert.equal((await bundle.pacientes!.porId(pid))!.responsables!.length,2);
+    assert.equal((await bundle.pacientes!.porId(pacienteId))!.responsables![0]!.responsable.telefono,'55550001');
+    assert.equal((await db.collection(`responsables/${responsableId}/historia_contacto`).get()).size,1);
+    await cmd('vinculo',responsableId,{version_paciente:5,version_vinculo:3,parentesco:'MADRE',es_principal:true,autoriza_atencion:true});
+    const carrera=await Promise.allSettled([
+      cmd('baja',responsableId,{version_paciente:6,version_vinculo:4,motivo:'Carrera uno'}),
+      cmd('baja',alta.respuesta.id,{version_paciente:6,version_vinculo:1,motivo:'Carrera dos'})
+    ]);
+    assert.equal(carrera.filter(r=>r.status==='fulfilled').length,1);
+    assert.equal((await bundle.pacientes!.porId(pid))!.responsables!.filter(r=>r.vinculo.esPrincipal).length,1);
+
   });
 
   await t.test('E04 migración 009 aditiva: nueva, reinicio y legado conservado',async()=>{
@@ -294,7 +305,49 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.equal(ultima.get('anterior.version'),3);
     assert.equal(ultima.get('anterior.historia'),undefined);
     assert.deepEqual(ultima.get('actual.historia'),historia);
+    assert.deepEqual((await bundle.antecedentesPediatricos!.porVersion!(pid,4))!.actual.historia,historia);
+    await new CambiarEstadoHistorial(deps).ejecutar('archivar',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{version_esperada:5,causa:'TRASLADO',motivo:'Archivo sintético'}});
+    await assert.rejects(servicio.ejecutar('historia',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{...he,version_paciente:6,version_antecedentes:4}}),{codigo:'ESTADO_INVALIDO'});
+    const corregida={...historia,patologicos:['Antecedente rectificado']};
+    await servicio.ejecutar('rectificar',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:{version_paciente:6,version_antecedentes:4,motivo:'Corrección autorizada',historia:corregida}});
+    assert.equal((await bundle.pacientes!.porId(pid))!.estado,'ARCHIVADO');
+    assert.deepEqual((await bundle.antecedentesPediatricos!.porVersion!(pid,5))!.anterior.historia,historia);
 
+
+  });
+
+  await t.test('E04 crecimiento: paginación por consulta única y rango vacío real',async()=>{
+    const servicio=new ConsultarCrecimiento();
+    const primera=await servicio.ejecutar(contexto,bundle,pacienteId,{limite:1});
+    assert.equal(primera.data.length,1);
+    assert.equal(primera.data[0]!.consulta_id.length,36);
+    const ids=new Set(primera.data.map(x=>x.consulta_id));
+    let cursor=primera.meta.siguiente_cursor;
+    while(cursor){const pagina=await servicio.ejecutar(contexto,bundle,pacienteId,{limite:1,cursor});for(const m of pagina.data){assert.equal(ids.has(m.consulta_id),false);ids.add(m.consulta_id);}cursor=pagina.meta.siguiente_cursor;}
+    assert.ok(ids.size>=1);
+    assert.deepEqual((await servicio.ejecutar(contexto,bundle,pacienteId,{desde:'2099-01-01T00:00:00Z'})).data,[]);
+    if(primera.meta.siguiente_cursor)await assert.rejects(servicio.ejecutar(contexto,bundle,pacienteId,{limite:2,cursor:primera.meta.siguiente_cursor}),{codigo:'SOLICITUD_INVALIDA'});
+  });
+
+  await t.test('E04 fallo de auditoría revierte contacto, historia, revisión y clave',async()=>{
+    const actual=await bundle.responsablesPediatricos!.porDocumento({tipo:'CUI',numero:'1234567890101'});assert.ok(actual);
+    const menor=(await new RegistrarPaciente(deps).ejecutar({contexto,bundle,claveIdempotencia:id(),entrada:{nombres:'Rollback',apellidos:'Sintético',fecha_nacimiento:'2024-01-01',sexo:'MASCULINO',responsables:[{responsable_id:actual.id,version_responsable:actual.version,parentesco:'MADRE',es_principal:true,autoriza_atencion:true}]}})).respuesta;
+    const pid=uuidPublico(menor.id),original=bundle.uow!;
+    const roto:BundleInstitucional={...bundle,uow:{ejecutar(ctx,comando,planificar){return original.ejecutar(ctx,comando,async lector=>{const plan=await planificar(lector);return plan.tipo==='CONFIRMAR'?{...plan,auditoria:plan.auditoria.map(a=>({...a,caso:''}))}:plan;});}}};
+    const antes=(await db.collection(`responsables/${actual.id}/historia_contacto`).get()).size;
+    const contacto={version_paciente:1,version_responsable:actual.version,telefono:'55559999'},clave=id();
+    await assert.rejects(new GestionarResponsable(deps).ejecutar('contacto',{contexto,bundle:roto,id:pid,claveIdempotencia:clave,entrada:contacto},actual.id));
+    assert.equal((await bundle.pacientes!.porId(pid))!.version,1);
+    assert.equal((await db.collection(`responsables/${actual.id}/historia_contacto`).get()).size,antes);
+    assert.equal((await bundle.responsablesPediatricos!.porDocumento(actual.documento!))!.telefono,actual.telefono);
+    await new GestionarResponsable(deps).ejecutar('contacto',{contexto,bundle,id:pid,claveIdempotencia:clave,entrada:contacto},actual.id);
+    const entrada={version_paciente:2,version_antecedentes:0,motivo:'Prueba rollback',perinatales:{apgar1Minuto:0}},claveAnt=id();
+    await assert.rejects(new GestionarAntecedentes(deps).ejecutar('perinatales',{contexto,bundle:roto,id:pid,claveIdempotencia:claveAnt,entrada}));
+    assert.equal((await bundle.pacientes!.porId(pid))!.version,2);
+    assert.deepEqual(await bundle.antecedentesPediatricos!.porPaciente(pid),{version:0,alergias:[]});
+    assert.equal((await db.collection(`pediatria_antecedentes/${pid}/versiones`).get()).size,0);
+    await new GestionarAntecedentes(deps).ejecutar('perinatales',{contexto,bundle,id:pid,claveIdempotencia:claveAnt,entrada});
+    assert.equal((await bundle.antecedentesPediatricos!.porPaciente(pid)).version,1);
   });
 
 });

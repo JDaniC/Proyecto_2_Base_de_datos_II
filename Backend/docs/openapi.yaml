@@ -391,6 +391,7 @@ paths:
           - INFORME_LAB
           - VACUNA
           - CRECIMIENTO
+          - ANTECEDENTE
       responses:
         '200':
           description: Resultado confirmado; una repetición idempotente conserva código HTTP y cuerpo originales.
@@ -2610,6 +2611,830 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/HospitalProcedimientoRegistrar'
+  /pacientes/{pacienteId}/antecedentes-pediatricos:
+    get:
+      operationId: pediatriaAntecedentesLeer
+      summary: pediatriaAntecedentesLeer
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - historial.leer
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/versiones/{version}:
+    get:
+      operationId: pediatriaAntecedentesVersion
+      summary: pediatriaAntecedentesVersion
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - historial.leer
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 9007199254740991
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/crecimiento:
+    get:
+      operationId: pediatriaCrecimientoLeer
+      summary: pediatriaCrecimientoLeer
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - historial.leer
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: desde
+          in: query
+          schema:
+            type: string
+        - name: hasta
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: orden
+          in: query
+          schema:
+            enum:
+              - ASC
+              - DESC
+        - name: limite
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/alergias:
+    post:
+      operationId: pediatriaAlergiaCrear
+      summary: pediatriaAlergiaCrear
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaAlergiaCrearEntrada"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/alergias/baja:
+    post:
+      operationId: pediatriaAlergiaBaja
+      summary: pediatriaAlergiaBaja
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaAlergiaBajaEntrada"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/sin-alergias:
+    post:
+      operationId: pediatriaSinAlergias
+      summary: pediatriaSinAlergias
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaSinAlergiasEntrada"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/historia:
+    post:
+      operationId: pediatriaHistoria
+      summary: pediatriaHistoria
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaHistoriaEntrada"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/perinatales:
+    post:
+      operationId: pediatriaPerinatales
+      summary: pediatriaPerinatales
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaPerinatalesEntrada"
+  /pacientes/{pacienteId}/antecedentes-pediatricos/rectificaciones:
+    post:
+      operationId: pediatriaRectificar
+      summary: pediatriaRectificar
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - consultas.registrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaRectificarEntrada"
+  /pacientes/{pacienteId}/responsables/buscar:
+    get:
+      operationId: pediatriaResponsableBuscar
+      summary: pediatriaResponsableBuscar
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: tipo
+          in: query
+          required: true
+          schema:
+            enum:
+              - CUI
+              - PASAPORTE
+        - name: numero
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 30
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+  /pacientes/{pacienteId}/responsables:
+    post:
+      operationId: pediatriaResponsableCrear
+      summary: pediatriaResponsableCrear
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "201":
+          description: Responsable creado y vinculado atómicamente.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaResponsableCrearEntrada"
+  /pacientes/{pacienteId}/responsables/{id}/contacto:
+    post:
+      operationId: pediatriaResponsableContacto
+      summary: pediatriaResponsableContacto
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaResponsableContactoEntrada"
+  /pacientes/{pacienteId}/responsables/{id}/vinculo:
+    post:
+      operationId: pediatriaResponsableVinculo
+      summary: pediatriaResponsableVinculo
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaResponsableVinculoEntrada"
+  /pacientes/{pacienteId}/responsables/{id}/vinculacion:
+    post:
+      operationId: pediatriaResponsableVincular
+      summary: pediatriaResponsableVincular
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaResponsableVincularEntrada"
+  /pacientes/{pacienteId}/responsables/{id}/baja:
+    post:
+      operationId: pediatriaResponsableBaja
+      summary: pediatriaResponsableBaja
+      description: Exclusivo de pediatría. Institución, autor y permisos desde token verificado y cuenta local.
+        Versiones esperadas, motivo clínico y clave estable; transacción atómica e historia inmutable. No
+        sustituye preparación 009 ni interpreta datos clínicos.
+      tags:
+        - pediatria
+      x-permisos:
+        - pacientes.administrar
+      x-instituciones:
+        - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+        - name: pacienteId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PediatriaResponsableBajaEntrada"
+  /catalogos/odontologia:
+    get:
+      operationId: catalogoOdontologia
+      summary: Catálogo clínico odontológico
+      description: Catálogos ya implementados de diagnósticos, procedimientos y medicamentos; lectura autorizada sin
+        editar tarifas ni permisos.
+      tags:
+        - catalogos
+      x-permisos:
+        - historial.leer
+        - consultas.registrar
+      x-instituciones:
+        - CLINICA_ODONTOLOGICA
+      x-implementacion: IMPLEMENTED
+      parameters: []
+      responses:
+        "200":
+          description: Dato confirmado y metadatos de correlación; lecturas paginadas incluyen siguiente_cursor cuando
+            procede.
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "413":
+          $ref: "#/components/responses/Error413"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "503":
+          $ref: "#/components/responses/Error503"
+      x-modo-permisos: ALGUNO
 components:
   securitySchemes:
     FirebaseBearer:
@@ -6363,6 +7188,395 @@ components:
       - indicaciones
       - concentracion
       - id
+    HistoriaPediatrica:
+      type: object
+      additionalProperties: false
+      required:
+        - patologicos
+        - quirurgicos
+        - familiares
+        - medicamentosActuales
+      properties:
+        patologicos:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4000
+        quirurgicos:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4000
+        familiares:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4000
+        medicamentosActuales:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 4000
+    AlergiaPediatricaEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - sustancia
+        - severidad
+        - reaccion
+      properties:
+        sustancia:
+          type: string
+          minLength: 1
+          maxLength: 200
+        severidad:
+          enum:
+            - LEVE
+            - MODERADA
+            - SEVERA
+        reaccion:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    PerinatalesPediatricos:
+      type: object
+      additionalProperties: false
+      properties:
+        edadGestacionalSemanas:
+          type: number
+          minimum: 1
+          maximum: 45
+        pesoNacimientoGramos:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        tallaNacimientoCm:
+          type: number
+          minimum: 1
+          maximum: 100
+        apgar1Minuto:
+          type: integer
+          minimum: 0
+          maximum: 10
+        apgar5Minutos:
+          type: integer
+          minimum: 0
+          maximum: 10
+        tipoParto:
+          enum:
+            - PARTO_VAGINAL
+            - CESAREA
+            - PARTO_INSTRUMENTADO
+        lactanciaMaternaExclusivaMeses:
+          type: number
+          minimum: 0
+          maximum: 120
+        complicacionesPerinatales:
+          type: string
+          maxLength: 4000
+    PediatriaAlergiaCrearEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+        - alergia
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        alergia:
+          $ref: "#/components/schemas/AlergiaPediatricaEntrada"
+    PediatriaAlergiaBajaEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+        - alergia_id
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        alergia_id:
+          $ref: "#/components/schemas/UUID"
+    PediatriaSinAlergiasEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    PediatriaHistoriaEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+        - historia
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        historia:
+          $ref: "#/components/schemas/HistoriaPediatrica"
+    PediatriaPerinatalesEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+        - perinatales
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        perinatales:
+          $ref: "#/components/schemas/PerinatalesPediatricos"
+    PediatriaRectificarEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_antecedentes
+        - motivo
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_antecedentes:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        alergia_id:
+          $ref: "#/components/schemas/UUID"
+        alergia:
+          $ref: "#/components/schemas/AlergiaPediatricaEntrada"
+        historia:
+          $ref: "#/components/schemas/HistoriaPediatrica"
+        perinatales:
+          $ref: "#/components/schemas/PerinatalesPediatricos"
+      anyOf:
+        - required:
+            - alergia
+        - required:
+            - historia
+        - required:
+            - perinatales
+      dependentRequired:
+        alergia:
+          - alergia_id
+        alergia_id:
+          - alergia
+    PediatriaResponsableCrearEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - nombres
+        - apellidos
+        - telefono
+        - documento
+        - parentesco
+        - es_principal
+        - autoriza_atencion
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 200
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 200
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+        documento:
+          $ref: "#/components/schemas/Identificacion"
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 60
+        es_principal:
+          type: boolean
+        autoriza_atencion:
+          type: boolean
+    PediatriaResponsableContactoEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_responsable
+        - telefono
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_responsable:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        nombres:
+          type: string
+          minLength: 1
+          maxLength: 200
+        apellidos:
+          type: string
+          minLength: 1
+          maxLength: 200
+        telefono:
+          type: string
+          minLength: 1
+          maxLength: 30
+    PediatriaResponsableVinculoEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_vinculo
+        - parentesco
+        - es_principal
+        - autoriza_atencion
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_vinculo:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 60
+        es_principal:
+          type: boolean
+        autoriza_atencion:
+          type: boolean
+    PediatriaResponsableVincularEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_responsable
+        - parentesco
+        - es_principal
+        - autoriza_atencion
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_responsable:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_vinculo:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        parentesco:
+          type: string
+          minLength: 1
+          maxLength: 60
+        es_principal:
+          type: boolean
+        autoriza_atencion:
+          type: boolean
+    PediatriaResponsableBajaEntrada:
+      type: object
+      additionalProperties: false
+      required:
+        - version_paciente
+        - version_vinculo
+        - motivo
+      properties:
+        version_paciente:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        version_vinculo:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
   parameters:
     Idempotencia:
       name: Idempotency-Key

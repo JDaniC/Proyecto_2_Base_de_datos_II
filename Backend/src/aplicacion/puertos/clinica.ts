@@ -77,6 +77,7 @@ export interface PuertosClinicos {
   };
   readonly consultas: {
     porId(id: UUID): Promise<Consulta | null>;
+    listarPorPaciente?(pacienteId: UUID, rango: RangoRevisiones, pagina: FiltrosPagina, ambito: string): Promise<Pagina<Consulta>>;
     porVersion(id: UUID, version: Version): Promise<Consulta | null>;
     porCita(id: UUID): Promise<Consulta | null>;
   };
