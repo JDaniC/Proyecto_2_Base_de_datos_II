@@ -1,3 +1,6 @@
+import { AntecedentesController } from '../adaptadores/entrada/http/pediatria/antecedentes.controller.js';
+import { GestionarAntecedentes } from '../aplicacion/casos-uso/pediatria/gestionar-antecedentes.js';
+import { ConsultarAntecedentes } from '../aplicacion/casos-uso/pediatria/consultar-antecedentes.js';
 import { ResponsablesController } from '../adaptadores/entrada/http/pediatria/responsables.controller.js';
 import { GestionarResponsable } from '../aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { ServiciosHospitalarios } from '../aplicacion/casos-uso/hospital/servicios-hospitalarios.js';
@@ -70,7 +73,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -81,6 +84,8 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide: GestionarAntecedentes,useFactory:()=>new GestionarAntecedentes(dependenciasComandoPorDefecto)},
+        {provide: ConsultarAntecedentes,useFactory:()=>new ConsultarAntecedentes()},
         { provide: GestionarResponsable, useFactory: () => new GestionarResponsable(dependenciasComandoPorDefecto) },
         {provide: CambiarEstadoHistorial, useFactory: () => new CambiarEstadoHistorial(dependenciasComandoPorDefecto)},
         { provide: AtencionClinica, useFactory: () => new AtencionClinica(dependenciasComandoPorDefecto) },
