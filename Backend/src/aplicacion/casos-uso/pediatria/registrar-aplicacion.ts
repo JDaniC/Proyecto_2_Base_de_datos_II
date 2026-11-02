@@ -1,3 +1,4 @@
+import { edadMesesEnFecha } from '../../../dominio/pediatria/crecimiento.js';
 import { ErrorDominio, solicitudInvalida } from '../../../dominio/compartido/error-dominio.js';
 import { uuidPublico } from '../../../dominio/compartido/uuid.js';
 import { versionPositiva } from '../../../dominio/compartido/version.js';
@@ -111,6 +112,7 @@ export class RegistrarAplicacionVacuna {
       }
 
       if (entrada.fechaAplicacion > comando.instante.slice(0, 10)) throw solicitudInvalida('La aplicación no puede tener fecha futura.');
+      if(edadMesesEnFecha(paciente.fechaNacimiento,entrada.fechaAplicacion)<dosis.edadMesesRecomendada)throw solicitudInvalida('La fecha precede a la edad de la dosis en el esquema asignado.');
       const edadDias = (Date.parse(entrada.fechaAplicacion) - Date.parse(paciente.fechaNacimiento!)) / 86400000;
       if ((dosis.limiteInferiorDias !== undefined && edadDias < dosis.limiteInferiorDias) || (dosis.limiteSuperiorDias !== undefined && edadDias > dosis.limiteSuperiorDias)) throw solicitudInvalida('La fecha está fuera del intervalo del esquema.');
       const nuevaAplicacion: AplicacionVacuna = {

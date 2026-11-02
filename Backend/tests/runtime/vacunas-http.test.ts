@@ -10,7 +10,7 @@ import { parsearConfiguracion } from '../../src/configuracion/entorno.js';
 import { VerificadorIdentidadMemoria } from '../../src/adaptadores/salida/identidad/verificador-identidad-memoria.js';
 import { escenarioClinico, nuevoId } from '../fixtures/clinica-comun.js';
 const pediatria=escenarioClinico('CENTRO_MEDICO_PEDIATRICO'), hospital=escenarioClinico('HOSPITAL_GENERAL');
-const escenarios=[pediatria,hospital];
+const escenarios=[pediatria,hospital,escenarioClinico('CLINICA_ODONTOLOGICA'),escenarioClinico('LABORATORIO_CLINICO')];
 const tokens=escenarios.map((s,i)=>({token:`vacunas-sintetico-${i}`,uid:s.cuenta.uid,institucion:s.bundle.institucion}));
 describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
  let app:INestApplication,url:string;
@@ -18,9 +18,9 @@ describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
  const ruta=`/pacientes/${pediatria.paciente.id}/aplicaciones-vacuna`;
  const entrada={vacunaId:nuevoId(),dosisId:nuevoId(),fechaAplicacion:'2026-01-01',lote:'ENSAYO',sitioAnatomico:'Brazo'};
  const headers=(i=0)=>({authorization:`Bearer ${tokens[i]!.token}`,'content-type':'application/json'});
- const post=(path:string,body:unknown,i=0,key=nuevoId())=>fetch(url+path,{method:'POST',headers:{...headers(i),'idempotency-key':key},body:JSON.stringify(body)});
+ const post=(path:string,body:unknown,i=0,key:string=nuevoId())=>fetch(url+path,{method:'POST',headers:{...headers(i),'idempotency-key':key},body:JSON.stringify(body)});
  before(async()=>{
-  const config=parsearConfiguracion({APP_ENV:'test',HOST:'127.0.0.1',PORT:'3000',INSTITUTIONS:'HOSPITAL_GENERAL,CENTRO_MEDICO_PEDIATRICO'});
+  const config=parsearConfiguracion({APP_ENV:'test',HOST:'127.0.0.1',PORT:'3000',INSTITUTIONS:'HOSPITAL_GENERAL,CLINICA_ODONTOLOGICA,LABORATORIO_CLINICO,CENTRO_MEDICO_PEDIATRICO'});
   app=await crearAplicacionHttp(AppModule.registrar(config,{bundles:escenarios.map(s=>s.bundle),verificadorIdentidad:new VerificadorIdentidadMemoria(tokens)}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
   await app.listen(0,'127.0.0.1');url=`http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}/api/v1`;
  });
@@ -55,10 +55,15 @@ describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
   assert.equal((await post(`/aplicaciones-vacuna/${appId}/correcciones`,{versionEsperada:1,lote:'OTRO'})).status,400);
   assert.equal((await post(`/aplicaciones-vacuna/${appId}/anulacion`,{versionEsperada:0,motivo:'Ensayo'})).status,400);
  });
+ it('400 ID compuesto malformado en corrección y anulación',async()=>{
+  const idInvalido=`${pediatria.paciente.id}__invalida`;
+  assert.equal((await post(`/aplicaciones-vacuna/${idInvalido}/correcciones`,{versionEsperada:1,motivo:'Ensayo',lote:'OTRO'})).status,400);
+  assert.equal((await post(`/aplicaciones-vacuna/${idInvalido}/anulacion`,{versionEsperada:1,motivo:'Ensayo'})).status,400);
+ });
  it('400 edad cliente no sustituye edad civil',async()=>{
   assert.equal((await fetch(url+`/pacientes/${pediatria.paciente.id}/esquemas?edad_meses=999`,{headers:headers()})).status,400);
  });
  it('503 adaptador ausente no simula catálogo vacío',async()=>{
-  const r=await fetch(url+'/vacunas',{headers:headers()});assert.equal(r.status,503);assert.equal('data' in await r.json(),false);
+  const r=await fetch(url+'/vacunas',{headers:headers()});assert.equal(r.status,503);assert.equal('data' in (await r.json() as object),false);
  });
 });

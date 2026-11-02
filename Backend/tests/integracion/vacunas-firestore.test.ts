@@ -41,7 +41,7 @@ test('E04 CA11 vacunas Firestore aislado', {skip: !host}, async t => {
   await migracion.prepararClinicaFirestore(db);
   const vacunaId=id(),versionId=id(),dosisId=id();
   await db.doc(`vacunas/${vacunaId}`).set({revision:1,nombre:'Vacuna sintética',enfermedad_objetivo:'PRUEBA',fabricante:'Sintético',version_vigente:versionId});
-  const esquema={revision:1,version:1,nombre:'Esquema original',enfermedad_objetivo:'PRUEBA',fabricante:'Sintético',fecha_creacion:new Date(),dosis:[{dosis_id:dosisId,numero:1,edad_recomendada_meses:0}]};
+  const esquema={revision:1,version:1,nombre:'Esquema original',enfermedad_objetivo:'PRUEBA',fabricante:'Sintético',fecha_creacion:new Date(),dosis:[{dosis_id:dosisId,numero:1,edad_recomendada_meses:2}]};
   await db.doc(`vacunas/${vacunaId}/versiones/${versionId}`).set(esquema);
   const asignar=new AsignarEsquemaVacuna(deps), registrar=new RegistrarAplicacionVacuna(deps),corregir=new CorregirAplicacionVacuna(deps),anular=new AnularAplicacionVacuna(deps);
   const entrada={vacunaId,dosisId,fechaAplicacion:'2026-01-01',lote:'LOTE-1',sitioAnatomico:'Brazo'};
@@ -61,7 +61,20 @@ test('E04 CA11 vacunas Firestore aislado', {skip: !host}, async t => {
   await t.test('fecha futura y anterior al nacimiento se rechazan sin escritura',async()=>{
     await assert.rejects(registrar.ejecutar({...p(),entrada:{...entrada,fechaAplicacion:'2099-01-01'}}),{codigo:'SOLICITUD_INVALIDA'});
     await assert.rejects(registrar.ejecutar({...p(),entrada:{...entrada,fechaAplicacion:'2021-01-01'}}),{codigo:'SOLICITUD_INVALIDA'});
+    await assert.rejects(registrar.ejecutar({...p(),entrada:{...entrada,fechaAplicacion:'2022-02-01'}}),{codigo:'SOLICITUD_INVALIDA'});
     assert.equal((await db.collection('aplicaciones_vacuna').get()).size,0);
+  });
+  await t.test('fallo en cronología revierte aplicación, operación y auditoría completas',async()=>{
+    const antes=await Promise.all(['aplicaciones_vacuna','operaciones','auditoria'].map(c=>db.collection(c).get().then(q=>q.size)));
+    const uow:import('../../src/aplicacion/puertos/nucleo.js').UnidadDeTrabajo={ejecutar:(ctx,cmd,planificar)=>bundle.uow!.ejecutar(ctx,cmd,async lector=>{
+      const plan=await planificar(lector);
+      if(plan.tipo==='REPETIR')return plan;
+      for(const c of plan.cambios)if(c.agregado==='eventosHistorial')Object.assign(c.nuevoEstado as object,{titulo:''});
+      return plan;
+    })};
+    await assert.rejects(registrar.ejecutar({...p(),bundle:{...bundle,uow}}),{codigo:'PERSISTENCIA_NO_DISPONIBLE'});
+    const despues=await Promise.all(['aplicaciones_vacuna','operaciones','auditoria'].map(c=>db.collection(c).get().then(q=>q.size)));
+    assert.deepEqual(despues,antes);
   });
   let appId='';
   await t.test('carrera: una aplicación, reintento estable y otra clave duplicada',async()=>{

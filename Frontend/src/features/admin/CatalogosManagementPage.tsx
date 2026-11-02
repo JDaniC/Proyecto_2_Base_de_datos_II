@@ -219,7 +219,7 @@ export const CatalogosManagementPage: React.FC = () => {
                         {vac.nombreVacuna}
                       </h4>
                       <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                        Previene: <strong style={{ color: 'var(--color-strong)' }}>{vac.enfermedadPrevenida}</strong> • Vía: {vac.viaAdministracion}
+                        Previene: <strong style={{ color: 'var(--color-strong)' }}>{vac.enfermedadPrevenida}</strong> • Vía: {vac.viaAdministracion === 'SIN_DATO' ? 'No registrada' : vac.viaAdministracion}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Badge variant="primary">{vac.esquemaVersion}</Badge><Button size="sm" variant="secondary" onClick={() => { setVacunaExistente(vac); setShowModalVacuna(true); }}>Actualizar dosis y edades</Button></div>
