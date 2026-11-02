@@ -1,3 +1,4 @@
+import type { ContextoAutenticado } from './contexto-autenticado.js';
 import type { UUID } from '../../dominio/compartido/uuid.js';
 import type { Version } from '../../dominio/compartido/version.js';
 import type {
@@ -7,6 +8,7 @@ import type {
 } from '../../dominio/hospital/hospitalizacion.js';
 
 export interface ParametrosIngresoHospitalario {
+  readonly comando: ComandoHospital;
   readonly pacienteId: UUID;
   readonly camaId: UUID;
   readonly motivoIngreso: string;
@@ -17,6 +19,7 @@ export interface ParametrosIngresoHospitalario {
 }
 
 export interface ParametrosEgresoHospitalario {
+  readonly comando: ComandoHospital;
   readonly hospitalizacionId: UUID;
   readonly fechaEgreso: string;
   readonly tipoEgreso: TipoEgresoHospitalario;
@@ -27,6 +30,7 @@ export interface ParametrosEgresoHospitalario {
 }
 
 export interface ParametrosAsignarCama {
+  readonly comando: ComandoHospital;
   readonly hospitalizacionId: UUID;
   readonly nuevaCamaId: UUID;
   readonly fechaInicio: string;
@@ -35,12 +39,14 @@ export interface ParametrosAsignarCama {
 }
 
 export interface ParametrosLiberarCama {
+  readonly comando: ComandoHospital;
   readonly hospitalizacionId: UUID;
   readonly fechaFin: string;
   readonly versionEsperada?: Version | undefined;
 }
 
 export interface ParametrosNotaEvolucion {
+  readonly comando: ComandoHospital;
   readonly hospitalizacionId: UUID;
   readonly notaClinica: string;
   readonly planTerapeutico?: string | undefined;
@@ -48,6 +54,7 @@ export interface ParametrosNotaEvolucion {
 }
 
 export interface ParametrosProcedimientoHospitalario {
+  readonly comando: ComandoHospital;
   readonly hospitalizacionId: UUID;
   readonly nombre: string;
   readonly resultado: string;
@@ -78,4 +85,9 @@ export interface PuertosHospital {
     listar(): Promise<readonly CamaHospitalaria[]>;
     porId(id: UUID): Promise<CamaHospitalaria | null>;
   };
+}
+
+export interface ComandoHospital {
+  readonly contexto: ContextoAutenticado;
+  readonly clave: string;
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { UUID } from '../../../../dominio/compartido/uuid.js';
 import { uuidPublico } from '../../../../dominio/compartido/uuid.js';
 import { versionPositiva } from '../../../../dominio/compartido/version.js';
@@ -30,6 +31,7 @@ interface FilaCama extends Record<string, unknown> {
   id_habitacion: number | string;
   numero_cama: string;
   estado_operativo: string;
+  habitacion_estado: string;
   habitacion_id_publico: string;
   habitacion_numero: string;
   habitacion_piso: string | null;
@@ -81,6 +83,7 @@ interface ObservacionesEvolucion {
   notasEvolucion?: Array<{
     id: string;
     fechaHora: string;
+    medicoId: string;
     medicoNombre: string;
     medicoColegiado: string;
     notaClinica: string;
@@ -91,6 +94,7 @@ interface ObservacionesEvolucion {
     nombre: string;
     codigo?: string | undefined;
     fechaHora: string;
+    profesionalId: string;
     profesionalNombre: string;
     resultado: string;
     observaciones?: string | undefined;
@@ -125,7 +129,7 @@ function mapearFilaCama(f: FilaCama): CamaHospitalaria {
     piso: Number(f.habitacion_piso) || 1,
     salaServicio: f.habitacion_tipo || 'Medicina General',
     codigoCama: `${f.habitacion_numero}-${f.numero_cama}`,
-    estado: mapearEstadoCama(f.estado_operativo, ocupada),
+    estado: mapearEstadoCama(f.habitacion_estado === 'DISPONIBLE' ? f.estado_operativo : f.habitacion_estado, ocupada),
     hospitalizacionActivaId: f.id_hospitalizacion_activa ? uuidPublico(f.id_hospitalizacion_activa) : undefined,
     pacienteActual: f.paciente_nombre_actual?.trim() || undefined,
     version: versionPositiva(Number(f.revision)),
@@ -138,13 +142,15 @@ function formatearFechaIso(valor: string | Date | null | undefined): string | un
   return new Date(valor).toISOString();
 }
 
-export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHospital {
+export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql, estable?: {
+  instante: string; hospitalizacionId: string; asignacionId: string; detalleId: string;
+}): PuertosHospital {
   return {
     camas: {
       async listar(): Promise<readonly CamaHospitalaria[]> {
         const sql = `
           SELECT c.id_publico, c.revision, c.id_cama, c.id_habitacion, c.numero_cama, c.estado_operativo,
-                 h.id_publico AS habitacion_id_publico, h.numero AS habitacion_numero, h.piso AS habitacion_piso, h.tipo AS habitacion_tipo,
+                 h.estado_operativo AS habitacion_estado, h.id_publico AS habitacion_id_publico, h.numero AS habitacion_numero, h.piso AS habitacion_piso, h.tipo AS habitacion_tipo,
                  activa.id_publico AS id_hospitalizacion_activa,
                  CONCAT_WS(' ', p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido) AS paciente_nombre_actual
             FROM cama c
@@ -165,7 +171,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
       async porId(id: UUID): Promise<CamaHospitalaria | null> {
         const sql = `
           SELECT c.id_publico, c.revision, c.id_cama, c.id_habitacion, c.numero_cama, c.estado_operativo,
-                 h.id_publico AS habitacion_id_publico, h.numero AS habitacion_numero, h.piso AS habitacion_piso, h.tipo AS habitacion_tipo,
+                 h.estado_operativo AS habitacion_estado, h.id_publico AS habitacion_id_publico, h.numero AS habitacion_numero, h.piso AS habitacion_piso, h.tipo AS habitacion_tipo,
                  activa.id_publico AS id_hospitalizacion_activa,
                  CONCAT_WS(' ', p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido) AS paciente_nombre_actual
             FROM cama c
@@ -233,7 +239,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
       async ingresar(params: ParametrosIngresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion> {
         // Validar paciente
         const pacRes = await ejecutor.consultar<{ id_paciente: number; estado: string; id_publico: string }>(
-          'SELECT id_paciente, estado, id_publico FROM paciente WHERE id_publico = $1',
+          'SELECT p.id_paciente, h.estado_historial AS estado, p.id_publico FROM paciente p JOIN historial_clinico h USING(id_paciente) WHERE p.id_publico = $1 FOR UPDATE OF h',
           [params.pacienteId],
         );
         const paciente = pacRes.filas[0];
@@ -256,7 +262,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
 
         // Validar cama
         const camaRes = await ejecutor.consultar<{ id_cama: number; estado_operativo: string; revision: number; numero_cama: string }>(
-          'SELECT id_cama, estado_operativo, revision, numero_cama FROM cama WHERE id_publico = $1 FOR UPDATE',
+          `SELECT c.id_cama, CASE WHEN h.estado_operativo = 'DISPONIBLE' THEN c.estado_operativo ELSE h.estado_operativo END AS estado_operativo, c.revision, c.numero_cama FROM cama c JOIN habitacion h USING(id_habitacion) WHERE c.id_publico = $1 FOR UPDATE OF c, h`,
           [params.camaId],
         );
         const cama = camaRes.filas[0];
@@ -279,7 +285,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
           throw new ErrorDominio('ESTADO_INVALIDO', `La cama ${cama.numero_cama} ya se encuentra ocupada.`);
         }
 
-        const ahoraIso = new Date().toISOString();
+        const ahoraIso = estable?.instante ?? new Date().toISOString();
         const obsInicial: ObservacionesEvolucion = {
           diagnosticoIngresoCIE: params.diagnosticoIngresoCIE,
           diagnosticoIngresoNombre: params.diagnosticoIngresoNombre,
@@ -292,10 +298,10 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
 
         try {
           const insertHosp = await ejecutor.consultar<{ id_hospitalizacion: number; id_publico: string }>(
-            `INSERT INTO hospitalizacion(id_paciente, id_personal_responsable_ingreso, fecha_ingreso, motivo_ingreso, observaciones, estado)
-             VALUES ($1, $2, $3, $4, $5, 'ACTIVA')
+            `INSERT INTO hospitalizacion(id_publico, id_paciente, id_personal_responsable_ingreso, fecha_ingreso, motivo_ingreso, observaciones, estado)
+             VALUES ($6, $1, $2, $3, $4, $5, 'ACTIVA')
              RETURNING id_hospitalizacion, id_publico`,
-            [paciente.id_paciente, medico.id_personal, ahoraIso, params.motivoIngreso, serializarObservaciones(obsInicial)],
+            [paciente.id_paciente, medico.id_personal, ahoraIso, params.motivoIngreso, serializarObservaciones(obsInicial), estable?.hospitalizacionId ?? randomUUID()],
           );
           hospIdInterno = insertHosp.filas[0]!.id_hospitalizacion;
           hospIdPublico = insertHosp.filas[0]!.id_publico;
@@ -307,9 +313,9 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         // Asignar cama
         try {
           await ejecutor.consultar(
-            `INSERT INTO asignacion_cama(id_hospitalizacion, id_cama, fecha_hora_inicio)
-             VALUES ($1, $2, $3)`,
-            [hospIdInterno, cama.id_cama, ahoraIso],
+            `INSERT INTO asignacion_cama(id_publico, id_hospitalizacion, id_cama, fecha_hora_inicio)
+             VALUES ($4, $1, $2, $3)`,
+            [hospIdInterno, cama.id_cama, ahoraIso, estable?.asignacionId ?? randomUUID()],
           );
         } catch (error: unknown) {
           manejarErrorPostgres(error);
@@ -359,7 +365,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
           estado: string;
           observaciones: string | null;
         }>(
-          `SELECT id_hospitalizacion, revision, fecha_ingreso, estado, observaciones
+          `SELECT id_hospitalizacion, revision, fecha_ingreso AT TIME ZONE 'UTC' AS fecha_ingreso, estado, observaciones
              FROM hospitalizacion
             WHERE id_publico = $1
               FOR UPDATE`,
@@ -388,6 +394,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         obs.tipoEgreso = params.tipoEgreso;
         obs.resumenEgreso = params.resumenClinico;
 
+        await validarPeriodo(ejecutor, hosp.id_hospitalizacion, params.fechaEgreso);
         // Cerrar asignación de cama abierta si existe
         await ejecutor.consultar(
           `UPDATE asignacion_cama
@@ -419,7 +426,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
           estado: string;
           fecha_ingreso: string | Date;
         }>(
-          `SELECT id_hospitalizacion, revision, estado, fecha_ingreso
+          `SELECT id_hospitalizacion, revision, estado, fecha_ingreso AT TIME ZONE 'UTC' AS fecha_ingreso
              FROM hospitalizacion
             WHERE id_publico = $1
               FOR UPDATE`,
@@ -433,7 +440,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         }
 
         const camaDestRes = await ejecutor.consultar<{ id_cama: number; estado_operativo: string; numero_cama: string }>(
-          'SELECT id_cama, estado_operativo, numero_cama FROM cama WHERE id_publico = $1 FOR UPDATE',
+          `SELECT c.id_cama, CASE WHEN h.estado_operativo = 'DISPONIBLE' THEN c.estado_operativo ELSE h.estado_operativo END AS estado_operativo, c.numero_cama FROM cama c JOIN habitacion h USING(id_habitacion) WHERE c.id_publico = $1 FOR UPDATE OF c, h`,
           [params.nuevaCamaId],
         );
         const camaDest = camaDestRes.filas[0];
@@ -450,6 +457,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
           throw new ErrorDominio('ESTADO_INVALIDO', `La cama ${camaDest.numero_cama} ya se encuentra ocupada.`);
         }
 
+        await validarPeriodo(ejecutor, hosp.id_hospitalizacion, params.fechaInicio);
         // Cerrar asignación anterior
         await ejecutor.consultar(
           `UPDATE asignacion_cama
@@ -461,9 +469,9 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         // Crear nueva asignación
         try {
           await ejecutor.consultar(
-            `INSERT INTO asignacion_cama(id_hospitalizacion, id_cama, fecha_hora_inicio)
-             VALUES ($1, $2, $3)`,
-            [hosp.id_hospitalizacion, camaDest.id_cama, params.fechaInicio],
+            `INSERT INTO asignacion_cama(id_publico, id_hospitalizacion, id_cama, fecha_hora_inicio)
+             VALUES ($4, $1, $2, $3)`,
+            [hosp.id_hospitalizacion, camaDest.id_cama, params.fechaInicio, estable?.asignacionId ?? randomUUID()],
           );
         } catch (error: unknown) {
           manejarErrorPostgres(error);
@@ -498,6 +506,8 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
           throw new ErrorDominio('VERSION_DESACTUALIZADA', 'La versión de la hospitalización ha cambiado.');
         }
 
+        if (hosp.estado !== 'ACTIVA') throw new ErrorDominio('ESTADO_INVALIDO', 'La estancia no está activa.');
+        await validarPeriodo(ejecutor, hosp.id_hospitalizacion, params.fechaFin);
         await ejecutor.consultar(
           `UPDATE asignacion_cama
               SET fecha_hora_fin = $1, revision = revision + 1
@@ -543,10 +553,11 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         const obs = parsearObservaciones(hosp.observaciones);
         if (!obs.notasEvolucion) obs.notasEvolucion = [];
         obs.notasEvolucion.unshift({
-          id: `nota-${Date.now()}`,
-          fechaHora: new Date().toISOString(),
-          medicoNombre: medico.nombre,
-          medicoColegiado: medico.colegiado,
+          id: estable?.detalleId ?? randomUUID(),
+          fechaHora: estable?.instante ?? new Date().toISOString(),
+          medicoId: medico.id,
+          medicoNombre: (await leerAutor(ejecutor, medico.id)).nombre,
+          medicoColegiado: (await leerAutor(ejecutor, medico.id)).colegiado,
           notaClinica: params.notaClinica,
           planTerapeutico: params.planTerapeutico,
         });
@@ -588,11 +599,12 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
         const obs = parsearObservaciones(hosp.observaciones);
         if (!obs.procedimientos) obs.procedimientos = [];
         obs.procedimientos.unshift({
-          id: `proc-${Date.now()}`,
+          id: estable?.detalleId ?? randomUUID(),
           nombre: params.nombre,
           codigo: params.codigo,
-          fechaHora: new Date().toISOString(),
-          profesionalNombre: profesional.nombre,
+          fechaHora: estable?.instante ?? new Date().toISOString(),
+          profesionalId: profesional.id,
+          profesionalNombre: (await leerAutor(ejecutor, profesional.id)).nombre,
           resultado: params.resultado,
           observaciones: params.observaciones,
         });
@@ -615,7 +627,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql): PuertosHo
 async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID): Promise<Hospitalizacion | null> {
   const sqlHosp = `
     SELECT hosp.id_publico, hosp.revision, hosp.id_hospitalizacion, hosp.id_paciente,
-           hosp.fecha_ingreso, hosp.fecha_egreso, hosp.motivo_ingreso, hosp.observaciones, hosp.estado,
+           hosp.fecha_ingreso AT TIME ZONE 'UTC' AS fecha_ingreso, hosp.fecha_egreso AT TIME ZONE 'UTC' AS fecha_egreso, hosp.motivo_ingreso, hosp.observaciones, hosp.estado,
            p.id_publico AS paciente_id_publico,
            CONCAT_WS(' ', p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido) AS paciente_nombre,
            COALESCE(h.numero_historial, p.id_publico::text) AS paciente_expediente,
@@ -643,7 +655,7 @@ async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID
 
   // Consultas asignaciones de cama históricas
   const sqlAsig = `
-    SELECT ac.id_publico, ac.revision, ac.fecha_hora_inicio, ac.fecha_hora_fin,
+    SELECT ac.id_publico, ac.revision, ac.fecha_hora_inicio AT TIME ZONE 'UTC' AS fecha_hora_inicio, ac.fecha_hora_fin AT TIME ZONE 'UTC' AS fecha_hora_fin,
            c.id_publico AS cama_id_publico, c.numero_cama,
            hab.numero AS habitacion_numero, hab.tipo AS habitacion_tipo
       FROM asignacion_cama ac
@@ -677,6 +689,7 @@ async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID
   const notas: NotaEvolucionItem[] = (obs.notasEvolucion || []).map((n) => Object.freeze({
     id: uuidPublico(n.id.startsWith('nota-') ? '00000000-0000-0000-0000-' + n.id.slice(-12).padStart(12, '0') : n.id),
     fechaHora: n.fechaHora,
+    medicoId: n.medicoId ? uuidPublico(n.medicoId) : undefined,
     medicoNombre: n.medicoNombre,
     medicoColegiado: n.medicoColegiado,
     notaClinica: n.notaClinica,
@@ -688,6 +701,7 @@ async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID
     nombre: p.nombre,
     codigo: p.codigo,
     fechaHora: p.fechaHora,
+    profesionalId: p.profesionalId ? uuidPublico(p.profesionalId) : undefined,
     profesionalNombre: p.profesionalNombre,
     resultado: p.resultado,
     observaciones: p.observaciones,
@@ -744,4 +758,21 @@ function manejarErrorPostgres(error: unknown): void {
       throw new ErrorDominio('SOLICITUD_INVALIDA', 'Violación de restricción de fechas o coherencia clínica.');
     }
   }
+}
+
+async function leerAutor(ejecutor: EjecutorSql, id: UUID) {
+  const r = await ejecutor.consultar<{ nombre: string; colegiado: string }>(
+    `SELECT CONCAT_WS(' ', primer_nombre, segundo_nombre, primer_apellido, segundo_apellido) AS nombre,
+      numero_colegiado AS colegiado FROM personal_medico WHERE id_publico=$1 AND estado='ACTIVO' FOR SHARE`, [id]);
+  if (!r.filas[0]) throw new ErrorDominio('SIN_PERMISO', 'Profesional no disponible.');
+  return r.filas[0];
+}
+
+async function validarPeriodo(ejecutor: EjecutorSql, id: number, fecha: string) {
+  const r = await ejecutor.consultar<{ valido: boolean }>(
+    `SELECT $2::timestamp >= h.fecha_ingreso AND NOT EXISTS(
+       SELECT 1 FROM asignacion_cama a WHERE a.id_hospitalizacion=h.id_hospitalizacion
+       AND (a.fecha_hora_inicio >= $2::timestamp OR a.fecha_hora_fin > $2::timestamp)) AS valido
+     FROM hospitalizacion h WHERE h.id_hospitalizacion=$1`, [id, fecha]);
+  if (!r.filas[0]?.valido) throw new ErrorDominio('SOLICITUD_INVALIDA', 'El período no es coherente con la estancia y sus asignaciones.');
 }

@@ -31,6 +31,7 @@ export interface AsignacionCamaItem {
 }
 
 export interface NotaEvolucionItem {
+  readonly medicoId?: UUID | undefined;
   readonly id: UUID;
   readonly fechaHora: string;
   readonly medicoNombre: string;
@@ -40,6 +41,7 @@ export interface NotaEvolucionItem {
 }
 
 export interface ProcedimientoHospitalarioItem {
+  readonly profesionalId?: UUID | undefined;
   readonly id: UUID;
   readonly nombre: string;
   readonly codigo?: string | undefined;

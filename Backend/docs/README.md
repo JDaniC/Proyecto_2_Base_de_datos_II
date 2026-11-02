@@ -217,3 +217,17 @@ Esta tarea habilita escritores comunes ya presentes. Órdenes, vacunas y cobros
 especializados siguen su alcance E04/E05: no se presentan como implementados
 porque las políticas de archivo estén disponibles. La integración React de
 estos comandos corresponde a E03-P2-03.
+
+## Hospitalizaciones — E04-P1-02
+
+La extensión hospitalaria v1 publica nueve operaciones bajo `/hospital` (ver
+OpenAPI y `fixtures/hospital-v1.json`). Lecturas completas exigen `historial.leer`;
+comandos además `consultas.registrar`, profesional activo, revisión esperada y
+`Idempotency-Key` UUID. Ingreso recibe `versionEsperadaCama`; restantes comandos
+`versionEsperada`. Cuenta/institución/autor se resuelven desde sesión verificada.
+
+`crearHospitalPostgresql` entrega comandos ligados a una UoW SQL real, con
+operación durable, revisión anterior, auditoría y evento HOSPITALIZACION atómicos.
+Requiere preparación 004 y compatibilidad SQL 007 vigentes; no añade esquema ni
+modifica inicializadores. Validación offline especializada:
+`python scripts/validar-contrato-hospital.py` con requirements-contrato.txt.

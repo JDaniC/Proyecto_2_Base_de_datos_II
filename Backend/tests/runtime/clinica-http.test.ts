@@ -232,6 +232,7 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
       body: JSON.stringify({
         pacienteId: sHosp.paciente.id,
         camaId,
+        versionEsperadaCama: 1,
         motivoIngreso: 'Crisis de hipertensión severa refractaria',
         diagnosticoIngresoCIE: 'I10',
         diagnosticoIngresoNombre: 'Hipertensión esencial primaria',
@@ -246,7 +247,7 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
     // 3. Registrar nota de evolución médica
     const resNota = await fetch(`${url}/hospital/hospitalizaciones/${hosp.id}/notas-evolucion`, {
       method: 'POST',
-      headers: authHeaders,
+      headers: { ...authHeaders, 'idempotency-key': nuevoId() },
       body: JSON.stringify({
         notaClinica: 'Presión arterial estabilizada en 130/85 mmHg con infusión.',
         planTerapeutico: 'Disminuir dosis gradualmente y monitorear.',
@@ -263,6 +264,7 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
       headers: { ...authHeaders, 'idempotency-key': nuevoId() },
       body: JSON.stringify({
         fechaEgreso: '2026-11-01T12:00:00Z',
+        versionEsperada: 2,
         tipoEgreso: 'ALTA_MEDICA',
         diagnosticoEgresoCIE: 'I10',
         diagnosticoEgresoNombre: 'Hipertensión esencial compensada',

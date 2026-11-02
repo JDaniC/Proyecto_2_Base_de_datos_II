@@ -69,6 +69,8 @@ describe('Hospital HTTP (E04-P1-02)', () => {
     const ingreso = await repo.crearIngreso('HOSPITAL_GENERAL', {
       pacienteId: 'pac-01',
       camaId: 'cama-01',
+      medicoTratanteId: 'med-01',
+      fechaIngreso: '2026-10-31T20:00:00Z',
       motivoIngreso: 'Crisis hipertensiva',
       diagnosticoIngresoCIE: 'I10',
       diagnosticoIngresoNombre: 'Hipertensión esencial',
@@ -145,7 +147,22 @@ describe('Hospital HTTP (E04-P1-02)', () => {
       diagnosticoEgresoNombre: 'Hipertensión esencial compensada',
       resumenClinico: 'Paciente dado de alta',
     });
-    expect(egresado.estado).toBe('FINALIZADA');
+    expect(egresado.estado).toBe('EGRESADA');
     expect(egresado.camaActual).toBeUndefined();
+  });
+});
+
+
+describe('Reintento hospitalario', () => {
+  it('conserva la clave tras pérdida de respuesta y renueva la clave al cambiar la versión', async () => {
+    const client = { post: vi.fn().mockRejectedValueOnce(new Error('respuesta perdida'))
+      .mockResolvedValue({ data: { id: 'hosp', estado: 'ACTIVA' } }) } as unknown as HttpClient;
+    const repo = createHttpHospitalizationRepository(client);
+    const nota = { fechaHora: '2026-11-01T12:00:00Z', medicoNombre: 'Sintético', medicoColegiado: '1', notaClinica: 'Control' };
+    await expect(repo.agregarNotaEvolucion('HOSPITAL_GENERAL', 'hosp', nota, 1)).rejects.toThrow('respuesta perdida');
+    await repo.agregarNotaEvolucion('HOSPITAL_GENERAL', 'hosp', nota, 1);
+    expect(vi.mocked(client.post).mock.calls[0]?.[2]?.idempotencyKey).toBe(vi.mocked(client.post).mock.calls[1]?.[2]?.idempotencyKey);
+    await repo.agregarNotaEvolucion('HOSPITAL_GENERAL', 'hosp', nota, 2);
+    expect(vi.mocked(client.post).mock.calls[1]?.[2]?.idempotencyKey).not.toBe(vi.mocked(client.post).mock.calls[2]?.[2]?.idempotencyKey);
   });
 });

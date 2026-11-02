@@ -22,7 +22,7 @@ export const RegistrarEgresoModal: React.FC<RegistrarEgresoModalProps> = ({
   onConfirm
 }) => {
   const [fechaEgreso, setFechaEgreso] = useState<string>(
-    toClinicDateTimeInput()
+    toClinicDateTimeInput(new Date(Date.now() + 60000))
   );
   const [tipoEgreso, setTipoEgreso] = useState<'ALTA_MEDICA' | 'TRASLADO' | 'VOLUNTARIA' | 'FALLECIMIENTO'>('ALTA_MEDICA');
   const [cieCodigo, setCieCodigo] = useState<string>(hospitalizacion.diagnosticoIngresoCIE);

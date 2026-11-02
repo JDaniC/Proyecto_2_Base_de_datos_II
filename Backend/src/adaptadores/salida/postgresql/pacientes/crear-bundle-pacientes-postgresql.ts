@@ -7,7 +7,7 @@ import { crearConsultaHistorialSql } from '../../sql/consulta-historial-sql.js';
 import { RepositorioPacientesPostgresql } from './repositorio-pacientes-postgresql.js';
 import { aplicarCambiosClinicosPostgresql } from '../clinica/aplicar-cambios-clinicos-postgresql.js';
 import { crearPuertosClinicosPostgresql } from '../clinica/crear-puertos-clinicos-postgresql.js';
-import { crearPuertosHospitalPostgresql } from '../hospital/puertos-hospital-postgresql.js';
+import { crearHospitalTransaccionalPostgresql } from '../hospital/hospital-transaccional-postgresql.js';
 
 export function crearRepositorioPacientesPostgresql(pool: PoolSql): RepositorioPacienteLectura {
   return new RepositorioPacientesPostgresql(pool);
@@ -19,7 +19,7 @@ export function crearClinicaPostgresql(pool: PoolSql) {
 }
 
 export function crearHospitalPostgresql(pool: PoolSql) {
-  return crearPuertosHospitalPostgresql(pool);
+  return crearHospitalTransaccionalPostgresql(pool);
 }
 
 export function crearUnidadDeTrabajoPacientesPostgresql(pool: PoolSql): UnidadDeTrabajo {

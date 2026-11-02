@@ -72,6 +72,10 @@ try {
   await mongo.connect();
   await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico')); await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore);
   for (const institucion of instituciones) cuentas.push(await crearCuenta(institucion));
+  const hospitalCuenta = cuentas.find(c => c.institucion === 'HOSPITAL_GENERAL');
+  const habitacion = await pg.consultar(`INSERT INTO habitacion(numero,piso,tipo) VALUES($1,'1','Medicina General') RETURNING id_habitacion`, [`UI-${randomUUID().slice(0,8)}`]);
+  const camas = await pg.consultar(`INSERT INTO cama(id_habitacion,numero_cama) VALUES($1,'UI-A'),($1,'UI-B') RETURNING id_publico`, [habitacion.filas[0].id_habitacion]);
+  hospitalCuenta.hospitalCamas = camas.filas.map(c => c.id_publico);
   const secretariaDental = await crearCuenta('CLINICA_ODONTOLOGICA', true);
   const cuentaDental = cuentas.find((c) => c.institucion === 'CLINICA_ODONTOLOGICA');
   if (cuentaDental) cuentaDental.secretariaCuenta = secretariaDental;

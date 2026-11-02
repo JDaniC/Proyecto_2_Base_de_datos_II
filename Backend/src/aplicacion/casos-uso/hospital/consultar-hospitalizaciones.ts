@@ -12,6 +12,7 @@ export class ConsultarHospitalizaciones {
     filtroEstado?: string,
   ): Promise<readonly Hospitalizacion[]> {
     const puertos = this.obtenerPuertosHospital(contexto, bundle);
+    if (filtroEstado !== undefined && !['ACTIVA', 'FINALIZADA', 'ANULADA'].includes(filtroEstado)) throw new ErrorDominio('SOLICITUD_INVALIDA', 'Estado de hospitalización inválido.');
     return puertos.hospitalizaciones.listar(filtroEstado);
   }
 
@@ -48,6 +49,9 @@ export class ConsultarHospitalizaciones {
   }
 
   private obtenerPuertosHospital(contexto: ContextoAutenticado, bundle: BundleInstitucional): PuertosHospital {
+    if (!contexto.cuenta.permisos.includes('historial.leer')) {
+      throw new ErrorDominio('SIN_PERMISO', 'Se requiere acceso al historial clínico.');
+    }
     if (contexto.cuenta.institucion !== 'HOSPITAL_GENERAL') {
       throw new ErrorDominio('SIN_PERMISO', 'Capacidad hospitalaria exclusiva de Hospital General.');
     }

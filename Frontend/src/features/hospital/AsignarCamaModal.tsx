@@ -24,7 +24,7 @@ export const AsignarCamaModal: React.FC<AsignarCamaModalProps> = ({
 }) => {
   const [nuevaCamaId, setNuevaCamaId] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>(
-    toClinicDateTimeInput()
+    toClinicDateTimeInput(new Date(Date.now() + 60000))
   );
   const [motivo, setMotivo] = useState<string>('');
   const [guardando, setGuardando] = useState(false);

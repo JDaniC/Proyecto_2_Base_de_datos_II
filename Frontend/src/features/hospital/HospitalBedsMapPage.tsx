@@ -127,7 +127,7 @@ export const HospitalBedsMapPage: React.FC = () => {
 
   const handleConfirmarTraslado = async (nuevaCamaId: string, fechaInicio: string, motivo: string) => {
     if (!hospParaTraslado) return;
-    await hospitalizationRepository.asignarCama(institucionId, hospParaTraslado.id, nuevaCamaId, fechaInicio, motivo);
+    await hospitalizationRepository.asignarCama(institucionId, hospParaTraslado.id, nuevaCamaId, fechaInicio, motivo, hospParaTraslado.version);
     setMensajeExito('Traslado de cama registrado correctamente.');
     await cargarDatos();
     setModalTrasladoAbierto(false);
@@ -141,7 +141,8 @@ export const HospitalBedsMapPage: React.FC = () => {
       await hospitalizationRepository.liberarCama(
         institucionId,
         camaParaLiberar.hospitalizacionActivaId,
-        new Date().toISOString()
+        new Date().toISOString(),
+        hospitalizaciones.find(h => h.id === camaParaLiberar.hospitalizacionActivaId)?.version
       );
       setMensajeExito(`Cama ${camaParaLiberar.codigoCama} liberada exitosamente.`);
       await cargarDatos();

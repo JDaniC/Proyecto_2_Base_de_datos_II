@@ -37,6 +37,8 @@ export interface DependenciasUnidadDeTrabajoSql<
   readonly dialecto: DialectoSql;
   readonly pool: PoolSql;
   readonly reintentosMaximos?: number;
+  /** PostgreSQL: serializa reintentos simultáneos de una misma clave antes de leer su resultado. */
+  readonly serializarClavePostgresql?: boolean;
   /** Implementado por el bundle institucional; todas las consultas usan este executor. */
   readonly crearLector: (
     executor: EjecutorSql,
@@ -137,6 +139,11 @@ async function ejecutarIntento<T, TEstado, TSnapshot, TCuenta, TPaciente, TCita,
     inicioEnCurso = false;
     await establecerUtc(conexion, deps.dialecto);
     const idUsuario = await resolverUsuario(conexion, deps.dialecto, contexto);
+    if (deps.serializarClavePostgresql) {
+      if (deps.dialecto !== 'postgresql') throw new Error('SERIALIZACION_CLAVE_REQUIERE_POSTGRESQL');
+      await conexion.consultar('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))',
+        [JSON.stringify([contexto.cuenta.id, comando.caso, comando.claveIdempotencia])]);
+    }
     const lector = crearLectorConOperaciones(deps, conexion, idUsuario, contexto.cuenta.id);
     const previa = await lector.operaciones.porClave<T>(
       contexto.cuenta.id, comando.caso, comando.claveIdempotencia,

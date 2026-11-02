@@ -1,3 +1,5 @@
+import { stableCommandKeys } from '../stableCommand';
+import { HttpError } from '../errors';
 import { HospitalizationRepository } from '../../contracts';
 import { HttpClient } from '../httpClient';
 import {
@@ -13,6 +15,10 @@ import {
 
 export class HttpHospitalizationRepository implements HospitalizationRepository {
   constructor(private readonly client: HttpClient) {}
+  private readonly clave = stableCommandKeys();
+  private mutar<T>(path: string, body: unknown, options?: { idempotencyKey?: string }) {
+    return this.client.post<T>(path, body, { idempotencyKey: options?.idempotencyKey || this.clave(path, body) });
+  }
 
   async listarHospitalizaciones(
     _institucionId: InstitucionId,
@@ -37,8 +43,9 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
         `/hospital/hospitalizaciones/${id}`,
       );
       return normalizarHospitalizacionItem(res.data);
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 404) return null;
+      throw error;
     }
   }
 
@@ -58,7 +65,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     _institucionId: InstitucionId,
     dto: CrearIngresoHospitalarioDTO,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       '/hospital/hospitalizaciones',
       {
         pacienteId: dto.pacienteId,
@@ -81,7 +88,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     hospitalizacionId: string,
     dto: RegistrarEgresoHospitalarioDTO,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       `/hospital/hospitalizaciones/${hospitalizacionId}/egreso`,
       {
         fechaEgreso: dto.fechaEgreso,
@@ -123,7 +130,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     motivo: string,
     versionEsperada?: number,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       `/hospital/hospitalizaciones/${hospitalizacionId}/asignacion-cama`,
       {
         nuevaCamaId,
@@ -141,7 +148,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     fechaFin: string,
     versionEsperada?: number,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       `/hospital/hospitalizaciones/${hospitalizacionId}/liberacion-cama`,
       {
         fechaFin,
@@ -165,7 +172,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     nota: Omit<NotaEvolucionItem, 'id'>,
     versionEsperada?: number,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       `/hospital/hospitalizaciones/${hospitalizacionId}/notas-evolucion`,
       {
         notaClinica: nota.notaClinica,
@@ -182,7 +189,7 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     proc: Omit<ProcedimientoHospitalarioItem, 'id'>,
     versionEsperada?: number,
   ): Promise<HospitalizacionItem> {
-    const res = await this.client.post<HospitalizacionItem>(
+    const res = await this.mutar<HospitalizacionItem>(
       `/hospital/hospitalizaciones/${hospitalizacionId}/procedimientos`,
       {
         nombre: proc.nombre,
@@ -210,7 +217,7 @@ function normalizarHospitalizacionItem(raw: unknown): HospitalizacionItem {
     medicoTratanteColegiado: String(item.medicoTratanteColegiado || ''),
     fechaIngreso: String(item.fechaIngreso || ''),
     fechaEgreso: item.fechaEgreso ? String(item.fechaEgreso) : undefined,
-    estado: item.estado || 'ACTIVA',
+    estado: (item.estado as string) === 'FINALIZADA' ? 'EGRESADA' : item.estado || 'ACTIVA',
     diagnosticoIngresoCIE: String(item.diagnosticoIngresoCIE || ''),
     diagnosticoIngresoNombre: String(item.diagnosticoIngresoNombre || ''),
     diagnosticoEgresoCIE: item.diagnosticoEgresoCIE ? String(item.diagnosticoEgresoCIE) : undefined,

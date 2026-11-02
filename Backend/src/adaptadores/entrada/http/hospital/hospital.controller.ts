@@ -29,7 +29,7 @@ export class HospitalController {
   ) {}
 
   @Get('hospitalizaciones')
-  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar', 'pacientes.administrar'], modo: 'ALGUNO', instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer'], instituciones: ['HOSPITAL_GENERAL'] })
   async listarHospitalizaciones(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
@@ -45,7 +45,7 @@ export class HospitalController {
   }
 
   @Get('hospitalizaciones/:id')
-  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar', 'pacientes.administrar'], modo: 'ALGUNO', instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer'], instituciones: ['HOSPITAL_GENERAL'] })
   async obtenerHospitalizacionPorId(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
@@ -56,7 +56,7 @@ export class HospitalController {
   }
 
   @Get('camas')
-  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar', 'pacientes.administrar'], modo: 'ALGUNO', instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer'], instituciones: ['HOSPITAL_GENERAL'] })
   async listarCamas(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
@@ -66,75 +66,79 @@ export class HospitalController {
   }
 
   @Post('hospitalizaciones')
-  @RequiereAcceso({ permisos: ['consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async crearIngreso(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Body() body: EntradaIngresoHospitalario,
-    @Headers('idempotency-key') _idempotencyKey?: string,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.ingresar(contexto, bundle, body);
+    const item = await this.gestionarHospitalizaciones.ingresar(contexto, bundle, body, idempotencyKey);
     return item;
   }
 
   @Post('hospitalizaciones/:id/egreso')
-  @RequiereAcceso({ permisos: ['consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async registrarEgreso(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Param('id') id: string,
     @Body() body: EntradaEgresoHospitalario,
-    @Headers('idempotency-key') _idempotencyKey?: string,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.egresar(contexto, bundle, id, body);
+    const item = await this.gestionarHospitalizaciones.egresar(contexto, bundle, id, body, idempotencyKey);
     return item;
   }
 
   @Post('hospitalizaciones/:id/asignacion-cama')
-  @RequiereAcceso({ permisos: ['consultas.registrar', 'pacientes.administrar'], modo: 'ALGUNO', instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async asignarCama(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Param('id') id: string,
     @Body() body: EntradaAsignarCama,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.asignarCama(contexto, bundle, id, body);
+    const item = await this.gestionarHospitalizaciones.asignarCama(contexto, bundle, id, body, idempotencyKey);
     return item;
   }
 
   @Post('hospitalizaciones/:id/liberacion-cama')
-  @RequiereAcceso({ permisos: ['consultas.registrar', 'pacientes.administrar'], modo: 'ALGUNO', instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async liberarCama(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Param('id') id: string,
     @Body() body: EntradaLiberarCama,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.liberarCama(contexto, bundle, id, body);
+    const item = await this.gestionarHospitalizaciones.liberarCama(contexto, bundle, id, body, idempotencyKey);
     return item;
   }
 
   @Post('hospitalizaciones/:id/notas-evolucion')
-  @RequiereAcceso({ permisos: ['consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async agregarNotaEvolucion(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Param('id') id: string,
     @Body() body: EntradaNotaEvolucion,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.agregarNotaEvolucion(contexto, bundle, id, body);
+    const item = await this.gestionarHospitalizaciones.agregarNotaEvolucion(contexto, bundle, id, body, idempotencyKey);
     return item;
   }
 
   @Post('hospitalizaciones/:id/procedimientos')
-  @RequiereAcceso({ permisos: ['consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
+  @RequiereAcceso({ permisos: ['historial.leer', 'consultas.registrar'], instituciones: ['HOSPITAL_GENERAL'] })
   async agregarProcedimiento(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,
     @Param('id') id: string,
     @Body() body: EntradaProcedimientoHospitalario,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const item = await this.gestionarHospitalizaciones.agregarProcedimiento(contexto, bundle, id, body);
+    const item = await this.gestionarHospitalizaciones.agregarProcedimiento(contexto, bundle, id, body, idempotencyKey);
     return item;
   }
 }
