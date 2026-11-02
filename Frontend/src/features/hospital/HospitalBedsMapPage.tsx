@@ -39,7 +39,6 @@ export const HospitalBedsMapPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [camas, setCamas] = useState<CamaHospitalaria[]>([]);
-  const [hospitalizaciones, setHospitalizaciones] = useState<HospitalizacionItem[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<'TODAS' | EstadoCama>('TODAS');
   const [filtroPiso, setFiltroPiso] = useState<string>('TODOS');
@@ -61,12 +60,8 @@ export const HospitalBedsMapPage: React.FC = () => {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [camasData, hospData] = await Promise.all([
-        hospitalizationRepository.listarCamas(institucionId),
-        hospitalizationRepository.listarHospitalizaciones(institucionId)
-      ]);
+      const camasData = await hospitalizationRepository.listarCamas(institucionId);
       setCamas(camasData);
-      setHospitalizaciones(hospData);
     } catch {
       // Fallback
     } finally {
@@ -117,17 +112,17 @@ export const HospitalBedsMapPage: React.FC = () => {
   });
 
 
-  const handleAbrirTraslado = (cama: CamaHospitalaria) => {
-    const hosp = hospitalizaciones.find((h) => h.id === cama.hospitalizacionActivaId);
-    if (hosp) {
-      setHospParaTraslado(hosp);
-      setModalTrasladoAbierto(true);
-    }
+  const handleAbrirTraslado = async (cama: CamaHospitalaria) => {
+    if (!cama.hospitalizacionActivaId) return;
+    try {
+      const hosp = await hospitalizationRepository.obtenerHospitalizacionPorId(institucionId, cama.hospitalizacionActivaId);
+      if (hosp) { setHospParaTraslado(hosp); setModalTrasladoAbierto(true); }
+    } catch { setErrorAccion('No se pudo cargar la estancia para el traslado.'); }
   };
 
   const handleConfirmarTraslado = async (nuevaCamaId: string, fechaInicio: string, motivo: string) => {
     if (!hospParaTraslado) return;
-    await hospitalizationRepository.asignarCama(institucionId, hospParaTraslado.id, nuevaCamaId, fechaInicio, motivo);
+    await hospitalizationRepository.asignarCama(institucionId, hospParaTraslado.id, nuevaCamaId, fechaInicio, motivo, hospParaTraslado.version);
     setMensajeExito('Traslado de cama registrado correctamente.');
     await cargarDatos();
     setModalTrasladoAbierto(false);
@@ -138,10 +133,13 @@ export const HospitalBedsMapPage: React.FC = () => {
     if (!camaParaLiberar || !camaParaLiberar.hospitalizacionActivaId) return;
     setLiberando(true);
     try {
+      const estancia = await hospitalizationRepository.obtenerHospitalizacionPorId(institucionId, camaParaLiberar.hospitalizacionActivaId);
+      if (!estancia) { setErrorAccion('No se encontró la estancia.'); return; }
       await hospitalizationRepository.liberarCama(
         institucionId,
         camaParaLiberar.hospitalizacionActivaId,
-        new Date().toISOString()
+        new Date().toISOString(),
+        estancia.version
       );
       setMensajeExito(`Cama ${camaParaLiberar.codigoCama} liberada exitosamente.`);
       await cargarDatos();

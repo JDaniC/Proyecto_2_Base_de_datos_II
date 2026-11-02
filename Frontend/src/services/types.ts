@@ -952,6 +952,7 @@ export type EstadoHospitalizacion = 'ACTIVA' | 'EGRESADA' | 'CANCELADA';
 export type EstadoCama = 'DISPONIBLE' | 'OCUPADA' | 'MANTENIMIENTO';
 
 export interface CamaHospitalaria {
+  version?: number;
   id: string;
   habitacionId: string;
   numeroHabitacion: string;
@@ -1508,3 +1509,5 @@ export interface ReferenciaLaboratorio {
   estado: 'ACTIVO' | 'INACTIVO';
   version?: number;
 }
+
+export interface PaginaHospitalizaciones { items: HospitalizacionItem[]; pagina: number; hayMas: boolean; }

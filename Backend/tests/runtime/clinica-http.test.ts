@@ -207,4 +207,100 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
       s.cuenta = cuentaOriginal;
     }
   });
+
+  it('E04-P1-02: hospitalizaciones, asignación de camas, notas de evolución y egreso en Hospital General', async () => {
+    const sHosp = escenarios[0]!;
+    const authHeaders = {
+      authorization: `Bearer ${tokens[0]!.token}`,
+      'content-type': 'application/json',
+    };
+
+    // 1. Listar camas disponibles
+    const resCamas = await fetch(`${url}/hospital/camas`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+    assert.equal(resCamas.status, 200);
+    const bodyCamas = (await resCamas.json()) as { data: { camas: Array<{ id: string; estado: string; codigoCama: string }> } };
+    assert.ok(bodyCamas.data.camas.length > 0);
+    const camaId = sHosp.camaDemoId;
+
+    // 2. Crear ingreso hospitalario
+    const resIngreso = await fetch(`${url}/hospital/hospitalizaciones`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'idempotency-key': nuevoId() },
+      body: JSON.stringify({
+        pacienteId: sHosp.paciente.id,
+        camaId,
+        versionEsperadaCama: 1,
+        motivoIngreso: 'Crisis de hipertensión severa refractaria',
+        diagnosticoIngresoCIE: 'I10',
+        diagnosticoIngresoNombre: 'Hipertensión esencial primaria',
+      }),
+    });
+    assert.equal(resIngreso.status, 201);
+    const resIngresoBody = (await resIngreso.json()) as { data: { id: string; estado: string; camaActual?: { camaId: string }; version: number } };
+    const hosp = resIngresoBody.data;
+    assert.equal(hosp.estado, 'ACTIVA');
+    assert.equal(hosp.camaActual?.camaId, camaId);
+
+    // 3. Registrar nota de evolución médica
+    const resNota = await fetch(`${url}/hospital/hospitalizaciones/${hosp.id}/notas-evolucion`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'idempotency-key': nuevoId() },
+      body: JSON.stringify({
+        notaClinica: 'Presión arterial estabilizada en 130/85 mmHg con infusión.',
+        planTerapeutico: 'Disminuir dosis gradualmente y monitorear.',
+        versionEsperada: hosp.version,
+      }),
+    });
+    assert.equal(resNota.status, 201);
+    const resNotaBody = (await resNota.json()) as { data: { notasEvolucion: Array<{ notaClinica: string }> } };
+    assert.equal(resNotaBody.data.notasEvolucion[0]?.notaClinica, 'Presión arterial estabilizada en 130/85 mmHg con infusión.');
+
+    // 4. Registrar egreso hospitalario
+    const resEgreso = await fetch(`${url}/hospital/hospitalizaciones/${hosp.id}/egreso`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'idempotency-key': nuevoId() },
+      body: JSON.stringify({
+        fechaEgreso: '2026-11-01T12:00:00Z',
+        versionEsperada: 2,
+        tipoEgreso: 'ALTA_MEDICA',
+        diagnosticoEgresoCIE: 'I10',
+        diagnosticoEgresoNombre: 'Hipertensión esencial compensada',
+        resumenClinico: 'Evolución favorable, paciente estable hemodinámicamente.',
+      }),
+    });
+    assert.equal(resEgreso.status, 201);
+    const resEgresoBody = (await resEgreso.json()) as { data: { estado: string; fechaEgreso: string; camaActual?: unknown } };
+    const hospEgresada = resEgresoBody.data;
+    assert.equal(hospEgresada.estado, 'FINALIZADA');
+    assert.equal(hospEgresada.camaActual, undefined);
+
+    const pagina = await fetch(`${url}/hospital/hospitalizaciones?pagina=1&limite=1`, { headers: authHeaders });
+    assert.equal(pagina.status, 200);
+    const paginaBody = await pagina.json() as { data: { pagina: number; hayMas: boolean; hospitalizaciones: unknown[] } };
+    assert.equal(paginaBody.data.pagina, 1);
+    assert.equal(paginaBody.data.hospitalizaciones.length, 1);
+    assert.equal(paginaBody.data.hayMas, false);
+    const finalizadas = await fetch(`${url}/hospital/hospitalizaciones?pacienteId=${sHosp.paciente.id}&estado=FINALIZADA`, { headers: authHeaders });
+    assert.equal(finalizadas.status, 200);
+    assert.equal(((await finalizadas.json()) as { data: { hospitalizaciones: unknown[] } }).data.hospitalizaciones.length, 1);
+    const activas = await fetch(`${url}/hospital/hospitalizaciones?pacienteId=${sHosp.paciente.id}&estado=ACTIVA`, { headers: authHeaders });
+    assert.equal(activas.status, 200);
+    assert.equal(((await activas.json()) as { data: { hospitalizaciones: unknown[] } }).data.hospitalizaciones.length, 0);
+    for (const query of ['pagina=0', 'limite=101', 'pagina=texto']) {
+      const invalida = await fetch(`${url}/hospital/hospitalizaciones?${query}`, { headers: authHeaders });
+      assert.equal(invalida.status, 400);
+    }
+
+    // 5. Verificar rechazo en otra institución (ej: CLINICA_ODONTOLOGICA, index 1)
+    const resDental = await fetch(`${url}/hospital/camas`, {
+      method: 'GET',
+      headers: {
+        authorization: `Bearer ${tokens[1]!.token}`,
+      },
+    });
+    assert.equal(resDental.status, 403);
+  });
 });

@@ -22,6 +22,7 @@ import {
   Paciente,
   MedicoCatalogo,
   CamaHospitalaria,
+  EventoHistorial,
   CrearIngresoHospitalarioDTO
 } from '../../services/types';
 
@@ -31,10 +32,11 @@ export const HospitalizationAdmissionPage: React.FC = () => {
   const pacienteIdParam = searchParams.get('pacienteId');
 
   const { sesion } = useAuthSession();
-  const { hospitalizationRepository, patientRepository, catalogRepository } = useServices();
+  const { mode, hospitalizationRepository, patientRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
 
   const [loading, setLoading] = useState(true);
+  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [medicos, setMedicos] = useState<MedicoCatalogo[]>([]);
   const [camas, setCamas] = useState<CamaHospitalaria[]>([]);
@@ -51,7 +53,32 @@ export const HospitalizationAdmissionPage: React.FC = () => {
   const [motivoIngreso, setMotivoIngreso] = useState<string>('');
   
   // Enlace de consultas previas del mismo paciente
+  const [consultasPrevias, setConsultasPrevias] = useState<EventoHistorial[]>([]);
+  const [consultaPreviaId, setConsultaPreviaId] = useState('');
   const [enlazarConsultaPrevia, setEnlazarConsultaPrevia] = useState(false);
+
+  useEffect(() => {
+    let vigente = true;
+    setConsultasPrevias([]);
+    setConsultaPreviaId('');
+    if (pacienteSeleccionadoId && patientRepository.obtenerHistorial) {
+      patientRepository.obtenerHistorial(institucionId, pacienteSeleccionadoId, { tipo: 'CONSULTA', limite: 100 })
+        .then(pagina => { if (vigente) setConsultasPrevias(pagina.eventos); })
+        .catch(() => { if (vigente) setErrorGlobal('No se pudieron cargar las consultas previas.'); });
+    }
+    return () => { vigente = false; };
+  }, [pacienteSeleccionadoId, institucionId, patientRepository]);
+
+  useEffect(() => {
+    if (!busquedaPaciente.trim()) return;
+    let vigente = true;
+    const timer = setTimeout(() => {
+      patientRepository.buscar(institucionId, { q: busquedaPaciente.trim() }).then(r => {
+        if (vigente) setPacientes(r.items.filter(p => p.estado === 'ACTIVO'));
+      }).catch(() => { if (vigente) setErrorGlobal('No se pudo buscar pacientes.'); });
+    }, 250);
+    return () => { vigente = false; clearTimeout(timer); };
+  }, [busquedaPaciente, institucionId, patientRepository]);
 
   const [guardando, setGuardando] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState<string | null>(null);
@@ -61,7 +88,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       setLoading(true);
       try {
         const [pacientesRes, medicosRes, camasRes] = await Promise.all([
-          patientRepository.buscar(institucionId, { q: '' }),
+          pacienteIdParam ? patientRepository.obtenerPorId(institucionId, pacienteIdParam).then(p => ({ items: p ? [p] : [] })) : Promise.resolve({ items: [] as Paciente[] }),
           catalogRepository.obtenerMedicos(institucionId),
           hospitalizationRepository.listarCamas(institucionId)
         ]);
@@ -122,7 +149,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       setErrorGlobal('Debe seleccionar un paciente con expediente activo.');
       return;
     }
-    if (!medicoSeleccionadoId) {
+    if (mode !== 'api' && !medicoSeleccionadoId) {
       setErrorGlobal('Debe asignar un médico tratante activo responsable del internamiento.');
       return;
     }
@@ -137,7 +164,8 @@ export const HospitalizationAdmissionPage: React.FC = () => {
 
     const consultasEnlazadas: string[] = [];
     if (enlazarConsultaPrevia) {
-      consultasEnlazadas.push(`cons-${pacienteActual?.id || 'pac'}-previa-01`);
+      if (!consultaPreviaId) { setErrorGlobal('Seleccione una consulta previa del paciente.'); return; }
+      consultasEnlazadas.push(consultaPreviaId);
     }
 
     const dto: CrearIngresoHospitalarioDTO = {
@@ -148,6 +176,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       medicoTratanteNombre: medicoActual?.nombre,
       medicoTratanteColegiado: medicoActual?.colegiado,
       camaId: camaSeleccionadaId,
+      versionEsperadaCama: camas.find(c => c.id === camaSeleccionadaId)?.version,
       fechaIngreso: fromClinicDateTimeInput(fechaIngreso),
       diagnosticoIngresoCIE: cieCodigo,
       diagnosticoIngresoNombre: cieNombre,
@@ -283,6 +312,8 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                 >
                   Paciente a Hospitalizar (Expediente Activo) *
                 </label>
+                <input aria-label="Buscar paciente para ingreso" placeholder="Nombre o documento del paciente"
+                  value={busquedaPaciente} onChange={e => setBusquedaPaciente(e.target.value)} />
                 <select
                   id="paciente-select"
                   value={pacienteSeleccionadoId}
@@ -316,6 +347,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                 >
                   Médico Tratante / Especialista Responsable *
                 </label>
+                {mode === 'api' ? <div id="medico-select">{sesion?.nombre} — médico de la sesión activa</div> : <>
                 <select
                   id="medico-select"
                   value={medicoSeleccionadoId}
@@ -340,6 +372,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                     Colegiado Activo: <strong>{medicoActual.colegiado}</strong> • Especialidad: <strong>{medicoActual.especialidadPrincipal}</strong>
                   </div>
                 )}
+                </>}
               </div>
 
               <div>
@@ -347,11 +380,12 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                   htmlFor="fecha-ingreso-input"
                   style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-strong)', marginBottom: '6px' }}
                 >
-                  Fecha y Hora de Ingreso *
+                  {mode === 'api' ? 'Hora de referencia (el ingreso se sella al confirmar)' : 'Fecha y Hora de Ingreso *'}
                 </label>
                 <input
                   id="fecha-ingreso-input"
                   type="datetime-local"
+                  disabled={mode === 'api'}
                   value={fechaIngreso}
                   onChange={(e) => setFechaIngreso(e.target.value)}
                   required
@@ -570,7 +604,12 @@ export const HospitalizationAdmissionPage: React.FC = () => {
                 }}
               >
                 <div style={{ fontSize: '13px', color: 'var(--color-strong)', fontWeight: 600 }}>
-                  Consulta seleccionada: Consulta de Urgencias / Medicina General — Expediente {pacienteActual?.codigoLegible}
+                  <label>Consulta del paciente
+                    <select aria-label="Consulta previa" value={consultaPreviaId} onChange={e => setConsultaPreviaId(e.target.value)}>
+                      <option value="">Seleccione una consulta</option>
+                      {consultasPrevias.map(c => <option key={c.id} value={c.consultaId || c.recursoId}>{c.titulo} — {c.fechaHora}</option>)}
+                    </select>
+                  </label>
                 </div>
               <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                 La consulta seleccionada debe pertenecer a {pacienteActual?.nombreCompleto}.

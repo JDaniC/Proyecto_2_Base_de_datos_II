@@ -603,72 +603,80 @@
   {
     "metodo": "HospitalizationRepository.listarHospitalizaciones",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationsListPage.tsx:44`, `features/hospital/HospitalBedsMapPage.tsx:66`",
-    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones?estado={filtroEstado}`"
+    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones?estado={filtroEstado}`",
+    "operationId": "hospitalListar"
   },
   {
     "metodo": "HospitalizationRepository.obtenerHospitalizacionPorId",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:67`",
-    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones/{id}`"
+    "propuesta_inventario": "`GET /api/v1/hospital/hospitalizaciones/{id}`",
+    "operationId": "hospitalPorId"
   },
   {
     "metodo": "HospitalizationRepository.obtenerHospitalizacionesPorPaciente",
     "categoria": "SIN_USO_DIRECTO_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
+    "operationId": "hospitalListar"
   },
   {
     "metodo": "HospitalizationRepository.crearIngreso",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationAdmissionPage.tsx:160`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones`",
+    "operationId": "hospitalIngresar"
   },
   {
     "metodo": "HospitalizationRepository.registrarEgreso",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:85`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/egreso`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/egreso`",
+    "operationId": "hospitalEgresar"
   },
   {
     "metodo": "HospitalizationRepository.listarCamas",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationsListPage.tsx:45`, `features/hospital/HospitalBedsMapPage.tsx:65`, `features/hospital/HospitalizationAdmissionPage.tsx:66`, `features/hospital/HospitalizationDetailPage.tsx:68`, `88`, `98`",
-    "propuesta_inventario": "`GET /api/v1/hospital/camas`"
+    "propuesta_inventario": "`GET /api/v1/hospital/camas`",
+    "operationId": "hospitalCamas"
   },
   {
     "metodo": "HospitalizationRepository.asignarCama",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalBedsMapPage.tsx:130`, `features/hospital/HospitalizationDetailPage.tsx:95`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/asignacion-cama`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/asignacion-cama`",
+    "operationId": "hospitalAsignarCama"
   },
   {
     "metodo": "HospitalizationRepository.liberarCama",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalBedsMapPage.tsx:141`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/liberacion-cama`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/liberacion-cama`",
+    "operationId": "hospitalLiberarCama"
   },
   {
     "metodo": "HospitalizationRepository.cambiarEstadoCama",
@@ -680,20 +688,22 @@
   {
     "metodo": "HospitalizationRepository.agregarNotaEvolucion",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:108`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/notas-evolucion`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/notas-evolucion`",
+    "operationId": "hospitalNota"
   },
   {
     "metodo": "HospitalizationRepository.agregarProcedimiento",
     "categoria": "VIGENTE_UI",
-    "destino": "EXTENSION_PENDIENTE",
+    "destino": "COMUN_V1",
     "responsable": "E04-P1-02",
-    "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
+    "regla": "Extensión hospitalaria v1 conectada; acceso clínico, versión y clave UUID obligatorios para comandos.",
     "fuente_ui": "`features/hospital/HospitalizationDetailPage.tsx:131`",
-    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/procedimientos`"
+    "propuesta_inventario": "`POST /api/v1/hospital/hospitalizaciones/{hospitalizacionId}/procedimientos`",
+    "operationId": "hospitalProcedimiento"
   },
   {
     "metodo": "HospitalExamRepository.listarOrdenes",

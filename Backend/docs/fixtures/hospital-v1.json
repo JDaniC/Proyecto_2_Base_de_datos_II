@@ -1,0 +1,220 @@
+[
+  {
+    "id": "HospitalIngreso-valido",
+    "schema": "HospitalIngreso",
+    "valid": true,
+    "value": {
+      "pacienteId": "00000000-0000-4000-8000-000000000001",
+      "camaId": "00000000-0000-4000-8000-000000000001",
+      "motivoIngreso": "Observación sintética",
+      "diagnosticoIngresoCIE": "Z09",
+      "diagnosticoIngresoNombre": "Seguimiento",
+      "versionEsperadaCama": 1
+    }
+  },
+  {
+    "id": "HospitalIngreso-rechaza-autoridad",
+    "schema": "HospitalIngreso",
+    "valid": false,
+    "value": {
+      "pacienteId": "00000000-0000-4000-8000-000000000001",
+      "camaId": "00000000-0000-4000-8000-000000000001",
+      "motivoIngreso": "Observación sintética",
+      "diagnosticoIngresoCIE": "Z09",
+      "diagnosticoIngresoNombre": "Seguimiento",
+      "versionEsperadaCama": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalIngreso-sin-version",
+    "schema": "HospitalIngreso",
+    "valid": false,
+    "value": {
+      "pacienteId": "00000000-0000-4000-8000-000000000001",
+      "camaId": "00000000-0000-4000-8000-000000000001",
+      "motivoIngreso": "Observación sintética",
+      "diagnosticoIngresoCIE": "Z09",
+      "diagnosticoIngresoNombre": "Seguimiento"
+    }
+  },
+  {
+    "id": "HospitalEgreso-valido",
+    "schema": "HospitalEgreso",
+    "valid": true,
+    "value": {
+      "fechaEgreso": "2026-11-01T12:00:00Z",
+      "tipoEgreso": "ALTA_MEDICA",
+      "diagnosticoEgresoCIE": "Z09",
+      "diagnosticoEgresoNombre": "Alta",
+      "resumenClinico": "Estable",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "HospitalEgreso-rechaza-autoridad",
+    "schema": "HospitalEgreso",
+    "valid": false,
+    "value": {
+      "fechaEgreso": "2026-11-01T12:00:00Z",
+      "tipoEgreso": "ALTA_MEDICA",
+      "diagnosticoEgresoCIE": "Z09",
+      "diagnosticoEgresoNombre": "Alta",
+      "resumenClinico": "Estable",
+      "versionEsperada": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalEgreso-sin-version",
+    "schema": "HospitalEgreso",
+    "valid": false,
+    "value": {
+      "fechaEgreso": "2026-11-01T12:00:00Z",
+      "tipoEgreso": "ALTA_MEDICA",
+      "diagnosticoEgresoCIE": "Z09",
+      "diagnosticoEgresoNombre": "Alta",
+      "resumenClinico": "Estable"
+    }
+  },
+  {
+    "id": "HospitalAsignar-valido",
+    "schema": "HospitalAsignar",
+    "valid": true,
+    "value": {
+      "nuevaCamaId": "00000000-0000-4000-8000-000000000001",
+      "fechaInicio": "2026-11-01T12:00:00Z",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "HospitalAsignar-rechaza-autoridad",
+    "schema": "HospitalAsignar",
+    "valid": false,
+    "value": {
+      "nuevaCamaId": "00000000-0000-4000-8000-000000000001",
+      "fechaInicio": "2026-11-01T12:00:00Z",
+      "versionEsperada": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalAsignar-sin-version",
+    "schema": "HospitalAsignar",
+    "valid": false,
+    "value": {
+      "nuevaCamaId": "00000000-0000-4000-8000-000000000001",
+      "fechaInicio": "2026-11-01T12:00:00Z"
+    }
+  },
+  {
+    "id": "HospitalLiberar-valido",
+    "schema": "HospitalLiberar",
+    "valid": true,
+    "value": {
+      "fechaFin": "2026-11-01T12:00:00Z",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "HospitalLiberar-rechaza-autoridad",
+    "schema": "HospitalLiberar",
+    "valid": false,
+    "value": {
+      "fechaFin": "2026-11-01T12:00:00Z",
+      "versionEsperada": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalLiberar-sin-version",
+    "schema": "HospitalLiberar",
+    "valid": false,
+    "value": {
+      "fechaFin": "2026-11-01T12:00:00Z"
+    }
+  },
+  {
+    "id": "HospitalNota-valido",
+    "schema": "HospitalNota",
+    "valid": true,
+    "value": {
+      "notaClinica": "Evolución estable",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "HospitalNota-rechaza-autoridad",
+    "schema": "HospitalNota",
+    "valid": false,
+    "value": {
+      "notaClinica": "Evolución estable",
+      "versionEsperada": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalNota-sin-version",
+    "schema": "HospitalNota",
+    "valid": false,
+    "value": {
+      "notaClinica": "Evolución estable"
+    }
+  },
+  {
+    "id": "HospitalProcedimiento-valido",
+    "schema": "HospitalProcedimiento",
+    "valid": true,
+    "value": {
+      "nombre": "Control",
+      "resultado": "Estable",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "HospitalProcedimiento-rechaza-autoridad",
+    "schema": "HospitalProcedimiento",
+    "valid": false,
+    "value": {
+      "nombre": "Control",
+      "resultado": "Estable",
+      "versionEsperada": 1,
+      "institucion": "HOSPITAL_GENERAL"
+    }
+  },
+  {
+    "id": "HospitalProcedimiento-sin-version",
+    "schema": "HospitalProcedimiento",
+    "valid": false,
+    "value": {
+      "nombre": "Control",
+      "resultado": "Estable"
+    }
+  },
+  {
+    "id": "egreso-tipo-invalido",
+    "schema": "HospitalEgreso",
+    "valid": false,
+    "value": {
+      "fechaEgreso": "2026-11-01T12:00:00Z",
+      "tipoEgreso": "OTRO",
+      "diagnosticoEgresoCIE": "Z09",
+      "diagnosticoEgresoNombre": "Alta",
+      "resumenClinico": "Estable",
+      "versionEsperada": 1
+    }
+  },
+  {
+    "id": "egreso-vacio",
+    "schema": "HospitalEgreso",
+    "valid": false,
+    "value": {
+      "fechaEgreso": "2026-11-01T12:00:00Z",
+      "tipoEgreso": "ALTA_MEDICA",
+      "diagnosticoEgresoCIE": "Z09",
+      "diagnosticoEgresoNombre": "Alta",
+      "resumenClinico": "   ",
+      "versionEsperada": 1
+    }
+  }
+]

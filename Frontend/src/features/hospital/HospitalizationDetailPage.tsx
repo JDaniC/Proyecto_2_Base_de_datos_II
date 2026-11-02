@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../services/errors';
 import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -57,6 +58,7 @@ export const HospitalizationDetailPage: React.FC = () => {
   const [procObs, setProcObs] = useState('');
   const [guardandoProc, setGuardandoProc] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   const cargarDatos = async () => {
@@ -69,8 +71,8 @@ export const HospitalizationDetailPage: React.FC = () => {
       ]);
       setHospitalizacion(hosp);
       setCamas(camasRes);
-    } catch {
-      // Fallback
+    } catch (error) {
+      setError(getErrorMessage(error, 'No se pudo cargar la estancia.'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export const HospitalizationDetailPage: React.FC = () => {
 
   const handleEgresoConfirm = async (dto: RegistrarEgresoHospitalarioDTO) => {
     if (!hospitalizacion) return;
-    const actualizado = await hospitalizationRepository.registrarEgreso(institucionId, hospitalizacion.id, dto);
+    const actualizado = await hospitalizationRepository.registrarEgreso(institucionId, hospitalizacion.id, { ...dto, versionEsperada: hospitalizacion.version });
     setHospitalizacion(actualizado);
     setMensajeExito('Egreso hospitalario registrado exitosamente y cama liberada.');
     const camasActualizadas = await hospitalizationRepository.listarCamas(institucionId);
@@ -92,7 +94,7 @@ export const HospitalizationDetailPage: React.FC = () => {
 
   const handleAsignarCamaConfirm = async (nuevaCamaId: string, fechaInicio: string, motivo: string) => {
     if (!hospitalizacion) return;
-    const actualizado = await hospitalizationRepository.asignarCama(institucionId, hospitalizacion.id, nuevaCamaId, fechaInicio, motivo);
+    const actualizado = await hospitalizationRepository.asignarCama(institucionId, hospitalizacion.id, nuevaCamaId, fechaInicio, motivo, hospitalizacion.version);
     setHospitalizacion(actualizado);
     setMensajeExito('Traslado de cama registrado correctamente.');
     const camasActualizadas = await hospitalizationRepository.listarCamas(institucionId);
@@ -103,6 +105,7 @@ export const HospitalizationDetailPage: React.FC = () => {
   const handleAgregarNota = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hospitalizacion || !notaTexto.trim()) return;
+    setError(null);
     setGuardandoNota(true);
     try {
       const actualizado = await hospitalizationRepository.agregarNotaEvolucion(institucionId, hospitalizacion.id, {
@@ -111,13 +114,15 @@ export const HospitalizationDetailPage: React.FC = () => {
         fechaHora: new Date().toISOString(),
         notaClinica: notaTexto.trim(),
         planTerapeutico: planTexto.trim() || undefined
-      });
+      }, hospitalizacion.version);
       setHospitalizacion(actualizado);
       setNotaTexto('');
       setPlanTexto('');
       setMostrarFormNota(false);
       setMensajeExito('Nota de evolución registrada exitosamente.');
       setTimeout(() => setMensajeExito(null), 3500);
+    } catch (error) {
+      setError(getErrorMessage(error, 'No se pudo registrar la nota. Reintente con el mismo contenido.'));
     } finally {
       setGuardandoNota(false);
     }
@@ -126,6 +131,7 @@ export const HospitalizationDetailPage: React.FC = () => {
   const handleAgregarProc = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hospitalizacion || !procNombre.trim() || !procResultado.trim()) return;
+    setError(null);
     setGuardandoProc(true);
     try {
       const actualizado = await hospitalizationRepository.agregarProcedimiento(institucionId, hospitalizacion.id, {
@@ -134,7 +140,7 @@ export const HospitalizationDetailPage: React.FC = () => {
         profesionalNombre: sesion?.nombre || 'Dra. Elena Morales',
         resultado: procResultado.trim(),
         observaciones: procObs.trim() || undefined
-      });
+      }, hospitalizacion.version);
       setHospitalizacion(actualizado);
       setProcNombre('');
       setProcResultado('');
@@ -142,6 +148,8 @@ export const HospitalizationDetailPage: React.FC = () => {
       setMostrarFormProc(false);
       setMensajeExito('Procedimiento clínico registrado exitosamente.');
       setTimeout(() => setMensajeExito(null), 3500);
+    } catch (error) {
+      setError(getErrorMessage(error, 'No se pudo registrar el procedimiento.'));
     } finally {
       setGuardandoProc(false);
     }
@@ -178,6 +186,7 @@ export const HospitalizationDetailPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {error && <div role="alert">{error}</div>}
       {/* Breadcrumb */}
       <nav aria-label="Ruta de navegación" style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
         <span>Inicio</span>

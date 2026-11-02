@@ -12,6 +12,9 @@ import type { BundleInstitucional } from '../../src/aplicacion/puertos/bundle-in
 import type { AntecedentesClinicos, PuertosClinicos, RevisionCita } from '../../src/aplicacion/puertos/clinica.js';
 import { CATALOGO_ODONTOLOGIA_BASE } from '../../src/aplicacion/casos-uso/clinica/consultar-catalogos-clinicos.js';
 import type { LectorTransaccional, UnidadDeTrabajo, OperacionIdempotente, RevisionPlanificada, EventoAuditoria, CambioPlanificado } from '../../src/aplicacion/puertos/nucleo.js';
+import type { PuertosHospital } from '../../src/aplicacion/puertos/hospital.js';
+import type { CamaHospitalaria, Hospitalizacion } from '../../src/dominio/hospital/hospitalizacion.js';
+
 export const nuevoId = () => uuidPublico(randomUUID());
 export const ahora = instanteUtc('2026-10-28T18:00:00Z');
 export const medicamento = { nombre: 'Medicamento sintético', presentacion: 'Tableta', concentracion: '10 mg', dosis: '1 tableta', frecuencia: 'Cada 24 h', duracion: '3 días', via: 'Oral', indicaciones: 'Indicación sintética' };
@@ -128,7 +131,171 @@ export function escenarioClinico(institucion: Institucion) {
       return plan.resultado;
     } finally { liberar(); }
   } };
+  const camasHospital = new Map<string, CamaHospitalaria>();
+  const hospHospital = new Map<string, Hospitalizacion>();
+
+  const camaDemoId = nuevoId();
+  const camaDemo: CamaHospitalaria = {
+    id: camaDemoId,
+    habitacionId: nuevoId(),
+    numeroHabitacion: '201',
+    piso: 2,
+    salaServicio: 'Medicina General',
+    codigoCama: '201-A',
+    estado: 'DISPONIBLE',
+    version: versionPositiva(1),
+  };
+  camasHospital.set(camaDemo.id, camaDemo);
+
+  const hospital: PuertosHospital = {
+    camas: {
+      async listar() { return Object.freeze([...camasHospital.values()]); },
+      async porId(id) { return camasHospital.get(id) ?? null; },
+    },
+    hospitalizaciones: {
+      async porId(id) { return hospHospital.get(id) ?? null; },
+      async listar(filtroEstado) {
+        let lista = [...hospHospital.values()];
+        if (filtroEstado) lista = lista.filter((h) => h.estado === filtroEstado);
+        return Object.freeze(lista);
+      },
+      async porPaciente(pacienteId, _pagina, estado) {
+        return Object.freeze([...hospHospital.values()].filter((h) => h.pacienteId === pacienteId && (!estado || h.estado === estado)));
+      },
+      async ingresar(params, medicoResponsableId) {
+        const cama = camasHospital.get(params.camaId);
+        if (!cama) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Cama no encontrada');
+        if (cama.estado !== 'DISPONIBLE') throw new ErrorDominio('ESTADO_INVALIDO', 'Cama ocupada');
+        const nuevaCama: CamaHospitalaria = { ...cama, estado: 'OCUPADA', hospitalizacionActivaId: nuevoId(), pacienteActual: paciente.nombres };
+        camasHospital.set(cama.id, nuevaCama);
+
+        const idHosp = nuevoId();
+        const nuevaHosp: Hospitalizacion = {
+          id: idHosp,
+          codigoIngreso: 'ING-000001',
+          pacienteId: params.pacienteId,
+          pacienteNombre: `${paciente.nombres} ${paciente.apellidos}`,
+          pacienteExpediente: 'EXP-001',
+          medicoTratanteId: medicoResponsableId,
+          medicoTratanteNombre: profesional.nombre,
+          medicoTratanteColegiado: profesional.colegiado || '',
+          fechaIngreso: '2026-10-31T20:00:00Z',
+          estado: 'ACTIVA',
+          diagnosticoIngresoCIE: params.diagnosticoIngresoCIE,
+          diagnosticoIngresoNombre: params.diagnosticoIngresoNombre,
+          motivoIngreso: params.motivoIngreso,
+          camaActual: {
+            camaId: cama.id,
+            codigoCama: cama.codigoCama,
+            habitacion: `Habitación ${cama.numeroHabitacion}`,
+            servicio: cama.salaServicio,
+          },
+          asignacionesCama: [{
+            id: nuevoId(),
+            camaId: cama.id,
+            codigoCama: cama.codigoCama,
+            habitacion: `Habitación ${cama.numeroHabitacion}`,
+            servicio: cama.salaServicio,
+            fechaInicio: '2026-10-31T20:00:00Z',
+            version: versionPositiva(1),
+          }],
+          consultasEnlazadasIds: params.consultasEnlazadasIds || [],
+          notasEvolucion: [],
+          procedimientos: [],
+          version: versionPositiva(1),
+        };
+        hospHospital.set(nuevaHosp.id, nuevaHosp);
+        return nuevaHosp;
+      },
+      async egresar(params) {
+        const hosp = hospHospital.get(params.hospitalizacionId);
+        if (!hosp) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Hospitalización no encontrada');
+        if (hosp.estado !== 'ACTIVA') throw new ErrorDominio('ESTADO_INVALIDO', 'No está activa');
+        const egresada: Hospitalizacion = {
+          ...hosp,
+          estado: 'FINALIZADA',
+          fechaEgreso: params.fechaEgreso,
+          diagnosticoEgresoCIE: params.diagnosticoEgresoCIE,
+          diagnosticoEgresoNombre: params.diagnosticoEgresoNombre,
+          tipoEgreso: params.tipoEgreso,
+          resumenEgreso: params.resumenClinico,
+          camaActual: undefined,
+          version: versionPositiva(hosp.version + 1),
+        };
+        hospHospital.set(egresada.id, egresada);
+        return egresada;
+      },
+      async asignarCama(params) {
+        const hosp = hospHospital.get(params.hospitalizacionId);
+        if (!hosp) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Hospitalización no encontrada');
+        const camaDest = camasHospital.get(params.nuevaCamaId);
+        if (!camaDest) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Cama destino no encontrada');
+        const actualizada: Hospitalizacion = {
+          ...hosp,
+          camaActual: {
+            camaId: camaDest.id,
+            codigoCama: camaDest.codigoCama,
+            habitacion: `Habitación ${camaDest.numeroHabitacion}`,
+            servicio: camaDest.salaServicio,
+          },
+          version: versionPositiva(hosp.version + 1),
+        };
+        hospHospital.set(actualizada.id, actualizada);
+        return actualizada;
+      },
+      async liberarCama(params) {
+        const hosp = hospHospital.get(params.hospitalizacionId);
+        if (!hosp) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Hospitalización no encontrada');
+        const actualizada: Hospitalizacion = {
+          ...hosp,
+          camaActual: undefined,
+          version: versionPositiva(hosp.version + 1),
+        };
+        hospHospital.set(actualizada.id, actualizada);
+        return actualizada;
+      },
+      async agregarNotaEvolucion(params, medico) {
+        const hosp = hospHospital.get(params.hospitalizacionId);
+        if (!hosp) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Hospitalización no encontrada');
+        const actualizada: Hospitalizacion = {
+          ...hosp,
+          notasEvolucion: [{
+            id: nuevoId(),
+            fechaHora: '2026-10-31T21:00:00Z',
+            medicoNombre: medico.nombre,
+            medicoColegiado: medico.colegiado,
+            notaClinica: params.notaClinica,
+            planTerapeutico: params.planTerapeutico,
+          }, ...hosp.notasEvolucion],
+          version: versionPositiva(hosp.version + 1),
+        };
+        hospHospital.set(actualizada.id, actualizada);
+        return actualizada;
+      },
+      async agregarProcedimiento(params, prof) {
+        const hosp = hospHospital.get(params.hospitalizacionId);
+        if (!hosp) throw new ErrorDominio('RECURSO_NO_ENCONTRADO', 'Hospitalización no encontrada');
+        const actualizada: Hospitalizacion = {
+          ...hosp,
+          procedimientos: [{
+            id: nuevoId(),
+            nombre: params.nombre,
+            resultado: params.resultado,
+            codigo: params.codigo,
+            fechaHora: '2026-10-31T21:30:00Z',
+            profesionalNombre: prof.nombre,
+            observaciones: params.observaciones,
+          }, ...hosp.procedimientos],
+          version: versionPositiva(hosp.version + 1),
+        };
+        hospHospital.set(actualizada.id, actualizada);
+        return actualizada;
+      },
+    },
+  };
+
   const bundle: BundleInstitucional = { institucion, estadoPersistencia: 'DISPONIBLE', clinica, uow,
+    ...(institucion === 'HOSPITAL_GENERAL' ? { hospital } : {}),
     cuenta: { async porUid() { return cuenta; } } };
   const cita: Cita = { id: nuevoId(), paciente_id: paciente.id, profesional_id: profesional.id, fecha: '2026-10-28', hora_inicio: '10:00', hora_fin: '10:30', duracion_minutos: 30, motivo: 'Control', estado: 'PROGRAMADA', version: versionPositiva(1), fecha_creacion: ahora };
   citas.set(cita.id, cita);
@@ -136,6 +303,9 @@ export function escenarioClinico(institucion: Institucion) {
     ...(institucion === 'CLINICA_ODONTOLOGICA' ? { cita_id: cita.id, version_cita: 1 } : {}),
     ...(institucion === 'CENTRO_MEDICO_PEDIATRICO' ? { responsable_id: responsableId, version_vinculo: 1 } : {}) };
   return { contexto, bundle, paciente, cita, responsableId, entrada, control,
+    camaDemoId,
+    get camasHospital() { return camasHospital; },
+    get hospHospital() { return hospHospital; },
     get pacientes() { return pacientes; }, get citas() { return citas; }, get consultas() { return consultas; }, get operaciones() { return operaciones; },
     get auditoria() { return auditoria; }, get revisiones() { return revisiones; }, get eventos() { return eventos; },
     get cuenta() { return cuenta; }, set cuenta(c: CuentaAutorizada) { cuenta = c; },

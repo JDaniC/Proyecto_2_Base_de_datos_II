@@ -1,3 +1,5 @@
+import { GestionarHospitalizaciones } from '../../src/aplicacion/casos-uso/hospital/gestionar-hospitalizaciones.js';
+import { ConsultarHospitalizaciones } from '../../src/aplicacion/casos-uso/hospital/consultar-hospitalizaciones.js';
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import { ConsultarCitas } from '../../src/aplicacion/casos-uso/citas/consultar-citas.js';
 import { ConsultarAntecedentesClinicos, ActualizarAntecedentesClinicos } from '../../src/aplicacion/casos-uso/pacientes/antecedentes-clinicos.js';
@@ -19,6 +21,7 @@ import { crearRepositorioCuentaPostgresql } from '../../src/adaptadores/salida/p
 import { crearRepositorioCuentaMysql } from '../../src/adaptadores/salida/mysql/repositorio-cuenta-mysql.js';
 import {
   crearClinicaPostgresql,
+  crearHospitalPostgresql,
   crearRepositorioPacientesPostgresql,
   crearUnidadDeTrabajoPacientesPostgresql,
 } from '../../src/adaptadores/salida/postgresql/pacientes/crear-bundle-pacientes-postgresql.js';
@@ -160,6 +163,7 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
     ? crearRepositorioPacientesPostgresql(pool)
     : crearRepositorioPacientesMysql(pool);
   const bundle: BundleInstitucional = {
+    ...(dialecto === 'postgresql' ? { hospital: crearHospitalPostgresql(pool) } : {}),
     institucion, estadoPersistencia: 'DISPONIBLE', clinica, uow, pacientes,
   };
 
@@ -383,7 +387,276 @@ async function verificarClinica(pool: PoolSql, dialecto: 'postgresql' | 'mysql')
 
   if (dialecto === 'mysql') {
     await verificarFlujoDentalDosRolesMysql(pool, bundle, clinica, pacientes, profesionalId);
+  } else if (dialecto === 'postgresql') {
+    await verificarHospitalizacionesPostgresql(pool, bundle, profesionalId, contexto);
   }
+}
+
+async function verificarHospitalizacionesPostgresql(
+  pool: PoolSql,
+  bundle: BundleInstitucional,
+  medicoId: string,
+  contexto: ReturnType<typeof crearContextoAutenticado>,
+): Promise<void> {
+  const hospital = bundle.hospital;
+  assert.ok(hospital, 'El adaptador hospitalario debe estar conectado');
+
+  // Insertar un paciente activo nuevo para la prueba hospitalaria
+  const pacHospId = randomUUID();
+  await pool.consultar(
+    `INSERT INTO paciente (id_publico, primer_nombre, primer_apellido)
+     VALUES ($1, 'Carlos', 'Gómez')`,
+    [pacHospId],
+  );
+  const idPacInterno = await pool.consultar<{ id_paciente: number }>(
+    'SELECT id_paciente FROM paciente WHERE id_publico = $1',
+    [pacHospId],
+  );
+  await pool.consultar(
+    `INSERT INTO historial_clinico (id_paciente, numero_historial)
+     VALUES ($1, $2)`,
+    [idPacInterno.filas[0]!.id_paciente, `HOSP-${randomUUID().slice(0, 8)}`],
+  );
+
+  // Asegurar que existan al menos dos camas disponibles
+  const habRes = await pool.consultar<{ id_habitacion: number }>(
+    `INSERT INTO habitacion (numero, piso, tipo)
+     VALUES ($1, '2', 'Medicina Interna')
+     RETURNING id_habitacion`,
+    [`HAB-${randomUUID().slice(0, 6)}`],
+  );
+  const idHab = habRes.filas[0]!.id_habitacion;
+
+  const cama1Res = await pool.consultar<{ id_publico: string }>(
+    `INSERT INTO cama (id_habitacion, numero_cama)
+     VALUES ($1, 'A')
+     RETURNING id_publico`,
+    [idHab],
+  );
+  const cama2Res = await pool.consultar<{ id_publico: string }>(
+    `INSERT INTO cama (id_habitacion, numero_cama)
+     VALUES ($1, 'B')
+     RETURNING id_publico`,
+    [idHab],
+  );
+
+  const cama1Id = uuidPublico(cama1Res.filas[0]!.id_publico);
+  const cama2Id = uuidPublico(cama2Res.filas[0]!.id_publico);
+  const pacienteUuid = uuidPublico(pacHospId);
+  const medicoUuid = uuidPublico(medicoId);
+
+  const servicio = new GestionarHospitalizaciones();
+  const ingresoEntrada = {
+    pacienteId: pacienteUuid, camaId: cama1Id, motivoIngreso: 'Ingreso verificable',
+    diagnosticoIngresoCIE: 'Z09', diagnosticoIngresoNombre: 'Seguimiento', versionEsperadaCama: versionPositiva(1),
+  };
+  // Rechazo administrativo también desde aplicación (sin depender del guard HTTP).
+  const administrativo = crearContextoAutenticado(contexto.identidad,
+    { ...contexto.cuenta, permisos: ['pacientes.administrar'] }, contexto.correlacion);
+  await assert.rejects(new ConsultarHospitalizaciones().ejecutarListado(administrativo, bundle),
+    { codigo: 'SIN_PERMISO' });
+  await assert.rejects(servicio.ingresar(contexto, bundle, ingresoEntrada), { codigo: 'SOLICITUD_INVALIDA' });
+  // Una referencia ajena falla después de INSERT: la UoW debe revertir ingreso y cama.
+  await assert.rejects(hospital.hospitalizaciones.ingresar({ ...ingresoEntrada,
+    consultasEnlazadasIds: [uuidPublico(randomUUID())], comando: { contexto, clave: randomUUID() } }, medicoUuid),
+    { codigo: 'REFERENCIA_INCOMPATIBLE' });
+  const sinParciales = await hospital.hospitalizaciones.porPaciente(pacienteUuid);
+  assert.equal(sinParciales.length, 0);
+  assert.equal((await hospital.camas.porId(cama1Id))?.estado, 'DISPONIBLE');
+  const claveIngreso = randomUUID();
+  // 1. Ingreso hospitalario ocupa cama1
+  const simultaneos = await Promise.all([1, 2].map(() => servicio.ingresar(contexto, bundle, ingresoEntrada, claveIngreso)));
+  const ingreso = simultaneos[0]!;
+  assert.deepEqual(JSON.parse(JSON.stringify(simultaneos[0])), JSON.parse(JSON.stringify(simultaneos[1])));
+  assert.deepEqual(JSON.parse(JSON.stringify(await servicio.ingresar(contexto, bundle, ingresoEntrada, claveIngreso))), JSON.parse(JSON.stringify(ingreso)));
+  await assert.rejects(servicio.ingresar(contexto, bundle, { ...ingresoEntrada, motivoIngreso: 'Intención distinta' }, claveIngreso),
+    { codigo: 'CLAVE_REUTILIZADA' });
+
+  assert.equal(ingreso.estado, 'ACTIVA');
+  assert.equal(ingreso.camaActual?.camaId, cama1Id);
+
+  // 2. Comprobar que cama1 queda OCUPADA y rechaza segundo ingreso (CA17)
+  const camasTrasIngreso = await hospital.camas.listar();
+  const c1 = camasTrasIngreso.find((c) => c.id === cama1Id);
+  assert.equal(c1?.estado, 'OCUPADA');
+
+  await assert.rejects(
+    hospital.hospitalizaciones.ingresar({
+    comando: { contexto, clave: randomUUID() },
+      pacienteId: pacienteUuid,
+      camaId: cama1Id,
+      motivoIngreso: 'Segundo intento concurrente',
+      diagnosticoIngresoCIE: 'Z09',
+      diagnosticoIngresoNombre: 'Examen',
+    }, medicoUuid),
+    (err: unknown) => {
+      const error = err as { codigo?: string };
+      return error.codigo === 'ESTADO_INVALIDO' || error.codigo === 'CAMA_NO_DISPONIBLE';
+    },
+    'Debe rechazar ocupar una cama que ya está asignada',
+  );
+
+  // Fallo inyectado después del cierre de cama: rollback conserva el período abierto.
+  const poolConFallo: PoolSql = { ...pool, adquirir: async () => {
+    const conexion = await pool.adquirir();
+    return { ...conexion, consultar: async (sql, valores) => {
+      if (sql.includes('INSERT INTO asignacion_cama')) throw new Error('FALLO_TRAS_CIERRE_CAMA');
+      return conexion.consultar(sql, valores);
+    } };
+  } };
+  await assert.rejects(crearHospitalPostgresql(poolConFallo).hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id, nuevaCamaId: cama2Id,
+    fechaInicio: new Date().toISOString(), versionEsperada: ingreso.version,
+  }, medicoUuid));
+  assert.deepEqual(await hospital.hospitalizaciones.porId(ingreso.id), ingreso);
+  await assert.rejects(hospital.hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id, nuevaCamaId: cama2Id,
+    fechaInicio: '2000-01-01T00:00:00.000Z', versionEsperada: ingreso.version,
+  }, medicoUuid), { codigo: 'SOLICITUD_INVALIDA' });
+  // Habitación fuera de servicio invalida camas aunque estén disponibles individualmente.
+  await pool.consultar("UPDATE habitacion SET estado_operativo='MANTENIMIENTO' WHERE id_habitacion=$1", [idHab]);
+  assert.equal((await hospital.camas.porId(cama2Id))?.estado, 'MANTENIMIENTO');
+  await assert.rejects(hospital.hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id, nuevaCamaId: cama2Id,
+    fechaInicio: new Date().toISOString(), versionEsperada: ingreso.version,
+  }, medicoUuid), { codigo: 'ESTADO_INVALIDO' });
+  await pool.consultar("UPDATE habitacion SET estado_operativo='DISPONIBLE' WHERE id_habitacion=$1", [idHab]);
+  // 3. Traslado atómico a cama2
+  const trasladada = await hospital.hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() },
+    hospitalizacionId: ingreso.id,
+    nuevaCamaId: cama2Id,
+    fechaInicio: new Date().toISOString(),
+    motivo: 'Traslado a cuidados intermedios',
+    versionEsperada: ingreso.version,
+  }, medicoUuid);
+
+  assert.equal(trasladada.camaActual?.camaId, cama2Id);
+  assert.equal(trasladada.asignacionesCama[1]?.motivoCambio, 'Traslado a cuidados intermedios');
+
+  // Comprobar que cama1 fue liberada y cama2 quedó ocupada
+  const camasTrasTraslado = await hospital.camas.listar();
+  assert.equal(camasTrasTraslado.find((c) => c.id === cama1Id)?.estado, 'DISPONIBLE');
+  assert.equal(camasTrasTraslado.find((c) => c.id === cama2Id)?.estado, 'OCUPADA');
+
+  // 4. Agregar nota de evolución
+  const conNota = await hospital.hospitalizaciones.agregarNotaEvolucion({
+    comando: { contexto, clave: randomUUID() },
+    hospitalizacionId: ingreso.id,
+    notaClinica: 'Evolución satisfactoria sin complicaciones.',
+    versionEsperada: trasladada.version,
+  }, {
+    id: medicoUuid,
+    nombre: 'Médico Hospitalario',
+    colegiado: 'COL-123',
+  });
+  assert.equal(conNota.notasEvolucion.length, 1);
+
+  assert.equal(conNota.notasEvolucion[0]?.medicoNombre, 'Ana María Méndez Ruiz');
+  const obsAutor = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [ingreso.id]);
+  assert.equal(JSON.parse(obsAutor.filas[0]!.observaciones).notasEvolucion[0].medicoId, medicoUuid);
+  for (const tipoEgreso of ['', 'INVALIDO']) {
+    await assert.rejects(servicio.egresar(contexto, bundle, ingreso.id, {
+      fechaEgreso: new Date().toISOString(), tipoEgreso: tipoEgreso as 'ALTA_MEDICA',
+      diagnosticoEgresoCIE: '', diagnosticoEgresoNombre: '', resumenClinico: '', versionEsperada: conNota.version,
+    }, randomUUID()), { codigo: 'SOLICITUD_INVALIDA' });
+  }
+  assert.deepEqual(await hospital.hospitalizaciones.porId(ingreso.id), conNota);
+  // 5. Egreso hospitalario libera ocupación
+  const egresada = await hospital.hospitalizaciones.egresar({
+    comando: { contexto, clave: randomUUID() },
+    hospitalizacionId: ingreso.id,
+    fechaEgreso: new Date().toISOString(),
+    tipoEgreso: 'ALTA_MEDICA',
+    diagnosticoEgresoCIE: 'Z09',
+    diagnosticoEgresoNombre: 'Recuperación completa',
+    resumenClinico: 'Alta médica concedida sin secuelas.',
+    versionEsperada: conNota.version,
+  }, medicoUuid);
+
+  assert.equal(egresada.estado, 'FINALIZADA');
+  assert.equal(egresada.camaActual, undefined);
+
+  const camasTrasEgreso = await hospital.camas.listar();
+  assert.equal(camasTrasEgreso.find((c) => c.id === cama2Id)?.estado, 'DISPONIBLE');
+  const proyeccion = await pool.consultar<{ total: string }>(
+    "SELECT count(*) AS total FROM hospital_historial.eventos WHERE paciente_id=$1 AND tipo='HOSPITALIZACION'", [pacienteUuid]);
+  assert.equal(Number(proyeccion.filas[0]?.total), 4);
+  const revisiones = await pool.consultar<{ total: string }>(
+    "SELECT count(*) AS total FROM revisiones WHERE recurso_id=$1 AND tipo_recurso='hospitalizaciones'", [ingreso.id]);
+  assert.equal(Number(revisiones.filas[0]?.total), 3);
+  await assert.rejects(hospital.hospitalizaciones.agregarProcedimiento({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ingreso.id,
+    nombre: 'No autorizado tras egreso', resultado: 'No debe persistir', versionEsperada: egresada.version,
+  }, { id: medicoUuid, nombre: 'Sintético' }), { codigo: 'ESTADO_INVALIDO' });
+  assert.deepEqual(await hospital.hospitalizaciones.porId(ingreso.id), egresada);
+  // Sesiones independientes compiten realmente por la misma cama.
+  const competidores = await Promise.allSettled([1, 2].map(() => hospital.hospitalizaciones.ingresar({
+    ...ingresoEntrada, comando: { contexto, clave: randomUUID() }, versionEsperadaCama: undefined,
+  }, medicoUuid)));
+  assert.equal(competidores.filter(r => r.status === 'fulfilled').length, 1);
+  assert.equal(competidores.filter(r => r.status === 'rejected').length, 1);
+  const ganadora = competidores.find(r => r.status === 'fulfilled');
+  assert.ok(ganadora?.status === 'fulfilled');
+  const hospitalActiva = ganadora.value;
+  const estadoPrevio = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  const saturado = JSON.parse(estadoPrevio.filas[0]!.observaciones);
+  saturado.notasEvolucion = Array.from({ length: 99 }, () => ({ id: randomUUID(), medicoId: medicoUuid,
+    medicoNombre: 'Autor sintético', medicoColegiado: 'COL-TEST', fechaHora: new Date().toISOString(), notaClinica: 'N'.repeat(2000) }));
+  let faltan = 255000 - Buffer.byteLength(JSON.stringify(saturado), 'utf8');
+  for (const nota of saturado.notasEvolucion) {
+    const agregar = Math.min(faltan, 8000); nota.notaClinica += 'N'.repeat(agregar); faltan -= agregar;
+  }
+  assert.equal(faltan, 0);
+  const textoSaturado = JSON.stringify(saturado);
+  await pool.consultar('UPDATE hospitalizacion SET observaciones=$2 WHERE id_publico=$1', [hospitalActiva.id, textoSaturado]);
+  await assert.rejects(hospital.hospitalizaciones.agregarProcedimiento({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: hospitalActiva.id,
+    nombre: 'Superaría bytes permitidos', resultado: 'R'.repeat(10000), versionEsperada: hospitalActiva.version,
+  }, { id: medicoUuid, nombre: 'Sintético' }), { codigo: 'SOLICITUD_INVALIDA' });
+  const trasLimiteBytes = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  assert.equal(trasLimiteBytes.filas[0]!.observaciones, textoSaturado, 'el rechazo por bytes no modifica historia');
+  saturado.notasEvolucion.push({ ...saturado.notasEvolucion[0], id: randomUUID(), notaClinica: 'Nota 100 de fixture' });
+  const textoCien = JSON.stringify(saturado);
+  await pool.consultar('UPDATE hospitalizacion SET observaciones=$2 WHERE id_publico=$1', [hospitalActiva.id, textoCien]);
+  await assert.rejects(hospital.hospitalizaciones.agregarNotaEvolucion({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: hospitalActiva.id,
+    notaClinica: 'No debe añadirse como nota 101', versionEsperada: hospitalActiva.version,
+  }, { id: medicoUuid, nombre: 'Sintético', colegiado: 'COL-TEST' }), { codigo: 'SOLICITUD_INVALIDA' });
+  const trasLimiteItems = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  assert.equal(trasLimiteItems.filas[0]!.observaciones, textoCien);
+  const soloFinalizadas = await new ConsultarHospitalizaciones().ejecutarPorPaciente(contexto, bundle, pacienteUuid, { pagina: 1, limite: 25 }, 'FINALIZADA');
+  const soloActivas = await new ConsultarHospitalizaciones().ejecutarPorPaciente(contexto, bundle, pacienteUuid, { pagina: 1, limite: 25 }, 'ACTIVA');
+  assert.deepEqual(soloFinalizadas.map(h => h.id), [ingreso.id]);
+  assert.deepEqual(soloActivas.map(h => h.id), [hospitalActiva.id]);
+  const inicioFuturo = new Date(Date.now() + 60000).toISOString();
+  const futura = await hospital.hospitalizaciones.asignarCama({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: ganadora.value.id,
+    nuevaCamaId: cama2Id, fechaInicio: inicioFuturo, motivo: 'Cambio programado',
+    versionEsperada: ganadora.value.version,
+  }, medicoUuid);
+  assert.equal(futura.camaActual?.camaId, cama1Id);
+  assert.equal((await hospital.camas.porId(cama1Id))?.estado, 'OCUPADA');
+  assert.equal((await hospital.camas.porId(cama2Id))?.estado, 'DISPONIBLE');
+  assert.equal(futura.asignacionesCama[1]?.motivoCambio, 'Cambio programado');
+  // Archivo rechaza nueva atención pero permite terminar la estancia anterior.
+  await pool.consultar("UPDATE historial_clinico SET estado_historial='ARCHIVADO', causa_baja='OTRA_ADMINISTRATIVA', motivo_baja='Archivo sintético', fecha_baja=CURRENT_TIMESTAMP, actor_baja=$2 WHERE id_paciente=$1", [idPacInterno.filas[0]!.id_paciente, contexto.cuenta.id]);
+  await assert.rejects(hospital.hospitalizaciones.ingresar({ ...ingresoEntrada, camaId: cama2Id,
+    comando: { contexto, clave: randomUUID() }, versionEsperadaCama: undefined }, medicoUuid), { codigo: 'ESTADO_INVALIDO' });
+  await hospital.hospitalizaciones.egresar({ comando: { contexto, clave: randomUUID() },
+    hospitalizacionId: ganadora.value.id, fechaEgreso: new Date(Date.now() + 120000).toISOString(),
+    tipoEgreso: 'ALTA_MEDICA', diagnosticoEgresoCIE: 'Z09', diagnosticoEgresoNombre: 'Alta',
+    resumenClinico: 'Estable', versionEsperada: futura.version }, medicoUuid);
+
+  const paginaUno = await hospital.hospitalizaciones.listar(undefined, { pagina: 1, limite: 1 });
+  const paginaDos = await hospital.hospitalizaciones.listar(undefined, { pagina: 2, limite: 1 });
+  assert.equal(paginaUno.length, 2, 'incluye un centinela para hayMas, no detalle completo');
+  assert.equal(paginaDos.length, 1);
+  assert.notEqual(paginaUno[0]?.id, paginaDos[0]?.id);
+  assert.equal('notasEvolucion' in paginaUno[0]!, false);
+  assert.equal('asignacionesCama' in paginaUno[0]!, false);
+  await assert.rejects(hospital.hospitalizaciones.listar(undefined, { pagina: 0, limite: 1 }), { codigo: 'SOLICITUD_INVALIDA' });
+
 }
 
 async function verificarFlujoDentalDosRolesMysql(
