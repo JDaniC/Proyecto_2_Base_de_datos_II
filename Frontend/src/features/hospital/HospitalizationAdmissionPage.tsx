@@ -88,7 +88,7 @@ export const HospitalizationAdmissionPage: React.FC = () => {
       setLoading(true);
       try {
         const [pacientesRes, medicosRes, camasRes] = await Promise.all([
-          pacienteIdParam ? patientRepository.obtenerPorId(institucionId, pacienteIdParam).then(p => ({ items: p ? [p] : [] })) : patientRepository.buscar(institucionId, { q: '' }),
+          pacienteIdParam ? patientRepository.obtenerPorId(institucionId, pacienteIdParam).then(p => ({ items: p ? [p] : [] })) : Promise.resolve({ items: [] as Paciente[] }),
           catalogRepository.obtenerMedicos(institucionId),
           hospitalizationRepository.listarCamas(institucionId)
         ]);

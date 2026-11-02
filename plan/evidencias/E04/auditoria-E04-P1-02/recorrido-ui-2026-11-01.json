@@ -46,6 +46,11 @@
   },
   {
     "institucion": "HOSPITAL_GENERAL",
+    "caso": "ingreso sin paciente precargado carga camas y busca paciente por término real",
+    "resultado": "PASS"
+  },
+  {
+    "institucion": "HOSPITAL_GENERAL",
     "caso": "ingreso UI ocupa cama y enlaza consulta real del paciente",
     "resultado": "PASS"
   },

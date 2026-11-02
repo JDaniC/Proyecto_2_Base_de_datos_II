@@ -34,6 +34,7 @@ export const HospitalizationsListPage: React.FC = () => {
   const [hospitalizaciones, setHospitalizaciones] = useState<HospitalizacionItem[]>([]);
   const [camas, setCamas] = useState<CamaHospitalaria[]>([]);
   const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<'TODAS' | EstadoHospitalizacion>('TODAS');
   const [filtroServicio, setFiltroServicio] = useState<string>('TODOS');
@@ -45,7 +46,8 @@ export const HospitalizationsListPage: React.FC = () => {
         hospitalizationRepository.listarHospitalizaciones(institucionId, filtroEstado === 'TODAS' ? undefined : filtroEstado, { pagina, limite: 25 }),
         hospitalizationRepository.listarCamas(institucionId)
       ]);
-      setHospitalizaciones(hospData);
+      setHospitalizaciones(hospData.items);
+      setHayMas(hospData.hayMas);
       setCamas(camasData);
     } catch {
       // Fallback
@@ -366,7 +368,7 @@ export const HospitalizationsListPage: React.FC = () => {
       <nav aria-label="Páginas de hospitalizaciones" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <Button disabled={pagina === 1 || loading} onClick={() => setPagina(p => p - 1)}>Anterior</Button>
         <span>Página {pagina} · búsqueda y servicio dentro de esta página</span>
-        <Button disabled={hospitalizaciones.length < 25 || loading} onClick={() => setPagina(p => p + 1)}>Siguiente</Button>
+        <Button disabled={!hayMas || loading} onClick={() => setPagina(p => p + 1)}>Siguiente</Button>
       </nav>
     </div>
   );

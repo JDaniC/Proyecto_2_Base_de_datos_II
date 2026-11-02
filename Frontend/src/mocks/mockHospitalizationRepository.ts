@@ -2,6 +2,7 @@ import { HospitalizationRepository } from '../services/contracts';
 import {
   InstitucionId,
   HospitalizacionItem,
+  PaginaHospitalizaciones,
   CamaHospitalaria,
   EstadoCama,
   AsignacionCamaItem,
@@ -271,15 +272,17 @@ export class MockHospitalizationRepository implements HospitalizationRepository 
     }
   }
 
-  async listarHospitalizaciones(institucionId: InstitucionId, filtroEstado?: string): Promise<HospitalizacionItem[]> {
+  async listarHospitalizaciones(institucionId: InstitucionId, filtroEstado?: string, pagina = { pagina: 1, limite: 25 }): Promise<PaginaHospitalizaciones> {
     await new Promise((res) => setTimeout(res, 40));
-    return this.hospitalizaciones.filter((h) => {
+    const filtradas = this.hospitalizaciones.filter((h) => {
       if (h.institucionId !== institucionId) return false;
       if (filtroEstado && filtroEstado !== 'TODAS' && h.estado !== filtroEstado) {
         return false;
       }
       return true;
     });
+    const inicio = (pagina.pagina - 1) * pagina.limite;
+    return { items: filtradas.slice(inicio, inicio + pagina.limite), pagina: pagina.pagina, hayMas: inicio + pagina.limite < filtradas.length };
   }
 
   async obtenerHospitalizacionPorId(institucionId: InstitucionId, id: string): Promise<HospitalizacionItem | null> {

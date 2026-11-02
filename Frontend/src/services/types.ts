@@ -1509,3 +1509,5 @@ export interface ReferenciaLaboratorio {
   estado: 'ACTIVO' | 'INACTIVO';
   version?: number;
 }
+
+export interface PaginaHospitalizaciones { items: HospitalizacionItem[]; pagina: number; hayMas: boolean; }

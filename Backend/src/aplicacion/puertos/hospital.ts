@@ -68,7 +68,7 @@ export interface PuertosHospital {
   readonly hospitalizaciones: {
     porId(id: UUID): Promise<Hospitalizacion | null>;
     listar(filtroEstado?: string, pagina?: PaginaHospital): Promise<readonly ResumenHospitalizacion[]>;
-    porPaciente(pacienteId: UUID, pagina?: PaginaHospital): Promise<readonly ResumenHospitalizacion[]>;
+    porPaciente(pacienteId: UUID, pagina?: PaginaHospital, estado?: string): Promise<readonly ResumenHospitalizacion[]>;
     ingresar(params: ParametrosIngresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion>;
     egresar(params: ParametrosEgresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion>;
     asignarCama(params: ParametrosAsignarCama, actorId: UUID): Promise<Hospitalizacion>;

@@ -21,9 +21,9 @@ versiones por UI. Los tests obsoletos que contaban 22 rutas ahora cuentan 30
 porque se añadieron ocho rutas hospitalarias (nueve operaciones), conservando
 sus comprobaciones de salud/rutas simuladas fuera del contrato.
 
-Frontend completo: base `268cbf3` 131 FAIL/123 PASS; copia modificada 131 FAIL/124
+Frontend completo: base `268cbf3` 131 FAIL/123 PASS; copia modificada 131 FAIL/126
 PASS. Comparación exacta de los 131 nombres: sin fallos agregados ni eliminados.
-No se confunde esa suite histórica con las 77 comprobaciones HTTP PASS.
+No se confunde esa suite histórica con las 79 comprobaciones HTTP PASS.
 
 ## Segunda revisión nativa sobre ca07571
 
@@ -42,3 +42,22 @@ Regresiones añadidas en SQL: motivo tras reconstrucción, rechazo postegreso si
 cambios, origen todavía ocupado/destino libre antes de traslado futuro, páginas
 distintas sin colecciones clínicas y rechazo de página inválida. El navegador
 comprueba además listado resumido y navegación a detalle.
+
+## Tercera revisión sobre 07f20e1
+
+- Se omite el puerto buscar con q vacío al abrir ingreso sin pacienteId. El
+  adaptador HTTP anterior ya cortocircuitaba la búsqueda vacía, pero ahora el
+  formulario no depende de ese detalle y lo prueba con un puerto que la rechaza.
+- listarHospitalizaciones retorna items/pagina/hayMas: la UI usa el indicador
+  real, incluso con una última página de exactamente 25 filas. Se adapta también
+  el repositorio de simulación al contrato, sin usarlo en modo API.
+- Se limitan notas/procedimientos a 100 y observaciones serializadas a 256 KiB;
+  el detalle completo también comprueba colecciones y bytes. La UoW revierte
+  cualquier cambio que produzca un detalle excesivo. Legado excesivo no se
+  trunca ni se devuelve silenciosamente; requiere reconciliación explícita.
+- Paciente + estado se aplican juntos. SQL y HTTP comprueban ACTIVA/FINALIZADA
+  para el mismo paciente sin incluir estancias del otro estado.
+
+Evidencia actual: 79 HTTP/UI frontend, 58 recorrido real, 6 suites SQL y 293+32
+backend PASS. Frontend completo: 131 FAIL/126 PASS; los mismos 131 nombres de
+fallos que base, sin nuevos ni eliminados.

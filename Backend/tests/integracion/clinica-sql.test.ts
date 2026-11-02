@@ -598,6 +598,37 @@ async function verificarHospitalizacionesPostgresql(
   assert.equal(competidores.filter(r => r.status === 'rejected').length, 1);
   const ganadora = competidores.find(r => r.status === 'fulfilled');
   assert.ok(ganadora?.status === 'fulfilled');
+  const hospitalActiva = ganadora.value;
+  const estadoPrevio = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  const saturado = JSON.parse(estadoPrevio.filas[0]!.observaciones);
+  saturado.notasEvolucion = Array.from({ length: 99 }, () => ({ id: randomUUID(), medicoId: medicoUuid,
+    medicoNombre: 'Autor sintético', medicoColegiado: 'COL-TEST', fechaHora: new Date().toISOString(), notaClinica: 'N'.repeat(2000) }));
+  let faltan = 255000 - Buffer.byteLength(JSON.stringify(saturado), 'utf8');
+  for (const nota of saturado.notasEvolucion) {
+    const agregar = Math.min(faltan, 8000); nota.notaClinica += 'N'.repeat(agregar); faltan -= agregar;
+  }
+  assert.equal(faltan, 0);
+  const textoSaturado = JSON.stringify(saturado);
+  await pool.consultar('UPDATE hospitalizacion SET observaciones=$2 WHERE id_publico=$1', [hospitalActiva.id, textoSaturado]);
+  await assert.rejects(hospital.hospitalizaciones.agregarProcedimiento({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: hospitalActiva.id,
+    nombre: 'Superaría bytes permitidos', resultado: 'R'.repeat(10000), versionEsperada: hospitalActiva.version,
+  }, { id: medicoUuid, nombre: 'Sintético' }), { codigo: 'SOLICITUD_INVALIDA' });
+  const trasLimiteBytes = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  assert.equal(trasLimiteBytes.filas[0]!.observaciones, textoSaturado, 'el rechazo por bytes no modifica historia');
+  saturado.notasEvolucion.push({ ...saturado.notasEvolucion[0], id: randomUUID(), notaClinica: 'Nota 100 de fixture' });
+  const textoCien = JSON.stringify(saturado);
+  await pool.consultar('UPDATE hospitalizacion SET observaciones=$2 WHERE id_publico=$1', [hospitalActiva.id, textoCien]);
+  await assert.rejects(hospital.hospitalizaciones.agregarNotaEvolucion({
+    comando: { contexto, clave: randomUUID() }, hospitalizacionId: hospitalActiva.id,
+    notaClinica: 'No debe añadirse como nota 101', versionEsperada: hospitalActiva.version,
+  }, { id: medicoUuid, nombre: 'Sintético', colegiado: 'COL-TEST' }), { codigo: 'SOLICITUD_INVALIDA' });
+  const trasLimiteItems = await pool.consultar<{ observaciones: string }>('SELECT observaciones FROM hospitalizacion WHERE id_publico=$1', [hospitalActiva.id]);
+  assert.equal(trasLimiteItems.filas[0]!.observaciones, textoCien);
+  const soloFinalizadas = await new ConsultarHospitalizaciones().ejecutarPorPaciente(contexto, bundle, pacienteUuid, { pagina: 1, limite: 25 }, 'FINALIZADA');
+  const soloActivas = await new ConsultarHospitalizaciones().ejecutarPorPaciente(contexto, bundle, pacienteUuid, { pagina: 1, limite: 25 }, 'ACTIVA');
+  assert.deepEqual(soloFinalizadas.map(h => h.id), [ingreso.id]);
+  assert.deepEqual(soloActivas.map(h => h.id), [hospitalActiva.id]);
   const inicioFuturo = new Date(Date.now() + 60000).toISOString();
   const futura = await hospital.hospitalizaciones.asignarCama({
     comando: { contexto, clave: randomUUID() }, hospitalizacionId: ganadora.value.id,

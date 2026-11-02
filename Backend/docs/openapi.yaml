@@ -2282,18 +2282,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/HospitalAsignacion"
+          maxItems: 100
         consultasEnlazadasIds:
           type: array
           items:
             $ref: "#/components/schemas/UUID"
+          maxItems: 100
         notasEvolucion:
           type: array
           items:
             $ref: "#/components/schemas/HospitalNotaItem"
+          maxItems: 100
         procedimientos:
           type: array
           items:
             $ref: "#/components/schemas/HospitalProcedimientoItem"
+          maxItems: 100
         version:
           type: integer
           minimum: 1

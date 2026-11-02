@@ -40,7 +40,7 @@ export class HospitalController {
   ) {
     const pagina = { pagina: Number(numeroPagina), limite: Number(numeroLimite) };
     const items = pacienteId
-      ? await this.consultarHospitalizaciones.ejecutarPorPaciente(contexto, bundle, pacienteId, pagina)
+      ? await this.consultarHospitalizaciones.ejecutarPorPaciente(contexto, bundle, pacienteId, pagina, estado)
       : await this.consultarHospitalizaciones.ejecutarListado(contexto, bundle, estado, pagina);
     return { hospitalizaciones: items.slice(0, pagina.limite), pagina: pagina.pagina, hayMas: items.length > pagina.limite };
 

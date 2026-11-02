@@ -13,7 +13,7 @@ export class ConsultarHospitalizaciones {
     pagina?: PaginaHospital,
   ): Promise<readonly ResumenHospitalizacion[]> {
     const puertos = this.obtenerPuertosHospital(contexto, bundle);
-    if (filtroEstado !== undefined && !['ACTIVA', 'FINALIZADA', 'ANULADA'].includes(filtroEstado)) throw new ErrorDominio('SOLICITUD_INVALIDA', 'Estado de hospitalización inválido.');
+    validarEstado(filtroEstado);
     return puertos.hospitalizaciones.listar(filtroEstado, validarPagina(pagina));
   }
 
@@ -36,10 +36,12 @@ export class ConsultarHospitalizaciones {
     bundle: BundleInstitucional,
     pacienteId: string,
     pagina?: PaginaHospital,
+    estado?: string,
   ): Promise<readonly ResumenHospitalizacion[]> {
     const puertos = this.obtenerPuertosHospital(contexto, bundle);
     const id = uuidPublico(pacienteId);
-    return puertos.hospitalizaciones.porPaciente(id, validarPagina(pagina));
+    validarEstado(estado);
+    return puertos.hospitalizaciones.porPaciente(id, validarPagina(pagina), estado);
   }
 
   async ejecutarListarCamas(
@@ -70,4 +72,10 @@ function validarPagina(pagina: PaginaHospital = { pagina: 1, limite: 25 }): Pagi
     throw new ErrorDominio('SOLICITUD_INVALIDA', 'Página hospitalaria inválida.');
   }
   return pagina;
+}
+
+function validarEstado(estado?: string): void {
+  if (estado !== undefined && !['ACTIVA', 'FINALIZADA', 'ANULADA'].includes(estado)) {
+    throw new ErrorDominio('SOLICITUD_INVALIDA', 'Estado de hospitalización inválido.');
+  }
 }

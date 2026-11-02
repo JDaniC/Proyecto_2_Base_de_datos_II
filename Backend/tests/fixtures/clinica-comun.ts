@@ -159,8 +159,8 @@ export function escenarioClinico(institucion: Institucion) {
         if (filtroEstado) lista = lista.filter((h) => h.estado === filtroEstado);
         return Object.freeze(lista);
       },
-      async porPaciente(pacienteId) {
-        return Object.freeze([...hospHospital.values()].filter((h) => h.pacienteId === pacienteId));
+      async porPaciente(pacienteId, _pagina, estado) {
+        return Object.freeze([...hospHospital.values()].filter((h) => h.pacienteId === pacienteId && (!estado || h.estado === estado)));
       },
       async ingresar(params, medicoResponsableId) {
         const cama = camasHospital.get(params.camaId);

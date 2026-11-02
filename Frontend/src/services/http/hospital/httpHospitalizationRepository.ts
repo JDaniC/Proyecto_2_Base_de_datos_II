@@ -5,6 +5,7 @@ import { HttpClient } from '../httpClient';
 import {
   InstitucionId,
   HospitalizacionItem,
+  PaginaHospitalizaciones,
   CamaHospitalaria,
   EstadoCama,
   NotaEvolucionItem,
@@ -24,16 +25,16 @@ export class HttpHospitalizationRepository implements HospitalizationRepository 
     _institucionId: InstitucionId,
     filtroEstado?: string,
     pagina?: { pagina: number; limite: number },
-  ): Promise<HospitalizacionItem[]> {
+  ): Promise<PaginaHospitalizaciones> {
     const query: Record<string, string> = {};
     if (filtroEstado) query.estado = filtroEstado === 'EGRESADA' ? 'FINALIZADA' : filtroEstado;
     if (pagina) { query.pagina = String(pagina.pagina); query.limite = String(pagina.limite); }
-    const res = await this.client.get<{ hospitalizaciones: HospitalizacionItem[] }>(
+    const res = await this.client.get<{ hospitalizaciones: HospitalizacionItem[]; pagina: number; hayMas: boolean }>(
       '/hospital/hospitalizaciones',
       { query },
     );
     const lista = res.data?.hospitalizaciones || [];
-    return lista.map(normalizarHospitalizacionItem);
+    return { items: lista.map(normalizarHospitalizacionItem), pagina: res.data.pagina, hayMas: res.data.hayMas };
   }
 
   async obtenerHospitalizacionPorId(

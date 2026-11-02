@@ -283,6 +283,12 @@ describe('HTTP clínico — transporte real, identidad y UoW sintéticas', () =>
     assert.equal(paginaBody.data.pagina, 1);
     assert.equal(paginaBody.data.hospitalizaciones.length, 1);
     assert.equal(paginaBody.data.hayMas, false);
+    const finalizadas = await fetch(`${url}/hospital/hospitalizaciones?pacienteId=${sHosp.paciente.id}&estado=FINALIZADA`, { headers: authHeaders });
+    assert.equal(finalizadas.status, 200);
+    assert.equal(((await finalizadas.json()) as { data: { hospitalizaciones: unknown[] } }).data.hospitalizaciones.length, 1);
+    const activas = await fetch(`${url}/hospital/hospitalizaciones?pacienteId=${sHosp.paciente.id}&estado=ACTIVA`, { headers: authHeaders });
+    assert.equal(activas.status, 200);
+    assert.equal(((await activas.json()) as { data: { hospitalizaciones: unknown[] } }).data.hospitalizaciones.length, 0);
     for (const query of ['pagina=0', 'limite=101', 'pagina=texto']) {
       const invalida = await fetch(`${url}/hospital/hospitalizaciones?${query}`, { headers: authHeaders });
       assert.equal(invalida.status, 400);

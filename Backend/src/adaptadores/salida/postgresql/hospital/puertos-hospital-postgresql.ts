@@ -114,7 +114,12 @@ function parsearObservaciones(texto: string | null): ObservacionesEvolucion {
 }
 
 function serializarObservaciones(obs: ObservacionesEvolucion): string {
-  return JSON.stringify(obs);
+  const serializado = JSON.stringify(obs);
+  if ((obs.notasEvolucion?.length ?? 0) > 100 || (obs.procedimientos?.length ?? 0) > 100 ||
+      Buffer.byteLength(serializado, 'utf8') > 262144) {
+    throw new ErrorDominio('SOLICITUD_INVALIDA', 'El detalle clínico supera el límite de 100 elementos o 256 KiB.');
+  }
+  return serializado;
 }
 
 function mapearEstadoCama(estadoDb: string, ocupada: boolean): EstadoCama {
@@ -203,7 +208,7 @@ export function crearPuertosHospitalPostgresql(ejecutor: EjecutorSql, estable?: 
       },
 
       listar: (estado, pagina) => listarResumenes(ejecutor, estado, undefined, pagina),
-      porPaciente: (pacienteId, pagina) => listarResumenes(ejecutor, undefined, pacienteId, pagina),
+      porPaciente: (pacienteId, pagina, estado) => listarResumenes(ejecutor, estado, pacienteId, pagina),
 
       async ingresar(params: ParametrosIngresoHospitalario, medicoResponsableId: UUID): Promise<Hospitalizacion> {
         // Validar paciente
@@ -690,7 +695,7 @@ async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID
     servicio: f.cama_actual_servicio || 'Medicina General',
   }) : undefined;
 
-  return Object.freeze({
+  const respuesta = Object.freeze({
     id: uuidPublico(f.id_publico),
     codigoIngreso: `ING-${f.id_hospitalizacion.toString().padStart(6, '0')}`,
     pacienteId: uuidPublico(f.paciente_id_publico),
@@ -716,6 +721,12 @@ async function reconstruirHospitalizacion(ejecutor: EjecutorSql, idPublico: UUID
     procedimientos: Object.freeze(procedimientos),
     version: versionPositiva(Number(f.revision)),
   });
+  if (notas.length > 100 || procedimientos.length > 100 || asignaciones.length > 100 || consultasEnlazadasIds.length > 100 ||
+      Buffer.byteLength(JSON.stringify(respuesta), 'utf8') > 262144) {
+    throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'El detalle clínico requiere reconciliación por tamaño.');
+  }
+  return respuesta;
+
 }
 
 function manejarErrorPostgres(error: unknown): void {
