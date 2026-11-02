@@ -31,6 +31,7 @@ import {
 } from '../../../services/types';
 
 interface PediatricHistoryAllergiesViewProps {
+  soloLectura?: boolean;
   paciente: Paciente;
   antecedentes: AntecedentesClinicos;
   institucionId: InstitucionId;
@@ -41,7 +42,8 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   paciente,
   antecedentes,
   institucionId,
-  onActualizar
+  onActualizar,
+  soloLectura = false
 }) => {
   const { sesion } = useAuthSession();
   const { patientRepository } = useServices();
@@ -196,6 +198,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const perinatales = antecedentes.perinatales;
 
   return (
+    <fieldset disabled={soloLectura} style={{border:0,padding:0,margin:0,minWidth:0}}>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Alerta transversal de error */}
       {errorAccion && (
@@ -878,5 +881,6 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
       </Modal>
       )}
     </div>
+    </fieldset>
   );
 };

@@ -1,3 +1,4 @@
+import { leerAntecedentesPediatricos } from '../pediatrics/antecedentes';
 import { patientHospitalMethods } from '../hospital/patientHospitalMethods';
 import { stableCommandKeys } from '../stableCommand';
 import type { PatientRepository } from '../../contracts';
@@ -65,6 +66,7 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
       return { eventos: res.data.eventos.map(mapearEvento), siguienteCursor: res.meta.siguiente_cursor };
     },
     async obtenerAntecedentes(_institucion: InstitucionId, id: string): Promise<AntecedentesClinicos> {
+      if(_institucion==='CENTRO_PEDIATRICO')return leerAntecedentesPediatricos(http,id);
       const res = await http.get<AntecedentesDto>(`${path(id)}/antecedentes`);
       return {
         patologicos: res.data.patologicos ?? [],

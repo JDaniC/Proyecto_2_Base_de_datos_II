@@ -1,3 +1,4 @@
+import { PediatricHistoryAllergiesView } from './components/PediatricHistoryAllergiesView';
 import { PatientExamsView } from './components/PatientExamsView';
 import { PatientInsurancesView } from './components/PatientInsurancesView';
 import { PatientProceduresView } from './components/PatientProceduresView';
@@ -64,7 +65,7 @@ const PatientRecord: React.FC = () => {
       ? patientRepository.obtenerExpedienteCompleto(sesion.institucionId, pacienteId, filtros)
       : patientRepository.obtenerPorId(sesion.institucionId, pacienteId);
     const cargaAntecedentes =
-      puedeLeer && esOdontologia && patientRepository.obtenerAntecedentes
+      puedeLeer && (esOdontologia || sesion.institucionId==='CENTRO_PEDIATRICO') && patientRepository.obtenerAntecedentes
         ? patientRepository.obtenerAntecedentes(sesion.institucionId, pacienteId)
         : Promise.resolve(null);
     Promise.allSettled([carga, cargaAntecedentes]).then(([resExp, resAnt]) => {
@@ -167,6 +168,10 @@ const PatientRecord: React.FC = () => {
         {hospital&&tab==='examenes'&&puedeLeer&&<PatientExamsView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {hospital&&tab==='procedimientos'&&puedeLeer&&<PatientProceduresView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {hospital&&tab==='seguros'&&(puedeLeer||puedeEditar)&&<PatientInsurancesView pacienteId={paciente.id} pacienteNombre={paciente.nombreCompleto} pacienteDpi={paciente.tipoIdentificacion==='CUI'?paciente.numeroIdentificacion??'':''} pacienteTelefono={paciente.telefono??''} pacienteNombres={paciente.nombres} pacienteApellidos={paciente.apellidos} esArchivado={paciente.estado==='ARCHIVADO'} onActualizado={()=>setReintento(n=>n+1)}/>}
+        {sesion?.institucionId==='CENTRO_PEDIATRICO' && puedeLeer && <Panel title="Antecedentes pediátricos">
+          {errorAntecedentes ? <Alert variant="danger" title="No se pudieron cargar antecedentes">{errorAntecedentes}<Button onClick={()=>setReintento(n=>n+1)}>Reintentar</Button></Alert>
+          : antecedentes && <PediatricHistoryAllergiesView soloLectura paciente={paciente} antecedentes={antecedentes} institucionId={sesion.institucionId} onActualizar={async()=>{setReintento(n=>n+1);}} />}
+        </Panel>}
         {hospital&&general&&puedeLeer&&<HospitalAntecedentesView pacienteId={paciente.id} editable={puedeRegistrarClinica&&paciente.estado==='ACTIVO'} onActualizado={()=>setReintento(n=>n+1)}/>}
         {puedeLeer && esOdontologia && (
           <Panel title="Antecedentes clínicos odontológicos" style={{ marginBottom: '24px' }}>

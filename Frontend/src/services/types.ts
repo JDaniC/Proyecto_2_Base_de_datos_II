@@ -457,6 +457,7 @@ export interface VerificacionAlergias {
 }
 
 export interface AlergiaRegistro {
+  id?: string;
   sustancia: string;
   severidad: 'LEVE' | 'MODERADA' | 'SEVERA';
   reaccion: string;
@@ -464,6 +465,7 @@ export interface AlergiaRegistro {
 }
 
 export interface AntecedentesClinicos {
+  versionAntecedentes?: number;
   patologicos: string[];
   quirurgicos: string[];
   familiares: string[];
@@ -643,7 +645,8 @@ export type TipoEventoHistorial =
   | 'EXAMEN'
   | 'ORDEN_LAB'
   | 'VACUNA'
-  | 'CRECIMIENTO';
+  | 'CRECIMIENTO'
+  | 'ANTECEDENTE';
 
 export interface EventoHistorial {
   id: string;
