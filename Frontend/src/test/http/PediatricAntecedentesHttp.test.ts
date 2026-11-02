@@ -26,3 +26,9 @@ it('reintento conserva cuerpo y clave y omite el autor de presentación',async()
  const a=fetch.mock.calls[0][1],b=fetch.mock.calls[1][1];expect(a.body).toBe(b.body);expect(a.headers['Idempotency-Key']).toBe(b.headers['Idempotency-Key']);
  expect(JSON.parse(a.body)).toEqual({version_paciente:4,version_antecedentes:2,motivo:'Confirmación sintética'});
 });
+
+it('historia persistida se presenta sin sustituirla por listas vacías',async()=>{
+ const historia={patologicos:['Antecedente sintético'],quirurgicos:[],familiares:['Familiar sintético'],medicamentosActuales:[]};
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({data:{version:4,alergias:[],historia}}),{status:200})));
+ const a=await createHttpPatientRepository(new HttpClient()).obtenerAntecedentes!('CENTRO_PEDIATRICO','menor');expect(a.patologicos).toEqual(historia.patologicos);expect(a.familiares).toEqual(historia.familiares);
+});

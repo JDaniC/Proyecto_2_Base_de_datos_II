@@ -37,3 +37,23 @@ export function validarAlergia(entrada: unknown) {
   if(!['LEVE','MODERADA','SEVERA'].includes(String(e.severidad)))throw solicitudInvalida('Severidad no admitida.','severidad');
   return {sustancia:textoClinico(e.sustancia,'sustancia',200).trim(),severidad:e.severidad as 'LEVE'|'MODERADA'|'SEVERA',reaccion:textoClinico(e.reaccion,'reaccion',4000).trim()};
 }
+
+export interface HistoriaPediatrica {
+  readonly patologicos: readonly string[];
+  readonly quirurgicos: readonly string[];
+  readonly familiares: readonly string[];
+  readonly medicamentosActuales: readonly string[];
+}
+/** Captura explícita; una lista vacía no constituye una certificación clínica. */
+export function validarHistoriaPediatrica(entrada: unknown): HistoriaPediatrica {
+  const campos=['patologicos','quirurgicos','familiares','medicamentosActuales'] as const;
+  const e=objetoCerrado(entrada,[...campos]);
+  const salida={} as Record<typeof campos[number],string[]>;
+  for(const campo of campos){
+    const lista=e[campo];
+    if(!Array.isArray(lista)||lista.length>100)throw solicitudInvalida('Se requiere una lista de hasta 100 registros.',campo);
+    salida[campo]=lista.map(valor=>textoClinico(valor,campo,4000).trim());
+    if(new Set(salida[campo].map(valor=>valor.toLocaleLowerCase())).size!==lista.length)throw solicitudInvalida('Registros duplicados.',campo);
+  }
+  return salida;
+}

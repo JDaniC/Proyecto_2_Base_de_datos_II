@@ -2,7 +2,7 @@ import type { Firestore, Transaction, DocumentReference } from 'firebase-admin/f
 import type { PuertoAntecedentesPediatricos, AntecedentesPediatricos } from '../../../../aplicacion/puertos/pediatria.js';
 import { ErrorDominio } from '../../../../dominio/compartido/error-dominio.js';
 import { uuidPublico } from '../../../../dominio/compartido/uuid.js';
-import { validarAlergia, validarPerinatales } from '../../../../dominio/pediatria/antecedentes.js';
+import { validarAlergia, validarPerinatales, validarHistoriaPediatrica } from '../../../../dominio/pediatria/antecedentes.js';
 import { instanteUtc } from '../../../../dominio/compartido/instante-utc.js';
 
 export function validarSnapshotAntecedentes(valor:unknown):AntecedentesPediatricos {
@@ -11,6 +11,7 @@ export function validarSnapshotAntecedentes(valor:unknown):AntecedentesPediatric
   if(new Set(r.alergias.map(a=>uuidPublico(a.id))).size!==r.alergias.length)throw new Error('ALERGIA_DUPLICADA');
   for(const a of r.alergias){validarAlergia({sustancia:a.sustancia,severidad:a.severidad,reaccion:a.reaccion});uuidPublico(a.actorId);instanteUtc(a.fechaHora);if(typeof a.activa!=='boolean')throw new Error('ESTADO_ALERGIA_INVALIDO');}
   if(r.perinatales)validarPerinatales(r.perinatales);
+  if(r.historia)validarHistoriaPediatrica(r.historia);
   uuidPublico(r.actorId);instanteUtc(r.fechaHora);
   if(r.verificacionSinAlergias){uuidPublico(r.verificacionSinAlergias.actorId);instanteUtc(r.verificacionSinAlergias.fechaHora);if(r.alergias.some(a=>a.activa))throw new Error('VERIFICACION_INCOMPATIBLE');}
   return r;

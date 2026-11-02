@@ -42,6 +42,7 @@ export function createHttpPatientRepository(http: HttpClient): PatientRepository
     confirmarSinAlergias:(i:InstitucionId,id:string,_autor:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'sin-alergias',{},v,c),
     registrarAlergia:(i:InstitucionId,id:string,a:AlergiaRegistro,_autor?:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias',{alergia:{sustancia:a.sustancia,severidad:a.severidad,reaccion:a.reaccion}},v,c),
     eliminarAlergia:(i:InstitucionId,id:string,_sustancia:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias/baja',{alergia_id:c?.alergiaId},v,c),
+    async actualizarHistoriaPediatrica(i:InstitucionId,id:string,historia:Pick<AntecedentesClinicos,'patologicos'|'quirurgicos'|'familiares'|'medicamentosActuales'>,v?:number,c?:ContextoCambioPediatrico){return (await mutarPediatria(i,id,'historia',{historia},v,c)).antecedentes;},
     async actualizarPerinatales(i:InstitucionId,id:string,p:AntecedentesPerinatales,v?:number,c?:ContextoCambioPediatrico){return (await mutarPediatria(i,id,'perinatales',{perinatales:p},v,c)).antecedentes;},
     async archivar(_i: InstitucionId, id: string, causa: string, motivo: string, versionEsperada?: number) {
       const body = {causa, motivo, version_esperada: versionEsperada};

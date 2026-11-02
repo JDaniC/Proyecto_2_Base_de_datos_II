@@ -43,7 +43,14 @@ export class AntecedentesController {
     @Headers('idempotency-key') clave:string,@Body() entrada:unknown,@Res({passthrough:true}) res:Response){
     return this.ejecutar('perinatales',contexto,bundle,id,clave,entrada,res);
   }
-  private async ejecutar(accion:'alergia'|'bajaAlergia'|'sinAlergias'|'perinatales',contexto:ContextoAutenticado,bundle:BundleInstitucional,id:string,clave:string,entrada:unknown,res:Response){
+  @Post('historia')
+  @HttpCode(200)
+  @RequiereAcceso({permisos:['consultas.registrar'],capacidad:'PACIENTES'})
+  historia(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('pacienteId') id:string,
+    @Headers('idempotency-key') clave:string,@Body() entrada:unknown,@Res({passthrough:true}) res:Response){
+    return this.ejecutar('historia',contexto,bundle,id,clave,entrada,res);
+  }
+  private async ejecutar(accion:'alergia'|'bajaAlergia'|'sinAlergias'|'perinatales'|'historia',contexto:ContextoAutenticado,bundle:BundleInstitucional,id:string,clave:string,entrada:unknown,res:Response){
     const r=await this.gestionar.ejecutar(accion,{contexto,bundle,id:uuidPublico(id),claveIdempotencia:uuidPublico(clave),entrada});
     res.status(r.httpStatus);return {data:r.respuesta,meta:{correlacion:r.correlacionOriginal}};
   }

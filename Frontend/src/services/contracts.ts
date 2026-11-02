@@ -165,6 +165,7 @@ export interface PatientRepository {
   confirmarSinAlergias?(institucionId: InstitucionId, pacienteId: string, verificadoPor: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
   registrarAlergia?(institucionId: InstitucionId, pacienteId: string, alergia: AlergiaRegistro, verificadoPor?: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
   eliminarAlergia?(institucionId: InstitucionId, pacienteId: string, sustancia: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  actualizarHistoriaPediatrica?(institucionId: InstitucionId, pacienteId: string, historia: Pick<AntecedentesClinicos, 'patologicos'|'quirurgicos'|'familiares'|'medicamentosActuales'>, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<AntecedentesClinicos>;
   actualizarPerinatales?(institucionId: InstitucionId, pacienteId: string, perinatales: AntecedentesPerinatales, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<AntecedentesClinicos>;
 }
 

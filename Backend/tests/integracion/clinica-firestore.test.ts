@@ -282,6 +282,19 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.equal(p.respuesta.version,3);assert.equal(p.respuesta.alergias[0]!.activa,false);
     assert.equal((await db.collection(`pediatria_antecedentes/${pid}/versiones`).get()).size,3);
     assert.equal((await bundle.antecedentesPediatricos!.porPaciente(pid)).perinatales!.apgar1Minuto,0);
+    const historia={patologicos:['Antecedente sintético'],quirurgicos:[],familiares:['Registro familiar sintético'],medicamentosActuales:[]};
+    const hc=id(),he={version_paciente:4,version_antecedentes:3,motivo:'Historia sintética',historia};
+    const h=await servicio.ejecutar('historia',{contexto,bundle,id:pid,claveIdempotencia:hc,entrada:he});
+    assert.deepEqual((await servicio.ejecutar('historia',{contexto,bundle,id:pid,claveIdempotencia:hc,entrada:he})).respuesta,h.respuesta);
+    assert.deepEqual((await bundle.antecedentesPediatricos!.porPaciente(pid)).historia,historia);
+    await assert.rejects(servicio.ejecutar('historia',{contexto,bundle,id:pid,claveIdempotencia:id(),entrada:he}),{codigo:'VERSION_DESACTUALIZADA'});
+    const versiones=await db.collection(`pediatria_antecedentes/${pid}/versiones`).get();
+    assert.equal(versiones.size,4);
+    const ultima=versiones.docs.find(doc=>doc.get('actual.version')===4)!;
+    assert.equal(ultima.get('anterior.version'),3);
+    assert.equal(ultima.get('anterior.historia'),undefined);
+    assert.deepEqual(ultima.get('actual.historia'),historia);
+
   });
 
 });

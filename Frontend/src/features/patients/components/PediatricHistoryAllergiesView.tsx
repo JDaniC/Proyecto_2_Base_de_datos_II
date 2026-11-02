@@ -67,6 +67,21 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [alergiaParaEliminar, setAlergiaParaEliminar] = useState<string | null>(null);
 
+  const camposHistoria=['patologicos','quirurgicos','familiares','medicamentosActuales'] as const;
+  const etiquetasHistoria={patologicos:'Patológicos',quirurgicos:'Quirúrgicos',familiares:'Familiares',medicamentosActuales:'Medicamentos actuales'};
+  const [editarHistoria,setEditarHistoria]=useState(false);
+  const [historiaTexto,setHistoriaTexto]=useState(()=>Object.fromEntries(camposHistoria.map(c=>[c,antecedentes[c].join('\n')])) as Record<typeof camposHistoria[number],string>);
+  const guardarHistoria=async()=>{
+    try{
+      setProcesando(true);setErrorAccion(null);
+      if(!patientRepository.actualizarHistoriaPediatrica)throw new Error('Registro de historia no disponible.');
+      const cambio=contextoCambio();
+      const historia=Object.fromEntries(camposHistoria.map(c=>[c,historiaTexto[c].split('\n').map(t=>t.trim()).filter(Boolean)])) as Pick<AntecedentesClinicos,typeof camposHistoria[number]>;
+      await enviar(()=>patientRepository.actualizarHistoriaPediatrica!(institucionId,paciente.id,historia,paciente.version,cambio));
+      setEditarHistoria(false);await onActualizar();
+    }catch(e){setErrorAccion(getErrorMessage(e,'No se pudo guardar la historia.'));}finally{setProcesando(false);}
+  };
+
   // Formulario de nueva alergia
   const [sustancia, setSustancia] = useState('');
   const [severidad, setSeveridad] = useState<'LEVE' | 'MODERADA' | 'SEVERA'>('MODERADA');
@@ -622,11 +637,20 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
             Complicaciones o eventos perinatales reportados:
           </span>{' '}
           <span style={{ color: 'var(--color-strong)' }}>
-            {perinatales?.complicacionesPerinatales || 'Sin complicaciones perinatales ni estancias en UCIN.'}
+            {perinatales?.complicacionesPerinatales || 'Sin información registrada.'}
           </span>
         </div>
       </Panel>
 
+      {mode==='api'&&!soloLectura&&<Button variant="secondary" onClick={()=>setEditarHistoria(true)}>Actualizar historia clínica</Button>}
+      <Modal isOpen={editarHistoria} onClose={()=>{if(!procesando)setEditarHistoria(false);}} title="Actualizar historia clínica" footer={<>
+        <Button variant="secondary" disabled={procesando} onClick={()=>setEditarHistoria(false)}>Cancelar</Button>
+        <Button loading={procesando} onClick={guardarHistoria}>Guardar historia</Button>
+      </>}>
+        <p>Escribe un registro por línea. Los cambios conservarán las versiones anteriores.</p>
+        {errorAccion&&<Alert variant="danger">{errorAccion}</Alert>}
+        {camposHistoria.map(c=><label key={c} style={{display:'block',marginBottom:12}}>{etiquetasHistoria[c]}<textarea aria-label={etiquetasHistoria[c]} value={historiaTexto[c]} disabled={procesando} onChange={e=>setHistoriaTexto({...historiaTexto,[c]:e.target.value})} rows={3} style={{display:'block',width:'100%'}} /></label>)}
+      </Modal>
       {/* SECCIÓN 3: ANTECEDENTES PATOLÓGICOS, FAMILIARES Y MEDICACIÓN */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         {/* Patológicos y Quirúrgicos */}
@@ -648,7 +672,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 </ul>
               ) : (
                 <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                  Sin antecedentes patológicos crónicos reportados.
+                  Sin registros disponibles.
                 </p>
               )}
             </div>
@@ -692,7 +716,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 </ul>
               ) : (
                 <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                  No se refieren antecedentes heredo-familiares de relevancia.
+                  Sin registros disponibles.
                 </p>
               )}
             </div>
@@ -710,7 +734,7 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
                 </ul>
               ) : (
                 <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                  No consume medicamentos de uso crónico o suplementos activos.
+                  Sin registros disponibles.
                 </p>
               )}
             </div>

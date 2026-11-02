@@ -4,9 +4,10 @@ import {afterEach,it,expect,vi} from 'vitest';
 import {PediatricHistoryAllergiesView} from '../../features/patients/components/PediatricHistoryAllergiesView';
 import type {Paciente,AntecedentesClinicos} from '../../services/types';
 const confirmar=vi.hoisted(()=>vi.fn());
-vi.mock('../../app/ServiceContext',()=>({useServices:()=>({mode:'api',patientRepository:{confirmarSinAlergias:confirmar}})}));
+const historia=vi.hoisted(()=>vi.fn());
+vi.mock('../../app/ServiceContext',()=>({useServices:()=>({mode:'api',patientRepository:{confirmarSinAlergias:confirmar,actualizarHistoriaPediatrica:historia}})}));
 vi.mock('../../app/AuthSessionContext',()=>({useAuthSession:()=>({sesion:{nombre:'Pediatra',rolEtiqueta:'Pediatra'}})}));
-afterEach(()=>{cleanup();confirmar.mockReset();});
+afterEach(()=>{cleanup();confirmar.mockReset();historia.mockReset();});
 const paciente={id:'menor',version:4,nombreCompleto:'Menor Sintético',estadoAlergias:'SIN_VERIFICAR',estado:'ACTIVO'} as Paciente;
 const antecedentes:AntecedentesClinicos={versionAntecedentes:2,patologicos:[],quirurgicos:[],familiares:[],medicamentosActuales:[],alergias:[]};
 it('resultado incierto bloquea edición y reintenta exactamente versiones y motivo capturados',async()=>{
@@ -23,4 +24,17 @@ it('resultado incierto bloquea edición y reintenta exactamente versiones y moti
 it('sin motivo no envía ni anuncia éxito',async()=>{
  const user=userEvent.setup(),actualizar=vi.fn();render(<PediatricHistoryAllergiesView paciente={paciente} antecedentes={antecedentes} institucionId="CENTRO_PEDIATRICO" onActualizar={actualizar}/>);
  await user.click(screen.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}));await screen.findByText(/Completa el motivo/);expect(confirmar).not.toHaveBeenCalled();expect(actualizar).not.toHaveBeenCalled();
+});
+
+it('cancelar historia no escribe; guardar envía listas explícitas, versiones y motivo',async()=>{
+ const user=userEvent.setup(),actualizar=vi.fn().mockResolvedValue(undefined);historia.mockResolvedValue({});
+ render(<PediatricHistoryAllergiesView paciente={paciente} antecedentes={antecedentes} institucionId="CENTRO_PEDIATRICO" onActualizar={actualizar}/>);
+ await user.click(screen.getByRole('button',{name:'Actualizar historia clínica'}));
+ await user.type(screen.getByLabelText('Patológicos'),'Asma sintética');
+ await user.click(screen.getByRole('button',{name:'Cancelar'}));expect(historia).not.toHaveBeenCalled();
+ await user.type(screen.getByLabelText('Motivo del cambio clínico'),'Registro sintético');
+ await user.click(screen.getByRole('button',{name:'Actualizar historia clínica'}));
+ await user.click(screen.getByRole('button',{name:'Guardar historia'}));
+ await waitFor(()=>expect(actualizar).toHaveBeenCalledTimes(1));
+ expect(historia).toHaveBeenCalledWith('CENTRO_PEDIATRICO','menor',{patologicos:['Asma sintética'],quirurgicos:[],familiares:[],medicamentosActuales:[]},4,{versionAntecedentes:2,motivo:'Registro sintético'});
 });
