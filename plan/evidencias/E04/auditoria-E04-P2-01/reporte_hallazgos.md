@@ -26,11 +26,17 @@
 - **Condición inicial:** Validaciones de `tipoParto` y `severidad` admitían implícitamente arreglos u objetos antes de coerción.
 - **Corrección aplicada:** Se agregaron guardas explícitas `typeof e.tipoParto === 'string'` y `typeof e.severidad === 'string'`.
 
+### HALLAZGO-05: Limpieza de modales y formulario de alergia tras reintento exitoso (Resuelto)
+- **Severidad:** MINOR
+- **Archivo/Línea:** `Frontend/src/features/patients/components/PediatricHistoryAllergiesView.tsx:233-248`
+- **Condición inicial:** El botón de reintento de respuesta incierta no cerraba modales ni reseteaba los campos de alergia al tener éxito.
+- **Corrección aplicada:** Se invocan los setters de limpieza (`setModalAlergiaAbierto(false)`, etc.) en la rama exitosa de reintento, cubierto por regresión automatizada.
+
 ## 2. Resumen de Pruebas Ejecutadas y Estado Final
 - Pruebas Backend Unitarias/Runtime: 308 PASS (0 FAIL)
 - Pruebas Backend Contratos: 32 PASS (0 FAIL)
 - Integración Clínica Firestore Aislada: 19 PASS (0 FAIL)
 - Integración Pacientes Firestore Aislada: 8 PASS (0 FAIL)
-- Pruebas Frontend src/test/http: 104 PASS (0 FAIL)
+- Pruebas Frontend src/test/http: 105 PASS (0 FAIL)
 - Validador Contractual Offline: 58 rutas, 65 operaciones, 168 esquemas, 327 fixtures PASS
 - Estado de la Tarea: PASS

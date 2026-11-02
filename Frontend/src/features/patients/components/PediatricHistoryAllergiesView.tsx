@@ -233,7 +233,25 @@ export const PediatricHistoryAllergiesView: React.FC<PediatricHistoryAllergiesVi
   if(incierto)return <Alert variant="warning" title="Resultado pendiente de confirmar">
     Los datos enviados permanecen conservados. Reintenta la misma solicitud.
     {errorAccion && <p>{errorAccion}</p>}
-    <Button loading={procesando} onClick={async()=>{if(!intencion.current)return;setProcesando(true);try{await enviar(intencion.current);await onActualizar();}catch(e){setErrorAccion(getErrorMessage(e,'No se pudo confirmar la operación.'));}finally{setProcesando(false);}}}>Reintentar misma solicitud</Button>
+    <Button loading={procesando} onClick={async()=>{
+      if(!intencion.current)return;
+      setProcesando(true);
+      try{
+        await enviar(intencion.current);
+        setModalAlergiaAbierto(false);
+        setModalPerinatalesAbierto(false);
+        setEditarHistoria(false);
+        setAlergiaParaEliminar(null);
+        setSustancia('');
+        setSeveridad('MODERADA');
+        setReaccion('');
+        await onActualizar();
+      }catch(e){
+        setErrorAccion(getErrorMessage(e,'No se pudo confirmar la operación.'));
+      }finally{
+        setProcesando(false);
+      }
+    }}>Reintentar misma solicitud</Button>
   </Alert>;
 
   return (

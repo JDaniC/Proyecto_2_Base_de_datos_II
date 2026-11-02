@@ -44,3 +44,15 @@ it('rechazo definitivo después de respuesta incierta devuelve el formulario y c
  await user.type(screen.getByLabelText('Motivo del cambio clínico'),'Verificación sintética');await user.click(screen.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}));await screen.findByText('Resultado pendiente de confirmar');
  await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));await screen.findByText('Recarga antecedentes');expect(screen.queryByText('Resultado pendiente de confirmar')).toBeNull();expect(screen.getByLabelText('Motivo del cambio clínico')).toHaveValue('Verificación sintética');
 });
+it('reintento exitoso tras respuesta incierta limpia modales y campos de alergia',async()=>{
+ confirmar.mockRejectedValueOnce({status:503,mensaje:'Respuesta perdida'}).mockResolvedValueOnce({antecedentes});
+ const user=userEvent.setup(),actualizar=vi.fn().mockResolvedValue(undefined);
+ render(<PediatricHistoryAllergiesView paciente={paciente} antecedentes={antecedentes} institucionId="CENTRO_PEDIATRICO" onActualizar={actualizar}/>);
+ await user.type(screen.getByLabelText('Motivo del cambio clínico'),'Verificación sintética');
+ await user.click(screen.getByRole('button',{name:'Confirmar Sin Alergias Conocidas'}));
+ await screen.findByText('Resultado pendiente de confirmar');
+ await user.click(screen.getByRole('button',{name:'Reintentar misma solicitud'}));
+ await waitFor(()=>expect(actualizar).toHaveBeenCalledTimes(1));
+ expect(screen.queryByText('Resultado pendiente de confirmar')).toBeNull();
+ expect(screen.queryByRole('dialog')).toBeNull();
+});
