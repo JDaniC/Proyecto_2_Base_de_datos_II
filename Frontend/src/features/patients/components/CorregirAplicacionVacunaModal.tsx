@@ -70,7 +70,7 @@ export const CorregirAplicacionVacunaModal: React.FC<CorregirAplicacionVacunaMod
             lote: lote.trim().toUpperCase(),
             sitioAnatomico,
             ...(mode !== 'api' ? {reaccionesInmediatas: reaccionesInmediatas.trim() || undefined} : {}),
-            observaciones: observaciones.trim() || undefined,
+            observaciones: mode === 'api' ? observaciones.trim() : observaciones.trim() || undefined,
             motivo: motivo.trim()
           },
           profesionalNombre,
