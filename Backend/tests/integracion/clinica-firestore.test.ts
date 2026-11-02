@@ -1,3 +1,4 @@
+import { GestionarResponsable } from '../../src/aplicacion/casos-uso/pediatria/gestionar-responsable.js';
 import { CambiarEstadoHistorial } from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -219,6 +220,26 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     ]);
     assert.equal(r.filter(x => x.status === 'fulfilled').length, 1);
     assert.equal((await bundle.pacientes!.porId(pacienteId))?.version, datos.version_paciente + 1);
+  });
+
+  await t.test('E04: contacto compartido, principalidad, baja y reactivación versionadas',async()=>{
+    const segundo=(await new RegistrarPaciente(deps).ejecutar({contexto,bundle,claveIdempotencia:id(),entrada:{nombres:'Hermano',apellidos:'Sintético',fecha_nacimiento:'2023-01-01',sexo:'MASCULINO',responsables:[{responsable_id:responsableId,version_responsable:1,parentesco:'MADRE',es_principal:true,autoriza_atencion:false}]}})).respuesta;
+    const pid=uuidPublico(segundo.id),gestor=new GestionarResponsable(deps);
+    const cmd=(accion:'contacto'|'vinculo'|'baja'|'vincular',rid:string,entrada:unknown,clave=id())=>gestor.ejecutar(accion,{contexto,bundle,id:pid,entrada,claveIdempotencia:clave},rid);
+    const clave=id(),contacto={version_paciente:1,version_responsable:1,telefono:'55550001'};
+    await cmd('contacto',responsableId,contacto,clave);await cmd('contacto',responsableId,contacto,clave);
+    assert.equal((await bundle.pacientes!.porId(pid))!.version,2);
+    assert.equal((await bundle.pacientes!.porId(pid))!.responsables![0]!.responsable.telefono,'55550001');
+    assert.equal((await db.doc(`responsables/${responsableId}`).get()).get('revision'),2);
+    await assert.rejects(cmd('baja',responsableId,{version_paciente:2,version_vinculo:1,motivo:'Baja imposible'}),{codigo:'ESTADO_INVALIDO'});
+    const otro=id();
+    await db.doc(`responsables/${otro}`).set({revision:1,identificacion:'CUI:1234567890102',tipo_documento:'CUI',nombres:'Tutor',apellidos:'Sintético',telefono:'55555555',fecha_registro:new Date()});
+    await cmd('vincular',otro,{version_paciente:2,version_responsable:1,parentesco:'TUTOR',es_principal:true,autoriza_atencion:false});
+    await cmd('baja',responsableId,{version_paciente:3,version_vinculo:1,motivo:'Baja sintética'});
+    assert.equal((await db.doc(`pacientes/${pid}/responsables/${responsableId}`).get()).get('estado'),'INACTIVO');
+    await cmd('vincular',responsableId,{version_paciente:4,version_responsable:2,version_vinculo:2,parentesco:'MADRE',es_principal:false,autoriza_atencion:true});
+    assert.equal((await db.doc(`pacientes/${pid}/responsables/${responsableId}`).get()).get('revision'),3);
+    assert.equal((await bundle.pacientes!.porId(pid))!.responsables!.length,2);
   });
 
 });
