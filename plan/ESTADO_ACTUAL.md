@@ -102,3 +102,15 @@ emulados PASS; build postmerge PASS. [Evidencia](evidencias/E03/E03-P2-03.md).
 La agenda integra lectura para vincular citas, con filtros simulados y gestión
 pendiente deshabilitados en API. No acredita módulos E04–E05 ni producción
 Firestore. La demostración conjunta y auditoría de cierre de fase E03 están en `plan/evidencias/E03/CIERRE.md` y `plan/evidencias/E03/auditoria-cierre-2026-10-31/`; el cierre se integró mediante PR #65 (`f516156`), con revisión nativa de Codex sin hallazgos sobre `66e5f46` y `contrato-pr`/`revision-codex` success, habilitando la puerta de entrada a la fase E04 (`E04-P1-01`, `E04-P1-02`, `E04-P2-01`). Consultar tablero y plan/11.
+
+
+Corte E04-P1-02 (01/11/2026, America/Guatemala): PR #68 integrado en develop
+(`baa763e`), revisión nativa de Codex sin hallazgos sobre `20f22bb`.
+Hospitalizaciones PostgreSQL y React HTTP operativas: ingreso, evolución,
+traslado/liberación y egreso con UoW, idempotencia, revisiones, auditoría y
+cronología; autor y permisos clínicos vigentes. Requiere preparación 004/007
+existente; no modifica inicializadores ni M01–M09. Evidencia E04/E04-P1-02.md:
+293+32 backend, 6 suites SQL, 79 HTTP, 58 UI cuatro motores/emuladores y 20
+fixtures PASS. Suite frontend histórica conserva los mismos 131 FAIL que base,
+sin fallos nuevos. E04-P1-03 y tareas restantes conservan su alcance; consultar
+cola y reservas remotas. No acredita cierre E04 ni módulos de exámenes/pólizas.
