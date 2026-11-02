@@ -38,8 +38,11 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
   const { appointmentRepository, patientRepository, catalogRepository, mode } = useServices();
 
   const institucionId = sesion?.institucionId || 'HOSPITAL_GENERAL';
-  const [profesionalesApi, setProfesionalesApi] = useState<Array<{ id: string; nombre: string; especialidad: string }>>([]);
-  const profesionales = mode === 'api' ? profesionalesApi : PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const [profesionalesApi, setProfesionalesApi] = useState<Array<{ id: string; nombre: string; especialidad: string; especialidades: string[] }>>([]);
+  const [especialidadFiltro,setEspecialidadFiltro]=useState('');
+  const profesionalesBase = mode === 'api' ? profesionalesApi : PROFESIONALES_DISPONIBLES[institucionId] || [];
+  const especialidades=[...new Set(profesionalesApi.flatMap(p=>p.especialidades))].sort();
+  const profesionales=mode==='api'&&institucionId==='HOSPITAL_GENERAL'&&especialidadFiltro?profesionalesApi.filter(p=>p.especialidades.includes(especialidadFiltro)):profesionalesBase;
 
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [busquedaPaciente, setBusquedaPaciente] = useState('');
@@ -81,19 +84,21 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
             id: m.id,
             nombre: m.nombreCompleto ?? m.nombre,
             especialidad: m.especialidad ?? m.especialidadPrincipal,
+            especialidades:[m.especialidad??m.especialidadPrincipal,...(m.especialidadesSecundarias??[])].filter(Boolean),
           }));
         setProfesionalesApi(activos);
-        if (activos.length > 0 && !activos.some((a) => a.id === profesionalId)) {
-          setProfesionalId(activos[0]!.id);
-        }
+        const elegibles=institucionId==='HOSPITAL_GENERAL'&&especialidadFiltro?activos.filter(p=>p.especialidades.includes(especialidadFiltro)):activos;
+        if(!elegibles.some(p=>p.id===profesionalId))setProfesionalId(elegibles[0]?.id??'');
       })
       .catch(() => {
-        // Ignorar si no hay catálogo disponible
+        if(cancelado)return;
+        setProfesionalesApi([]);setProfesionalId('');
+        setErrorValidacion('No se pudo consultar el personal disponible. Vuelva a abrir el formulario.');
       });
     return () => {
       cancelado = true;
     };
-  }, [isOpen, mode, institucionId, catalogRepository, profesionalId]);
+  }, [isOpen, mode, institucionId, catalogRepository, profesionalId, especialidadFiltro]);
 
   // Cargar lista de pacientes con expediente activo
   useEffect(() => {
@@ -306,6 +311,11 @@ export const CrearCitaModal: React.FC<CrearCitaModalProps> = ({
           </select>
         </div>
 
+        {mode==='api'&&institucionId==='HOSPITAL_GENERAL'&&<label>Especialidad
+          <select aria-label="Especialidad del personal" value={especialidadFiltro} onChange={e=>{setEspecialidadFiltro(e.target.value);const opciones=e.target.value?profesionalesApi.filter(p=>p.especialidades.includes(e.target.value)):profesionalesApi;setProfesionalId(opciones.some(p=>p.id===profesionalId)?profesionalId:opciones[0]?.id??'');}}>
+            <option value="">Todas las especialidades</option>{especialidades.map(e=><option key={e} value={e}>{e}</option>)}
+          </select>
+        </label>}
         {/* Selección de Profesional */}
         <div>
           <label
