@@ -1,0 +1,168 @@
+{
+  "entorno": "Navegador con transporte HTTP real, Firestore y Firebase Auth emulados; cuatro motores aislados preparados por harness",
+  "comando": "CLINICA_UI_SOLO_PEDIATRIA=1 node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "alcance": "32 comprobaciones pediátricas; incluye seis de vacunas y regresión de agenda/clínica/responsables/crecimiento/archivo/reactivación. No acredita Firestore de producción.",
+  "exitCode": 0,
+  "comprobaciones": [
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "agenda institucional HTTP persiste tras recarga en móvil/escritorio y reintento no duplica",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "agenda cancela con versión y rechaza versión obsoleta",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "detalle y receta después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "corrección conserva consulta y crea versión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "lectura de versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunas asignación explícita por UI persiste después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunación UI registra dosis y recarga lote persistido",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunación UI corrige con motivo y revisión observada",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "publicar versión nueva conserva esquema asignado y snapshot histórico",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "anulación UI preserva historia y estado después de reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "nueva administración explícita tras anular conserva identidad lógica y una sola vigente",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "crecimiento HTTP desde consulta sin talla muestra IMC no calculable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "verificación de alergias se confirma por HTTP y persiste",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "cancelar historia no escribe datos",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia clínica UI se conserva tras escritura real",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "registro de alergia por HTTP conserva autoría e invalida verificación negativa previa",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "baja lógica desde UI conserva alergia histórica",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "perinatales explícitos preservan Apgar cero",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "contacto compartido en dos menores y autorización independiente",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "último principal rechazado también por API desde el formulario",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia y contacto persisten tras reinicio y recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "ficha pediátrica disponible en móvil y escritorio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "archivo conserva eventos y consultas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia y receta conservadas tras reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "corrección histórica autorizada después del archivo",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "reactivación pediátrica por HTTP",
+      "resultado": "PASS"
+    }
+  ]
+}
