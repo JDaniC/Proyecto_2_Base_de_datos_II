@@ -15,3 +15,14 @@ it('falla de preparación conserva 503 sin listas vacías simuladas',async()=>{
  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({error:{codigo:'PERSISTENCIA_NO_DISPONIBLE',mensaje:'Preparación pendiente'}}),{status:503})));
  await expect(createHttpPatientRepository(new HttpClient()).obtenerAntecedentes!('CENTRO_PEDIATRICO','menor')).rejects.toMatchObject({status:503});
 });
+it('mutación exige versiones observadas y motivo antes de hacer tráfico',async()=>{
+ const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+ await expect(createHttpPatientRepository(new HttpClient()).confirmarSinAlergias!('CENTRO_PEDIATRICO','menor','Autor falso')).rejects.toMatchObject({status:400});expect(fetch).not.toHaveBeenCalled();
+});
+it('reintento conserva cuerpo y clave y omite el autor de presentación',async()=>{
+ const fetch=vi.fn().mockRejectedValue(new TypeError('offline'));vi.stubGlobal('fetch',fetch);
+ const r=createHttpPatientRepository(new HttpClient()),cambio={versionAntecedentes:2,motivo:'Confirmación sintética'};
+ for(let i=0;i<2;i++)await expect(r.confirmarSinAlergias!('CENTRO_PEDIATRICO','menor','Autor falso',4,cambio)).rejects.toMatchObject({status:503});
+ const a=fetch.mock.calls[0][1],b=fetch.mock.calls[1][1];expect(a.body).toBe(b.body);expect(a.headers['Idempotency-Key']).toBe(b.headers['Idempotency-Key']);
+ expect(JSON.parse(a.body)).toEqual({version_paciente:4,version_antecedentes:2,motivo:'Confirmación sintética'});
+});

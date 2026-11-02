@@ -1,3 +1,6 @@
+import { mapearAntecedentesPediatricos, type AntecedentesPediatricosDto } from '../pediatrics/antecedentes';
+import type { ContextoCambioPediatrico } from '../../contracts';
+import type { AlergiaRegistro, AntecedentesPerinatales } from '../../types';
 import { leerAntecedentesPediatricos } from '../pediatrics/antecedentes';
 import { patientHospitalMethods } from '../hospital/patientHospitalMethods';
 import { stableCommandKeys } from '../stableCommand';
@@ -27,8 +30,19 @@ interface AntecedentesDto {
 export function createHttpPatientRepository(http: HttpClient): PatientRepository {
   const path = (id: string) => `/pacientes/${encodeURIComponent(id)}`;
   const key = stableCommandKeys();
+  const mutarPediatria = async (i:InstitucionId,id:string,accion:string,datos:object,version:number|undefined,cambio:ContextoCambioPediatrico|undefined) => {
+    if(i!=='CENTRO_PEDIATRICO'||!Number.isSafeInteger(version)||!cambio||!Number.isSafeInteger(cambio.versionAntecedentes)||!cambio.motivo.trim())throw new HttpError({status:400,codigo:'SOLICITUD_INVALIDA',mensaje:'Recarga antecedentes y completa el motivo antes de enviar.'});
+    const body={version_paciente:version,version_antecedentes:cambio.versionAntecedentes,motivo:cambio.motivo.trim(),...datos};
+    const r=await http.post<AntecedentesPediatricosDto>(`${path(id)}/antecedentes-pediatricos/${accion}`,body,{idempotencyKey:key(`${id}/pediatria/${accion}`,body)});
+    const paciente=mapearPaciente((await http.get<PacienteDto>(path(id))).data);
+    return {paciente,antecedentes:mapearAntecedentesPediatricos(r.data)};
+  };
   const methods = {
     ...patientHospitalMethods(http),
+    confirmarSinAlergias:(i:InstitucionId,id:string,_autor:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'sin-alergias',{},v,c),
+    registrarAlergia:(i:InstitucionId,id:string,a:AlergiaRegistro,_autor?:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias',{alergia:{sustancia:a.sustancia,severidad:a.severidad,reaccion:a.reaccion}},v,c),
+    eliminarAlergia:(i:InstitucionId,id:string,_sustancia:string,v?:number,c?:ContextoCambioPediatrico)=>mutarPediatria(i,id,'alergias/baja',{alergia_id:c?.alergiaId},v,c),
+    async actualizarPerinatales(i:InstitucionId,id:string,p:AntecedentesPerinatales,v?:number,c?:ContextoCambioPediatrico){return (await mutarPediatria(i,id,'perinatales',{perinatales:p},v,c)).antecedentes;},
     async archivar(_i: InstitucionId, id: string, causa: string, motivo: string, versionEsperada?: number) {
       const body = {causa, motivo, version_esperada: versionEsperada};
       return mapearPaciente((await http.post<PacienteDto>(`${path(id)}/archivo`, body, {idempotencyKey: key(`${id}/archivo`, body)})).data);

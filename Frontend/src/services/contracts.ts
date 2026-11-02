@@ -129,6 +129,8 @@ export interface DashboardRepository {
   obtenerDashboard(institucionId: InstitucionId, rolId: RolId): Promise<DashboardData>;
 }
 
+export interface ContextoCambioPediatrico { versionAntecedentes: number; motivo: string; alergiaId?: string; }
+
 export interface PatientRepository {
   buscar(institucionId: InstitucionId, query: BuscarPacientesQuery): Promise<ResultadoPaginadoPacientes>;
   obtenerPorId(institucionId: InstitucionId, id: string): Promise<Paciente | null>;
@@ -160,10 +162,10 @@ export interface PatientRepository {
   obtenerAntecedentes?(institucionId: InstitucionId, pacienteId: string): Promise<AntecedentesClinicos>;
   /** @remarks Sin llamada directa en UI actual: en Pediatría se usan `confirmarSinAlergias`, `registrarAlergia`, `eliminarAlergia` y `actualizarPerinatales`. */
   actualizarAntecedentes?(institucionId: InstitucionId, pacienteId: string, antecedentes: AntecedentesClinicos, versionEsperada?: number): Promise<AntecedentesClinicos>;
-  confirmarSinAlergias?(institucionId: InstitucionId, pacienteId: string, verificadoPor: string, versionEsperada?: number): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
-  registrarAlergia?(institucionId: InstitucionId, pacienteId: string, alergia: AlergiaRegistro, verificadoPor?: string, versionEsperada?: number): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
-  eliminarAlergia?(institucionId: InstitucionId, pacienteId: string, sustancia: string, versionEsperada?: number): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
-  actualizarPerinatales?(institucionId: InstitucionId, pacienteId: string, perinatales: AntecedentesPerinatales, versionEsperada?: number): Promise<AntecedentesClinicos>;
+  confirmarSinAlergias?(institucionId: InstitucionId, pacienteId: string, verificadoPor: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  registrarAlergia?(institucionId: InstitucionId, pacienteId: string, alergia: AlergiaRegistro, verificadoPor?: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  eliminarAlergia?(institucionId: InstitucionId, pacienteId: string, sustancia: string, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<{ paciente: Paciente; antecedentes: AntecedentesClinicos }>;
+  actualizarPerinatales?(institucionId: InstitucionId, pacienteId: string, perinatales: AntecedentesPerinatales, versionEsperada?: number, cambio?: ContextoCambioPediatrico): Promise<AntecedentesClinicos>;
 }
 
 export interface AppointmentRepository {
