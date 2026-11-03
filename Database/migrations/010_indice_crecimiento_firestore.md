@@ -6,7 +6,15 @@ sincronizar las dos huellas, sin reescribir pacientes, consultas o historia.
 En instalación nueva ejecutar inicialización M04 y preparación004/006/009 según
 sus guías;006 utiliza el plan actual.010 comprueba esa instalación y no escribe.
 
-En volumen existente, detener escritores y respaldar el entorno. Desde sesión
+En un proyecto Firestore cloud, publicar primero el índice descendente de
+`Database/firebase/firestore.indexes.json` y confirmar que está listo (no en
+construcción) antes de habilitar la huella nueva. Mantener los escritores
+detenidos durante la actualización y reanudarlos solo después de completar010.
+La disponibilidad se comprueba en el proyecto de destino; los resultados del
+emulador no verifican esa condición. Ver la [guía oficial de índices](https://firebase.google.com/docs/firestore/query-data/indexing).
+
+En volumen existente, detener escritores y respaldar el entorno. Con el índice
+listo si se trata de cloud, desde sesión
 administrativa controlada ejecutar `prepararIndiceCrecimientoFirestore(db)` del
 módulo010 **antes de reejecutar el inicializador o006 del código nuevo**. Acepta
 solo el origen conocido `a39fdac43acefecf82145f3dfde06c89a3adbfe96240f637cf79c0a1a6073e08`
