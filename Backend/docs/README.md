@@ -14,12 +14,15 @@ Desde el directorio `Backend/`, con Node.js 24 LTS y npm:
 
 ```sh
 npm ci
+npm --prefix ../Database ci
 cp .env.example .env
 npm run build
 npm run lint
 npm test
 npm start
 ```
+
+Las pruebas contractuales actuales de huella Firestore importan el plan de `Database/`, paquete npm separado. Instalar también sus dependencias con el comando anterior antes de `npm test`, incluso sin ejecutar motores. Desde la raíz, el flujo equivalente es `npm --prefix Backend ci`, `npm --prefix Database ci` y `npm --prefix Backend test`. El resto de este apartado conserva el corte histórico del servidor base.
 
 La configuración requerida es `APP_ENV`, `HOST`, `PORT` y `INSTITUTIONS`. El ejemplo incluye las cuatro instituciones canónicas. Si falta una variable o la lista no contiene exactamente las cuatro instituciones reconocidas, el proceso termina antes de abrir el puerto e informa solo los nombres de las variables que se deben revisar. `.env` está excluido de Git; el ejemplo no incluye credenciales.
 

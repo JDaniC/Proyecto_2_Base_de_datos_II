@@ -1,0 +1,27 @@
+{
+  "fecha": "2026-11-02",
+  "zona": "America/Guatemala",
+  "tarea": "E04-P2-03",
+  "huella_objetivo": "34517ff024a5d455a8579571f66b881ccaa58b7657e5101a14eeab6755d64de3",
+  "comando": "node Backend/scripts/run-clinica-firestore-integration.mjs",
+  "entorno": "Firestore/Auth emulados aislados, datos sintéticos",
+  "resultado": "PASS",
+  "exitCode": 0,
+  "tests": 20,
+  "pass": 20,
+  "fail": 0,
+  "skipped": 0,
+  "duracion_ms": 21640.993667,
+  "alcance": [
+    "Instalación nueva clínica006 con huella final y migración010 no-op",
+    "Volumen existente simulado con paciente y consulta/receta conservados íntegros",
+    "Fallo antes de commit revierte manifiestos y no crea respaldo parcial",
+    "Recuperación y reejecución idempotente",
+    "Respaldo clínico conserva huella anterior; deriva desconocida se rechaza",
+    "Regresión clínica/agenda/archivo, responsables, antecedentes y crecimiento"
+  ],
+  "limites": [
+    "El emulador no verifica disponibilidad del índice compuesto en cloud",
+    "Dos wrappers previos fallaron al cerrar por permisos locales después de tests PASS; este registro corresponde al wrapper posterior con acceso adecuado y exit0"
+  ]
+}

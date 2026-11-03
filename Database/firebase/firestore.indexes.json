@@ -29,6 +29,10 @@
       { "fieldPath": "fecha_hora", "order": "ASCENDING" }
     ] },
     { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "paciente_id", "order": "ASCENDING" },
+      { "fieldPath": "fecha_hora", "order": "DESCENDING" }
+    ] },
+    { "collectionGroup": "consultas", "queryScope": "COLLECTION", "fields": [
       { "fieldPath": "pediatra_id", "order": "ASCENDING" },
       { "fieldPath": "fecha_hora", "order": "ASCENDING" }
     ] },

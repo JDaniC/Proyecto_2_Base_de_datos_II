@@ -64,6 +64,28 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await assert.rejects(atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:clave,entrada:e}),{codigo:'SIN_PERMISO'});
     await db.doc(`roles/${rol}`).update({permisos:cuenta.permisos});
   });
+  await t.test('migración010 nueva/existente, rollback, rechazo de deriva y reejecución sin pérdida',async()=>{
+    const m=await import(new URL('../../../../Database/migrations/010_indice_crecimiento_firestore.mjs',import.meta.url).href) as {HUELLA_ORIGEN:string;prepararIndiceCrecimientoFirestore(db:unknown,o?:{antesDeConfirmar?:()=>void}):Promise<{actualizado:boolean}>};
+    const consultasAntes=(await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()}));
+    assert.ok(consultasAntes.length>0);
+    const pacienteAntes=(await db.doc(`pacientes/${pacienteId}`).get()).data();
+    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,false);
+    await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN});
+    await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN});
+    await assert.rejects(m.prepararIndiceCrecimientoFirestore(db,{antesDeConfirmar:()=>{throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
+    assert.equal((await db.doc('configuracion/modelo').get()).get('hash_modelo'),m.HUELLA_ORIGEN);
+    assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
+    assert.equal((await db.doc('clinica_migracion_010_respaldo/modelo').get()).exists,false);
+    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,true);
+    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,false);
+    assert.deepEqual((await db.doc(`pacientes/${pacienteId}`).get()).data(),pacienteAntes);
+    assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
+    assert.equal((await db.doc('clinica_migracion_010_respaldo/modelo').get()).get('clinica.huella'),m.HUELLA_ORIGEN);
+    const hash=(await db.doc('configuracion/modelo').get()).get('hash_modelo') as string;
+    await db.doc('configuracion/modelo').update({hash_modelo:'deriva-desconocida'});
+    await assert.rejects(m.prepararIndiceCrecimientoFirestore(db),/MANIFIESTO_CLINICO_INCOMPATIBLE/);
+    await db.doc('configuracion/modelo').update({hash_modelo:hash});
+  });
   await t.test('principal sin autorización y vínculo inactivo se rechazan sin parcialidad',async()=>{
     const ref = db.doc(`pacientes/${pacienteId}/responsables/${responsableId}`);
     for (const cambio of [{autoriza_atencion:false},{autoriza_atencion:true,estado:'INACTIVO'}]) {
