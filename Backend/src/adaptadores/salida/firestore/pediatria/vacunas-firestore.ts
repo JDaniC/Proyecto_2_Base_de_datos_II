@@ -134,7 +134,7 @@ export function crearVacunasFirestore(
         const snap = await (t ? t.get(db.collection(`pacientes/${uuidPublico(pacienteId)}/esquemas`)) : db.collection(`pacientes/${uuidPublico(pacienteId)}/esquemas`).get());
         if (snap.empty) return [];
         return snap.docs.map((doc) => {
-          const d = doc.data();
+          const d = validarDocumento<Record<string,unknown>>(doc.ref.path,doc.data());
           return {
             vacunaId: uuidPublico(String(d.vacuna_id || doc.id)),
             versionId: uuidPublico(String(d.version_id)),

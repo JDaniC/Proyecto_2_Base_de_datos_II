@@ -28,10 +28,15 @@ export class ConsultarAplicacionesVacuna {
     }
 
     const aplicaciones=await bundle.vacunasPediatricas.obtenerAplicaciones(pid);
-    return Promise.all(aplicaciones.map(async a=>{
-      const esquema=await bundle.vacunasPediatricas!.obtenerVersionEsquema(uuidPublico(a.vacunaId),uuidPublico(a.versionEsquemaId));
-      if(!esquema)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Versión histórica no disponible.');
-      return {...a,esquema};
+    const vacunas = bundle.vacunasPediatricas;
+    const pares = [...new Map(aplicaciones.map(a => [`${a.vacunaId}__${a.versionEsquemaId}`, a])).entries()];
+    const lecturas = await Promise.allSettled(pares.map(([, a]) => vacunas.obtenerVersionEsquema(uuidPublico(a.vacunaId), uuidPublico(a.versionEsquemaId))));
+    const versiones = new Map(pares.map(([clave], i) => {
+      const lectura = lecturas[i]!;
+      if (lectura.status === 'rejected') throw lectura.reason;
+      if (!lectura.value) throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'Versión histórica no disponible.');
+      return [clave, lectura.value] as const;
     }));
+    return aplicaciones.map(a => ({...a, esquema: versiones.get(`${a.vacunaId}__${a.versionEsquemaId}`)!}));
   }
 }

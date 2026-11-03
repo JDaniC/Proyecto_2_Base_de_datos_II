@@ -53,6 +53,9 @@ test('E04 CA11 vacunas Firestore aislado', {skip: !host}, async t => {
   await t.test('asignación idempotente; versión exacta resiste catálogo nuevo',async()=>{
     const e={...p(),entrada:{vacunaId,versionId}};
     assert.deepEqual(await asignar.ejecutar(e),await asignar.ejecutar(e));
+    const asignados=await bundle.vacunasPediatricas!.obtenerEsquemas(pacienteId);
+    assert.match(asignados[0]!.fechaAsignacion,/^\d{4}-\d{2}-\d{2}T/);
+    assert.ok(Number.isFinite(Date.parse(asignados[0]!.fechaAsignacion)));
     const nueva=id();await db.doc(`vacunas/${vacunaId}/versiones/${nueva}`).set({...esquema,version:2,nombre:'Cambio',dosis:[{dosis_id:id(),numero:1,edad_recomendada_meses:99}]});
     await db.doc(`vacunas/${vacunaId}`).update({version_vigente:nueva});
     const vista=await new ConsultarEsquemaVacunas().ejecutar(contexto,bundle,pacienteId);

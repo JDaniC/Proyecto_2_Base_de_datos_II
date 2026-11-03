@@ -9,6 +9,8 @@ import { Input } from '../../design-system/components/Input';
 import { Select } from '../../design-system/components/Select';
 import { VacunaCatalogo } from '../../services/types';
 
+const creacionesPendientes = new WeakMap<object, Omit<VacunaCatalogo, 'id'>>();
+
 interface DosisFormItem {
   dosisId: string;
   numeroDosis: number;
@@ -32,14 +34,15 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
 }) => {
   const { catalogRepository, mode } = useServices();
   const { sesion } = useAuthSession();
+  const pendiente = !vacunaExistente ? creacionesPendientes.get(catalogRepository) : undefined;
   const institucionId = sesion?.institucionId || 'CENTRO_PEDIATRICO';
 
-  const [fabricante,setFabricante] = useState(vacunaExistente?.fabricante??'');
-  const [nombreVacuna, setNombreVacuna] = useState(vacunaExistente?.nombreVacuna || '');
-  const [enfermedadPrevenida, setEnfermedadPrevenida] = useState(vacunaExistente?.enfermedadPrevenida || '');
+  const [fabricante,setFabricante] = useState(vacunaExistente?.fabricante??pendiente?.fabricante??'');
+  const [nombreVacuna, setNombreVacuna] = useState(vacunaExistente?.nombreVacuna || pendiente?.nombreVacuna || '');
+  const [enfermedadPrevenida, setEnfermedadPrevenida] = useState(vacunaExistente?.enfermedadPrevenida || pendiente?.enfermedadPrevenida || '');
   const [viaAdministracion, setViaAdministracion] = useState<VacunaCatalogo['viaAdministracion']>(vacunaExistente?.viaAdministracion || 'INTRAMUSCULAR');
   const [esquemaVersion, setEsquemaVersion] = useState(vacunaExistente ? `${vacunaExistente.esquemaVersion} · revisión` : '');
-  const [dosisList, setDosisList] = useState<DosisFormItem[]>(vacunaExistente?.dosis.map(d => ({ ...d })) || [
+  const [dosisList, setDosisList] = useState<DosisFormItem[]>(vacunaExistente?.dosis.map(d => ({ ...d })) || pendiente?.dosis.map(d => ({ ...d })) || [
     {
       dosisId: crypto.randomUUID(),
       numeroDosis: 1,
@@ -96,6 +99,10 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
       setErrorMsg('Debe especificar la enfermedad o patología prevenida.');
       return;
     }
+    if (mode === 'api' && !vacunaExistente && !fabricante.trim()) {
+      setErrorMsg('Debe indicar el fabricante de la vacuna.');
+      return;
+    }
     if (dosisList.length === 0) {
       setErrorMsg('Debe configurar al menos una dosis para el esquema.');
       return;
@@ -125,11 +132,13 @@ export const RegistrarVacunaModal: React.FC<RegistrarVacunaModalProps> = ({
       if (vacunaExistente && catalogRepository.crearVersionEsquemaVacuna) {
         guardada = await catalogRepository.crearVersionEsquemaVacuna(institucionId, vacunaExistente.id, mode === 'api' ? vacunaExistente.esquemaVersion : esquemaVersion, nuevaVacunaPayload.dosis);
       } else if (catalogRepository.crearVacuna) {
+        if (mode === 'api') creacionesPendientes.set(catalogRepository, nuevaVacunaPayload);
         guardada = await catalogRepository.crearVacuna(institucionId, nuevaVacunaPayload);
       } else {
         throw new Error('No se pudo guardar el catálogo. Servicio no disponible.');
       }
 
+      creacionesPendientes.delete(catalogRepository);
       onVacunaGuardada(guardada);
       onClose();
     } catch (err: unknown) {

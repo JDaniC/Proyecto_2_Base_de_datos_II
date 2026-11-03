@@ -19,7 +19,7 @@
     "Rollback de aplicación, operación y auditoría ante fallo de cronología",
     "Carrera: única aplicación lógica, reintento estable y rechazo de duplicado vigente",
     "Corrección y anulación versionadas con expediente archivado, conservando historia",
-    "Nueva administración explícita tras anulación: carrera, reintento, misma identidad, versión 4 y tres snapshots previos completos",
+    "Nueva administración explícita tras anulación: carrera, reintento, misma identidad, versión 4 y tres snapshots previos existentes; estado y fecha de la versión anulada comprobados",
     "Rechazo de dosis ajena, autorización vigente insuficiente y nueva administración con paciente archivado",
     "Alta administrativa de catálogo, versiones inmutables y rechazo de versión obsoleta"
   ],

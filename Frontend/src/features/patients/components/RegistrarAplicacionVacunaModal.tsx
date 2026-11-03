@@ -86,6 +86,10 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
       setErrorMsg('Ingresa el número de lote de la vacuna.');
       return;
     }
+    if (!sitioAnatomico.trim()) {
+      setErrorMsg('Debe seleccionar el sitio anatómico de aplicación.');
+      return;
+    }
     if (!vacunaId || !dosisId) {
       setErrorMsg('Debe seleccionar la vacuna y la dosis a administrar.');
       return;
@@ -201,7 +205,9 @@ export const RegistrarAplicacionVacunaModal: React.FC<RegistrarAplicacionVacunaM
               label="Sitio Anatómico de Punción *"
               value={sitioAnatomico}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSitioAnatomico(e.target.value)}
+              required
               options={[
+                { value: '', label: 'Selecciona el sitio de aplicación' },
                 { value: 'Cara anterolateral muslo izquierdo', label: 'Cara anterolateral muslo izquierdo' },
                 { value: 'Cara anterolateral muslo derecho', label: 'Cara anterolateral muslo derecho' },
                 { value: 'Deltoides brazo izquierdo', label: 'Deltoides brazo izquierdo' },

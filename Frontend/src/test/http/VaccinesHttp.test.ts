@@ -34,3 +34,13 @@ it('publica nueva versión preservando IDs dosis y versión anterior observada',
  expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({nombre:vacuna.nombre,enfermedadObjetivo:vacuna.enfermedadObjetivo,fabricante:vacuna.fabricante,versionEsquemaAnterior:'version-vieja',dosis:[{dosisId:'dosis-estable',numero:1,edadMesesRecomendada:3}]});
  expect(r.esquemaVersion).toBe('version-nueva');expect(vacuna.versionVigente).toBe('version-vieja');
 });
+it('nueva administración con datos idénticos tras anular usa clave nueva y etiqueta numérica',async()=>{
+ const app={id:'p__v__d',pacienteId:'p',vacunaId:'v',dosisId:'d',fechaAplicacion:'2026-11-02',lote:'L',sitioAplicacion:'Brazo',pediatraId:'profesional',estado:'APLICADA',version:1,versionEsquemaId:'ver',esquema:{nombre:'Histórica',dosis:[{dosisId:'d',numero:2}]}};
+ const fetch=vi.fn().mockImplementation(async(url:string)=>new Response(JSON.stringify({data:url.endsWith('/anulacion')?{...app,estado:'ANULADA',version:2}:app}),{status:200}));vi.stubGlobal('fetch',fetch);
+ const repo=createHttpVaccineRepository(new HttpClient()),dto={vacunaId:'v',dosisId:'d',fechaAplicacion:'2026-11-02',lote:'L',sitioAnatomico:'Brazo'};
+ const primera=await repo.registrarAplicacion('CENTRO_PEDIATRICO','p',dto,'');
+ await repo.anularAplicacion('CENTRO_PEDIATRICO','p__v__d','Error','',1);
+ await repo.registrarAplicacion('CENTRO_PEDIATRICO','p',dto,'');
+ expect(fetch.mock.calls[0][1].headers['Idempotency-Key']).not.toBe(fetch.mock.calls[2][1].headers['Idempotency-Key']);
+ expect(primera.etiquetaDosis).toBe('Dosis 2');
+});

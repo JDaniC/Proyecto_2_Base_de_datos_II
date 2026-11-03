@@ -1,3 +1,4 @@
+import { ErrorDominio } from '../../src/dominio/compartido/error-dominio.js';
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { resolve } from 'node:path';
@@ -14,6 +15,8 @@ const escenarios=[pediatria,hospital,escenarioClinico('CLINICA_ODONTOLOGICA'),es
 const tokens=escenarios.map((s,i)=>({token:`vacunas-sintetico-${i}`,uid:s.cuenta.uid,institucion:s.bundle.institucion}));
 describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
  let app:INestApplication,url:string;
+ let catalogDisponible=false;
+ const catalogPort={obtenerCatalogo:async()=>{if(!catalogDisponible) throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Catálogo no disponible.');return [];},obtenerVersionEsquema:async()=>null,obtenerEsquemas:async()=>[],obtenerAplicaciones:async()=>[],obtenerPorId:async()=>null};
  const appId=`${pediatria.paciente.id}__${nuevoId()}__${nuevoId()}`;
  const ruta=`/pacientes/${pediatria.paciente.id}/aplicaciones-vacuna`;
  const entrada={vacunaId:nuevoId(),dosisId:nuevoId(),fechaAplicacion:'2026-01-01',lote:'ENSAYO',sitioAnatomico:'Brazo'};
@@ -21,7 +24,7 @@ describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
  const post=(path:string,body:unknown,i=0,key:string=nuevoId())=>fetch(url+path,{method:'POST',headers:{...headers(i),'idempotency-key':key},body:JSON.stringify(body)});
  before(async()=>{
   const config=parsearConfiguracion({APP_ENV:'test',HOST:'127.0.0.1',PORT:'3000',INSTITUTIONS:'HOSPITAL_GENERAL,CLINICA_ODONTOLOGICA,LABORATORIO_CLINICO,CENTRO_MEDICO_PEDIATRICO'});
-  app=await crearAplicacionHttp(AppModule.registrar(config,{bundles:escenarios.map(s=>s.bundle),verificadorIdentidad:new VerificadorIdentidadMemoria(tokens)}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
+  app=await crearAplicacionHttp(AppModule.registrar(config,{bundles:escenarios.map((s,i)=>i===0?{...s.bundle,vacunasPediatricas:catalogPort}:s.bundle),verificadorIdentidad:new VerificadorIdentidadMemoria(tokens)}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
   await app.listen(0,'127.0.0.1');url=`http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}/api/v1`;
  });
  after(async()=>{await app?.close();});
@@ -42,6 +45,15 @@ describe('vacunas HTTP con identidad y persistencia sintéticas',()=>{
    assert.equal((await post('/vacunas',{})).status,403);
    assert.equal((await post(`/vacunas/${entrada.vacunaId}/versiones`,{})).status,403);
   }finally{pediatria.cuenta=original;}
+ });
+ it('administrador lee catálogo sin acceso a historia de pacientes',async()=>{
+  const original=pediatria.cuenta;
+  pediatria.cuenta={...original,permisos:['usuarios.administrar']};
+  catalogDisponible=true;
+  try{
+   assert.equal((await fetch(url+'/vacunas',{headers:headers()})).status,200);
+   for(const path of [`/pacientes/${pediatria.paciente.id}/esquemas`,ruta]) assert.equal((await fetch(url+path,{headers:headers()})).status,403);
+  }finally{pediatria.cuenta=original;catalogDisponible=false;}
  });
  it('400 clave ausente o inválida y dosis malformada',async()=>{
   assert.equal((await fetch(url+ruta,{method:'POST',headers:headers(),body:JSON.stringify(entrada)})).status,400);

@@ -1,0 +1,14 @@
+{
+  "entorno": "Cuatro motores aislados, Firebase Auth/Firestore emulados; backend ejecutado en proceso Node separado",
+  "comando": "CLINICA_UI_SMOKE_REINICIOS=1 node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "resultado": "PASS",
+  "exitCode": 0,
+  "comprobaciones": [
+    "Token Firebase Auth emulado y alta pediátrica por HTTP real",
+    "12 lecturas HTTP concurrentes por ciclo: catálogo vacunas, esquema y paciente; todas200",
+    "SIGTERM y espera de salida limpia del proceso antes de nuevo arranque, repetido dos veces",
+    "Migraciones nuevas/existentes y reejecución sin pérdida PASS"
+  ],
+  "alcance": "Prueba de reinicio del harness; no sustituye recorridos de producto ni acredita Firestore de producción.",
+  "revision": "Posterior a corrección OnApplicationShutdown del ciclo de recursos"
+}

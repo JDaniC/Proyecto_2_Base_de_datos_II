@@ -70,7 +70,7 @@ export class VacunasController {
   }
 
   @Get('vacunas')
-  @RequiereAcceso({ permisos: ['historial.leer'], capacidad: 'PACIENTES' })
+  @RequiereAcceso({ permisos: ['historial.leer', 'usuarios.administrar'], modo: 'ALGUNO', capacidad: 'PEDIATRIA' })
   async catalogoVacunas(
     @Contexto() contexto: ContextoAutenticado,
     @Bundle() bundle: BundleInstitucional,

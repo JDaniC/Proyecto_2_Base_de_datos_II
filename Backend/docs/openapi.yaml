@@ -3597,6 +3597,8 @@ paths:
       - pediatria
       x-permisos:
       - historial.leer
+      - usuarios.administrar
+      x-permisos-modo: ALGUNO
       x-instituciones:
       - CENTRO_MEDICO_PEDIATRICO
       x-implementacion: IMPLEMENTED

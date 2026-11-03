@@ -38,12 +38,17 @@ async function iniciarBackendAislado() {
   const exit=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
   child.on('error',error=>{errorOutput+=error.message;});
   let listo=false;
+  try {
   for(let i=0;i<200;i++){
     if(child.exitCode!==null||child.signalCode)throw new Error(`Backend aislado terminó antes de escuchar: ${errorOutput}`);
     try{if((await fetch(`http://127.0.0.1:${runtime.PORT}/api/v1/health/live`)).ok){listo=true;break;}}catch{/* arranque aislado */}
     await new Promise(resolve=>setTimeout(resolve,50));
   }
   assert.ok(listo,`Backend aislado no inició: ${errorOutput}`);
+  } catch(error) {
+    if(child.exitCode===null&&!child.signalCode) child.kill('SIGKILL');
+    throw error;
+  }
   return {close:async()=>{child.kill('SIGTERM');const result=await exit;assert.ok(result.code===0||result.signal==='SIGTERM',`Cierre backend aislado falló: ${errorOutput}`);}};
 }
 
