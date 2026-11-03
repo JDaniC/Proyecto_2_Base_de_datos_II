@@ -3505,6 +3505,531 @@ paths:
         "503":
           $ref: "#/components/responses/Error503"
       x-modo-permisos: ALGUNO
+  /pacientes/{pacienteId}/esquemas:
+    get:
+      operationId: consultarEsquemaVacunas
+      summary: Consultar el esquema asignado y estados de dosis
+      tags:
+      - pediatria
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: pacienteId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: asignarEsquemaVacuna
+      summary: Asignar explícitamente una versión de esquema
+      tags:
+      - pediatria
+      x-permisos:
+      - consultas.registrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: pacienteId
+        required: true
+        schema:
+          type: string
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                vacunaId: &vacunaId001
+                  type: string
+                  format: uuid
+                versionId: *vacunaId001
+              required:
+              - vacunaId
+              - versionId
+  /vacunas:
+    get:
+      operationId: catalogoVacunas
+      summary: Consultar catálogo de vacunas
+      tags:
+      - pediatria
+      x-permisos:
+      - historial.leer
+      - usuarios.administrar
+      x-permisos-modo: ALGUNO
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters: []
+      responses:
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: crearVacuna
+      summary: Crear vacuna y primera versión de esquema
+      tags:
+      - pediatria
+      x-permisos:
+      - usuarios.administrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Catálogo y versión inmutable confirmados en una transacción.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - nombre
+              - enfermedadObjetivo
+              - fabricante
+              - dosis
+              properties:
+                nombre:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                enfermedadObjetivo:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                fabricante:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                dosis:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - dosisId
+                    - numero
+                    - edadMesesRecomendada
+                    properties:
+                      dosisId:
+                        type: string
+                        format: uuid
+                      numero:
+                        type: integer
+                        minimum: 1
+                      edadMesesRecomendada:
+                        type: integer
+                        minimum: 0
+                        maximum: 2400
+
+  /vacunas/{vacunaId}/versiones/{versionId}:
+    get:
+      operationId: versionEsquemaVacuna
+      summary: Consultar versión histórica exacta
+      tags:
+      - pediatria
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: vacunaId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: versionId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /pacientes/{pacienteId}/aplicaciones-vacuna:
+    get:
+      operationId: consultarAplicacionesVacuna
+      summary: Consultar aplicaciones del paciente
+      tags:
+      - pediatria
+      x-permisos:
+      - historial.leer
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: pacienteId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: registrarAplicacionVacuna
+      summary: Registrar una única aplicación por paciente vacuna y dosis
+      tags:
+      - pediatria
+      x-permisos:
+      - consultas.registrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: pacienteId
+        required: true
+        schema:
+          type: string
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Resultado confirmado con versión de esquema preservada.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                vacunaId: *vacunaId001
+                dosisId: *vacunaId001
+                fechaAplicacion:
+                  type: string
+                  format: date
+                lote: &vacunaId002
+                  type: string
+                sitioAnatomico: *vacunaId002
+                observaciones: *vacunaId002
+              required:
+              - vacunaId
+              - dosisId
+              - fechaAplicacion
+              - lote
+              - sitioAnatomico
+  /aplicaciones-vacuna/{aplicacionId}/correcciones:
+    post:
+      operationId: corregirAplicacionVacuna
+      summary: Corregir con historia
+      tags:
+      - pediatria
+      x-permisos:
+      - consultas.registrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: aplicacionId
+        required: true
+        schema:
+          type: string
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                motivo:
+                  type: string
+                  minLength: 1
+                versionEsperada:
+                  type: integer
+                  minimum: 1
+                lote: *vacunaId002
+                sitioAnatomico: *vacunaId002
+                observaciones: *vacunaId002
+              required:
+              - motivo
+              - versionEsperada
+  /aplicaciones-vacuna/{aplicacionId}/anulacion:
+    post:
+      operationId: anularAplicacionVacuna
+      summary: Anular conservando historia
+      tags:
+      - pediatria
+      x-permisos:
+      - consultas.registrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: aplicacionId
+        required: true
+        schema:
+          type: string
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '200':
+          description: Resultado confirmado con versión de esquema preservada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                motivo:
+                  type: string
+                  minLength: 1
+                versionEsperada:
+                  type: integer
+                  minimum: 1
+              required:
+              - motivo
+              - versionEsperada
+  /vacunas/{vacunaId}/versiones:
+    post:
+      operationId: publicarVersionVacuna
+      summary: Publicar versión conservando las dosis lógicas y versiones previas
+      tags:
+      - pediatria
+      x-permisos:
+      - usuarios.administrar
+      x-instituciones:
+      - CENTRO_MEDICO_PEDIATRICO
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - in: path
+        name: vacunaId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: header
+        name: idempotency-key
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Catálogo y versión inmutable confirmados en una transacción.
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - nombre
+              - enfermedadObjetivo
+              - fabricante
+              - dosis
+              - versionEsquemaAnterior
+              properties:
+                nombre:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                enfermedadObjetivo:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                fabricante:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                dosis:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - dosisId
+                    - numero
+                    - edadMesesRecomendada
+                    properties:
+                      dosisId:
+                        type: string
+                        format: uuid
+                      numero:
+                        type: integer
+                        minimum: 1
+                      edadMesesRecomendada:
+                        type: integer
+                        minimum: 0
+                        maximum: 2400
+                versionEsquemaAnterior:
+                  type: string
+                  format: uuid
 components:
   securitySchemes:
     FirebaseBearer:

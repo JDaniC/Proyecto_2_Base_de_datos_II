@@ -1,0 +1,30 @@
+{
+  "tarea": "E04-P2-02",
+  "fecha": "2026-11-02",
+  "zona": "America/Guatemala",
+  "commit_base_verificado": "0cd726c30e95900a71390126f78e45a8fd3f5e77",
+  "comando": "cd Backend && node scripts/run-vacunas-firestore-integration.mjs",
+  "entorno": "Firestore y Auth emulados, proyecto demo y puertos loopback aislados, datos sintéticos",
+  "resultado": "PASS",
+  "exit_code": 0,
+  "tests": 10,
+  "pass": 10,
+  "fail": 0,
+  "skipped": 0,
+  "duracion_ms": 7377.601292,
+  "alcance": [
+    "Asignación explícita e idempotente de esquema",
+    "Versión asignada exacta tras cambio de catálogo",
+    "Rechazo de fecha futura, anterior al nacimiento y edad anterior a dosis asignada",
+    "Rollback de aplicación, operación y auditoría ante fallo de cronología",
+    "Carrera: única aplicación lógica, reintento estable y rechazo de duplicado vigente",
+    "Corrección y anulación versionadas con expediente archivado, conservando historia",
+    "Nueva administración explícita tras anulación: carrera, reintento, misma identidad, versión 4 y tres snapshots previos existentes; estado y fecha de la versión anulada comprobados",
+    "Rechazo de dosis ajena, autorización vigente insuficiente y nueva administración con paciente archivado",
+    "Alta administrativa de catálogo, versiones inmutables y rechazo de versión obsoleta",
+    "Lectura de fechaAsignacion ISO tras normalizar Timestamp del emulador"
+  ],
+  "limites": [
+    "Casos de uso con adaptador Firestore real contra emulador aislado; no acredita UI ni Firestore cloud."
+  ]
+}

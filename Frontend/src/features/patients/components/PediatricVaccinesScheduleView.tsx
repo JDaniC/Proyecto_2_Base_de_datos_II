@@ -34,11 +34,16 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
   paciente,
   onActualizado
 }) => {
-  const { vaccineRepository, catalogRepository } = useServices();
+  const { vaccineRepository, catalogRepository, mode } = useServices();
   const { sesion } = useAuthSession();
   const institucionId = sesion?.institucionId || 'CENTRO_PEDIATRICO';
 
   const [modoVista, setModoVista] = useState<'ESQUEMA' | 'HISTORIAL'>('ESQUEMA');
+  const [asignando,setAsignando] = useState(false);
+  const [vacunaAsignar,setVacunaAsignar] = useState('');
+  const [errorAsignacion,setErrorAsignacion] = useState<string|null>(null);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const puedeRegistrar = Boolean(sesion?.permisos.includes('consultas.registrar'));
   const [cargando, setCargando] = useState(true);
   const [notificacion, setNotificacion] = useState<string | null>(null);
 
@@ -60,15 +65,14 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
 
   // Calcular edad del menor en meses
   const edadMeses = useMemo(() => {
-    const fn = new Date(paciente.fechaNacimiento);
+    const [anio, mes, dia] = paciente.fechaNacimiento.split('-').map(Number);
     const ahora = new Date();
-    const difAnios = ahora.getFullYear() - fn.getFullYear();
-    const difMeses = ahora.getMonth() - fn.getMonth();
-    return Math.max(0, difAnios * 12 + difMeses);
+    return Math.max(0, (ahora.getFullYear() - anio) * 12 + ahora.getMonth() + 1 - mes - (ahora.getDate() < dia ? 1 : 0));
   }, [paciente.fechaNacimiento]);
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
+    setErrorCarga(null);
     try {
       const [items, apps, cats] = await Promise.all([
         vaccineRepository.obtenerEsquemaCompletoPaciente(institucionId, paciente.id, edadMeses),
@@ -79,7 +83,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
       setAplicaciones(apps);
       setCatalogoVacunas(cats);
     } catch (err) {
-      console.error('Error cargando esquema de vacunación:', err);
+      setErrorCarga('No se pudo consultar vacunación. Reintenta para obtener los datos vigentes.');
     } finally {
       setCargando(false);
     }
@@ -154,8 +158,18 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
     );
   }
 
+  if (errorCarga) return <Alert variant="danger" title="Vacunación no disponible">{errorCarga}<Button onClick={() => void cargarDatos()}>Reintentar</Button></Alert>;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {vaccineRepository.asignarEsquema && puedeRegistrar && paciente.estado === 'ACTIVO' && <Panel title="Asignar versión del esquema">
+        <p>La asignación conserva esta versión aunque cambie el catálogo.</p>
+        <select aria-label="Vacuna para asignar" value={vacunaAsignar} onChange={e=>setVacunaAsignar(e.target.value)} disabled={asignando}>
+          <option value="">Seleccionar vacuna</option>{catalogoVacunas.map(v=><option key={v.id} value={v.id}>{v.nombreVacuna} · Versión {v.esquemaVersion}</option>)}
+        </select>
+        <Button disabled={asignando||!vacunaAsignar} onClick={async()=>{const v=catalogoVacunas.find(v=>v.id===vacunaAsignar);if(!v)return;setAsignando(true);setErrorAsignacion(null);try{await vaccineRepository.asignarEsquema!(paciente.id,v.id,v.esquemaVersion);await cargarDatos();}catch{setErrorAsignacion('No se pudo confirmar la asignación. Reintenta la misma selección o recarga si cambió el expediente.');}finally{setAsignando(false);}}}>Asignar esquema</Button>
+        {errorAsignacion&&<Alert variant="danger" title="Asignación pendiente">{errorAsignacion}</Alert>}
+      </Panel>}
       {/* Notificación de éxito */}
       {notificacion && (
         <Alert variant="success" title="Operación exitosa">
@@ -182,7 +196,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
             <Button
               variant="primary"
               size="sm"
-              onClick={handleAbrirAplicarGeneral}
+              disabled={!puedeRegistrar || paciente.estado !== 'ACTIVO'} onClick={handleAbrirAplicarGeneral}
               className="bg-clinic-primary text-white flex items-center gap-1.5"
             >
               <Plus size={15} />
@@ -352,7 +366,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                           {item.vacuna.nombreVacuna}
                         </strong>
                         <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                          {item.vacuna.enfermedadPrevenida} ({item.vacuna.viaAdministracion})
+                          {item.vacuna.enfermedadPrevenida} ({item.vacuna.viaAdministracion === 'SIN_DATO' ? 'Vía no registrada' : item.vacuna.viaAdministracion})
                         </span>
                       </td>
 
@@ -415,7 +429,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => handleAbrirAplicarParaItem(item)}
+                            disabled={!puedeRegistrar || paciente.estado !== 'ACTIVO'} onClick={() => handleAbrirAplicarParaItem(item)}
                             className="bg-clinic-primary text-white"
                           >
                             <Syringe size={14} style={{ marginRight: '4px' }} />
@@ -482,7 +496,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--color-strong)' }}>
                         {app.fechaAplicacion}
                         <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'block' }}>
-                          {app.horaAplicacion || '10:00'}
+                          {app.horaAplicacion || 'Hora no registrada'}
                         </span>
                       </td>
 
@@ -538,7 +552,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleAbrirCorregir(app)}
+                              disabled={!puedeRegistrar} onClick={() => handleAbrirCorregir(app)}
                               title="Corregir lote o datos auditados"
                             >
                               <Edit2 size={14} />
@@ -546,7 +560,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleAbrirAnular(app)}
+                              disabled={!puedeRegistrar} onClick={() => handleAbrirAnular(app)}
                               title="Anular aplicación con motivo formal"
                             >
                               <Trash2 size={14} color="#DC2626" />
@@ -570,7 +584,7 @@ export const PediatricVaccinesScheduleView: React.FC<PediatricVaccinesScheduleVi
           onClose={() => setModalRegistrarAbierto(false)}
           paciente={paciente}
           itemSeleccionado={itemSeleccionadoParaAplicar}
-          catalogoVacunas={catalogoVacunas}
+          catalogoVacunas={mode === 'api' ? Array.from(new Map(esquemaItems.map(item=>[item.vacuna.id, {...item.vacuna,dosis:esquemaItems.filter(i=>i.vacuna.id===item.vacuna.id).map(i=>({dosisId:i.dosisId,numeroDosis:i.numeroDosis,etiquetaDosis:i.etiquetaDosis,edadRecomendadaMeses:i.edadRecomendadaMeses}))}])).values()) : catalogoVacunas}
           onAplicacionRegistrada={handleAplicacionCompletada}
         />
       )}

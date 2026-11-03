@@ -1,0 +1,30 @@
+import {render,screen,cleanup} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {afterEach,it,expect,vi} from 'vitest';
+import {RegistrarVacunaModal} from '../../features/admin/RegistrarVacunaModal';
+const crear=vi.hoisted(()=>vi.fn());
+vi.mock('../../app/ServiceContext',()=>{const services={mode:'api',catalogRepository:{crearVacuna:crear}};return {useServices:()=>services};});
+vi.mock('../../app/AuthSessionContext',()=>({useAuthSession:()=>({sesion:{institucionId:'CENTRO_PEDIATRICO'}})}));
+afterEach(()=>{cleanup();vi.clearAllMocks();});
+it('cerrar y reabrir tras respuesta perdida conserva el cuerpo y dosis UUID de la creación',async()=>{
+ crear.mockRejectedValueOnce(new Error('Servicio temporalmente no disponible')).mockResolvedValue({id:'creada'});
+ const props={isOpen:true,onClose:vi.fn(),onVacunaGuardada:vi.fn()},user=userEvent.setup();
+ const view=render(<RegistrarVacunaModal {...props}/>);
+ await user.type(screen.getByLabelText(/Nombre de la Vacuna/),'Vacuna sintética');
+ await user.type(screen.getByLabelText(/Enfermedad Prevenida/),'Objetivo sintético');
+ await user.type(screen.getByLabelText(/Fabricante/),'Fabricante sintético');
+ await user.click(screen.getByRole('button',{name:/Guardar Vacuna/}));
+ await screen.findByText('Servicio temporalmente no disponible');
+ const primerCuerpo=structuredClone(crear.mock.calls[0][1]);
+ view.unmount();render(<RegistrarVacunaModal {...props}/>);
+ expect(screen.getByLabelText(/Nombre de la Vacuna/)).toHaveValue('Vacuna sintética');
+ await user.click(screen.getByRole('button',{name:/Guardar Vacuna/}));
+ expect(crear.mock.calls[1][1]).toEqual(primerCuerpo);
+ expect(props.onVacunaGuardada).toHaveBeenCalled();
+});
+it('rechaza fabricante con espacios antes de enviar',async()=>{
+ const user=userEvent.setup();render(<RegistrarVacunaModal isOpen onClose={vi.fn()} onVacunaGuardada={vi.fn()}/>);
+ await user.type(screen.getByLabelText(/Nombre de la Vacuna/),'Otra vacuna');await user.type(screen.getByLabelText(/Enfermedad Prevenida/),'Objetivo');await user.type(screen.getByLabelText(/Fabricante/),'   ');
+ await user.click(screen.getByRole('button',{name:/Guardar Vacuna/}));
+ expect(await screen.findByText('Debe indicar el fabricante de la vacuna.')).toBeInTheDocument();expect(crear).not.toHaveBeenCalled();
+});

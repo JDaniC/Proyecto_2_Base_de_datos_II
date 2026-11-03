@@ -138,3 +138,30 @@ ya existentes con autorización clínica y motivo; no habilita nuevas atenciones
 El crecimiento se pagina por fecha desde consultas vigentes; sus correcciones
 se realizan en la revisión de consulta. Sin talla/peso suficiente no hay IMC,
 y la interfaz no ofrece curvas ni interpretación clínica automática.
+
+### Pediatría HTTP · vacunación versionada
+
+La ficha consulta el esquema asignado y las aplicaciones por HTTP. Antes de
+administrar se selecciona y asigna explícitamente una versión del catálogo;
+un cambio posterior del catálogo conserva las dosis de la versión asignada.
+El formulario de aplicación utiliza esas dosis, no las de una versión nueva.
+El servidor calcula pendientes, futuras y aplicadas desde la fecha civil de
+nacimiento y las aplicaciones vigentes; la interfaz no envía una edad autoritativa.
+
+Registro, corrección y anulación conservan claves estables para reintentos.
+Corregir o anular exige motivo y revisión observada; el historial muestra el
+nombre y dosis del esquema histórico. La autoría procede de la sesión verificada,
+no del nombre mostrado en el formulario. Un expediente archivado bloquea nuevas
+administraciones. Las acciones clínicas requieren el permiso vigente del servidor.
+
+En API se capturan fecha, lote, sitio anatómico y observaciones; no se ofrecen
+hora ni reacciones como campos separados porque el contrato no los persiste.
+Cuando no hay vía registrada se muestra «Vía no registrada» y el sitio se captura
+explícitamente. Una falla de lectura presenta un error con reintento y nunca se
+interpreta como un esquema vacío ni activa datos simulados.
+
+La administración pediátrica permite crear vacunas con fabricante explícito y
+publicar nuevas versiones con dosis de UUID estable. La revisión envía la versión
+anterior observada para detectar cambios concurrentes; publicar no reasigna los
+esquemas de pacientes existentes. La vía y la etiqueta libre de versión no se
+ofrecen en API: el servidor identifica las versiones de forma estable.

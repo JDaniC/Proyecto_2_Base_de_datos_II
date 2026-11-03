@@ -1,3 +1,11 @@
+import { GestionarCatalogoVacunas } from '../aplicacion/casos-uso/pediatria/gestionar-catalogo-vacunas.js';
+import { AsignarEsquemaVacuna } from '../aplicacion/casos-uso/pediatria/asignar-esquema.js';
+import { VacunasController } from '../adaptadores/entrada/http/pediatria/vacunas.controller.js';
+import { ConsultarEsquemaVacunas } from '../aplicacion/casos-uso/pediatria/consultar-esquema-vacunas.js';
+import { ConsultarAplicacionesVacuna } from '../aplicacion/casos-uso/pediatria/consultar-aplicaciones.js';
+import { RegistrarAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/registrar-aplicacion.js';
+import { CorregirAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/corregir-aplicacion.js';
+import { AnularAplicacionVacuna } from '../aplicacion/casos-uso/pediatria/anular-aplicacion.js';
 import { ConsultarResponsable } from '../aplicacion/casos-uso/pediatria/consultar-responsable.js';
 import { ConsultarCrecimiento } from '../aplicacion/casos-uso/pediatria/consultar-crecimiento.js';
 import { AntecedentesController } from '../adaptadores/entrada/http/pediatria/antecedentes.controller.js';
@@ -26,7 +34,7 @@ import { GestionarHospitalizaciones } from '../aplicacion/casos-uso/hospital/ges
 import { HospitalController } from '../adaptadores/entrada/http/hospital/hospital.controller.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
 import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catalogos.controller.js';
-import { DynamicModule, Module, type OnModuleDestroy } from '@nestjs/common';
+import { DynamicModule, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-bundles-configurados.js';
 import { CerrarSesion } from '../aplicacion/casos-uso/cuentas/cerrar-sesion.js';
@@ -61,9 +69,10 @@ export interface DependenciasAplicacion {
   readonly cerrarRecursos?: () => Promise<void>;
 }
 
-class LimpiadorRecursos implements OnModuleDestroy {
+class LimpiadorRecursos implements OnApplicationShutdown {
   constructor(private readonly cerrar: () => Promise<void>) {}
-  onModuleDestroy(): Promise<void> { return this.cerrar(); }
+  // Nest ya cerró HTTP y drenó sus solicitudes antes de liberar pools y SDKs.
+  onApplicationShutdown(): Promise<void> { return this.cerrar(); }
 }
 
 const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
@@ -75,7 +84,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -86,6 +95,14 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide:GestionarCatalogoVacunas,useFactory:()=>new GestionarCatalogoVacunas(dependenciasComandoPorDefecto)},
+        {provide: AsignarEsquemaVacuna,useFactory:()=>new AsignarEsquemaVacuna(dependenciasComandoPorDefecto)},
+        {provide: ConsultarEsquemaVacunas, useFactory: () => new ConsultarEsquemaVacunas()},
+        {provide: ConsultarAplicacionesVacuna, useFactory: () => new ConsultarAplicacionesVacuna()},
+        {provide: RegistrarAplicacionVacuna, useFactory: () => new RegistrarAplicacionVacuna(dependenciasComandoPorDefecto)},
+        {provide: CorregirAplicacionVacuna, useFactory: () => new CorregirAplicacionVacuna(dependenciasComandoPorDefecto)},
+        {provide: AnularAplicacionVacuna, useFactory: () => new AnularAplicacionVacuna(dependenciasComandoPorDefecto)},
+
         {provide: GestionarAntecedentes,useFactory:()=>new GestionarAntecedentes(dependenciasComandoPorDefecto)},
         {provide: ConsultarResponsable,useFactory:()=>new ConsultarResponsable()},
         {provide: ConsultarCrecimiento,useFactory:()=>new ConsultarCrecimiento()},

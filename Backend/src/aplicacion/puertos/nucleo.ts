@@ -76,6 +76,7 @@ export interface LectorTransaccional<
 > {
   readonly clinica?: PuertosClinicos;
   readonly antecedentesPediatricos?: PuertoAntecedentesPediatricos;
+  readonly vacunasPediatricas?: import('./vacunas.js').PuertoVacunasCatalogo & import('./vacunas.js').PuertoEsquemaPaciente & import('./vacunas.js').PuertoAplicacionesVacuna;
   readonly cuentas: RepositorioCuenta<TCuenta>;
   readonly pacientes: RepositorioPaciente<TPaciente>;
   readonly citas: RepositorioCita<TCita>;

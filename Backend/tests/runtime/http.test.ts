@@ -279,7 +279,7 @@ describe('frontera HTTP y composición', () => {
 
     assert.equal(respuesta.status, 200);
     assert.equal(documento.openapi, '3.1.0');
-    assert.equal(Object.keys(documento.paths).length, 58);
+    assert.equal(Object.keys(documento.paths).length, 65);
     assert.equal(documento.servers[0]?.url, '/api/v1');
     assert.equal('/health/live' in documento.paths, false);
     assert.equal('/pruebas-http/eco' in documento.paths, false);
