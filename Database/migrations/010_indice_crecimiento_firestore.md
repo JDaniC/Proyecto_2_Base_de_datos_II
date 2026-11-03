@@ -9,7 +9,9 @@ sus guías;006 utiliza el plan actual.010 comprueba esa instalación y no escrib
 En un proyecto Firestore cloud, publicar primero el índice descendente de
 `Database/firebase/firestore.indexes.json` y confirmar que está listo (no en
 construcción) antes de habilitar la huella nueva. Mantener los escritores
-detenidos durante la actualización y reanudarlos solo después de completar010.
+detenidos durante la actualización. Reanudarlos solo si010 devuelve `LISTO`.
+Si devuelve `RECONCILIAR`, mantenerlos detenidos y completar la reconciliación
+verificable antes de reanudarlos; finalizar010 no convierte ese estado en LISTO.
 La disponibilidad se comprueba en el proyecto de destino; los resultados del
 emulador no verifican esa condición. Ver la [guía oficial de índices](https://firebase.google.com/docs/firestore/query-data/indexing).
 
