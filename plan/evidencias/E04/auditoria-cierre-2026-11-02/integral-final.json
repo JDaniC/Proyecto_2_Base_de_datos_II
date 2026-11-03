@@ -1,10 +1,8 @@
 {
+  "commit": "0cd726c30e95900a71390126f78e45a8fd3f5e77",
   "resultadoGlobal": "PASS",
   "exitCode": 0,
-  "ejecucion": "bdii-ca07-85abf01615",
-  "comando": "CLINICA_UI_EVIDENCE=plan/evidencias/E04/auditoria-cierre-2026-11-02/integral-final.json node Backend/scripts/run-historial-integration.mjs --clinica-ui",
-  "entorno": "Navegador Chromium con HTTP real; PostgreSQL/MySQL/MongoDB replica set aislados; Firestore y Firebase Auth emulados; backend en proceso separado con reinicios SIGTERM y salida limpia",
-  "alcance": "87 recorridos de cuatro instituciones; incluye vacunas versionadas, agenda institucional, clínica, camas/estancia, servicios hospitalarios, responsables/crecimiento, archivo/corrección/reactivación. No acredita Firestore de producción. Migraciones SQL nueva/existente y reejecución sin pérdida completadas.",
+  "entorno": "Chromium y HTTP reales; PostgreSQL/MySQL/MongoDB aislados; Firebase Auth/Firestore emulados",
   "totalesPorInstitucion": {
     "HOSPITAL_GENERAL": 28,
     "CLINICA_ODONTOLOGICA": 15,
@@ -447,5 +445,12 @@
       "caso": "reactivación pediátrica por HTTP",
       "resultado": "PASS"
     }
-  ]
+  ],
+  "fecha": "2026-11-02",
+  "zona": "America/Guatemala",
+  "ejecucion": "bdii-ca07-208443a4b1",
+  "comando": "node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "reproduccion_con_archivo": "CLINICA_UI_EVIDENCE=/tmp/e04-integral-repro.json node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "procedencia": "Resultado JSON emitido por stdout; registro generado tras confirmar exitCode 0 del runner. La variable de salida opcional debe usar ruta absoluta pues el proceso hijo trabaja en Backend.",
+  "alcance": "87 comprobaciones: hospital28, dental15, laboratorio12 y pediatría32. Incluye recarga/reinicio; migraciones nuevas, existentes y recuperación. No acredita Firestore cloud."
 }
