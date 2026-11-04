@@ -32,10 +32,13 @@
     "revisión obsoleta rechazada sin evento extra",
     "abort posterior revierte estado y evento juntos",
     "preflight runtime rechaza manifiesto ausente, MIGRANDO y RECONCILIAR",
-    "preflight runtime acepta LISTO y rechaza índice incompatible"
+    "preflight runtime acepta LISTO y rechaza índice incompatible",
+    "bundle.uow con credenciales de aplicación y cuenta local sintética vigente confirma orden, auditoría y operación",
+    "replay de misma clave/hash devuelve respuesta durable sin planificar de nuevo ni duplicar conteos",
+    "fallo real por _id de auditoría duplicado revierte orden y no agrega operación durable"
   ],
   "regresionModeloM03": {
     "pass": 102
   },
-  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Escritura condicional y rollback probados con session explícita; integración con operación/auditoría durable e idempotencia aún pendiente."
+  "limites": "Infraestructura transaccional real con contexto autenticado sintético construido por fixture y cuenta local persistida; no prueba token Firebase, referencias clínicas ni caso HTTP/UI. No acredita cierre E05 ni reglas de archivo/stock/cobro."
 }

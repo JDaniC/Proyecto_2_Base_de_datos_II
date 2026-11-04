@@ -1,3 +1,8 @@
+import {crearClienteMongodb} from '../../src/adaptadores/salida/mongodb/crear-cliente-mongodb.js';
+import {crearBundlePacientesMongodb} from '../../src/adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
+import {crearContextoAutenticado} from '../../src/aplicacion/puertos/contexto-autenticado.js';
+import type {ComandoEstable,PlanDeEscrituras} from '../../src/aplicacion/puertos/nucleo.js';
+import {instanteUtc} from '../../src/dominio/compartido/instante-utc.js';
 import {verificarLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/verificar-preparacion.js';
 import {guardarMuestraMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/guardar-muestra.js';
 import {tomarMuestra,registrarEventoMuestra,rectificarMuestra,retomarMuestra} from '../../src/dominio/laboratorio/muestras.js';
@@ -112,6 +117,28 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   assert.deepEqual(await lector.porId(uuidPublico(original.id)),recibida);
   assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:original.id}),2);
  }finally{await sesionCambio.endSession();}
+ // UoW real con cuenta local actual y credenciales de aplicación, sin identidad de UI.
+ const rolId=randomUUID(),cuentaId=randomUUID(),uid=`sintetico-${randomUUID()}`;
+ await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolId,revision:1,nombre:'SECRETARIA',permisos:['ordenes.administrar','muestras.administrar']});
+ await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:cuentaId,revision:1,auth_uid:uid,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolId],estado:'ACTIVO',activo:true,nombre_usuario:uid});
+ const app=await crearClienteMongodb({host:'127.0.0.1',puerto:Number(port),baseDatos:'laboratorio_clinico',usuario:'laboratorio_app',archivoContrasena:process.env.MONGO_TEST_SECRET_FILE!,replicaSet:'rs0',conexionDirecta:true,timeoutMs:5000});
+ t.after(()=>app.cerrar());const bundle=await crearBundlePacientesMongodb(app);
+ const cuenta=await bundle.cuenta.porUid(uid);assert.ok(cuenta);
+ const contexto=crearContextoAutenticado({uid,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuenta,uuidPublico(randomUUID()));
+ const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{}};
+ const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id};
+ const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[],auditoria:[{id:auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});
+ let planificaciones=0;
+ const primera=await bundle.uow!.ejecutar(contexto,comando,async lector=>{planificaciones++;assert.equal(await lector.laboratorio!.ordenPorId(comando.id),null);return plan(comando,nuevaOrden);});
+ assert.deepEqual(primera.respuesta,nuevaOrden);
+ const conteos=async()=>Promise.all(['ordenes','auditoria','operaciones'].map(c=>db.collection(c).countDocuments()));
+ const confirmados=await conteos();
+ const repetida=await bundle.uow!.ejecutar(contexto,comando,async()=>{throw new Error('REPLAY_NO_DEBE_PLANIFICAR');});
+ assert.deepEqual(repetida,primera);assert.equal(planificaciones,1);assert.deepEqual(await conteos(),confirmados);
+ const fallido={...comando,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID())};
+ await assert.rejects(bundle.uow!.ejecutar(contexto,fallido,async()=>plan(fallido,{...nuevaOrden,id:fallido.id})));
+ assert.equal(await ordenes.findOne({_id:fallido.id}),null,'auditoría duplicada aborta orden');
+ assert.deepEqual(await conteos(),confirmados,'fallo real no crea auditoría ni operación durable');
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  await assert.rejects(verificarLaboratorioMongodb(db));
