@@ -61,7 +61,10 @@
     "índice codigo/version rechaza publicación duplicada sin crear tercera versión",
     "desactivación de prueba con permiso/rol/revisión/motivo y replay",
     "prueba desactivada rechaza nueva orden sin cambiar snapshot de orden anterior",
-    "revisión antigua rechazada y reactivación solo cambia actividad/revisión, conserva contenido"
+    "revisión antigua rechazada y reactivación solo cambia actividad/revisión, conserva contenido",
+    "publicación de métodos v1/v2 exige rol/permiso, predecesora exacta e inserción inmutable",
+    "replay de método no duplica y código/versión duplicado se rechaza",
+    "método1, prueba y snapshot de orden conservan referencia tras publicar método2"
   ],
   "regresionModeloM03": {
     "pass": 102

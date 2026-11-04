@@ -1,3 +1,4 @@
+import {PublicarMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-metodo.js';
 import {CambiarEstadoPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-prueba.js';
 import {PublicarPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-prueba.js';
 import {GestionarMuestraLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
@@ -212,13 +213,27 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const cuentaVal=await bundle.cuenta.porUid(uidVal);assert.ok(cuentaVal);
  const contextoVal=crearContextoAutenticado({uid:uidVal,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuentaVal,uuidPublico(randomUUID()));
  const publicar=new PublicarPruebaLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
- const catalogoEntrada={codigo:'SINT-PUBLICADA',version:1,nombre:'Prueba publicada v1',area:'Sintética',metodoId:referenciaIds.metodo,tiposMuestraIds:[referenciaIds.tipo],parametros:resultadoCaso.respuesta.items[0]!.prueba.parametros};
+ const publicarMetodo=new PublicarMetodoLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const metodoEntrada={codigo:'SINT-METODO-PUBLICADO',version:1,nombre:'Método publicado v1',descripcion:'Descripción sintética'};
+ await assert.rejects(publicarMetodo.ejecutar({contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:metodoEntrada}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+ const metodoPublicado=await publicarMetodo.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:metodoEntrada});
+ const metodoAntes=await db.collection<{_id:string}&Document>('metodos').findOne({_id:metodoPublicado.respuesta.id});
+ const catalogoEntrada={codigo:'SINT-PUBLICADA',version:1,nombre:'Prueba publicada v1',area:'Sintética',metodoId:metodoPublicado.respuesta.id,tiposMuestraIds:[referenciaIds.tipo],parametros:resultadoCaso.respuesta.items[0]!.prueba.parametros};
  await assert.rejects(publicar.ejecutar({contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:catalogoEntrada}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
  const publicada=await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:catalogoEntrada});
  const ordenConVersion=await invocarOrden({...entradaCaso,versionPaciente:2,items:[{pruebaId:publicada.respuesta.prueba.id,centavos:12345}]});
  const claveVersion2=uuidPublico(randomUUID());const version2Entrada={...catalogoEntrada,version:2,anteriorId:publicada.respuesta.prueba.id,nombre:'Prueba publicada v2'};
  const publicada2=await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveVersion2,entrada:version2Entrada});
  assert.equal(publicada2.respuesta.prueba.version,2);
+ const claveMetodo2=uuidPublico(randomUUID());const metodoVersion2={...metodoEntrada,version:2,anteriorId:metodoPublicado.respuesta.id,nombre:'Método publicado v2'};
+ const metodo2=await publicarMetodo.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveMetodo2,entrada:metodoVersion2});
+ assert.deepEqual(await publicarMetodo.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveMetodo2,entrada:metodoVersion2}),metodo2);
+ assert.deepEqual(await db.collection<{_id:string}&Document>('metodos').findOne({_id:metodoPublicado.respuesta.id}),metodoAntes);
+ assert.equal((await db.collection<{_id:string}&Document>('pruebas').findOne({_id:publicada.respuesta.prueba.id}))!.metodo_id,metodoPublicado.respuesta.id);
+ assert.equal((await ordenes.findOne({_id:ordenConVersion.respuesta.id}))!.items[0].prueba_historica.metodo_id,metodoPublicado.respuesta.id);
+ await assert.rejects(publicarMetodo.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:metodoVersion2}));
+ assert.equal(await db.collection('metodos').countDocuments({codigo:metodoEntrada.codigo}),2);
+
  assert.deepEqual(await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveVersion2,entrada:version2Entrada}),publicada2);
  assert.equal(ordenConVersion.respuesta.items[0]!.prueba.version,1);
  assert.equal((await ordenes.findOne({_id:ordenConVersion.respuesta.id}))!.items[0].prueba_historica.nombre,'Prueba publicada v1');

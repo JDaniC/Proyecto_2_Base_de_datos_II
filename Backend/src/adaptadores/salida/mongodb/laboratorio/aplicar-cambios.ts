@@ -30,6 +30,13 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
+  if(cambio.agregado==='metodos'&&cambio.tipo==='PUBLICAR_METODO'&&cambio.versionAnterior===null){
+   if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede publicar métodos.');
+   const m=cambio.nuevoEstado as {id:string;codigo:string;nombre:string;version:number;descripcion:string;activo:boolean};
+   if(m.id!==cambio.recursoId||m.activo!==true)throw new ErrorDominio('ESTADO_INVALIDO','Plan de método incompatible.');
+   await db.collection<{_id:string}&import('mongodb').Document>('metodos').insertOne({_id:m.id,revision:1,codigo:m.codigo,nombre:m.nombre,version:m.version,activo:true,...(m.descripcion.trim()?{descripcion:m.descripcion}:{})},{session});
+   continue;
+  }
   if(cambio.agregado==='pruebas'&&cambio.tipo==='CAMBIAR_ESTADO'){
    if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar pruebas.');
    const nuevo=cambio.nuevoEstado as {id:string;activo:boolean;revision:number};
