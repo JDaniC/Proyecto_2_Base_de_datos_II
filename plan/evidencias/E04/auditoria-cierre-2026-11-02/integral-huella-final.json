@@ -1,0 +1,456 @@
+{
+  "commit": "d4b3a8ec8905b801898c4c8db958951ab04bd725",
+  "fecha": "2026-11-02",
+  "zona": "America/Guatemala",
+  "resultadoGlobal": "PASS",
+  "exitCode": 0,
+  "ejecucion": "bdii-ca07-b80535a1c9",
+  "comando": "node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "reproduccion_con_archivo": "CLINICA_UI_EVIDENCE=/tmp/e04-integral-repro.json node Backend/scripts/run-historial-integration.mjs --clinica-ui",
+  "procedencia": "JSON de stdout saneado después de confirmar exitCode0 del runner",
+  "entorno": "Chromium y HTTP reales; PostgreSQL/MySQL/MongoDB aislados; Firebase Auth/Firestore emulados",
+  "alcance": "Recorrido completo posterior a índice y huella final; prepara instalaciones nuevas y reejecuta SQL existente sin pérdida. Migración010 existente se acredita separadamente con20 pruebas clínicas en migracion-010.json. No acredita Firestore cloud.",
+  "totalesPorInstitucion": {
+    "HOSPITAL_GENERAL": 28,
+    "CLINICA_ODONTOLOGICA": 15,
+    "LABORATORIO_CLINICO": 12,
+    "CENTRO_MEDICO_PEDIATRICO": 32
+  },
+  "comprobaciones": [
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "agenda institucional HTTP persiste tras recarga en móvil/escritorio y reintento no duplica",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "agenda cancela con versión y rechaza versión obsoleta",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "detalle y receta después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "corrección conserva consulta y crea versión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "lectura de versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "alergia hospitalaria persiste severidad y reacción explícitas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "orden UI usa consulta propia y catálogo real con parámetros congelados",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "emisión UI persiste resultado y detalle en PostgreSQL",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "corrección UI agrega versión sin sobrescribir la emisión anterior",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "detalle UI permite leer la versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "procedimiento UI referencia catálogo, consulta y médico verificado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "póliza UI conserva nombres explícitos, fecha civil y copago cero",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "servicios especializados conservados tras reinicio del servidor",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "ingreso sin paciente precargado carga camas y busca paciente por término real",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "ingreso UI ocupa cama y enlaza consulta real del paciente",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "nota UI persiste autor médico verificado y nueva revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "traslado UI conserva períodos contiguos tras recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "egreso UI libera cama y conserva estancia después de reiniciar backend",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "listado UI paginado recibe resúmenes y carga detalle clínico bajo demanda",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "archivo conserva eventos y consultas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "historia y receta conservadas tras reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "HOSPITAL_GENERAL",
+      "caso": "corrección histórica autorizada después del archivo",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "SECRETARIA agenda y reprograma cita dental con secretaria_gestora diferenciada y 403 en antecedentes",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "ODONTOLOGO visualiza agenda dental con secretaria gestora e historial de revisiones de cita",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "ODONTOLOGO registra y consulta antecedente odontológico en expediente HTTP",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "detalle y receta después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "corrección conserva consulta y crea versión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "lectura de versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "archivo conserva eventos y consultas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "historia y receta conservadas tras reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CLINICA_ODONTOLOGICA",
+      "caso": "corrección histórica autorizada después del archivo",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "detalle y receta después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "corrección conserva consulta y crea versión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "lectura de versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "archivo conserva eventos y consultas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "historia y receta conservadas tras reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "LABORATORIO_CLINICO",
+      "caso": "corrección histórica autorizada después del archivo",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "agenda institucional HTTP persiste tras recarga en móvil/escritorio y reintento no duplica",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "agenda cancela con versión y rechaza versión obsoleta",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 400 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 403 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 409 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "HTTP 503 controlado conserva formulario sin éxito simulado",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "receta inválida real: sin consulta, receta ni avance de revisión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "consulta y receta atómicas; respuesta perdida y reintento estable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "detalle y receta después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "corrección conserva consulta y crea versión",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "lectura de versión original",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunas asignación explícita por UI persiste después de recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunación UI registra dosis y recarga lote persistido",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "vacunación UI corrige con motivo y revisión observada",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "publicar versión nueva conserva esquema asignado y snapshot histórico",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "anulación UI preserva historia y estado después de reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "nueva administración explícita tras anular conserva identidad lógica y una sola vigente",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "crecimiento HTTP desde consulta sin talla muestra IMC no calculable",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "verificación de alergias se confirma por HTTP y persiste",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "cancelar historia no escribe datos",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia clínica UI se conserva tras escritura real",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "registro de alergia por HTTP conserva autoría e invalida verificación negativa previa",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "baja lógica desde UI conserva alergia histórica",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "perinatales explícitos preservan Apgar cero",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "contacto compartido en dos menores y autorización independiente",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "último principal rechazado también por API desde el formulario",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia y contacto persisten tras reinicio y recarga",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "ficha pediátrica disponible en móvil y escritorio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "archivo conserva eventos y consultas",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "historia y receta conservadas tras reinicio",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "corrección histórica autorizada después del archivo",
+      "resultado": "PASS"
+    },
+    {
+      "institucion": "CENTRO_MEDICO_PEDIATRICO",
+      "caso": "reactivación pediátrica por HTTP",
+      "resultado": "PASS"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 02/11/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 03/11/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
@@ -33,7 +33,7 @@ Actualizado: 02/11/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E04-P1-03](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03) | P1 | JDaniC | HECHA | E04-P1-02 | [PR #70 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/70), `fbe58e3`; 304 backend, 32 contractuales, 6 SQL y 95 HTTP PASS; [evidencia](evidencias/E04/E04-P1-03.md), [seguimiento](seguimiento/E04-P1-03.md); 02/11/2026 |
 | [E04-P2-01](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-01) | P2 | JDaniC | HECHA | Puerta de fase | [PR #71 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/71), `f4310a1`; revisión CodeRabbit con hallazgos atendidos (sin APPROVED); 308 backend, 32 contratos, 27 Firestore, 105 HTTP UI PASS; [evidencia](evidencias/E04/E04-P2-01.md), [seguimiento](seguimiento/E04-P2-01.md); 02/11/2026 |
 | [E04-P2-02](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | P2 | JDaniC | HECHA | E04-P2-01 | [PR #73 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/73), `02910f0`; CodeRabbit APPROVED sobre `97b287c`, contrato-pr/CodeRabbit SUCCESS;326+32 backend,116 HTTP,10 Firestore y87 integral PASS; [evidencia](evidencias/E04/E04-P2-02.md);02/11/2026 |
-| [E04-P2-03](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 | JDaniC | EN_REVISION | E04-P1-01, E04-P1-03, E04-P2-02 | [PR #74](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/74) listo para revisión; rama `codex/e04-p2-03-integracion`; [seguimiento](seguimiento/E04-P2-03.md);02/11/2026 |
+| [E04-P2-03](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 | JDaniC | HECHA | E04-P1-01, E04-P1-03, E04-P2-02 | [PR #74 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/74), `8c2a5d1`; CodeRabbit APPROVED sobre `94d86ed`, revision-coderabbit SUCCESS; 87 integral PASS con huella final; [seguimiento](seguimiento/E04-P2-03.md);02/11/2026 |
 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
 | [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | — | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
 | [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
@@ -63,7 +63,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | E01 | HECHA | [Cierre y demostración](evidencias/E01/CIERRE.md); PR #39 integrado; Codex sin hallazgos |
 | E02 | HECHA | [Cierre y demostración](evidencias/E02/CIERRE.md); PR #49 integrado (`c1a932a`); Codex sin hallazgos sobre `a09fb9f` |
 | E03 | HECHA | [Cierre y demostración](evidencias/E03/CIERRE.md); PR #65 integrado (`f516156`); Codex sin hallazgos sobre `66e5f46` |
-| E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
+| E04 | EN_REVISION | [Acta funcional](evidencias/E04/CIERRE.md); PR #75 pendiente de revisión/integración documental; implementación #74 integrada |
 | E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
 | E06 | PENDIENTE | `plan/evidencias/E06/CIERRE.md` por crear al ejecutar |
 | E07 | PENDIENTE | `plan/evidencias/E07/CIERRE.md` por crear al ejecutar |
