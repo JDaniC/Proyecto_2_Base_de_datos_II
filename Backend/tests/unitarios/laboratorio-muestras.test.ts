@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { registrarEventoMuestra, type Muestra, type TipoEventoMuestra } from '../../src/dominio/laboratorio/muestras.js';
+const inicial: Muestra = {id:'muestra',ordenId:'orden',codigo:'M-1',estado:'TOMADA',version:1,eventos:[{id:'toma',actorId:'cuenta',instante:'2026-11-03T12:00:00.000Z',tipo:'TOMA',detalle:'Toma inicial'}]};
+const autor={id:'evento',actorId:'cuenta-verificada',instante:'2026-11-03T12:01:00.000Z'};
+test('cadena de custodia conserva eventos, estado y agregado original',()=>{
+ let muestra=inicial;
+ for(const [i,tipo] of (['RECEPCION','ACEPTACION','TRASLADO','PROCESAMIENTO'] as const).entries()) muestra=registrarEventoMuestra(muestra,muestra.version,tipo,'Detalle de custodia',{...autor,id:`evento-${i}`});
+ assert.equal(muestra.estado,'PROCESADA');assert.equal(muestra.version,5);assert.equal(muestra.eventos.length,5);
+ assert.equal(inicial.estado,'TOMADA');assert.equal(inicial.eventos.length,1);assert.ok(Object.isFrozen(muestra.eventos));
+});
+test('rechazo exige recepción, motivo y permite rectificación sin reabrir muestra',()=>{
+ assert.throws(()=>registrarEventoMuestra(inicial,1,'RECHAZO','Motivo',autor));
+ const recibida=registrarEventoMuestra(inicial,1,'RECEPCION','Recibida',autor);
+ assert.throws(()=>registrarEventoMuestra(recibida,2,'RECHAZO',' ',{...autor,id:'rechazo'}));
+ const rechazada=registrarEventoMuestra(recibida,2,'RECHAZO','Recipiente incorrecto',{...autor,id:'rechazo'});
+ const corregida=registrarEventoMuestra(rechazada,3,'RECTIFICACION','Rectifica ubicación registrada',{...autor,id:'rectificacion'});
+ assert.equal(corregida.estado,'RECHAZADA');assert.equal(corregida.eventos[2]?.detalle,'Recipiente incorrecto');
+ for(const tipo of ['ACEPTACION','PROCESAMIENTO','TRASLADO'] as const) assert.throws(()=>registrarEventoMuestra(rechazada,3,tipo,'Intento',{...autor,id:'otro'}));
+});
+test('versión, cronología, identidad de evento y transición fallan sin mutar',()=>{
+ for(const [version,tipo,datos] of [[0,'RECEPCION',autor],[2,'RECEPCION',autor],[1,'ACEPTACION',autor],[1,'TOMA',autor],[1,'RECEPCION',{...autor,id:'toma'}],[1,'RECEPCION',{...autor,instante:'2026-11-03T11:59:59.000Z'}],[1,'RECEPCION',{...autor,instante:'2026-02-30T12:00:00.000Z'}]] as [number,TipoEventoMuestra,typeof autor][]) assert.throws(()=>registrarEventoMuestra(inicial,version,tipo,'Detalle',datos));
+ assert.equal(inicial.version,1);assert.equal(inicial.eventos.length,1);
+});
