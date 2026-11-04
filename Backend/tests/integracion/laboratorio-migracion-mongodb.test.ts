@@ -1,3 +1,4 @@
+import {crearLectoresReferenciasMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-referencias.js';
 import {CambiarEstadoHistorial} from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
 import {RegistrarPaciente} from '../../src/aplicacion/casos-uso/pacientes/registrar-paciente.js';
 import type {Paciente} from '../../src/dominio/clinica/paciente.js';
@@ -42,6 +43,31 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
  }
  await verificarLaboratorioMongodb(db);
+ const referenciaIds={solicitante:randomUUID(),tipo:randomUUID(),metodo:randomUUID(),prueba:randomUUID(),proveedor:randomUUID()};
+ await db.collection<{_id:string}&Document>('solicitantes').insertOne({_id:referenciaIds.solicitante,revision:1,nombre_completo:'Solicitante sintético',tipo:'MEDICO',entidad_colegiacion:'Entidad sintética',numero_colegiado:'SINT-REF',activo:true});
+ await db.collection<{_id:string}&Document>('tipos_muestra').insertOne({_id:referenciaIds.tipo,revision:1,codigo:'SINT-REF',nombre:'Muestra sintética',recipiente_requerido:'Recipiente sintético',activo:true});
+ await db.collection<{_id:string}&Document>('metodos').insertOne({_id:referenciaIds.metodo,revision:1,codigo:'SINT-REF',version:1,nombre:'Método sintético',activo:true});
+ const pruebaReferencia={_id:referenciaIds.prueba,revision:1,codigo:'SINT-REF',version:1,nombre:'Prueba sintética',area:'Área sintética',metodo_id:referenciaIds.metodo,tipo_muestra_ids:[referenciaIds.tipo],parametros:[{parametro_id:randomUUID(),codigo:'P1',nombre:'Parámetro sintético',tipo_valor:'NUMERICO',obligatorio:true}],activo:true};
+ await db.collection<{_id:string}&Document>('pruebas').insertOne(pruebaReferencia);
+ await db.collection<{_id:string}&Document>('proveedores').insertOne({_id:referenciaIds.proveedor,revision:1,nombre:'Proveedor sintético',tipo_identificacion:'SINTETICO',numero_identificacion:'SINT-REF',activo:true});
+ const sesionReferencias=cliente.startSession();
+ try{
+  sesionReferencias.startTransaction();const refs=crearLectoresReferenciasMongodb(db,sesionReferencias);
+  assert.equal((await refs.solicitantePorId(uuidPublico(referenciaIds.solicitante)))!.numeroColegiado,'SINT-REF');
+  assert.equal((await refs.tipoMuestraPorId(uuidPublico(referenciaIds.tipo)))!.recipiente,'Recipiente sintético');
+  assert.equal((await refs.metodoPorId(uuidPublico(referenciaIds.metodo)))!.version,1);
+  assert.equal((await refs.proveedorPorId(uuidPublico(referenciaIds.proveedor)))!.nombre,'Proveedor sintético');
+  const snapshot=await refs.pruebaPorId(uuidPublico(referenciaIds.prueba));assert.equal(snapshot!.version,1);assert.equal(snapshot!.parametros.length,1);
+  assert.equal(await refs.pruebaPorId(uuidPublico(randomUUID())),null);
+  await sesionReferencias.commitTransaction();
+  await db.collection<{_id:string}&Document>('pruebas').updateOne({_id:referenciaIds.prueba},{$set:{activo:false}});
+  assert.equal((await refs.pruebaPorId(uuidPublico(referenciaIds.prueba)))!.activo,false);
+  assert.equal(snapshot!.activo,true,'snapshot leído no cambia tras desactivación');
+  const version2={...pruebaReferencia,_id:randomUUID(),version:2,nombre:'Prueba sintética versión2'};
+  await db.collection<{_id:string}&Document>('pruebas').insertOne(version2);
+  assert.equal((await refs.pruebaPorId(uuidPublico(referenciaIds.prueba)))!.version,1);
+  assert.equal((await refs.pruebaPorId(uuidPublico(version2._id)))!.version,2);
+ }finally{await sesionReferencias.endSession();}
  const respaldo=(await db.collection('historial_modelo').findOne({id:11}))!.respaldo;
  assert.equal(respaldo.length,3);
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');

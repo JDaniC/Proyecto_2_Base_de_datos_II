@@ -41,7 +41,10 @@
     "barrera determinista: orden lee revisión2, archivo real confirma revisión3, orden antigua no confirma ni deja operación",
     "expediente archivado rechaza orden posterior con ESTADO_INVALIDO y conserva snapshot",
     "muestra compatible por UoW confirma evento y reserva revisión de orden",
-    "tipo de muestra ajeno al snapshot rechazado sin muestra ni revisión extra"
+    "tipo de muestra ajeno al snapshot rechazado sin muestra ni revisión extra",
+    "lectores transaccionales de solicitante, tipo, método, prueba y proveedor con datos reales M03",
+    "ID inexistente devuelve null, prueba inactiva conserva lectura explícita",
+    "versiones1/2 por UUID exacto y snapshot leído intacto tras desactivar"
   ],
   "regresionModeloM03": {
     "pass": 102
