@@ -26,10 +26,14 @@
     "escritura sin commit invisible fuera de sesión",
     "commit conserva orden y rollback elimina intento abortado",
     "roundtrip físico de toma, recepción, rechazo, rectificación y retoma vinculada con lector session-bound",
-    "reconstrucción de custodia y snapshots exactos antes y después del commit"
+    "reconstrucción de custodia y snapshots exactos antes y después del commit",
+    "escritura condicional requiere transacción activa",
+    "actualización con revisión esperada añade solo un evento",
+    "revisión obsoleta rechazada sin evento extra",
+    "abort posterior revierte estado y evento juntos"
   ],
   "regresionModeloM03": {
     "pass": 102
   },
-  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Recorridos físicos usan session Mongo explícita; UoW de aplicación con operación/auditoría aún pendiente."
+  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Escritura condicional y rollback probados con session explícita; integración con operación/auditoría durable e idempotencia aún pendiente."
 }

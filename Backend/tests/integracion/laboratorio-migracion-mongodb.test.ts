@@ -1,3 +1,4 @@
+import {guardarMuestraMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/guardar-muestra.js';
 import {tomarMuestra,registrarEventoMuestra,rectificarMuestra,retomarMuestra} from '../../src/dominio/laboratorio/muestras.js';
 import {documentosMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
 import {crearLectorMuestraMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-muestra.js';
@@ -84,6 +85,28 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   await sesionCustodia.commitTransaction();
   assert.deepEqual(await lector.porId(uuidPublico(retoma.origen.id)),retoma.origen);
  }finally{await sesionCustodia.endSession();}
+ const sesionCambio=cliente.startSession();
+ try{
+  const original=retoma.nueva;
+  const recibida=registrarEventoMuestra(original,1,'RECEPCION','Recibida para análisis',autor());
+  await assert.rejects(guardarMuestraMongodb(db,sesionCambio,original,recibida));
+  sesionCambio.startTransaction();
+  await guardarMuestraMongodb(db,sesionCambio,original,recibida);
+  await sesionCambio.commitTransaction();
+  const lector=crearLectorMuestraMongodb(db,sesionCambio);
+  assert.deepEqual(await lector.porId(uuidPublico(original.id)),recibida);
+  assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:original.id}),2);
+  sesionCambio.startTransaction();
+  await assert.rejects(guardarMuestraMongodb(db,sesionCambio,original,recibida),e=>e instanceof Error&&'codigo' in e&&e.codigo==='VERSION_DESACTUALIZADA');
+  await sesionCambio.abortTransaction();
+  const aceptada=registrarEventoMuestra(recibida,2,'ACEPTACION','Apta para análisis',autor());
+  sesionCambio.startTransaction();
+  await guardarMuestraMongodb(db,sesionCambio,recibida,aceptada);
+  // Simula fallo posterior de auditoría: la misma transacción debe revertir muestra y evento.
+  await sesionCambio.abortTransaction();
+  assert.deepEqual(await lector.porId(uuidPublico(original.id)),recibida);
+  assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:original.id}),2);
+ }finally{await sesionCambio.endSession();}
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  assert.deepEqual(await ordenes.findOne({_id:orden._id}),ordenAlmacenada);
