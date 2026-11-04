@@ -1,5 +1,6 @@
-import {documentoOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
+import {documentoOrdenLaboratorio,mapearOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
 import {Long} from 'mongodb';
+import {ErrorDominio} from '../../src/dominio/compartido/error-dominio.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { crearOrdenLaboratorio, congelarPrueba, type PruebaVersionada } from '../../src/dominio/laboratorio/ordenes.js';
@@ -32,4 +33,15 @@ test('mapper de orden conserva snapshot y almacena dinero como BSON long',()=>{
  assert.ok(Long.isLong(doc.items[0]!.precio_acordado));assert.equal(doc.items[0]!.precio_acordado.toString(),'12345');
  assert.equal(doc.items[0]!.prueba_historica.version,1);assert.deepEqual(doc.items[0]!.prueba_historica.parametros[0].opciones_permitidas,['A','B']);
  assert.equal(doc.fecha_orden.toISOString(),'2026-11-03T12:00:00.000Z');assert.equal(doc.moneda,'GTQ');
+});
+
+test('lectura de orden reconstruye solo snapshot y rechaza legado o corrupción sin filtrar datos',()=>{
+ const orden=crearOrdenLaboratorio(entrada,[{id:id(9),prueba,centavos:12345}]);
+ const doc=documentoOrdenLaboratorio(orden,'ORD-SINT-1');
+ assert.deepEqual(mapearOrdenLaboratorio(doc),{...orden,instante:'2026-11-03T12:00:00.000Z'});
+ const final={...doc,estado:'COMPLETADA' as const,revision:3,items:doc.items.map(i=>({...i,estado:'COMPLETADO'}))};
+ assert.equal(mapearOrdenLaboratorio(final).items[0]?.estado,'COMPLETADO');assert.equal(mapearOrdenLaboratorio(final).version,3);
+ const legado={...doc,items:doc.items.map(i=>{const r={...i};delete r.prueba_historica;return r;})};
+ const fueraRango={...doc,items:doc.items.map(i=>({...i,precio_acordado:Long.fromString('9223372036854775807')}))};
+ for(const invalido of [legado,fueraRango,{...doc,revision:0},{...doc,moneda:'USD'}]) assert.throws(()=>mapearOrdenLaboratorio(invalido as typeof doc),e=>e instanceof ErrorDominio&&e.codigo==='PERSISTENCIA_NO_DISPONIBLE'&&!e.message.includes('ORD-SINT'));
 });
