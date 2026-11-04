@@ -54,7 +54,11 @@
     "dos recepciones concurrentes sobre misma revisión: un éxito y un rechazo, sin evento duplicado",
     "orden y comandos de custodia proyectan ORDEN_LAB con índice de historial v1 en misma UoW",
     "lector común recupera siete eventos del circuito sin duplicados por replay ni intento concurrente fallido",
-    "primera muestra cambia orden CREADA a EN_PROCESO"
+    "primera muestra cambia orden CREADA a EN_PROCESO",
+    "publicar prueba exige VALIDADOR_LABORATORIO y resultados.validar",
+    "publicación inmutable v1/v2 con predecesora exacta y replay",
+    "orden emitida con v1 conserva snapshot tras publicar v2",
+    "índice codigo/version rechaza publicación duplicada sin crear tercera versión"
   ],
   "regresionModeloM03": {
     "pass": 102

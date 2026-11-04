@@ -1,3 +1,4 @@
+import {congelarPrueba,type PruebaVersionada} from '../../../../dominio/laboratorio/ordenes.js';
 import {normalizarInstante} from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import {validarEventoHistorial} from '../../historial/proyeccion-historial.js';
 import {validarMuestraEnOrden} from '../../../../dominio/laboratorio/compatibilidad-muestra.js';
@@ -29,6 +30,13 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
+  if(cambio.agregado==='pruebas'&&cambio.tipo==='PUBLICAR_PRUEBA'&&cambio.versionAnterior===null){
+   if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede publicar pruebas.');
+   const {prueba:entrada,area}=cambio.nuevoEstado as {prueba:PruebaVersionada;area:string};const prueba=congelarPrueba(entrada);
+   if(prueba.id!==cambio.recursoId||typeof area!=='string'||!area.trim()||area.length>100)throw new ErrorDominio('ESTADO_INVALIDO','Plan de catálogo incompatible.');
+   await db.collection<{_id:string}&import('mongodb').Document>('pruebas').insertOne({_id:prueba.id,revision:1,codigo:prueba.codigo,version:prueba.version,nombre:prueba.nombre,area,metodo_id:prueba.metodoId,tipo_muestra_ids:[...prueba.tiposMuestraIds],activo:true,parametros:prueba.parametros.map(v=>({parametro_id:v.id,codigo:v.codigo,nombre:v.nombre,tipo_valor:v.tipo,obligatorio:v.obligatorio,...(v.unidad===undefined?{}:{unidad_sugerida:v.unidad}),...(v.opciones===undefined?{}:{opciones_permitidas:[...v.opciones]})}))},{session});
+   continue;
+  }
   if(cambio.agregado==='eventosHistorial'&&cambio.tipo==='LABORATORIO'){
    const {pacienteId,...entrada}=cambio.nuevoEstado as {pacienteId:string}&Record<string,unknown>;
    const evento=validarEventoHistorial(entrada,'LABORATORIO_CLINICO');

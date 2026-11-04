@@ -1,3 +1,4 @@
+import {PublicarPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-prueba.js';
 import {GestionarMuestraLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
 import {CrearOrdenLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/crear-orden.js';
 import {crearLectoresReferenciasMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-referencias.js';
@@ -204,6 +205,24 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const cronologia=await fuenteOrdenes.leer({pacienteId:pacienteCaso.id,orden:'ASC',cantidad:100});
  assert.equal(cronologia.length,7);assert.ok(cronologia.every(e=>e.recursoId===resultadoCaso.respuesta.id));
 
+ const rolVal=randomUUID(),cuentaValId=randomUUID(),uidVal=`sintetico-${randomUUID()}`;
+ await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolVal,revision:1,nombre:'VALIDADOR_LABORATORIO',permisos:['resultados.validar']});
+ await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:cuentaValId,revision:1,auth_uid:uidVal,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolVal],estado:'ACTIVO',activo:true,nombre_usuario:uidVal});
+ const cuentaVal=await bundle.cuenta.porUid(uidVal);assert.ok(cuentaVal);
+ const contextoVal=crearContextoAutenticado({uid:uidVal,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuentaVal,uuidPublico(randomUUID()));
+ const publicar=new PublicarPruebaLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const catalogoEntrada={codigo:'SINT-PUBLICADA',version:1,nombre:'Prueba publicada v1',area:'Sintética',metodoId:referenciaIds.metodo,tiposMuestraIds:[referenciaIds.tipo],parametros:resultadoCaso.respuesta.items[0]!.prueba.parametros};
+ await assert.rejects(publicar.ejecutar({contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:catalogoEntrada}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+ const publicada=await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:catalogoEntrada});
+ const ordenConVersion=await invocarOrden({...entradaCaso,versionPaciente:2,items:[{pruebaId:publicada.respuesta.prueba.id,centavos:12345}]});
+ const claveVersion2=uuidPublico(randomUUID());const version2Entrada={...catalogoEntrada,version:2,anteriorId:publicada.respuesta.prueba.id,nombre:'Prueba publicada v2'};
+ const publicada2=await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveVersion2,entrada:version2Entrada});
+ assert.equal(publicada2.respuesta.prueba.version,2);
+ assert.deepEqual(await publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:claveVersion2,entrada:version2Entrada}),publicada2);
+ assert.equal(ordenConVersion.respuesta.items[0]!.prueba.version,1);
+ assert.equal((await ordenes.findOne({_id:ordenConVersion.respuesta.id}))!.items[0].prueba_historica.nombre,'Prueba publicada v1');
+ await assert.rejects(publicar.ejecutar({contexto:contextoVal,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:version2Entrada}));
+ assert.equal(await db.collection('pruebas').countDocuments({codigo:'SINT-PUBLICADA'}),2);
  const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{revision:uuidPublico(randomUUID())}};
  const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id,pacienteId:paciente.id};
  const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden,p:Paciente):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:p.id,versionAnterior:p.version,nuevoEstado:{id:p.id,version:p.version+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[{id:cmd.ids.revision!,agregado:'pacientes',recursoId:p.id,versionAnterior:versionPositiva(p.version),snapshotAnterior:p}],auditoria:[{id:cmd.ids.auditoria??auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});
