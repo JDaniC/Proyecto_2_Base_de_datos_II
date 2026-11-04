@@ -77,6 +77,13 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   assert.equal((await refs.pruebaPorId(uuidPublico(referenciaIds.prueba)))!.version,1);
   assert.equal((await refs.pruebaPorId(uuidPublico(version2._id)))!.version,2);
  }finally{await sesionReferencias.endSession();}
+ const indiceNuevoAntes=await db.collection('historial_modelo').findOne({id:11});
+ await db.collection('muestras').dropIndex('ix_muestra_orden_fecha');
+ await db.collection('muestras').createIndex({orden_id:1},{name:'ix_muestra_orden_fecha'});
+ await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true}),/INDICE_LABORATORIO_INCOMPATIBLE/);
+ assert.deepEqual(await db.collection('historial_modelo').findOne({id:11}),indiceNuevoAntes);
+ await db.collection('muestras').dropIndex('ix_muestra_orden_fecha');
+ await db.collection('muestras').createIndex({orden_id:1,fecha_toma:1,_id:1},{name:'ix_muestra_orden_fecha'});
  const respaldo=(await db.collection('historial_modelo').findOne({id:11}))!.respaldo;
  assert.equal(respaldo.length,3);
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
@@ -313,6 +320,13 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const muestrasPagina2=await paginas.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:1,orden:'DESC',cursor:muestrasPagina1.siguienteCursor});
  assert.equal(muestrasPagina2.siguienteCursor,undefined);assert.equal(new Set([...muestrasPagina1.elementos,...muestrasPagina2.elementos].map(m=>m.id)).size,2);
  await assert.rejects(paginas.listarOrdenes(contexto,filtrosPagina,{limite:0,orden:'ASC'}));
+ const porPaciente=await paginas.listarMuestras(contexto,{pacienteId:uuidPublico(pacienteCaso.id)},{limite:1,orden:'ASC'});assert.ok(porPaciente.siguienteCursor);
+ const porPaciente2=await paginas.listarMuestras(contexto,{pacienteId:uuidPublico(pacienteCaso.id)},{limite:1,orden:'ASC',cursor:porPaciente.siguienteCursor});
+ assert.equal(porPaciente2.siguienteCursor,undefined);assert.equal(new Set([...porPaciente.elementos,...porPaciente2.elementos].map(m=>m.id)).size,2);
+ assert.equal((await paginas.listarMuestras(contexto,{pacienteId:uuidPublico(randomUUID())},{limite:100,orden:'ASC'})).elementos.length,0);
+ const indiceOrdinal=(await db.collection('eventos_muestra').listIndexes().toArray()).find(i=>i.name==='uq_evento_muestra_ordinal');assert.ok(indiceOrdinal?.unique);
+ const eventoExistente=await db.collection('eventos_muestra').findOne({muestra_id:idMuestra,orden_evento:1});assert.ok(eventoExistente);
+ await assert.rejects(db.collection<{_id:string}&Document>('eventos_muestra').insertOne({...eventoExistente,_id:randomUUID()}));
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
  await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar','ordenes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});

@@ -11,10 +11,11 @@ test('esquema origen 011 corresponde al M03 real sin modificar inicializador',()
  const real=JSON.parse(JSON.stringify(contexto.MONGO_LAB_DEFINICIONES.filter(d=>base.some(b=>b.nombre===d.nombre)).map(({nombre,validador,indices})=>({nombre,validador,indices}))));
  assert.deepEqual(base,real);
 });
-test('extensión conserva índices, campos y restricciones previos; solo agrega procedencia',()=>{
+test('extensión conserva índices, campos y restricciones previos; agrega procedencia e índices compatibles',()=>{
  for(const anterior of base){
   const nuevo=structuredClone(objetivo.find(d=>d.nombre===anterior.nombre));
-  assert.deepEqual(nuevo.indices,anterior.indices);
+  assert.deepEqual(nuevo.indices.slice(0,anterior.indices.length),anterior.indices);
+  nuevo.indices=nuevo.indices.slice(0,anterior.indices.length);
   const p=nuevo.validador.$and[0].$jsonSchema.properties;
   if(nuevo.nombre==='ordenes') delete p.items.items.properties.prueba_historica;
   if(nuevo.nombre==='muestras') for(const campo of ['recipiente','muestra_origen_id','retoma_id']) delete p[campo];

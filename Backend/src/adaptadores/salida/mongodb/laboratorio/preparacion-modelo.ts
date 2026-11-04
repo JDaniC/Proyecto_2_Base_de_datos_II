@@ -1,6 +1,6 @@
 /** Contrato estático del destino011; comprobado contra el esquema por tests. */
 export const preparacionLaboratorio = {
-  "huella": "380abc7a0ac4f566c1aea7e26529ed8fd975faf617b63ea57cd4184850483416",
+  "huella": "060ee5b779a575820364491ac97c240ba649bddc7063d54e93c4b500d73aee63",
   "colecciones": [
     {
       "nombre": "ordenes",
@@ -63,6 +63,14 @@ export const preparacionLaboratorio = {
             "fecha_toma": 1,
             "_id": 1
           }
+        },
+        {
+          "name": "ix_muestra_orden_fecha",
+          "key": {
+            "orden_id": 1,
+            "fecha_toma": 1,
+            "_id": 1
+          }
         }
       ]
     },
@@ -76,6 +84,19 @@ export const preparacionLaboratorio = {
             "muestra_id": 1,
             "fecha_hora": 1,
             "_id": 1
+          }
+        },
+        {
+          "name": "uq_evento_muestra_ordinal",
+          "key": {
+            "muestra_id": 1,
+            "orden_evento": 1
+          },
+          "unique": true,
+          "partialFilterExpression": {
+            "orden_evento": {
+              "$type": "int"
+            }
           }
         }
       ]

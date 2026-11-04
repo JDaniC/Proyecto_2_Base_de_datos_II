@@ -549,6 +549,14 @@
           "fecha_toma": 1,
           "_id": 1
         }
+      },
+      {
+        "name": "ix_muestra_orden_fecha",
+        "key": {
+          "orden_id": 1,
+          "fecha_toma": 1,
+          "_id": 1
+        }
       }
     ]
   },
@@ -715,6 +723,19 @@
           "muestra_id": 1,
           "fecha_hora": 1,
           "_id": 1
+        }
+      },
+      {
+        "name": "uq_evento_muestra_ordinal",
+        "key": {
+          "muestra_id": 1,
+          "orden_evento": 1
+        },
+        "unique": true,
+        "partialFilterExpression": {
+          "orden_evento": {
+            "$type": "int"
+          }
         }
       }
     ]

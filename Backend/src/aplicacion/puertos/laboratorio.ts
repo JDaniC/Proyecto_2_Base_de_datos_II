@@ -35,6 +35,7 @@ export interface FiltrosOrdenesLaboratorio {
   readonly estado?: OrdenLaboratorio['estado'];
 }
 export interface FiltrosMuestrasLaboratorio {
+  readonly pacienteId?: UUID;
   readonly ordenId?: UUID;
   readonly estado?: Muestra['estado'];
   readonly desde?: string;

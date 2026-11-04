@@ -73,7 +73,11 @@
     "revisión administrativa obsoleta rechazada sin sobrescribir contacto ni datos previos",
     "páginas de órdenes por paciente y muestras por orden sin duplicados con instantes iguales",
     "cursores AES-GCM ligados a institución, cuenta, revisión/permisos, recurso, filtros y orden; alteración u otro ámbito rechazados",
-    "rango desde con nanosegundo posterior excluye eventos del milisegundo previo"
+    "rango desde con nanosegundo posterior excluye eventos del milisegundo previo",
+    "migración011 añade índice orden/fecha de muestras y unicidad parcial muestra/ordinal sin alterar índices previos",
+    "preflight rechaza índice nuevo con claves incompatibles sin modificar manifiesto",
+    "ordinal duplicado rechazado por MongoDB",
+    "muestras por paciente mediante lookup en motor antes de sort/limit, dos páginas sin duplicados y paciente ajeno vacío"
   ],
   "regresionModeloM03": {
     "pass": 102

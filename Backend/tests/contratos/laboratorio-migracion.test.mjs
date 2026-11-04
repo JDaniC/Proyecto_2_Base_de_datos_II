@@ -8,7 +8,7 @@ function doble({legado=false,deriva=false}={}){
  if(deriva) configuracion.get('muestras').options.validator={incompatible:true};
  const modelos=new Map([[1,{id:1,version:1,estado:'LISTO'}]]);const escrituras=[];
  const db={listCollections:({name})=>({toArray:async()=>[configuracion.get(name)]}),
-  collection:nombre=>({listIndexes:()=>({toArray:async()=>origen.find(d=>d.nombre===nombre).indices}),countDocuments:async()=>0,
+  collection:nombre=>({aggregate:()=>({next:async()=>null}),createIndex:async()=>{},listIndexes:()=>({toArray:async()=>origen.find(d=>d.nombre===nombre).indices}),countDocuments:async()=>0,
    findOne:async filtro=>nombre==='historial_modelo'?modelos.get(filtro.id)??null:legado&&nombre==='ordenes'?{_id:'legado'}:null,
    updateOne:async(filtro,cambio)=>{escrituras.push('manifiesto');const previo=modelos.get(filtro.id);modelos.set(filtro.id,{...(!previo?cambio.$setOnInsert:{}),...previo,...cambio.$set});}}),
   command:async comando=>{escrituras.push(comando.collMod);configuracion.get(comando.collMod).options.validator=structuredClone(comando.validator);}};

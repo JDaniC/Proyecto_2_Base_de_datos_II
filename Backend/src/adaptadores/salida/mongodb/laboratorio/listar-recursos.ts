@@ -26,18 +26,20 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
   if(!Number.isInteger(p.limite)||p.limite<1||p.limite>100||!['ASC','DESC'].includes(p.orden))throw solicitudInvalida('Paginación inválida.');
   const estados=recurso==='ordenes'?['CREADA','EN_PROCESO','COMPLETADA','CANCELADA']:['TOMADA','RECIBIDA','ACEPTADA','RECHAZADA','PROCESADA'];
   if(f.estado!==undefined&&!estados.includes(f.estado))throw solicitudInvalida('Estado inválido.');
-  if(Object.keys(f).some(k=>!(recurso==='ordenes'?['pacienteId','estado','desde','hasta']:['ordenId','estado','desde','hasta']).includes(k)))throw solicitudInvalida('Filtro no admitido.');
+  if(Object.keys(f).some(k=>!(recurso==='ordenes'?['pacienteId','estado','desde','hasta']:['pacienteId','ordenId','estado','desde','hasta']).includes(k)))throw solicitudInvalida('Filtro no admitido.');
   if(f.desde!==undefined&&f.hasta!==undefined&&normalizarInstante(f.desde)>=normalizarInstante(f.hasta))throw solicitudInvalida('Rango inválido.');
   const campoFecha=recurso==='ordenes'?'fecha_orden':'fecha_toma';const filtro:Filter<Document>={};
   const filtros={...(f.pacienteId!==undefined?{pacienteId:uuidPublico(f.pacienteId)}:{}),...(f.ordenId!==undefined?{ordenId:uuidPublico(f.ordenId)}:{}),...(f.estado?{estado:f.estado}:{}),...(f.desde!==undefined?{desde:normalizarInstante(f.desde)}:{}),...(f.hasta!==undefined?{hasta:normalizarInstante(f.hasta)}:{})};
-  if(filtros.pacienteId)filtro.paciente_id=filtros.pacienteId;if(filtros.ordenId)filtro.orden_id=filtros.ordenId;if(filtros.estado)filtro.estado=filtros.estado;
+  if(filtros.pacienteId&&recurso==='ordenes')filtro.paciente_id=filtros.pacienteId;if(filtros.ordenId)filtro.orden_id=filtros.ordenId;if(filtros.estado)filtro.estado=filtros.estado;
   if(f.desde!==undefined||f.hasta!==undefined)filtro[campoFecha]={...(f.desde!==undefined?{$gte:limiteFecha(f.desde)}:{}),...(f.hasta!==undefined?{$lt:limiteFecha(f.hasta)}:{})};
   const ambito=JSON.stringify(['LABORATORIO_CLINICO',contexto.cuenta.id,contexto.cuenta.version,[...contexto.cuenta.permisos].sort(),recurso,p.orden,filtros]);
   if(p.cursor!==undefined){const ultima=codec.decodificar(p.cursor,ambito);const comparador=p.orden==='ASC'?'$gt':'$lt';filtro.$and=[{$or:[{[campoFecha]:{[comparador]:new Date(ultima.fechaHora)}},{[campoFecha]:new Date(ultima.fechaHora),_id:{[comparador]:ultima.id}}]}];}
   try{
   await verificarLaboratorioMongodb(db);
   const direccion=p.orden==='ASC'?1:-1;
-  const docs=await db.collection(recurso).find(filtro,{maxTimeMS:3000}).sort({[campoFecha]:direccion,_id:direccion}).limit(p.limite+1).toArray();
+  const docs=recurso==='muestras'&&filtros.pacienteId
+   ?await db.collection(recurso).aggregate<Document>([{$match:filtro},{$lookup:{from:'ordenes',localField:'orden_id',foreignField:'_id',pipeline:[{$project:{paciente_id:1,_id:0}}],as:'_orden'}},{$match:{'_orden.paciente_id':filtros.pacienteId}},{$unset:'_orden'},{$sort:{[campoFecha]:direccion,_id:direccion}},{$limit:p.limite+1}],{maxTimeMS:3000}).toArray()
+   :await db.collection(recurso).find(filtro,{maxTimeMS:3000}).sort({[campoFecha]:direccion,_id:direccion}).limit(p.limite+1).toArray();
   const pagina=docs.slice(0,p.limite);const ultimo=pagina.at(-1);
   const elementos:T[]=[];for(const d of pagina)elementos.push(await mapear(d));
   return {elementos,...(docs.length>p.limite&&ultimo?{siguienteCursor:codec.codificar(ambito,{id:ultimo._id as unknown as string,fechaHora:(ultimo[campoFecha] as Date).toISOString()})}:{})};

@@ -25,6 +25,12 @@ export async function migrarLaboratorioMongodb(db,{escritoresDetenidos=false,des
    const actual=indices.find(i=>i.name===ix.name);
    if(!actual||JSON.stringify(actual.key)!==JSON.stringify(ix.key)||Boolean(actual.unique)!==Boolean(ix.unique)||hash(actual.partialFilterExpression??null)!==hash(ix.partialFilterExpression??null)) throw new Error('INDICE_LABORATORIO_INCOMPATIBLE');
   }
+  for(const ix of objetivo.indices){
+   const actual=indices.find(i=>i.name===ix.name);
+   if(actual&&(JSON.stringify(actual.key)!==JSON.stringify(ix.key)||Boolean(actual.unique)!==Boolean(ix.unique)||hash(actual.partialFilterExpression??null)!==hash(ix.partialFilterExpression??null)))throw new Error('INDICE_LABORATORIO_INCOMPATIBLE');
+   if(!actual&&indices.some(i=>JSON.stringify(i.key)===JSON.stringify(ix.key)))throw new Error('INDICE_LABORATORIO_INCOMPATIBLE');
+  }
+  if(anterior.nombre==='eventos_muestra'&&await db.collection(anterior.nombre).aggregate([{$match:{orden_evento:{$type:'int'}}},{$group:{_id:{muestra:'$muestra_id',orden:'$orden_evento'},n:{$sum:1}}},{$match:{n:{$gt:1}}},{$limit:1}]).next())throw new Error('ORDINALES_LABORATORIO_DUPLICADOS');
   if(await db.collection(anterior.nombre).countDocuments({$nor:[objetivo.validador]})) throw new Error('DOCUMENTOS_LABORATORIO_INCOMPATIBLES');
   respaldo.push({nombre:anterior.nombre,validator:info.options.validator,indices:anterior.indices});
  }
@@ -36,6 +42,7 @@ export async function migrarLaboratorioMongodb(db,{escritoresDetenidos=false,des
  await modelos.updateOne({id:11},{$setOnInsert:{respaldo,manifiestoAnterior:previo??null},$set:{...manifiestoLaboratorioMongodb,estado:'MIGRANDO'}},{upsert:true});
  for(const objetivo of destino){
   await db.command({collMod:objetivo.nombre,validator:objetivo.validador,validationLevel:'strict',validationAction:'error'});
+  for(const {key,...opciones} of objetivo.indices)await db.collection(objetivo.nombre).createIndex(key,opciones);
   await despuesDeColeccion?.(objetivo.nombre);
  }
  const estado=reconciliar?'RECONCILIAR':'LISTO';
