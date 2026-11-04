@@ -34,6 +34,16 @@ import { GestionarHospitalizaciones } from '../aplicacion/casos-uso/hospital/ges
 import { HospitalController } from '../adaptadores/entrada/http/hospital/hospital.controller.js';
 import { HistorialesController } from '../adaptadores/entrada/http/historiales/historiales.controller.js';
 import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catalogos.controller.js';
+import { LaboratorioController } from '../adaptadores/entrada/http/laboratorio/laboratorio.controller.js';
+import { CrearOrdenLaboratorio } from '../aplicacion/casos-uso/laboratorio/crear-orden.js';
+import { GestionarMuestraLaboratorio } from '../aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
+import { ConsultarListadosLaboratorio } from '../aplicacion/casos-uso/laboratorio/consultar-listados.js';
+import { ConsultarRecursosLaboratorio } from '../aplicacion/casos-uso/laboratorio/consultar-recursos.js';
+import { PublicarPruebaLaboratorio } from '../aplicacion/casos-uso/laboratorio/publicar-prueba.js';
+import { PublicarMetodoLaboratorio } from '../aplicacion/casos-uso/laboratorio/publicar-metodo.js';
+import { CambiarEstadoPruebaLaboratorio } from '../aplicacion/casos-uso/laboratorio/cambiar-estado-prueba.js';
+import { CambiarEstadoMetodoLaboratorio } from '../aplicacion/casos-uso/laboratorio/cambiar-estado-metodo.js';
+import { GuardarReferenciaLaboratorio } from '../aplicacion/casos-uso/laboratorio/guardar-referencia.js';
 import { DynamicModule, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { ConsultarBundlesConfigurados } from '../aplicacion/casos-uso/consultar-bundles-configurados.js';
@@ -84,7 +94,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [LaboratorioController, VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -95,6 +105,15 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide:CrearOrdenLaboratorio,useFactory:()=>new CrearOrdenLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:GestionarMuestraLaboratorio,useFactory:()=>new GestionarMuestraLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:ConsultarListadosLaboratorio,useClass:ConsultarListadosLaboratorio},
+        {provide:ConsultarRecursosLaboratorio,useClass:ConsultarRecursosLaboratorio},
+        {provide:PublicarPruebaLaboratorio,useFactory:()=>new PublicarPruebaLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:PublicarMetodoLaboratorio,useFactory:()=>new PublicarMetodoLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:CambiarEstadoPruebaLaboratorio,useFactory:()=>new CambiarEstadoPruebaLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:CambiarEstadoMetodoLaboratorio,useFactory:()=>new CambiarEstadoMetodoLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:GuardarReferenciaLaboratorio,useFactory:()=>new GuardarReferenciaLaboratorio(dependenciasComandoPorDefecto)},
         {provide:GestionarCatalogoVacunas,useFactory:()=>new GestionarCatalogoVacunas(dependenciasComandoPorDefecto)},
         {provide: AsignarEsquemaVacuna,useFactory:()=>new AsignarEsquemaVacuna(dependenciasComandoPorDefecto)},
         {provide: ConsultarEsquemaVacunas, useFactory: () => new ConsultarEsquemaVacunas()},

@@ -54,7 +54,7 @@ def validate_artifacts():
     operations = {op['operationId']: op for item in spec['paths'].values()
                   for method, op in item.items() if method in {'get', 'post', 'patch', 'put', 'delete'}}
     require(len(operations) == sum(len(item) for item in spec['paths'].values()), 'operationId duplicado')
-    fixtures = [case for archivo in ('contrato-v1.json', 'hospital-v1.json', 'hospital-servicios-v1.json', 'pediatria-respuestas-v1.json')
+    fixtures = [case for archivo in ('contrato-v1.json', 'hospital-v1.json', 'hospital-servicios-v1.json', 'pediatria-respuestas-v1.json', 'laboratorio-v1.json')
                 for case in json.loads((DOCS / 'fixtures' / archivo).read_text(), parse_float=Decimal)]
     ids = set()
     request_coverage = set()

@@ -6,17 +6,19 @@ import { describe, it } from 'node:test';
 import { leerContratoOpenApi } from '../../src/composicion/leer-contrato-openapi.js';
 
 describe('contrato OpenAPI de arranque', () => {
-  it('lee el contrato canónico con las 65 rutas, incluidas las extensiones hospitalaria y pediátrica v1', () => {
+  it('lee el contrato canónico con las 79 rutas, incluidas las extensiones hospitalaria, pediátrica y de laboratorio v1', () => {
     const contrato = leerContratoOpenApi(resolve(process.cwd(), 'docs/openapi.yaml'));
 
     assert.equal(contrato.openapi, '3.1.0');
-    assert.equal(Object.keys(contrato.paths).length, 65);
+    assert.equal(Object.keys(contrato.paths).length, 79);
     assert.equal(contrato.servers?.[0]?.url, '/api/v1');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.get), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion/cierre']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/historial']?.get), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/expediente']?.get), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/laboratorio/ordenes']?.post), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/laboratorio/muestras']?.post), 'IMPLEMENTED');
   });
 
   it('falla cerrado para YAML malformado o documento con otra versión', () => {

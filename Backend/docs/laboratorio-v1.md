@@ -1,14 +1,14 @@
 # Laboratorio v1 — contrato de implementación E05-P1-01
 
-Estado: casos y persistencia en implementación, con pruebas físicas en PR76; endpoints aún NOT_IMPLEMENTED. Dominio y puertos en PR76 no habilitan el bundle. Institución exclusiva LABORATORIO_CLINICO desde token verificado y cuenta vigente, sin selector/body de autoridad. E05-P2-01 conserva resultados; informes, stock/calidad y cobro son tareas distintas.
+Estado: capacidades E05-P1-01 conectadas a HTTP y documentadas en OpenAPI por PR76, con pruebas físicas MongoDB y de transporte. Institución exclusiva LABORATORIO_CLINICO desde token verificado y cuenta vigente, sin selector/body de autoridad. E05-P2-01 conserva resultados; informes, stock/calidad y cobro son tareas distintas.
 
 ## Capacidades y permisos
 
 Órdenes y lectura de referencias administrativas: ordenes.administrar. Eventos/toma/retoma/rectificación y lectura de muestras: muestras.administrar. Ambos se asignan según matriz fija a SECRETARIA y ADMIN_INSTITUCIONAL. El mantenimiento administrativo de solicitantes/tipos/proveedores exige ordenes.administrar y rol ADMIN_INSTITUCIONAL; publicación/versionado/desactivación técnica de pruebas/métodos exige resultados.validar y rol VALIDADOR_LABORATORIO. Son decisiones locales de capacidad E05 (plan/03 §7); se aplicarán tanto en caso como guard, no por menú. Ningún permiso administrativo concede analizar, validar resultados, emitir informes o prescribir. Cuenta/roles/profesional se revalidan dentro de cada escritura.
 
-## Operaciones previstas
+## Operaciones publicadas
 
-Todas bajo /laboratorio, DTO cerrado; desconocidos/autoridad cliente →400. POST exige Idempotency-Key UUID; actualización de agregado exige versionEsperada positiva. IDs de recurso/evento, actor e instante los fija aplicación antes de callback repetible. Error de versión409; referencia inactiva/incompatible409; sin capacidad403; legado sin snapshot verificable503 RECONCILIAR.
+Todas bajo `/laboratorio`, DTO cerrado; desconocidos/autoridad cliente →400. POST/PATCH exige Idempotency-Key UUID; actualización de agregado exige versionEsperada positiva. IDs de recurso/evento, actor e instante los fija aplicación antes de callback repetible. Error de versión409; referencia inactiva/incompatible409; sin capacidad403; legado sin snapshot verificable503 RECONCILIAR. El contrato canónico contiene 79 rutas totales y 14 nuevas rutas de laboratorio.
 
 | Ruta y método | Entrada de negocio | Lecturas/plan atómico |
 |---|---|---|
@@ -20,7 +20,7 @@ Todas bajo /laboratorio, DTO cerrado; desconocidos/autoridad cliente →400. POS
 | POST /muestras/{id}/retomas | versionEsperada, versionOrden, codigo, tipoMuestraId, recipiente, motivo | Origen rechazado sin sucesora; nueva muestra y evento + enlace origen/sucesora; ambas revisiones en misma UoW |
 | GET /muestras y /muestras/{id} | filtros autorizados/página o UUID | Historia íntegra y vínculo original; datos de orden/paciente del servidor |
 
-Catálogos: mantenimiento por capacidad con DTO individual cerrado por tipo (sin endpoint genérico de escritura arbitraria). Publicar versión nueva de prueba/método conserva ID de versión anterior e índice codigo/version; desactivar impide nueva selección, nunca borra ni cambia snapshot emitido. DTO exactos y OpenAPI se completarán antes de exponer esas rutas.
+Catálogos: lectura en `GET /laboratorio/catalogos/{tipo}` y mantenimiento administrativo tipado en `POST/PATCH /laboratorio/referencias/{tipo}[/{id}]`, sin escritura arbitraria de colecciones. Publicación y estado de pruebas/métodos usan rutas separadas. Una versión nueva conserva ID de la anterior e índice codigo/version; desactivar impide nueva selección, nunca borra ni cambia snapshots emitidos.
 
 ## Estados y representación
 
