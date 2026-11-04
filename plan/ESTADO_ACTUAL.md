@@ -114,3 +114,5 @@ existente; no modifica inicializadores ni M01–M09. Evidencia E04/E04-P1-02.md:
 fixtures PASS. Suite frontend histórica conserva los mismos 131 FAIL que base,
 sin fallos nuevos. E04-P1-03 y tareas restantes conservan su alcance; consultar
 cola y reservas remotas. No acredita cierre E04 ni módulos de exámenes/pólizas.
+
+Corte03/11/2026: cierre funcional/documental E04 integrado por PR75 (`7dea7b4`), CodeRabbit APPROVED sobre `8be6865`, check nativo SUCCESS. E04-P2-03 integrada por PR74 (`8c2a5d1`). Demostración87 PASS con huella final en evidencia E04; solo documentos cambiaron después del SHA probado. E05-P1-01 es la siguiente entrada según cola, con reserva en su seguimiento/PR. No se acredita laboratorio especializado E05 ni producción Firestore.
