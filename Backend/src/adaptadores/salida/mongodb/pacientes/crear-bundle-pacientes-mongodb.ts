@@ -1,3 +1,7 @@
+import {crearLectorOrdenMongodb} from '../laboratorio/leer-orden.js';
+import {crearLectorMuestraMongodb} from '../laboratorio/leer-muestra.js';
+import {aplicarCambiosLaboratorio} from '../laboratorio/aplicar-cambios.js';
+import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
 import { crearClinicaMongodb, aplicarCambiosClinicosMongodb } from '../consultas/clinica-mongodb.js';
 import { crearHistorialMongodb } from '../../historial/historial-mongodb.js';
 import type { ClientSession, Db } from 'mongodb';
@@ -35,15 +39,19 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
   } catch { throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'La persistencia de pacientes requiere preparación compatible.'); }
 
   const originales = new WeakMap<ClientSession, Map<string, DocumentoPacienteMongo>>();
+  const originalesMuestras = new WeakMap<ClientSession, Map<string,Muestra>>();
   const uow = crearUnidadDeTrabajoMongodb({
     cliente,
     crearLector(db, session, usuarioId) {
       const cache = new Map<string, DocumentoPacienteMongo>();
       originales.set(session, cache);
       const lector = crearLectorPacientesMongodb(db, session, usuarioId, cache);
-      return {...lector, clinica: crearClinicaMongodb(db, session, cache)};
+      const muestras=new Map<string,Muestra>();originalesMuestras.set(session,muestras);
+      const ordenes=crearLectorOrdenMongodb(db,session);const lectorMuestras=crearLectorMuestraMongodb(db,session);
+      return {...lector,laboratorio:{ordenPorId:ordenes.porId,async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;}}, clinica: crearClinicaMongodb(db, session, cache)};
     },
     async aplicarCambios(db, session, contexto, comando, cambios) {
+      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map());
       if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },
