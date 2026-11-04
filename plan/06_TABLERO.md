@@ -63,7 +63,7 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | E01 | HECHA | [Cierre y demostración](evidencias/E01/CIERRE.md); PR #39 integrado; Codex sin hallazgos |
 | E02 | HECHA | [Cierre y demostración](evidencias/E02/CIERRE.md); PR #49 integrado (`c1a932a`); Codex sin hallazgos sobre `a09fb9f` |
 | E03 | HECHA | [Cierre y demostración](evidencias/E03/CIERRE.md); PR #65 integrado (`f516156`); Codex sin hallazgos sobre `66e5f46` |
-| E04 | PENDIENTE | `plan/evidencias/E04/CIERRE.md` por crear al ejecutar |
+| E04 | EN_REVISION | [Acta funcional](evidencias/E04/CIERRE.md); PR #75 pendiente de revisión/integración documental; implementación #74 integrada |
 | E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
 | E06 | PENDIENTE | `plan/evidencias/E06/CIERRE.md` por crear al ejecutar |
 | E07 | PENDIENTE | `plan/evidencias/E07/CIERRE.md` por crear al ejecutar |
