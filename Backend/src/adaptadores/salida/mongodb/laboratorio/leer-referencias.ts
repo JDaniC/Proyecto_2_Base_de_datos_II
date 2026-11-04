@@ -5,7 +5,7 @@ import {versionPositiva} from '../../../../dominio/compartido/version.js';
 import {congelarPrueba} from '../../../../dominio/laboratorio/ordenes.js';
 import {ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import type {PuertosLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
-type Referencias=Pick<PuertosLaboratorio,'solicitantePorId'|'tipoMuestraPorId'|'metodoPorId'|'proveedorPorId'|'pruebaPorId'>;
+type Referencias=Pick<PuertosLaboratorio,'solicitantePorId'|'tipoMuestraPorId'|'metodoPorId'|'proveedorPorId'|'pruebaPorId'|'revisionPruebaPorId'>;
 const texto=(v:unknown):string=>{if(typeof v!=='string'||!v.trim())throw new Error('TEXTO_INVALIDO');return v;};
 const activo=(v:unknown):boolean=>{if(typeof v!=='boolean')throw new Error('ESTADO_INVALIDO');return v;};
 /** Todos los accesos conservan session y UUID; actividad se devuelve, no se oculta como inexistencia. */
@@ -17,6 +17,7 @@ export function crearLectoresReferenciasMongodb(db:Db,session:ClientSession):Ref
   }catch{throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','La referencia de laboratorio requiere preparación compatible.');}
  }
  return {
+  revisionPruebaPorId:id=>leer('pruebas',id,d=>versionPositiva(Number(d.revision))),
   solicitantePorId:id=>leer('solicitantes',id,d=>{
    if(!['MEDICO','INSTITUCION'].includes(d.tipo))throw new Error('TIPO_INVALIDO');
    return Object.freeze({id:uuidPublico(d._id),version:versionPositiva(Number(d.revision)),nombre:texto(d.nombre_completo),tipo:d.tipo as 'MEDICO'|'INSTITUCION',activo:activo(d.activo),

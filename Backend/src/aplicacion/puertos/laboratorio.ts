@@ -43,6 +43,7 @@ export interface PuertosLaboratorio {
   tipoMuestraPorId(id: UUID): Promise<TipoMuestraLaboratorio | null>;
   metodoPorId(id: UUID): Promise<MetodoLaboratorio | null>;
   proveedorPorId(id: UUID): Promise<ProveedorLaboratorio | null>;
+  revisionPruebaPorId(id: UUID): Promise<Version | null>;
   pruebaPorId(id: UUID): Promise<PruebaVersionada | null>;
   ordenPorId(id: UUID): Promise<OrdenLaboratorio | null>;
   muestraPorId(id: UUID): Promise<Muestra | null>;

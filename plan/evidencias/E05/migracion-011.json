@@ -58,7 +58,10 @@
     "publicar prueba exige VALIDADOR_LABORATORIO y resultados.validar",
     "publicación inmutable v1/v2 con predecesora exacta y replay",
     "orden emitida con v1 conserva snapshot tras publicar v2",
-    "índice codigo/version rechaza publicación duplicada sin crear tercera versión"
+    "índice codigo/version rechaza publicación duplicada sin crear tercera versión",
+    "desactivación de prueba con permiso/rol/revisión/motivo y replay",
+    "prueba desactivada rechaza nueva orden sin cambiar snapshot de orden anterior",
+    "revisión antigua rechazada y reactivación solo cambia actividad/revisión, conserva contenido"
   ],
   "regresionModeloM03": {
     "pass": 102

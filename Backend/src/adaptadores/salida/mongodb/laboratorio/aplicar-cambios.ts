@@ -30,6 +30,14 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
+  if(cambio.agregado==='pruebas'&&cambio.tipo==='CAMBIAR_ESTADO'){
+   if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar pruebas.');
+   const nuevo=cambio.nuevoEstado as {id:string;activo:boolean;revision:number};
+   if(nuevo.id!==cambio.recursoId||typeof nuevo.activo!=='boolean'||cambio.versionAnterior===null||nuevo.revision!==cambio.versionAnterior+1)throw new ErrorDominio('ESTADO_INVALIDO','Plan de estado incompatible.');
+   const r=await db.collection<{_id:string}&import('mongodb').Document>('pruebas').updateOne({_id:nuevo.id,revision:cambio.versionAnterior},{$set:{revision:nuevo.revision,activo:nuevo.activo}},{session});
+   if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La versión de catálogo cambió.');
+   continue;
+  }
   if(cambio.agregado==='pruebas'&&cambio.tipo==='PUBLICAR_PRUEBA'&&cambio.versionAnterior===null){
    if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede publicar pruebas.');
    const {prueba:entrada,area}=cambio.nuevoEstado as {prueba:PruebaVersionada;area:string};const prueba=congelarPrueba(entrada);
