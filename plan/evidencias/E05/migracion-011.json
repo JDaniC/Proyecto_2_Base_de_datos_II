@@ -70,7 +70,10 @@
     "revisión obsoleta de método rechazada y reactivación preserva versión analítica",
     "mantenimiento de solicitante, tipo de muestra y proveedor exige ADMIN_INSTITUCIONAL y ordenes.administrar",
     "altas y replay de tres referencias, actualización/desactivación con revisión previa conservada",
-    "revisión administrativa obsoleta rechazada sin sobrescribir contacto ni datos previos"
+    "revisión administrativa obsoleta rechazada sin sobrescribir contacto ni datos previos",
+    "páginas de órdenes por paciente y muestras por orden sin duplicados con instantes iguales",
+    "cursores AES-GCM ligados a institución, cuenta, revisión/permisos, recurso, filtros y orden; alteración u otro ámbito rechazados",
+    "rango desde con nanosegundo posterior excluye eventos del milisegundo previo"
   ],
   "regresionModeloM03": {
     "pass": 102

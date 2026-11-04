@@ -65,3 +65,8 @@ export type CambioLaboratorio =
   | { readonly tipo: 'GUARDAR_TIPO_MUESTRA'; readonly versionAnterior: number | null; readonly tipoMuestra: TipoMuestraLaboratorio }
   | { readonly tipo: 'GUARDAR_METODO'; readonly versionAnterior: number | null; readonly metodo: MetodoLaboratorio }
   | { readonly tipo: 'GUARDAR_PROVEEDOR'; readonly versionAnterior: number | null; readonly proveedor: ProveedorLaboratorio };
+
+export interface ListadosLaboratorio {
+ listarOrdenes(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
+ listarMuestras(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
+}

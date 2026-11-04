@@ -1,3 +1,5 @@
+import {crearListadosLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/listar-recursos.js';
+import {CursorHistorialCifrado} from '../../src/adaptadores/salida/historial/cursor-historial.js';
 import {GuardarReferenciaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/guardar-referencia.js';
 import {CambiarEstadoMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-metodo.js';
 import {PublicarMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-metodo.js';
@@ -296,6 +298,21 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await assert.rejects(guardarMuestraPlan(invalida,incompatible),e=>e instanceof Error&&'codigo' in e&&e.codigo==='REFERENCIA_INCOMPATIBLE');
  assert.equal((await ordenes.findOne({_id:nuevaOrden.id}))!.revision,2);
  assert.equal(await db.collection('muestras').countDocuments({codigo_barras:'SINT-INCOMPATIBLE'}),0);
+ // Clave sintética estable durante todas las páginas de esta prueba, nunca registrada.
+ const secretoCursor=randomUUID()+randomUUID();const paginas=crearListadosLaboratorioMongodb(app.db,new CursorHistorialCifrado(()=>secretoCursor));
+ const filtrosPagina={pacienteId:uuidPublico(pacienteCaso.id)};
+ const pagina1=await paginas.listarOrdenes(contexto,filtrosPagina,{limite:1,orden:'ASC'});assert.ok(pagina1.siguienteCursor);
+ const pagina2=await paginas.listarOrdenes(contexto,filtrosPagina,{limite:1,orden:'ASC',cursor:pagina1.siguienteCursor});
+ assert.equal(pagina2.siguienteCursor,undefined);assert.deepEqual(new Set([...pagina1.elementos,...pagina2.elementos].map(o=>o.id)),new Set([resultadoCaso.respuesta.id,ordenConVersion.respuesta.id]));
+ const cursorAlterado=pagina1.siguienteCursor.slice(0,20)+(pagina1.siguienteCursor[20]==='A'?'B':'A')+pagina1.siguienteCursor.slice(21);
+ await assert.rejects(paginas.listarOrdenes(contexto,filtrosPagina,{limite:1,orden:'ASC',cursor:cursorAlterado}));
+ await assert.rejects(paginas.listarOrdenes(contexto,{...filtrosPagina,estado:'CREADA'},{limite:1,orden:'ASC',cursor:pagina1.siguienteCursor}));
+ await assert.rejects(paginas.listarOrdenes({...contexto,cuenta:{...contexto.cuenta,id:uuidPublico(randomUUID())}},filtrosPagina,{limite:1,orden:'ASC',cursor:pagina1.siguienteCursor}));
+ assert.equal((await paginas.listarOrdenes(contexto,{...filtrosPagina,desde:'2026-11-03T12:00:00.000000001Z',hasta:'2026-11-03T12:00:01Z'},{limite:100,orden:'ASC'})).elementos.length,0);
+ const muestrasPagina1=await paginas.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:1,orden:'DESC'});assert.ok(muestrasPagina1.siguienteCursor);
+ const muestrasPagina2=await paginas.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:1,orden:'DESC',cursor:muestrasPagina1.siguienteCursor});
+ assert.equal(muestrasPagina2.siguienteCursor,undefined);assert.equal(new Set([...muestrasPagina1.elementos,...muestrasPagina2.elementos].map(m=>m.id)).size,2);
+ await assert.rejects(paginas.listarOrdenes(contexto,filtrosPagina,{limite:0,orden:'ASC'}));
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
  await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar','ordenes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});
