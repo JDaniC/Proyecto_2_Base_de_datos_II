@@ -1,3 +1,7 @@
+import {crearOrdenLaboratorio} from '../../src/dominio/laboratorio/ordenes.js';
+import {uuidPublico} from '../../src/dominio/compartido/uuid.js';
+import {documentoOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
+import {crearLectorOrdenMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-orden.js';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -39,6 +43,23 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true}),/INDICE_LABORATORIO_INCOMPATIBLE/);
  assert.deepEqual(await db.collection('historial_modelo').findOne({id:11}),manifiestoAntesIndice);
  await ordenes.dropIndex(indice.name!);await ordenes.createIndex(indice.key,{name:indice.name!});
+ const agregado=crearOrdenLaboratorio({id:randomUUID(),pacienteId:randomUUID(),solicitanteId:randomUUID(),registradoPorId:randomUUID(),instante:'2026-11-03T12:00:00.000Z',prioridad:'URGENTE',indicaciones:'Fixture sintético'},[{id:randomUUID(),centavos:12345,prueba:{id:randomUUID(),codigo:'P-ROUNDTRIP',nombre:'Prueba congelada',version:1,activo:true,metodoId:randomUUID(),tiposMuestraIds:[randomUUID()],parametros:[{id:randomUUID(),codigo:'SINT',nombre:'Sintético',tipo:'CATEGORICO',obligatorio:true,opciones:['A','B']}]}}]);
+ const session=cliente.startSession();
+ try{
+  session.startTransaction();
+  await ordenes.insertOne(documentoOrdenLaboratorio(agregado,'SINT-ROUNDTRIP'),{session});
+  const lector=crearLectorOrdenMongodb(db,session);
+  assert.deepEqual(await lector.porId(uuidPublico(agregado.id)),agregado);
+  assert.equal(await ordenes.findOne({_id:agregado.id}),null,'sin commit no es visible fuera de la sesión');
+  await session.commitTransaction();
+  assert.deepEqual(await lector.porId(uuidPublico(agregado.id)),agregado);
+  session.startTransaction();
+  const abortada={...agregado,id:randomUUID()};
+  await ordenes.insertOne(documentoOrdenLaboratorio(abortada,'SINT-ROLLBACK'),{session});
+  assert.deepEqual(await lector.porId(uuidPublico(abortada.id)),abortada);
+  await session.abortTransaction();
+  assert.equal(await lector.porId(uuidPublico(abortada.id)),null);
+ }finally{await session.endSession();}
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  assert.deepEqual(await ordenes.findOne({_id:orden._id}),ordenAlmacenada);

@@ -1,3 +1,4 @@
+import {documentosMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { registrarEventoMuestra, rectificarMuestra, retomarMuestra, tomarMuestra, type Muestra, type TipoEventoMuestra } from '../../src/dominio/laboratorio/muestras.js';
@@ -55,4 +56,14 @@ test('toma y recepción conservan ítems, instante y cuenta; rechazo preserva mo
  const rechazada=registrarEventoMuestra(recibida,2,'RECHAZO','Volumen insuficiente',{...actor,id:ids[6]!});
  assert.equal(rechazada.motivoRechazo,'Volumen insuficiente');assert.equal(rechazada.fechaRecepcion,recibida.fechaRecepcion);
  for(const itemIds of [[],[idItem,idItem],['invalido']]) assert.throws(()=>tomarMuestra({...toma,itemIds},actor));
+});
+
+test('mapper conserva documentos de custodia separados y rechaza procedencia incompleta',()=>{
+ const m=tomarMuestra(toma,actor);
+ const recibida=registrarEventoMuestra(m,1,'RECEPCION','Recibida íntegra',{...actor,id:ids[5]!});
+ const r=documentosMuestra(recibida);
+ assert.deepEqual(r.muestra.item_ids,[idItem]);assert.equal(r.muestra.fecha_toma.toISOString(),actor.instante);
+ assert.equal(r.muestra.recibida_por_id,actor.actorId);assert.equal(r.eventos.length,2);assert.equal(r.eventos[1]!.tipo_evento,'RECEPCION');
+ assert.throws(()=>documentosMuestra({...recibida,recipiente:''}));
+ assert.throws(()=>documentosMuestra({...recibida,condicionRecepcion:''}));
 });

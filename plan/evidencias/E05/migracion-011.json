@@ -21,7 +21,10 @@
     "deriva de esquema rechazada sin modificar manifiesto",
     "índice de orden con mismo nombre y claves incompatibles rechazado sin modificar manifiesto",
     "snapshot completo nuevo aceptado y conservado tras reejecución",
-    "snapshot con versión0 rechazado por motor"
+    "snapshot con versión0 rechazado por motor",
+    "roundtrip dominio→mapper→Mongo→lector session-bound exacto",
+    "escritura sin commit invisible fuera de sesión",
+    "commit conserva orden y rollback elimina intento abortado"
   ],
   "regresionModeloM03": {
     "pass": 102
