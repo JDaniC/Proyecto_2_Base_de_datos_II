@@ -1,4 +1,4 @@
-import {documentosMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
+import {documentosMuestra,mapearMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { registrarEventoMuestra, rectificarMuestra, retomarMuestra, tomarMuestra, type Muestra, type TipoEventoMuestra } from '../../src/dominio/laboratorio/muestras.js';
@@ -66,4 +66,13 @@ test('mapper conserva documentos de custodia separados y rechaza procedencia inc
  assert.equal(r.muestra.recibida_por_id,actor.actorId);assert.equal(r.eventos.length,2);assert.equal(r.eventos[1]!.tipo_evento,'RECEPCION');
  assert.throws(()=>documentosMuestra({...recibida,recipiente:''}));
  assert.throws(()=>documentosMuestra({...recibida,condicionRecepcion:''}));
+});
+
+test('lector conserva orden de eventos con igual instante y rechaza ordinal faltante o duplicado',()=>{
+ const m=registrarEventoMuestra(tomarMuestra(toma,actor),1,'RECEPCION','Recibida íntegra',{...actor,id:ids[5]!});
+ const d=documentosMuestra(m);
+ assert.deepEqual(mapearMuestra(d.muestra,[...d.eventos].reverse()),m);
+ assert.throws(()=>mapearMuestra(d.muestra,d.eventos.map(e=>({...e,orden_evento:1}))));
+ assert.throws(()=>mapearMuestra(d.muestra,d.eventos.slice(1)));
+ assert.throws(()=>mapearMuestra(d.muestra,d.eventos.map(e=>({...e,muestra_id:ids[7]}))));
 });

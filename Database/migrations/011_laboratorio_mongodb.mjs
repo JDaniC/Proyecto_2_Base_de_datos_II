@@ -30,7 +30,8 @@ export async function migrarLaboratorioMongodb(db,{escritoresDetenidos=false,des
  }
  const legadoOrden=await db.collection('ordenes').findOne({items:{$elemMatch:{prueba_historica:{$exists:false}}}},{projection:{_id:1}});
  const legadoMuestra=await db.collection('muestras').findOne({recipiente:{$exists:false}},{projection:{_id:1}});
- const reconciliar=Boolean(legadoOrden||legadoMuestra||historial.estado==='RECONCILIAR'||previo?.estado==='RECONCILIAR');
+ const legadoEvento=await db.collection('eventos_muestra').findOne({orden_evento:{$exists:false}},{projection:{_id:1}});
+ const reconciliar=Boolean(legadoEvento||legadoOrden||legadoMuestra||historial.estado==='RECONCILIAR'||previo?.estado==='RECONCILIAR');
  // El respaldo de configuración se conserva en el manifiesto con índice único id existente.
  await modelos.updateOne({id:11},{$setOnInsert:{respaldo,manifiestoAnterior:previo??null},$set:{...manifiestoLaboratorioMongodb,estado:'MIGRANDO'}},{upsert:true});
  for(const objetivo of destino){

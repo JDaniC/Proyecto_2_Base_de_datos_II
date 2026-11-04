@@ -18,7 +18,7 @@ test('extensión conserva índices, campos y restricciones previos; solo agrega 
   if(nuevo.nombre==='ordenes') delete p.items.items.properties.prueba_historica;
   if(nuevo.nombre==='muestras') for(const campo of ['recipiente','muestra_origen_id','retoma_id']) delete p[campo];
   if(nuevo.nombre==='eventos_muestra'){
-   p.tipo_evento.enum=p.tipo_evento.enum.filter(e=>e!=='RETOMA');delete p.muestra_relacionada_id;nuevo.validador.$and.pop();
+   p.tipo_evento.enum=p.tipo_evento.enum.filter(e=>e!=='RETOMA');delete p.muestra_relacionada_id;delete p.orden_evento;nuevo.validador.$and.pop();
   }
   assert.deepEqual(nuevo,anterior);
  }
