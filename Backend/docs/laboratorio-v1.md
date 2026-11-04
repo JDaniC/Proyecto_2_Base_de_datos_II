@@ -14,10 +14,10 @@ Todas bajo /laboratorio, DTO cerrado; desconocidos/autoridad cliente →400. POS
 |---|---|---|
 | POST /ordenes | pacienteId, versionPaciente, solicitanteId, prioridad, indicaciones, moneda GTQ, items[{pruebaId,centavos}] | Paciente activo, solicitante y prueba/método/tipos vigentes; snapshot exacto de prueba/precio; tocar revisión paciente + orden + operación/auditoría |
 | GET /ordenes y /ordenes/{id} | filtros autorizados/página o UUID | Listado en motor, sin cargar todo para paginar |
-| POST /muestras | ordenId, itemIds, tipoMuestraId, codigo, recipiente | Orden anterior habilitada, ítems propios y tipos compatibles; muestra TOMADA + evento, tocar revisión orden y reservar código único |
-| POST /muestras/{id}/eventos | versionEsperada, tipo RECEPCION/ACEPTACION/RECHAZO/TRASLADO/PROCESAMIENTO, detalle | Revisar estado/orden/cronología; revisión previa + muestra/evento + operación/auditoría |
-| POST /muestras/{id}/rectificaciones | versionEsperada, campo tipoMuestraId/recipiente, nuevo, motivo | Referencia compatible y valor anterior verificable; antes/después inmutables; no reabrir rechazo |
-| POST /muestras/{id}/retomas | versionEsperada, codigo, tipoMuestraId, recipiente, motivo | Origen rechazado sin sucesora; nueva muestra y evento + enlace origen/sucesora; ambas revisiones en misma UoW |
+| POST /muestras | ordenId, versionOrden, itemIds, tipoMuestraId, codigo, recipiente | Orden anterior habilitada, ítems propios y tipos compatibles; muestra TOMADA + evento, tocar revisión orden y reservar código único |
+| POST /muestras/{id}/eventos | versionEsperada, versionOrden, tipo RECEPCION/ACEPTACION/RECHAZO/TRASLADO/PROCESAMIENTO, detalle | Revisar estado/orden/cronología; revisión previa + muestra/evento + operación/auditoría |
+| POST /muestras/{id}/rectificaciones | versionEsperada, versionOrden, campo tipoMuestraId/recipiente, nuevo, motivo | Referencia compatible y valor anterior verificable; antes/después inmutables; no reabrir rechazo |
+| POST /muestras/{id}/retomas | versionEsperada, versionOrden, codigo, tipoMuestraId, recipiente, motivo | Origen rechazado sin sucesora; nueva muestra y evento + enlace origen/sucesora; ambas revisiones en misma UoW |
 | GET /muestras y /muestras/{id} | filtros autorizados/página o UUID | Historia íntegra y vínculo original; datos de orden/paciente del servidor |
 
 Catálogos: mantenimiento por capacidad con DTO individual cerrado por tipo (sin endpoint genérico de escritura arbitraria). Publicar versión nueva de prueba/método conserva ID de versión anterior e índice codigo/version; desactivar impide nueva selección, nunca borra ni cambia snapshot emitido. DTO exactos y OpenAPI se completarán antes de exponer esas rutas.
@@ -31,3 +31,5 @@ Físico orden: CREADA/EN_PROCESO/COMPLETADA/CANCELADA; ítem SOLICITADO/EN_PROCE
 M03 tiene documentos cerrados: ampliar mediante migración explícita, nunca solo inicializador. Pendiente número de migración libre y esquema final de extensiones: snapshots de ítems, vínculo retoma, recipiente y eventos con referencia a origen, revisión/procedencia. Preservar datos M01–M09 y restauración; legado sin versión/snapshot verificable RECONCILIAR, no inventar versiones ni inferir nombres históricos desde catálogo actual.
 
 Búsquedas por paciente/orden/estado y rango [desde,hasta), orden (fecha,id), límite1–100 predeterminado20; cursor autenticado ligado a cuenta/permisos/ámbito/recurso/filtros. Índices explícitos en migración. Pruebas físicas: nueva/existente/fallo/recuperación/reejecución sin pérdida; código duplicado, archivo/nueva orden, auditoría fallida y rollback multidocumento, reintentos idempotentes. Pruebas unitarias no acreditan esas garantías.
+
+Casos de aplicación implementados en PR76: CrearOrdenLaboratorio y GestionarMuestraLaboratorio; pruebas físicas registradas en plan/evidencias/E05/migracion-011.json. Rutas HTTP y mantenimiento de catálogos siguen pendientes. Versiones de orden y muestra se exigen por separado; IDs/actor/instante se fijan fuera del callback.

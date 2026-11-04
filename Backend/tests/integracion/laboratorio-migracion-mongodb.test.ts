@@ -1,3 +1,4 @@
+import {GestionarMuestraLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
 import {CrearOrdenLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/crear-orden.js';
 import {crearLectoresReferenciasMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-referencias.js';
 import {CambiarEstadoHistorial} from '../../src/aplicacion/casos-uso/historiales/cambiar-estado-historial.js';
@@ -180,6 +181,23 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  assert.equal(resultadoCaso.respuesta.total.centavos,12345);assert.equal(resultadoCaso.respuesta.items[0]!.prueba.version,1);
  assert.deepEqual(await invocarOrden(entradaCaso,claveCaso),resultadoCaso);
  assert.equal(await ordenes.countDocuments({paciente_id:pacienteCaso.id}),1);
+ const gestionarCaso=new GestionarMuestraLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const altaMuestra={ordenId:resultadoCaso.respuesta.id,versionOrden:1,itemIds:[resultadoCaso.respuesta.items[0]!.id],tipoMuestraId:referenciaIds.tipo,codigo:'SINT-CASO-MUESTRA',recipiente:'Tubo inicial'};
+ const claveMuestra=uuidPublico(randomUUID());
+ const primeraMuestra=await gestionarCaso.ejecutar('tomar',{contexto,bundle,claveIdempotencia:claveMuestra,entrada:altaMuestra});
+ assert.deepEqual(await gestionarCaso.ejecutar('tomar',{contexto,bundle,claveIdempotencia:claveMuestra,entrada:altaMuestra}),primeraMuestra);
+ const idMuestra=uuidPublico(primeraMuestra.respuesta.id);
+ const eventoCaso=(entrada:unknown)=>gestionarCaso.ejecutar('evento',{contexto,bundle,id:idMuestra,claveIdempotencia:uuidPublico(randomUUID()),entrada});
+ await eventoCaso({versionEsperada:1,versionOrden:2,tipo:'RECEPCION',detalle:'Recibida íntegra'});
+ await assert.rejects(eventoCaso({versionEsperada:2,versionOrden:3,tipo:'RECHAZO',detalle:''}));
+ await eventoCaso({versionEsperada:2,versionOrden:3,tipo:'RECHAZO',detalle:'Volumen insuficiente'});
+ await gestionarCaso.ejecutar('rectificar',{contexto,bundle,id:idMuestra,claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:3,versionOrden:4,campo:'recipiente',nuevo:'Tubo corregido',motivo:'Error de captura'}});
+ const retomaCaso=await gestionarCaso.ejecutar('retomar',{contexto,bundle,id:idMuestra,claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:4,versionOrden:5,tipoMuestraId:referenciaIds.tipo,codigo:'SINT-CASO-RETOMA',recipiente:'Tubo nuevo',motivo:'Retoma sintética'}});
+ assert.equal(retomaCaso.respuesta.origenId,idMuestra);assert.notEqual(retomaCaso.respuesta.id,idMuestra);
+ assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:idMuestra}),5);
+ const carrerasMuestra=await Promise.allSettled([1,2].map(()=>gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(retomaCaso.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:1,versionOrden:6,tipo:'RECEPCION',detalle:'Recepción concurrente'}})));
+ assert.equal(carrerasMuestra.filter(r=>r.status==='fulfilled').length,1);assert.equal(carrerasMuestra.filter(r=>r.status==='rejected').length,1);
+ assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:retomaCaso.respuesta.id}),2);
  const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{revision:uuidPublico(randomUUID())}};
  const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id,pacienteId:paciente.id};
  const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden,p:Paciente):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:p.id,versionAnterior:p.version,nuevoEstado:{id:p.id,version:p.version+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[{id:cmd.ids.revision!,agregado:'pacientes',recursoId:p.id,versionAnterior:versionPositiva(p.version),snapshotAnterior:p}],auditoria:[{id:cmd.ids.auditoria??auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});

@@ -48,7 +48,10 @@
     "caso CrearOrdenLaboratorio real con DTO cerrado y paciente/version/solicitante/prueba/método/tipos vigentes",
     "rechazo de solicitante, prueba, método o tipo inactivo sin orden",
     "rechazo de autoridad cliente, moneda ausente, versión inválida y dinero fraccionario",
-    "creación por caso confirma snapshot/precio y replay mantiene una orden"
+    "creación por caso confirma snapshot/precio y replay mantiene una orden",
+    "casos reales de toma con replay, recepción y rechazo con motivo obligatorio",
+    "rectificación con antes/después y retoma en dos agregados sin reemplazar origen",
+    "dos recepciones concurrentes sobre misma revisión: un éxito y un rechazo, sin evento duplicado"
   ],
   "regresionModeloM03": {
     "pass": 102
