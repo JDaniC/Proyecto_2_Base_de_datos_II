@@ -77,7 +77,10 @@
     "migración011 añade índice orden/fecha de muestras y unicidad parcial muestra/ordinal sin alterar índices previos",
     "preflight rechaza índice nuevo con claves incompatibles sin modificar manifiesto",
     "ordinal duplicado rechazado por MongoDB",
-    "muestras por paciente mediante lookup en motor antes de sort/limit, dos páginas sin duplicados y paciente ajeno vacío"
+    "muestras por paciente mediante lookup en motor antes de sort/limit, dos páginas sin duplicados y paciente ajeno vacío",
+    "página y eventos de custodia leídos con misma transacción snapshot",
+    "aceptación real intercalada después de leer documentos: página conserva RECIBIDA, siguiente consulta ve ACEPTADA",
+    "caso de listados revalida permisos/cuenta local y rechaza permiso retirado o cuenta inactiva con contexto inicial antiguo"
   ],
   "regresionModeloM03": {
     "pass": 102

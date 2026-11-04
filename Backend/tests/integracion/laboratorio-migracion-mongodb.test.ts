@@ -1,3 +1,4 @@
+import {ConsultarListadosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-listados.js';
 import {crearListadosLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/listar-recursos.js';
 import {CursorHistorialCifrado} from '../../src/adaptadores/salida/historial/cursor-historial.js';
 import {GuardarReferenciaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/guardar-referencia.js';
@@ -327,6 +328,23 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const indiceOrdinal=(await db.collection('eventos_muestra').listIndexes().toArray()).find(i=>i.name==='uq_evento_muestra_ordinal');assert.ok(indiceOrdinal?.unique);
  const eventoExistente=await db.collection('eventos_muestra').findOne({muestra_id:idMuestra,orden_evento:1});assert.ok(eventoExistente);
  await assert.rejects(db.collection<{_id:string}&Document>('eventos_muestra').insertOne({...eventoExistente,_id:randomUUID()}));
+ let intercalado=false;
+ const paginasSnapshot=crearListadosLaboratorioMongodb(app.db,new CursorHistorialCifrado(()=>secretoCursor),{despuesDeLeerDocumentos:async()=>{
+  if(intercalado)return;intercalado=true;
+  await gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(retomaCaso.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:2,versionOrden:7,tipo:'ACEPTACION',detalle:'Aceptación durante lectura'}});
+ }});
+ const duranteCambio=await paginasSnapshot.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:100,orden:'ASC'});
+ assert.equal(duranteCambio.elementos.find(m=>m.id===retomaCaso.respuesta.id)!.estado,'RECIBIDA');
+ assert.equal((await paginas.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:100,orden:'ASC'})).elementos.find(m=>m.id===retomaCaso.respuesta.id)!.estado,'ACEPTADA');
+ const consultarListados=new ConsultarListadosLaboratorio();const bundleListados={...bundle,listadosLaboratorio:paginas};
+ assert.equal((await consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{pacienteId:pacienteCaso.id,limite:100}})).elementos.length,2);
+ await assert.rejects(consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{actorId:cuenta.id}}));
+ await db.collection<{_id:string}&Document>('roles').updateOne({_id:rolId},{$set:{permisos:['ordenes.administrar','pacientes.administrar']}});
+ await assert.rejects(consultarListados.ejecutar('muestras',{contexto,bundle:bundleListados,entrada:{}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+ await db.collection<{_id:string}&Document>('roles').updateOne({_id:rolId},{$set:{permisos:['ordenes.administrar','muestras.administrar','pacientes.administrar']}});
+ await db.collection<{_id:string}&Document>('usuarios').updateOne({_id:cuentaId},{$set:{estado:'INACTIVO',activo:false}});
+ await assert.rejects(consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='CUENTA_NO_HABILITADA');
+ await db.collection<{_id:string}&Document>('usuarios').updateOne({_id:cuentaId},{$set:{estado:'ACTIVO',activo:true}});
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
  await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar','ordenes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});

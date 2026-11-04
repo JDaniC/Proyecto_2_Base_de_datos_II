@@ -1,4 +1,4 @@
-import type {Db,Document,Filter} from 'mongodb';
+import type {Db,Document,Filter,ClientSession} from 'mongodb';
 import type {ContextoAutenticado} from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import type {FiltrosPagina,Pagina} from '../../../../aplicacion/puertos/nucleo.js';
 import type {FiltrosOrdenesLaboratorio,FiltrosMuestrasLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
@@ -19,8 +19,8 @@ function limiteFecha(valor:string):Date{
  if(/[1-9]/.test(fraccion.slice(3)))fecha.setTime(fecha.getTime()+1);
  return fecha;
 }
-export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial=new CursorHistorialCifrado()){
- async function listar<T>(recurso:'ordenes'|'muestras',contexto:ContextoAutenticado,f:{pacienteId?:string;ordenId?:string;estado?:string;desde?:string;hasta?:string},p:FiltrosPagina,mapear:(d:Document)=>Promise<T>):Promise<Pagina<T>>{
+export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial=new CursorHistorialCifrado(),ensayo:{despuesDeLeerDocumentos?:()=>Promise<void>}={}){
+ async function listar<T>(recurso:'ordenes'|'muestras',contexto:ContextoAutenticado,f:{pacienteId?:string;ordenId?:string;estado?:string;desde?:string;hasta?:string},p:FiltrosPagina,mapear:(d:Document,session:ClientSession)=>Promise<T>):Promise<Pagina<T>>{
   const permiso=recurso==='ordenes'?'ordenes.administrar':'muestras.administrar';
   if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!contexto.cuenta.permisos.includes(permiso))throw new ErrorDominio('SIN_PERMISO','No puede consultar este recurso de laboratorio.');
   if(!Number.isInteger(p.limite)||p.limite<1||p.limite>100||!['ASC','DESC'].includes(p.orden))throw solicitudInvalida('Paginación inválida.');
@@ -36,17 +36,23 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
   if(p.cursor!==undefined){const ultima=codec.decodificar(p.cursor,ambito);const comparador=p.orden==='ASC'?'$gt':'$lt';filtro.$and=[{$or:[{[campoFecha]:{[comparador]:new Date(ultima.fechaHora)}},{[campoFecha]:new Date(ultima.fechaHora),_id:{[comparador]:ultima.id}}]}];}
   try{
   await verificarLaboratorioMongodb(db);
+  const session=db.client.startSession();
+  try{
+  session.startTransaction({readConcern:{level:'snapshot'}});
   const direccion=p.orden==='ASC'?1:-1;
   const docs=recurso==='muestras'&&filtros.pacienteId
-   ?await db.collection(recurso).aggregate<Document>([{$match:filtro},{$lookup:{from:'ordenes',localField:'orden_id',foreignField:'_id',pipeline:[{$project:{paciente_id:1,_id:0}}],as:'_orden'}},{$match:{'_orden.paciente_id':filtros.pacienteId}},{$unset:'_orden'},{$sort:{[campoFecha]:direccion,_id:direccion}},{$limit:p.limite+1}],{maxTimeMS:3000}).toArray()
-   :await db.collection(recurso).find(filtro,{maxTimeMS:3000}).sort({[campoFecha]:direccion,_id:direccion}).limit(p.limite+1).toArray();
+   ?await db.collection(recurso).aggregate<Document>([{$match:filtro},{$lookup:{from:'ordenes',localField:'orden_id',foreignField:'_id',pipeline:[{$project:{paciente_id:1,_id:0}}],as:'_orden'}},{$match:{'_orden.paciente_id':filtros.pacienteId}},{$unset:'_orden'},{$sort:{[campoFecha]:direccion,_id:direccion}},{$limit:p.limite+1}],{maxTimeMS:3000,session}).toArray()
+   :await db.collection(recurso).find(filtro,{maxTimeMS:3000,session}).sort({[campoFecha]:direccion,_id:direccion}).limit(p.limite+1).toArray();
+  await ensayo.despuesDeLeerDocumentos?.();
   const pagina=docs.slice(0,p.limite);const ultimo=pagina.at(-1);
-  const elementos:T[]=[];for(const d of pagina)elementos.push(await mapear(d));
+  const elementos:T[]=[];for(const d of pagina)elementos.push(await mapear(d,session));
+  await session.commitTransaction();
   return {elementos,...(docs.length>p.limite&&ultimo?{siguienteCursor:codec.codificar(ambito,{id:ultimo._id as unknown as string,fechaHora:(ultimo[campoFecha] as Date).toISOString()})}:{})};
+  }catch(e){if(session.inTransaction())await session.abortTransaction();throw e;}finally{await session.endSession();}
   }catch(e){if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No fue posible consultar los recursos de laboratorio.');}
  }
  return {
   listarOrdenes:(c:ContextoAutenticado,f:FiltrosOrdenesLaboratorio,p:FiltrosPagina)=>listar<OrdenLaboratorio>('ordenes',c,f,p,async d=>mapearOrdenLaboratorio(d as DocumentoOrdenLaboratorio)),
-  listarMuestras:(c:ContextoAutenticado,f:FiltrosMuestrasLaboratorio,p:FiltrosPagina)=>listar<Muestra>('muestras',c,f,p,async d=>mapearMuestra(d,await db.collection('eventos_muestra').find({muestra_id:d._id},{maxTimeMS:3000}).sort({orden_evento:1}).toArray())),
+  listarMuestras:(c:ContextoAutenticado,f:FiltrosMuestrasLaboratorio,p:FiltrosPagina)=>listar<Muestra>('muestras',c,f,p,async(d,session)=>mapearMuestra(d,await db.collection('eventos_muestra').find({muestra_id:d._id},{maxTimeMS:3000,session}).sort({orden_evento:1}).toArray())),
  };
 }
