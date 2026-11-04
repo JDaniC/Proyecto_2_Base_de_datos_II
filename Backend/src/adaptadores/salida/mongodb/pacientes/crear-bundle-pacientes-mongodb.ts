@@ -1,3 +1,4 @@
+import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
 import {crearLectorOrdenMongodb} from '../laboratorio/leer-orden.js';
 import {crearLectorMuestraMongodb} from '../laboratorio/leer-muestra.js';
 import {aplicarCambiosLaboratorio} from '../laboratorio/aplicar-cambios.js';
@@ -39,6 +40,7 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
   } catch { throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE', 'La persistencia de pacientes requiere preparación compatible.'); }
 
   const originales = new WeakMap<ClientSession, Map<string, DocumentoPacienteMongo>>();
+  const originalesOrdenes = new WeakMap<ClientSession,Map<string,OrdenLaboratorio>>();
   const originalesMuestras = new WeakMap<ClientSession, Map<string,Muestra>>();
   const uow = crearUnidadDeTrabajoMongodb({
     cliente,
@@ -47,11 +49,12 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
       originales.set(session, cache);
       const lector = crearLectorPacientesMongodb(db, session, usuarioId, cache);
       const muestras=new Map<string,Muestra>();originalesMuestras.set(session,muestras);
+      const cacheOrdenes=new Map<string,OrdenLaboratorio>();originalesOrdenes.set(session,cacheOrdenes);
       const ordenes=crearLectorOrdenMongodb(db,session);const lectorMuestras=crearLectorMuestraMongodb(db,session);
-      return {...lector,laboratorio:{ordenPorId:ordenes.porId,async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;}}, clinica: crearClinicaMongodb(db, session, cache)};
+      return {...lector,laboratorio:{async ordenPorId(id){const o=await ordenes.porId(id);if(o)cacheOrdenes.set(id,o);return o;},async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;}}, clinica: crearClinicaMongodb(db, session, cache)};
     },
     async aplicarCambios(db, session, contexto, comando, cambios) {
-      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map());
+      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map(),originalesOrdenes.get(session)??new Map());
       if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },

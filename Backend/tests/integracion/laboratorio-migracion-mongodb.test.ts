@@ -147,6 +147,19 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  assert.deepEqual(await db.collection('pacientes').findOne({_id:paciente.id} as Document),pacienteConfirmado);
  assert.equal(await ordenes.findOne({_id:fallido.id}),null,'auditoría duplicada aborta orden');
  assert.deepEqual(await conteos(),confirmados,'fallo real no crea auditoría ni operación durable');
+ const comandoMuestra:ComandoEstable={...comando,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.muestra.tomar',ids:{revision:uuidPublico(randomUUID()),evento:uuidPublico(randomUUID()),auditoria:uuidPublico(randomUUID())}};
+ const nuevaMuestra=tomarMuestra({id:comandoMuestra.id,ordenId:nuevaOrden.id,codigo:'SINT-UOW-MUESTRA',itemIds:[nuevaOrden.items[0]!.id],tipoMuestraId:nuevaOrden.items[0]!.prueba.tiposMuestraIds[0]!,recipiente:'Tubo sintético'},{id:comandoMuestra.ids.evento!,actorId:cuenta.id,instante:comandoMuestra.instante});
+ const guardarMuestraPlan=(cmd:ComandoEstable,m:typeof nuevaMuestra)=>bundle.uow!.ejecutar(contexto,cmd,async lector=>{
+  const o=await lector.laboratorio!.ordenPorId(uuidPublico(nuevaOrden.id));assert.ok(o);
+  return {tipo:'CONFIRMAR',cambios:[{agregado:'ordenes',tipo:'RESERVAR_MUESTRA',recursoId:uuidPublico(o.id),versionAnterior:versionPositiva(o.version),nuevoEstado:{id:o.id,version:o.version+1}},{agregado:'muestras',tipo:'GUARDAR_MUESTRA',recursoId:uuidPublico(m.id),versionAnterior:null,nuevoEstado:m}],revisiones:[{id:cmd.ids.revision!,agregado:'ordenes',recursoId:uuidPublico(o.id),versionAnterior:versionPositiva(o.version),snapshotAnterior:o}],auditoria:[{id:cmd.ids.auditoria!,actorId:cuenta.id,caso:cmd.caso,recursoId:uuidPublico(m.id),fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:m,correlacionOriginal:contexto.correlacion}};
+ });
+ assert.deepEqual((await guardarMuestraPlan(comandoMuestra,nuevaMuestra)).respuesta,nuevaMuestra);
+ assert.equal((await ordenes.findOne({_id:nuevaOrden.id}))!.revision,2);
+ const invalida={...comandoMuestra,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),ids:{revision:uuidPublico(randomUUID()),evento:uuidPublico(randomUUID()),auditoria:uuidPublico(randomUUID())}};
+ const incompatible=tomarMuestra({...toma,id:invalida.id,ordenId:nuevaOrden.id,itemIds:[nuevaOrden.items[0]!.id],tipoMuestraId:randomUUID(),codigo:'SINT-INCOMPATIBLE'},{id:invalida.ids.evento!,actorId:cuenta.id,instante:invalida.instante});
+ await assert.rejects(guardarMuestraPlan(invalida,incompatible),e=>e instanceof Error&&'codigo' in e&&e.codigo==='REFERENCIA_INCOMPATIBLE');
+ assert.equal((await ordenes.findOne({_id:nuevaOrden.id}))!.revision,2);
+ assert.equal(await db.collection('muestras').countDocuments({codigo_barras:'SINT-INCOMPATIBLE'}),0);
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
  await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});
