@@ -67,7 +67,10 @@
     "método1, prueba y snapshot de orden conservan referencia tras publicar método2",
     "actividad de método con revisión/motivo, rol/permiso y replay",
     "método inactivo bloquea orden nueva, no cambia contenido ni referencias históricas",
-    "revisión obsoleta de método rechazada y reactivación preserva versión analítica"
+    "revisión obsoleta de método rechazada y reactivación preserva versión analítica",
+    "mantenimiento de solicitante, tipo de muestra y proveedor exige ADMIN_INSTITUCIONAL y ordenes.administrar",
+    "altas y replay de tres referencias, actualización/desactivación con revisión previa conservada",
+    "revisión administrativa obsoleta rechazada sin sobrescribir contacto ni datos previos"
   ],
   "regresionModeloM03": {
     "pass": 102

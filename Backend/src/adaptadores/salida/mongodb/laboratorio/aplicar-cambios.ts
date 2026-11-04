@@ -1,3 +1,4 @@
+import {guardarReferenciaMongodb} from './guardar-referencia.js';
 import {congelarPrueba,type PruebaVersionada} from '../../../../dominio/laboratorio/ordenes.js';
 import {normalizarInstante} from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
 import {validarEventoHistorial} from '../../historial/proyeccion-historial.js';
@@ -30,6 +31,10 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
+  if(['solicitantes','tipos_muestra','proveedores'].includes(cambio.agregado)&&cambio.tipo==='GUARDAR_REFERENCIA'){
+   if(!contexto.cuenta.roles.includes('ADMIN_INSTITUCIONAL')||!contexto.cuenta.permisos.includes('ordenes.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede mantener referencias.');
+   await guardarReferenciaMongodb(db,session,cambio);continue;
+  }
   if(cambio.agregado==='metodos'&&cambio.tipo==='PUBLICAR_METODO'&&cambio.versionAnterior===null){
    if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede publicar métodos.');
    const m=cambio.nuevoEstado as {id:string;codigo:string;nombre:string;version:number;descripcion:string;activo:boolean};

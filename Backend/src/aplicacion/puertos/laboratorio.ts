@@ -10,10 +10,12 @@ export interface SolicitanteLaboratorio {
   readonly nombre: string;
   readonly tipo: 'MEDICO' | 'INSTITUCION';
   readonly activo: boolean;
+  readonly institucion?: string; readonly telefono?: string; readonly correo?: string;
   readonly entidadColegiacion?: string;
   readonly numeroColegiado?: string;
 }
 export interface TipoMuestraLaboratorio {
+  readonly descripcion?: string; readonly condicionesConservacion?: string;
   readonly id: UUID; readonly version: Version; readonly codigo: string;
   readonly nombre: string; readonly recipiente: string; readonly activo: boolean;
 }
@@ -22,6 +24,7 @@ export interface MetodoLaboratorio {
   readonly nombre: string; readonly activo: boolean;
 }
 export interface ProveedorLaboratorio {
+  readonly tipoIdentificacion: string; readonly numeroIdentificacion: string; readonly telefono?: string; readonly correo?: string; readonly direccion?: string;
   readonly id: UUID; readonly version: Version; readonly nombre: string; readonly activo: boolean;
 }
 /** Instantes UTC [desde,hasta); cursor ligado a cuenta, institución, recurso y filtros. */

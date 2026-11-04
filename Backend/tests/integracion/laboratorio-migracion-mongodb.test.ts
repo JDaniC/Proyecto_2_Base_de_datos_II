@@ -1,3 +1,4 @@
+import {GuardarReferenciaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/guardar-referencia.js';
 import {CambiarEstadoMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-metodo.js';
 import {PublicarMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-metodo.js';
 import {CambiarEstadoPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-prueba.js';
@@ -296,10 +297,25 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  assert.equal((await ordenes.findOne({_id:nuevaOrden.id}))!.revision,2);
  assert.equal(await db.collection('muestras').countDocuments({codigo_barras:'SINT-INCOMPATIBLE'}),0);
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
- await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar']});
+ await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar','ordenes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});
  const cuentaAdmin=await bundle.cuenta.porUid(uidAdmin);assert.ok(cuentaAdmin);
  const adminContexto=crearContextoAutenticado({uid:uidAdmin,institucion:'LABORATORIO_CLINICO',emitidoEn:comando.instante},cuentaAdmin,uuidPublico(randomUUID()));
+ const referenciasAdmin=new GuardarReferenciaLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const referenciasEnsayo=[{tipo:'solicitante' as const,coleccion:'solicitantes',datos:{nombre:'Solicitante administrativo',tipo:'MEDICO',entidadColegiacion:'Entidad sintética',numeroColegiado:'SINT-ADMIN',telefono:'00000000',activo:true}},{tipo:'tipoMuestra' as const,coleccion:'tipos_muestra',datos:{nombre:'Tipo administrativo',codigo:'SINT-ADMIN',recipiente:'Tubo sintético',descripcion:'Descripción sintética',activo:true}},{tipo:'proveedor' as const,coleccion:'proveedores',datos:{nombre:'Proveedor administrativo',tipoIdentificacion:'SINTETICO',numeroIdentificacion:'SINT-ADMIN',telefono:'00000000',activo:true}}];
+ for(const r of referenciasEnsayo){
+  await assert.rejects(referenciasAdmin.ejecutar(r.tipo,{contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:r.datos,motivo:'Alta sintética'}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+  const claveReferencia=uuidPublico(randomUUID());const solicitud={datos:r.datos,motivo:'Alta sintética'};
+  const creada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,claveIdempotencia:claveReferencia,entrada:solicitud});
+  assert.deepEqual(await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,claveIdempotencia:claveReferencia,entrada:solicitud}),creada);
+  const idRef=creada.respuesta.id;
+  const actualizada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:{...r.datos,nombre:'Nombre actualizado',activo:false},versionEsperada:1,motivo:'Desactivación sintética'}});
+  assert.equal(actualizada.respuesta.version,2);
+  const fisica=await db.collection<{_id:string}&Document>(r.coleccion).findOne({_id:idRef});assert.equal(fisica!.activo,false);assert.equal(fisica!.revision,2);
+  const revisionRef=await db.collection('revisiones').findOne({tipo_recurso:r.coleccion,recurso_id:idRef,version:1});assert.equal(revisionRef!.contenido_anterior.nombre,r.datos.nombre);
+  if('telefono' in r.datos)assert.equal(revisionRef!.contenido_anterior.telefono,r.datos.telefono);
+  await assert.rejects(referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:r.datos,versionEsperada:1,motivo:'Revisión obsoleta'}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='VERSION_DESACTUALIZADA');
+ }
  const estadoHistorial=new CambiarEstadoHistorial({reloj:{ahora:()=>comando.instante},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
  const carrera={...comando,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),ids:{revision:uuidPublico(randomUUID()),auditoria:uuidPublico(randomUUID())}};
  let avisarLectura!:()=>void,liberarOrden!:()=>void;

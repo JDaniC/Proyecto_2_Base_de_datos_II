@@ -1,6 +1,6 @@
 # Laboratorio v1 — contrato de implementación E05-P1-01
 
-Estado: diseño de capacidad; endpoints y persistencia aún NOT_IMPLEMENTED. Dominio y puertos en PR76 no habilitan el bundle. Institución exclusiva LABORATORIO_CLINICO desde token verificado y cuenta vigente, sin selector/body de autoridad. E05-P2-01 conserva resultados; informes, stock/calidad y cobro son tareas distintas.
+Estado: casos y persistencia en implementación, con pruebas físicas en PR76; endpoints aún NOT_IMPLEMENTED. Dominio y puertos en PR76 no habilitan el bundle. Institución exclusiva LABORATORIO_CLINICO desde token verificado y cuenta vigente, sin selector/body de autoridad. E05-P2-01 conserva resultados; informes, stock/calidad y cobro son tareas distintas.
 
 ## Capacidades y permisos
 
@@ -43,3 +43,5 @@ CambiarEstadoPruebaLaboratorio implementado (sin endpoint): UUID de versión en 
 PublicarMetodoLaboratorio implementado sin endpoint: DTO cerrado codigo/version/anteriorId?/nombre/descripcion?. Rol VALIDADOR_LABORATORIO y resultados.validar actuales; versión1 sin predecesora y siguientes con mismo código/versión anterior+1. Insert-only y unicidad codigo/version; pruebas y órdenes conservan UUID del método anterior, sin promoción automática.
 
 CambiarEstadoMetodoLaboratorio implementado sin endpoint: mismo DTO y permiso que estado de prueba, pero sobre revisión de control de método. No cambia versión analítica ni contenido; un método inactivo bloquea la selección de pruebas que lo referencian en órdenes nuevas. Ambos casos comparten validación y plan en CambiarEstadoVersionLaboratorio, con capacidades fijas prueba/método.
+
+GuardarReferenciaLaboratorio implementado sin endpoint para capacidades fijas solicitante/tipoMuestra/proveedor. Sobre cerrado datos/motivo/versionEsperada?; alta sin versión, actualización con UUID de ruta y versión obligatoria. Datos cerrados según dominio/laboratorio/referencias.ts; ADMIN_INSTITUCIONAL+ordenes.administrar vigente. Reemplazo de referencia conserva revisión previa y auditoría; no borra identidades ni convierte solicitante médico en institución. Omitir opcionales los retira del registro vigente, conservando revisión previa completa.
