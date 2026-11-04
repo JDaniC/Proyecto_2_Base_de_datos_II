@@ -76,3 +76,13 @@ test('lector conserva orden de eventos con igual instante y rechaza ordinal falt
  assert.throws(()=>mapearMuestra(d.muestra,d.eventos.slice(1)));
  assert.throws(()=>mapearMuestra(d.muestra,d.eventos.map(e=>({...e,muestra_id:ids[7]}))));
 });
+
+test('lectura exige estado final y snapshots coherentes con toda la historia',()=>{
+ const recibida=registrarEventoMuestra(tomarMuestra(toma,actor),1,'RECEPCION','Recibida íntegra',{...actor,id:ids[5]!});
+ const corregida=rectificarMuestra(recibida,2,'recipiente','Otro tubo','Rectifica dato',{...actor,id:ids[6]!});
+ const d=documentosMuestra(corregida);assert.deepEqual(mapearMuestra(d.muestra,d.eventos),corregida);
+ assert.throws(()=>mapearMuestra({...d.muestra,estado:'PROCESADA'},d.eventos));
+ assert.throws(()=>mapearMuestra({...d.muestra,recipiente:'Dato sin evento'},d.eventos));
+ assert.throws(()=>mapearMuestra({...d.muestra,condicion_recepcion:'Dato sin evento'},d.eventos));
+ assert.throws(()=>mapearMuestra(d.muestra,d.eventos.map(e=>e.tipo_evento==='RECEPCION'?{...e,tipo_evento:'PROCESAMIENTO'}:e)));
+});

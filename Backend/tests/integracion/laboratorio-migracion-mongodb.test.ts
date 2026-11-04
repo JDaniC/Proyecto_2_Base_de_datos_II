@@ -1,3 +1,6 @@
+import {tomarMuestra,registrarEventoMuestra,rectificarMuestra,retomarMuestra} from '../../src/dominio/laboratorio/muestras.js';
+import {documentosMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
+import {crearLectorMuestraMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/leer-muestra.js';
 import {crearOrdenLaboratorio} from '../../src/dominio/laboratorio/ordenes.js';
 import {uuidPublico} from '../../src/dominio/compartido/uuid.js';
 import {documentoOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
@@ -60,6 +63,27 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   await session.abortTransaction();
   assert.equal(await lector.porId(uuidPublico(abortada.id)),null);
  }finally{await session.endSession();}
+ const autor=()=>({id:randomUUID(),actorId:agregado.registradoPorId,instante:agregado.instante});
+ const toma={id:randomUUID(),ordenId:agregado.id,codigo:'M-ROUNDTRIP',itemIds:[agregado.items[0]!.id],tipoMuestraId:agregado.items[0]!.prueba.tiposMuestraIds[0]!,recipiente:'Tubo inicial'};
+ let custodia=tomarMuestra(toma,autor());
+ custodia=registrarEventoMuestra(custodia,1,'RECEPCION','Recibida íntegra',autor());
+ custodia=registrarEventoMuestra(custodia,2,'RECHAZO','Volumen insuficiente',autor());
+ custodia=rectificarMuestra(custodia,3,'recipiente','Tubo rectificado','Error de captura',autor());
+ const retoma=retomarMuestra(custodia,4,{...toma,id:randomUUID(),codigo:'M-RETOMA'},'Nueva toma autorizada',autor(),autor());
+ const sesionCustodia=cliente.startSession();
+ try{
+  sesionCustodia.startTransaction();
+  for(const m of [retoma.origen,retoma.nueva]){
+   const docs=documentosMuestra(m);
+   await db.collection('muestras').insertOne(docs.muestra,{session:sesionCustodia});
+   await db.collection('eventos_muestra').insertMany([...docs.eventos],{session:sesionCustodia});
+  }
+  const lector=crearLectorMuestraMongodb(db,sesionCustodia);
+  assert.deepEqual(await lector.porId(uuidPublico(retoma.origen.id)),retoma.origen);
+  assert.deepEqual(await lector.porId(uuidPublico(retoma.nueva.id)),retoma.nueva);
+  await sesionCustodia.commitTransaction();
+  assert.deepEqual(await lector.porId(uuidPublico(retoma.origen.id)),retoma.origen);
+ }finally{await sesionCustodia.endSession();}
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  assert.deepEqual(await ordenes.findOne({_id:orden._id}),ordenAlmacenada);

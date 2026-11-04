@@ -1,5 +1,5 @@
 import type {Document} from 'mongodb';
-import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
+import {tomarMuestra,registrarEventoMuestra,rectificarMuestra,type Muestra} from '../../../../dominio/laboratorio/muestras.js';
 import {uuidPublico} from '../../../../dominio/compartido/uuid.js';
 import {versionPositiva} from '../../../../dominio/compartido/version.js';
 import {instanteUtc} from '../../../../dominio/compartido/instante-utc.js';
@@ -52,6 +52,36 @@ export function mapearMuestra(doc:Document, documentos:readonly Document[]):Mues
    ...(doc.fecha_recepcion?{fechaRecepcion:doc.fecha_recepcion.toISOString(),recibidaPorId:uuidPublico(doc.recibida_por_id),condicionRecepcion:doc.condicion_recepcion}:{}),
    ...(doc.motivo_rechazo?{motivoRechazo:doc.motivo_rechazo}:{}),...(doc.muestra_origen_id?{origenId:uuidPublico(doc.muestra_origen_id)}:{}),...(doc.retoma_id?{retomaId:uuidPublico(doc.retoma_id)}:{})};
   documentosMuestra(muestra);
+  validarHistoria(muestra);
   return Object.freeze(muestra);
  }catch{throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','La muestra requiere conciliación de su historia de custodia.');}
+}
+
+function validarHistoria(muestra:Muestra):void {
+ let tipo=muestra.tipoMuestraId!;let recipiente=muestra.recipiente!;
+ // Deshacer únicamente las rectificaciones documentadas permite recuperar el dato inicial.
+ for(const e of [...muestra.eventos].reverse()){
+  if(e.tipo!=='RECTIFICACION'){
+   if(e.rectificacion)throw new Error('SNAPSHOT_EN_EVENTO_INCORRECTO');
+   continue;
+  }
+  const r=e.rectificacion;
+  if(!r||!['tipoMuestraId','recipiente'].includes(r.campo))throw new Error('RECTIFICACION_INCOMPLETA');
+  if((r.campo==='tipoMuestraId'?tipo:recipiente)!==r.nuevo)throw new Error('RECTIFICACION_FINAL_INCOMPATIBLE');
+  if(r.campo==='tipoMuestraId')tipo=r.anterior;else recipiente=r.anterior;
+ }
+ let reconstruida=tomarMuestra({id:muestra.id,ordenId:muestra.ordenId,codigo:muestra.codigo,itemIds:muestra.itemIds,tipoMuestraId:tipo,recipiente},muestra.eventos[0]!);
+ for(const e of muestra.eventos.slice(1)){
+  if(e.tipo==='RECTIFICACION'){
+   const r=e.rectificacion!;
+   if(reconstruida[r.campo]!==r.anterior)throw new Error('RECTIFICACION_ANTERIOR_INCOMPATIBLE');
+   reconstruida=rectificarMuestra(reconstruida,reconstruida.version,r.campo,r.nuevo,e.detalle,e);
+  }else if(e.tipo==='RETOMA'){
+   if(reconstruida.estado!=='RECHAZADA'||reconstruida.retomaId||!muestra.retomaId||!e.detalle?.trim())throw new Error('RETOMA_FUERA_DE_ESTADO');
+   reconstruida={...reconstruida,version:reconstruida.version+1,retomaId:muestra.retomaId,eventos:[...reconstruida.eventos,e]};
+  }else reconstruida=registrarEventoMuestra(reconstruida,reconstruida.version,e.tipo,e.detalle,e);
+ }
+ for(const campo of ['estado','version','tipoMuestraId','recipiente','fechaRecepcion','recibidaPorId','condicionRecepcion','motivoRechazo','retomaId'] as const){
+  if(reconstruida[campo]!==muestra[campo])throw new Error('PROYECCION_NO_COINCIDE_CON_HISTORIA');
+ }
 }

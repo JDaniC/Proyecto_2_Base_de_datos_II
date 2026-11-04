@@ -24,10 +24,12 @@
     "snapshot con versión0 rechazado por motor",
     "roundtrip dominio→mapper→Mongo→lector session-bound exacto",
     "escritura sin commit invisible fuera de sesión",
-    "commit conserva orden y rollback elimina intento abortado"
+    "commit conserva orden y rollback elimina intento abortado",
+    "roundtrip físico de toma, recepción, rechazo, rectificación y retoma vinculada con lector session-bound",
+    "reconstrucción de custodia y snapshots exactos antes y después del commit"
   ],
   "regresionModeloM03": {
     "pass": 102
   },
-  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Mapper de escritura tiene prueba unitaria; su recorrido físico por UoW está pendiente. Primera corrida histórica falló por comparación Long/number del test, corregida con comparación almacenada y tipo BSON en motor."
+  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Recorridos físicos usan session Mongo explícita; UoW de aplicación con operación/auditoría aún pendiente."
 }
