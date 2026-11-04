@@ -21,7 +21,8 @@ Las dependencias constan en develop. PR #74 fue fusionado el 02/11/2026 (03:01 U
 
 | Criterio de salida | Evidencia | Resultado |
 |---|---|---|
-| Cita dental y agendas hospital/pediatría; recarga, móvil/escritorio, cancelación y conflicto | Recorridos hospital28/dental15/pediatría32 | PASS |
+| Agendas hospital/pediatría: recarga, móvil/escritorio, cancelación y conflicto | Recorridos hospital28/pediatría32 | PASS |
+| Cita dental: secretaría agenda/reprograma; odontólogo visualiza agenda, gestora e historial de revisiones | Recorrido dental15; sin atribuir a agenda dental las comprobaciones móvil/cancelación de las otras instituciones | PASS |
 | Estancia, traslado/liberación de cama, evolución y egreso | Hospital28 | PASS |
 | Exámenes, parámetros versionados, procedimientos y póliza/cobertura | Hospital28 | PASS |
 | Responsable compartido, autorización independiente, antecedentes y crecimiento | Pediatría32 | PASS |
@@ -34,6 +35,6 @@ Entorno: Chromium y HTTP reales; PostgreSQL/MySQL/MongoDB aislados; Firebase Aut
 
 ## Continuidad
 
-Instalación nueva y existente deben aplicar las migraciones explícitas correspondientes, incluidas008/009/010. Para cloud, publicar/verificar índices listos antes de010; si resulta RECONCILIAR, detener escritores hasta conciliación verificable. No basta modificar inicializadores.
+Instalación nueva y existente deben aplicar las migraciones explícitas correspondientes, incluidas008/009/010. Detener los escritores antes de ejecutar010 y mantenerlos detenidos durante toda la actualización. Para cloud, publicar/verificar índices listos antes de010. Reanudar escritores solo cuando el estado sea LISTO; si resulta RECONCILIAR, mantenerlos detenidos hasta completar conciliación verificable. No basta modificar inicializadores.
 
 E05 implementará órdenes, muestras, análisis/resultados, inventario/calidad, informes y cobro de laboratorio. E06 conserva reconciliación de pruebas históricas y auditoría global; E07 conserva instalación en otro equipo, comparativo y retroalimentación docente. Esta acta no acredita esos entregables ni producción Firestore. La puerta E05 se habilita únicamente después de integrar el cierre documental con revisión automática real.
