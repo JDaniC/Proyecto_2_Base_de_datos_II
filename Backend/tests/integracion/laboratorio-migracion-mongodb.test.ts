@@ -1,3 +1,4 @@
+import {CambiarEstadoMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-metodo.js';
 import {PublicarMetodoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-metodo.js';
 import {CambiarEstadoPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/cambiar-estado-prueba.js';
 import {PublicarPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-prueba.js';
@@ -254,6 +255,18 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await cambiarPrueba.ejecutar({contexto:contextoVal,bundle,id:pruebaId,claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:2,activo:true,motivo:'Reactivación sintética'}});
  assert.deepEqual(await db.collection<{_id:string}&Document>('pruebas').findOne({_id:pruebaId}),{...publicadoAntes,activo:true,revision:3});
 
+ const cambiarMetodo=new CambiarEstadoMetodoLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const metodoId=uuidPublico(metodoPublicado.respuesta.id),claveMetodoEstado=uuidPublico(randomUUID());
+ const metodoEstado={versionEsperada:1,activo:false,motivo:'Desactivación de método sintética'};
+ await assert.rejects(cambiarMetodo.ejecutar({contexto,bundle,id:metodoId,claveIdempotencia:uuidPublico(randomUUID()),entrada:metodoEstado}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+ const metodoInactivo=await cambiarMetodo.ejecutar({contexto:contextoVal,bundle,id:metodoId,claveIdempotencia:claveMetodoEstado,entrada:metodoEstado});
+ assert.deepEqual(await cambiarMetodo.ejecutar({contexto:contextoVal,bundle,id:metodoId,claveIdempotencia:claveMetodoEstado,entrada:metodoEstado}),metodoInactivo);
+ assert.deepEqual(await db.collection<{_id:string}&Document>('metodos').findOne({_id:metodoId}),{...metodoAntes,activo:false,revision:2});
+ await assert.rejects(invocarOrden({...entradaCaso,versionPaciente:3,items:[{pruebaId,centavos:12345}]}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='REFERENCIA_INCOMPATIBLE');
+ assert.equal((await ordenes.findOne({_id:ordenConVersion.respuesta.id}))!.items[0].prueba_historica.metodo_id,metodoId);
+ await assert.rejects(cambiarMetodo.ejecutar({contexto:contextoVal,bundle,id:metodoId,claveIdempotencia:uuidPublico(randomUUID()),entrada:{...metodoEstado,activo:true}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='VERSION_DESACTUALIZADA');
+ await cambiarMetodo.ejecutar({contexto:contextoVal,bundle,id:metodoId,claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:2,activo:true,motivo:'Reactivación sintética'}});
+ assert.deepEqual(await db.collection<{_id:string}&Document>('metodos').findOne({_id:metodoId}),{...metodoAntes,activo:true,revision:3});
  const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{revision:uuidPublico(randomUUID())}};
  const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id,pacienteId:paciente.id};
  const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden,p:Paciente):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:p.id,versionAnterior:p.version,nuevoEstado:{id:p.id,version:p.version+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[{id:cmd.ids.revision!,agregado:'pacientes',recursoId:p.id,versionAnterior:versionPositiva(p.version),snapshotAnterior:p}],auditoria:[{id:cmd.ids.auditoria??auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});

@@ -64,7 +64,10 @@
     "revisión antigua rechazada y reactivación solo cambia actividad/revisión, conserva contenido",
     "publicación de métodos v1/v2 exige rol/permiso, predecesora exacta e inserción inmutable",
     "replay de método no duplica y código/versión duplicado se rechaza",
-    "método1, prueba y snapshot de orden conservan referencia tras publicar método2"
+    "método1, prueba y snapshot de orden conservan referencia tras publicar método2",
+    "actividad de método con revisión/motivo, rol/permiso y replay",
+    "método inactivo bloquea orden nueva, no cambia contenido ni referencias históricas",
+    "revisión obsoleta de método rechazada y reactivación preserva versión analítica"
   ],
   "regresionModeloM03": {
     "pass": 102

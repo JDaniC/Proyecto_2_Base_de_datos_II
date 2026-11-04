@@ -37,11 +37,11 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
    await db.collection<{_id:string}&import('mongodb').Document>('metodos').insertOne({_id:m.id,revision:1,codigo:m.codigo,nombre:m.nombre,version:m.version,activo:true,...(m.descripcion.trim()?{descripcion:m.descripcion}:{})},{session});
    continue;
   }
-  if(cambio.agregado==='pruebas'&&cambio.tipo==='CAMBIAR_ESTADO'){
+  if((cambio.agregado==='pruebas'||cambio.agregado==='metodos')&&cambio.tipo==='CAMBIAR_ESTADO'){
    if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar pruebas.');
    const nuevo=cambio.nuevoEstado as {id:string;activo:boolean;revision:number};
    if(nuevo.id!==cambio.recursoId||typeof nuevo.activo!=='boolean'||cambio.versionAnterior===null||nuevo.revision!==cambio.versionAnterior+1)throw new ErrorDominio('ESTADO_INVALIDO','Plan de estado incompatible.');
-   const r=await db.collection<{_id:string}&import('mongodb').Document>('pruebas').updateOne({_id:nuevo.id,revision:cambio.versionAnterior},{$set:{revision:nuevo.revision,activo:nuevo.activo}},{session});
+   const r=await db.collection<{_id:string}&import('mongodb').Document>(cambio.agregado).updateOne({_id:nuevo.id,revision:cambio.versionAnterior},{$set:{revision:nuevo.revision,activo:nuevo.activo}},{session});
    if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La versión de catálogo cambió.');
    continue;
   }
