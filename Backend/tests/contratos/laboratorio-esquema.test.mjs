@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -22,4 +23,13 @@ test('extensión conserva índices, campos y restricciones previos; solo agrega 
   }
   assert.deepEqual(nuevo,anterior);
  }
+});
+
+test('preflight runtime está sincronizado con huella y contratos de migración011',()=>{
+ const codigo=readFileSync(new URL('../../src/adaptadores/salida/mongodb/laboratorio/preparacion-modelo.ts',import.meta.url),'utf8');
+ const runtime=JSON.parse(codigo.split(' = ')[1].replace(/ as const;\s*$/,''));
+ const ordenar=v=>Array.isArray(v)?v.map(ordenar):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordenar(v[k])])):v;
+ const hash=v=>createHash('sha256').update(JSON.stringify(ordenar(v))).digest('hex');
+ assert.equal(runtime.huella,hash(objetivo));
+ assert.deepEqual(runtime.colecciones,objetivo.map(d=>({nombre:d.nombre,huellaValidador:hash(d.validador),indices:d.indices})));
 });

@@ -1,3 +1,4 @@
+import {verificarLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/verificar-preparacion.js';
 import {guardarMuestraMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/guardar-muestra.js';
 import {tomarMuestra,registrarEventoMuestra,rectificarMuestra,retomarMuestra} from '../../src/dominio/laboratorio/muestras.js';
 import {documentosMuestra} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-muestra.js';
@@ -22,12 +23,15 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const {prepararHistorialMongodb}=await importar('004_historial_documental.mjs');
  const {migrarLaboratorioMongodb}=await importar('011_laboratorio_mongodb.mjs');
  await prepararHistorialMongodb(db);
+ await assert.rejects(verificarLaboratorioMongodb(db));
  await assert.rejects(migrarLaboratorioMongodb(db),/DETENER_ESCRITORES/);
  for(const coleccion of ['ordenes','muestras','eventos_muestra']){
   await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true,despuesDeColeccion:(nombre:string)=>{if(nombre===coleccion)throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
   assert.equal((await db.collection('historial_modelo').findOne({id:11}))!.estado,'MIGRANDO');
+  await assert.rejects(verificarLaboratorioMongodb(db));
   assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
  }
+ await verificarLaboratorioMongodb(db);
  const respaldo=(await db.collection('historial_modelo').findOne({id:11}))!.respaldo;
  assert.equal(respaldo.length,3);
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
@@ -43,6 +47,7 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const indicesAntes=await ordenes.listIndexes().toArray();
  const indice=indicesAntes.find(i=>i.name==='ix_orden_fecha')!;assert.ok(indice);
  await ordenes.dropIndex(indice.name!);await ordenes.createIndex({estado:1},{name:indice.name!});
+ await assert.rejects(verificarLaboratorioMongodb(db));
  const manifiestoAntesIndice=await db.collection('historial_modelo').findOne({id:11});
  await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true}),/INDICE_LABORATORIO_INCOMPATIBLE/);
  assert.deepEqual(await db.collection('historial_modelo').findOne({id:11}),manifiestoAntesIndice);
@@ -109,9 +114,11 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  }finally{await sesionCambio.endSession();}
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
+ await assert.rejects(verificarLaboratorioMongodb(db));
  assert.deepEqual(await ordenes.findOne({_id:orden._id}),ordenAlmacenada);
  assert.equal((await ordenes.aggregate([{$match:{_id:orden._id}},{$project:{tipo:{$type:{$arrayElemAt:['$items.precio_acordado',0]}}}}]).next())!.tipo,'long');
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
+ await assert.rejects(verificarLaboratorioMongodb(db));
  const muestras=db.collection<{_id:string}&Document>('muestras');
  const muestra={_id:randomUUID(),revision:1,codigo_barras:'SINT-M-011',orden_id:orden._id,item_ids:[orden.items[0]!.item_id],tipo_muestra_id:randomUUID(),fecha_toma:new Date(),tomada_por_id:randomUUID(),estado:'TOMADA',recipiente:'Recipiente sintético',muestra_origen_id:randomUUID()};
  await muestras.insertOne(muestra);

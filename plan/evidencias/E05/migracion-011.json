@@ -30,7 +30,9 @@
     "escritura condicional requiere transacción activa",
     "actualización con revisión esperada añade solo un evento",
     "revisión obsoleta rechazada sin evento extra",
-    "abort posterior revierte estado y evento juntos"
+    "abort posterior revierte estado y evento juntos",
+    "preflight runtime rechaza manifiesto ausente, MIGRANDO y RECONCILIAR",
+    "preflight runtime acepta LISTO y rechaza índice incompatible"
   ],
   "regresionModeloM03": {
     "pass": 102
