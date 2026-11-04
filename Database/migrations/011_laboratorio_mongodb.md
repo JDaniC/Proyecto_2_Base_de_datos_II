@@ -1,6 +1,6 @@
 # Migración011: órdenes y custodia de laboratorio
 
-Estado de implementación: ejecutor preparado; pruebas físicas pendientes. No habilitar laboratorio únicamente por los contratos offline.
+Estado de implementación: ejecutor probado en replica set aislado con instalación nueva, interrupción/recuperación, legado y deriva; evidencia plan/evidencias/E05/migracion-011.json. Persistencia de aplicación y habilitación del bundle siguen pendientes. No habilitar laboratorio únicamente por la migración.
 
 Usar cuenta administrativa, replica set aislado para pruebas. En instalación nueva y existente: preparar M03 y migraciones previas (003/004/005); verificar respaldo externo recuperable; detener escritores antes de011 y mantenerlos detenidos durante todo el proceso. Importar migrarLaboratorioMongodb(db,{escritoresDetenidos:true}) desde el entorno administrativo existente, sin guardar conexiones/secretos en repositorio. El booleano declara el requisito operativo, no detecta procesos activos.
 

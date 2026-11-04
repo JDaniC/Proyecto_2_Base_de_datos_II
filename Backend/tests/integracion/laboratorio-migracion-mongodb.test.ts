@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {randomUUID} from 'node:crypto';
+import {MongoClient, Long, type Document} from 'mongodb';
+const port=process.env.MONGO_TEST_PORT;
+test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{skip:!port},async t=>{
+ assert.match(process.env.MONGO_TEST_CONTAINER!,/^bdii-e03-p2-01-[a-f0-9]{10}-mongodb-1$/);
+ const cliente=new MongoClient(`mongodb://127.0.0.1:${port}/?directConnection=true`,{auth:{username:'mongo_admin',password:readFileSync(process.env.MONGO_ADMIN_TEST_SECRET_FILE!,'utf8').trim()},authSource:'admin'});
+ await cliente.connect();t.after(()=>cliente.close());const db=cliente.db('laboratorio_clinico');
+ const importar=(nombre:string)=>import(pathToFileURL(resolve('..','Database','migrations',nombre)).href);
+ const {prepararHistorialMongodb}=await importar('004_historial_documental.mjs');
+ const {migrarLaboratorioMongodb}=await importar('011_laboratorio_mongodb.mjs');
+ await prepararHistorialMongodb(db);
+ await assert.rejects(migrarLaboratorioMongodb(db),/DETENER_ESCRITORES/);
+ for(const coleccion of ['ordenes','muestras','eventos_muestra']){
+  await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true,despuesDeColeccion:(nombre:string)=>{if(nombre===coleccion)throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
+  assert.equal((await db.collection('historial_modelo').findOne({id:11}))!.estado,'MIGRANDO');
+  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
+ }
+ const respaldo=(await db.collection('historial_modelo').findOne({id:11}))!.respaldo;
+ assert.equal(respaldo.length,3);
+ assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
+ assert.deepEqual((await db.collection('historial_modelo').findOne({id:11}))!.respaldo,respaldo);
+ const orden={_id:randomUUID(),revision:1,numero_orden:'SINT-011',paciente_id:randomUUID(),solicitante_id:randomUUID(),fecha_orden:new Date('2026-11-03T12:00:00Z'),registrado_por_id:randomUUID(),prioridad:'RUTINA',estado:'CREADA',moneda:'GTQ',items:[{item_id:randomUUID(),prueba_id:randomUUID(),prioridad:'RUTINA',estado:'SOLICITADO',precio_acordado:Long.fromNumber(100)}]};
+ const ordenes=db.collection<{_id:string}&Document>('ordenes');await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
+ assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
+ assert.deepEqual(await ordenes.findOne({_id:orden._id}),ordenAlmacenada);
+ assert.equal((await ordenes.aggregate([{$match:{_id:orden._id}},{$project:{tipo:{$type:{$arrayElemAt:['$items.precio_acordado',0]}}}}]).next())!.tipo,'long');
+ assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
+ const muestras=db.collection<{_id:string}&Document>('muestras');
+ const muestra={_id:randomUUID(),revision:1,codigo_barras:'SINT-M-011',orden_id:orden._id,item_ids:[orden.items[0]!.item_id],tipo_muestra_id:randomUUID(),fecha_toma:new Date(),tomada_por_id:randomUUID(),estado:'TOMADA',recipiente:'Recipiente sintético',muestra_origen_id:randomUUID()};
+ await muestras.insertOne(muestra);
+ await assert.rejects(muestras.insertOne({...muestra,_id:randomUUID(),codigo_barras:'OTRA',muestra_origen_id:'invalido'}));
+ assert.deepEqual(await muestras.findOne({_id:muestra._id}),muestra);
+ const antes=await db.collection('historial_modelo').findOne({id:11});
+ await db.command({collMod:'muestras',validator:{$jsonSchema:{bsonType:'object'}},validationLevel:'strict',validationAction:'error'});
+ await assert.rejects(migrarLaboratorioMongodb(db,{escritoresDetenidos:true}),/ESQUEMA_LABORATORIO_DESCONOCIDO/);
+ assert.deepEqual(await db.collection('historial_modelo').findOne({id:11}),antes);
+});
