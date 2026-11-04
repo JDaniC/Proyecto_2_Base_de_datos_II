@@ -1,3 +1,7 @@
+import {RegistrarPaciente} from '../../src/aplicacion/casos-uso/pacientes/registrar-paciente.js';
+import type {Paciente} from '../../src/dominio/clinica/paciente.js';
+import {versionPositiva} from '../../src/dominio/compartido/version.js';
+import {createHash} from 'node:crypto';
 import {crearClienteMongodb} from '../../src/adaptadores/salida/mongodb/crear-cliente-mongodb.js';
 import {crearBundlePacientesMongodb} from '../../src/adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.js';
 import {crearContextoAutenticado} from '../../src/aplicacion/puertos/contexto-autenticado.js';
@@ -119,24 +123,27 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  }finally{await sesionCambio.endSession();}
  // UoW real con cuenta local actual y credenciales de aplicación, sin identidad de UI.
  const rolId=randomUUID(),cuentaId=randomUUID(),uid=`sintetico-${randomUUID()}`;
- await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolId,revision:1,nombre:'SECRETARIA',permisos:['ordenes.administrar','muestras.administrar']});
+ await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolId,revision:1,nombre:'SECRETARIA',permisos:['ordenes.administrar','muestras.administrar','pacientes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:cuentaId,revision:1,auth_uid:uid,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolId],estado:'ACTIVO',activo:true,nombre_usuario:uid});
  const app=await crearClienteMongodb({host:'127.0.0.1',puerto:Number(port),baseDatos:'laboratorio_clinico',usuario:'laboratorio_app',archivoContrasena:process.env.MONGO_TEST_SECRET_FILE!,replicaSet:'rs0',conexionDirecta:true,timeoutMs:5000});
  t.after(()=>app.cerrar());const bundle=await crearBundlePacientesMongodb(app);
  const cuenta=await bundle.cuenta.porUid(uid);assert.ok(cuenta);
  const contexto=crearContextoAutenticado({uid,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuenta,uuidPublico(randomUUID()));
- const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{}};
- const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id};
- const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[],auditoria:[{id:auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});
+ const alta=new RegistrarPaciente({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
+ const paciente=(await alta.ejecutar({contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:{nombres:'Sintético',apellidos:'Laboratorio',fecha_nacimiento:'2000-01-01',sexo:'FEMENINO'}})).respuesta;
+ const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{revision:uuidPublico(randomUUID())}};
+ const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id,pacienteId:paciente.id};
+ const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden,p:Paciente):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:p.id,versionAnterior:p.version,nuevoEstado:{id:p.id,version:p.version+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[{id:cmd.ids.revision!,agregado:'pacientes',recursoId:p.id,versionAnterior:versionPositiva(p.version),snapshotAnterior:p}],auditoria:[{id:auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});
  let planificaciones=0;
- const primera=await bundle.uow!.ejecutar(contexto,comando,async lector=>{planificaciones++;assert.equal(await lector.laboratorio!.ordenPorId(comando.id),null);return plan(comando,nuevaOrden);});
+ const primera=await bundle.uow!.ejecutar(contexto,comando,async lector=>{planificaciones++;assert.equal(await lector.laboratorio!.ordenPorId(comando.id),null);const p=await lector.pacientes.porId(uuidPublico(paciente.id)) as Paciente;assert.ok(p);return plan(comando,nuevaOrden,p);});
  assert.deepEqual(primera.respuesta,nuevaOrden);
  const conteos=async()=>Promise.all(['ordenes','auditoria','operaciones'].map(c=>db.collection(c).countDocuments()));
- const confirmados=await conteos();
+ const confirmados=await conteos();const pacienteConfirmado=await db.collection('pacientes').findOne({_id:paciente.id} as Document);assert.equal(pacienteConfirmado!.revision,2);
  const repetida=await bundle.uow!.ejecutar(contexto,comando,async()=>{throw new Error('REPLAY_NO_DEBE_PLANIFICAR');});
  assert.deepEqual(repetida,primera);assert.equal(planificaciones,1);assert.deepEqual(await conteos(),confirmados);
- const fallido={...comando,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID())};
- await assert.rejects(bundle.uow!.ejecutar(contexto,fallido,async()=>plan(fallido,{...nuevaOrden,id:fallido.id})));
+ const fallido={...comando,id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),ids:{revision:uuidPublico(randomUUID())}};
+ await assert.rejects(bundle.uow!.ejecutar(contexto,fallido,async lector=>{const p=await lector.pacientes.porId(uuidPublico(paciente.id)) as Paciente;return plan(fallido,{...nuevaOrden,id:fallido.id},p);}));
+ assert.deepEqual(await db.collection('pacientes').findOne({_id:paciente.id} as Document),pacienteConfirmado);
  assert.equal(await ordenes.findOne({_id:fallido.id}),null,'auditoría duplicada aborta orden');
  assert.deepEqual(await conteos(),confirmados,'fallo real no crea auditoría ni operación durable');
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});

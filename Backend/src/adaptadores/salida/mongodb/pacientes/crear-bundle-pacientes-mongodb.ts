@@ -51,7 +51,7 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
       return {...lector,laboratorio:{ordenPorId:ordenes.porId,async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;}}, clinica: crearClinicaMongodb(db, session, cache)};
     },
     async aplicarCambios(db, session, contexto, comando, cambios) {
-      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map());
+      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map());
       if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },

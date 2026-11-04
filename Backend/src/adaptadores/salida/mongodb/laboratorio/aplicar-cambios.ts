@@ -1,3 +1,4 @@
+import type {DocumentoPacienteMongo} from '../pacientes/mapear-paciente-mongodb.js';
 import type {Db,ClientSession} from 'mongodb';
 import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
 import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
@@ -9,9 +10,25 @@ import {documentoOrdenLaboratorio,mapearOrdenLaboratorio} from './documento-orde
 
 /** Llamado exclusivamente desde UoW después de todas las lecturas y validaciones. */
 export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,contexto:ContextoAutenticado,comando:ComandoEstable,
- cambios:readonly CambioPlanificado[],originales:ReadonlyMap<string,Muestra>):Promise<void>{
+ cambios:readonly CambioPlanificado[],originales:ReadonlyMap<string,Muestra>,pacientes:ReadonlyMap<string,DocumentoPacienteMongo>):Promise<void>{
  if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!comando.caso.startsWith('laboratorio.'))throw new ErrorDominio('SIN_PERMISO','Operación fuera del ámbito de laboratorio.');
+ const ordenesNuevas=cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='CREAR_ORDEN');
+ for(const cambio of ordenesNuevas){
+  const orden=cambio.nuevoEstado as OrdenLaboratorio;
+  const reservas=cambios.filter(c=>c.agregado==='pacientes'&&c.tipo==='RESERVAR_ORDEN'&&c.recursoId===orden.pacienteId);
+  if(reservas.length!==1||ordenesNuevas.length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La orden requiere reserva de revisión del paciente.');
+ }
  for(const cambio of cambios){
+  if(cambio.agregado==='pacientes'&&cambio.tipo==='RESERVAR_ORDEN'){
+   if(!contexto.cuenta.permisos.includes('ordenes.administrar')||!ordenesNuevas.some(c=>(c.nuevoEstado as OrdenLaboratorio).pacienteId===cambio.recursoId))throw new ErrorDominio('SIN_PERMISO','Reserva fuera del comando de orden.');
+   const p=pacientes.get(cambio.recursoId);const nuevo=cambio.nuevoEstado as {id:string;version:number};
+   if(!p||Number(p.revision)!==cambio.versionAnterior||nuevo.id!==p._id||nuevo.version!==Number(p.revision)+1)throw new ErrorDominio('VERSION_DESACTUALIZADA','El paciente cambió.');
+   if(!p.activo||p.historial.estado!=='ACTIVO')throw new ErrorDominio('ESTADO_INVALIDO','El expediente archivado no admite órdenes nuevas.');
+   const r=await db.collection<DocumentoPacienteMongo>('pacientes').updateOne({_id:p._id,revision:p.revision,activo:true,'historial.estado':'ACTIVO'},{$set:{revision:nuevo.version}},{session});
+   if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','El paciente cambió.');
+   continue;
+  }
+
   if(cambio.agregado==='ordenes'&&cambio.tipo==='CREAR_ORDEN'&&cambio.versionAnterior===null){
    if(!contexto.cuenta.permisos.includes('ordenes.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede crear órdenes.');
    const orden=cambio.nuevoEstado as OrdenLaboratorio;
