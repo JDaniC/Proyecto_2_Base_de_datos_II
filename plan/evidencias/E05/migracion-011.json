@@ -37,7 +37,9 @@
     "replay de misma clave/hash devuelve respuesta durable sin planificar de nuevo ni duplicar conteos",
     "fallo real por _id de auditoría duplicado revierte orden y no agrega operación durable",
     "creación de orden requiere reserva condicional de paciente activo y avanza su revisión",
-    "fallo real de auditoría también revierte revisión y snapshot del paciente"
+    "fallo real de auditoría también revierte revisión y snapshot del paciente",
+    "barrera determinista: orden lee revisión2, archivo real confirma revisión3, orden antigua no confirma ni deja operación",
+    "expediente archivado rechaza orden posterior con ESTADO_INVALIDO y conserva snapshot"
   ],
   "regresionModeloM03": {
     "pass": 102
