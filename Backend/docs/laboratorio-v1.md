@@ -12,7 +12,7 @@ Todas bajo /laboratorio, DTO cerrado; desconocidos/autoridad cliente →400. POS
 
 | Ruta y método | Entrada de negocio | Lecturas/plan atómico |
 |---|---|---|
-| POST /ordenes | pacienteId, solicitanteId, prioridad, indicaciones, moneda GTQ, items[{pruebaId,centavos}] | Paciente activo, solicitante y prueba/método/tipos vigentes; snapshot exacto de prueba/precio; tocar revisión paciente + orden + operación/auditoría |
+| POST /ordenes | pacienteId, versionPaciente, solicitanteId, prioridad, indicaciones, moneda GTQ, items[{pruebaId,centavos}] | Paciente activo, solicitante y prueba/método/tipos vigentes; snapshot exacto de prueba/precio; tocar revisión paciente + orden + operación/auditoría |
 | GET /ordenes y /ordenes/{id} | filtros autorizados/página o UUID | Listado en motor, sin cargar todo para paginar |
 | POST /muestras | ordenId, itemIds, tipoMuestraId, codigo, recipiente | Orden anterior habilitada, ítems propios y tipos compatibles; muestra TOMADA + evento, tocar revisión orden y reservar código único |
 | POST /muestras/{id}/eventos | versionEsperada, tipo RECEPCION/ACEPTACION/RECHAZO/TRASLADO/PROCESAMIENTO, detalle | Revisar estado/orden/cronología; revisión previa + muestra/evento + operación/auditoría |

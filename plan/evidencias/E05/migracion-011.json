@@ -44,7 +44,11 @@
     "tipo de muestra ajeno al snapshot rechazado sin muestra ni revisión extra",
     "lectores transaccionales de solicitante, tipo, método, prueba y proveedor con datos reales M03",
     "ID inexistente devuelve null, prueba inactiva conserva lectura explícita",
-    "versiones1/2 por UUID exacto y snapshot leído intacto tras desactivar"
+    "versiones1/2 por UUID exacto y snapshot leído intacto tras desactivar",
+    "caso CrearOrdenLaboratorio real con DTO cerrado y paciente/version/solicitante/prueba/método/tipos vigentes",
+    "rechazo de solicitante, prueba, método o tipo inactivo sin orden",
+    "rechazo de autoridad cliente, moneda ausente, versión inválida y dinero fraccionario",
+    "creación por caso confirma snapshot/precio y replay mantiene una orden"
   ],
   "regresionModeloM03": {
     "pass": 102
