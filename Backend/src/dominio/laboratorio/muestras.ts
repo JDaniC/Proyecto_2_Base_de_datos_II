@@ -19,6 +19,13 @@ export interface Muestra {
   readonly id: string;
   readonly ordenId: string;
   readonly codigo: string;
+  readonly itemIds: readonly string[];
+  readonly fechaToma: string;
+  readonly tomadaPorId: string;
+  readonly fechaRecepcion?: string;
+  readonly recibidaPorId?: string;
+  readonly condicionRecepcion?: string;
+  readonly motivoRechazo?: string;
   readonly estado: EstadoMuestra;
   readonly version: number;
   readonly eventos: readonly EventoMuestra[];
@@ -72,7 +79,10 @@ export function registrarEventoMuestra(
     throw new ErrorDominio('ESTADO_INVALIDO', 'La toma, retoma y rectificación requieren su comando específico.');
   }
   const evento = Object.freeze({ ...autor, tipo, detalle: texto });
-  return Object.freeze({ ...muestra, estado, version: muestra.version + 1, eventos: Object.freeze([...muestra.eventos, evento]) });
+  return Object.freeze({ ...muestra, estado, version: muestra.version + 1,
+    ...(tipo === 'RECEPCION' ? { fechaRecepcion: autor.instante, recibidaPorId: autor.actorId, condicionRecepcion: texto } : {}),
+    ...(tipo === 'RECHAZO' ? { motivoRechazo: texto } : {}),
+    eventos: Object.freeze([...muestra.eventos, evento]) });
 }
 
 export type CampoRectificable = 'tipoMuestraId' | 'recipiente';
@@ -101,6 +111,7 @@ function validarEventoNuevo(muestra: Muestra, versionEsperada: number, detalle: 
   }
   detalleObligatorio(detalle);
   const instante = instanteValido(autor.instante);
+  if (instante < instanteValido(muestra.fechaToma)) throw solicitudInvalida('El evento no puede preceder a la toma.', 'instante');
   if (muestra.eventos.some(e => e.id === autor.id)) {
     throw new ErrorDominio('ESTADO_INVALIDO', 'El evento ya existe.');
   }
@@ -114,6 +125,7 @@ export interface TomaMuestra {
   readonly id: string;
   readonly ordenId: string;
   readonly codigo: string;
+  readonly itemIds: readonly string[];
   readonly tipoMuestraId: string;
   readonly recipiente: string;
 }
@@ -124,8 +136,11 @@ export function tomarMuestra(entrada: TomaMuestra, autor: AutorEventoMuestra): M
   const codigo = detalleObligatorio(entrada.codigo);
   if (codigo.length > 80) throw solicitudInvalida('El código excede 80 caracteres.', 'codigo');
   const recipiente = detalleObligatorio(entrada.recipiente);
+  if (!Array.isArray(entrada.itemIds) || entrada.itemIds.length < 1 || entrada.itemIds.length > 100) throw solicitudInvalida('La muestra requiere de 1 a 100 ítems.', 'itemIds');
+  const itemIds = entrada.itemIds.map(id => uuidPublico(id, 'itemIds'));
+  if (new Set(itemIds).size !== itemIds.length) throw solicitudInvalida('La muestra no admite ítems duplicados.', 'itemIds');
   uuidPublico(autor.id, 'eventoId'); uuidPublico(autor.actorId, 'actorId'); instanteValido(autor.instante);
-  return Object.freeze({ id, ordenId, codigo, tipoMuestraId, recipiente, estado: 'TOMADA', version: 1,
+  return Object.freeze({ id, ordenId, codigo, itemIds: Object.freeze(itemIds), fechaToma: autor.instante, tomadaPorId: autor.actorId, tipoMuestraId, recipiente, estado: 'TOMADA', version: 1,
     eventos: Object.freeze([Object.freeze({ ...autor, tipo: 'TOMA' as const, detalle: 'Toma de muestra' })]) });
 }
 
@@ -137,6 +152,9 @@ export function retomarMuestra(origen: Muestra, versionEsperada: number, entrada
     throw new ErrorDominio('ESTADO_INVALIDO', 'La retoma requiere una muestra rechazada sin retoma previa.');
   }
   const nueva = tomarMuestra(entrada, autorToma);
+  if (nueva.itemIds.length !== origen.itemIds.length || nueva.itemIds.some(id => !origen.itemIds.includes(id))) {
+    throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La retoma debe conservar los ítems del origen.');
+  }
   if (nueva.id === origen.id || nueva.codigo === origen.codigo || nueva.ordenId !== origen.ordenId) {
     throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La retoma requiere nueva identidad y código dentro de la misma orden.');
   }
