@@ -1,3 +1,6 @@
+import {crearConsultasLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/consultar-recursos.js';
+import {CursorCatalogoLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/cursor-catalogo.js';
+import {ConsultarRecursosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-recursos.js';
 import {ConsultarListadosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-listados.js';
 import {crearListadosLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/listar-recursos.js';
 import {CursorHistorialCifrado} from '../../src/adaptadores/salida/historial/cursor-historial.js';
@@ -336,6 +339,7 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const duranteCambio=await paginasSnapshot.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:100,orden:'ASC'});
  assert.equal(duranteCambio.elementos.find(m=>m.id===retomaCaso.respuesta.id)!.estado,'RECIBIDA');
  assert.equal((await paginas.listarMuestras(contexto,{ordenId:uuidPublico(resultadoCaso.respuesta.id)},{limite:100,orden:'ASC'})).elementos.find(m=>m.id===retomaCaso.respuesta.id)!.estado,'ACEPTADA');
+ const consultaCaso=new ConsultarRecursosLaboratorio();const bundleConsulta={...bundle,consultasLaboratorio:crearConsultasLaboratorioMongodb(app.db,new CursorCatalogoLaboratorio(()=>secretoCursor))};
  const consultarListados=new ConsultarListadosLaboratorio();const bundleListados={...bundle,listadosLaboratorio:paginas};
  assert.equal((await consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{pacienteId:pacienteCaso.id,limite:100}})).elementos.length,2);
  await assert.rejects(consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{actorId:cuenta.id}}));
@@ -344,7 +348,23 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await db.collection<{_id:string}&Document>('roles').updateOne({_id:rolId},{$set:{permisos:['ordenes.administrar','muestras.administrar','pacientes.administrar']}});
  await db.collection<{_id:string}&Document>('usuarios').updateOne({_id:cuentaId},{$set:{estado:'INACTIVO',activo:false}});
  await assert.rejects(consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='CUENTA_NO_HABILITADA');
+ await assert.rejects(consultaCaso.detalle('ordenes',{contexto,bundle:bundleConsulta,id:resultadoCaso.respuesta.id}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='CUENTA_NO_HABILITADA');
  await db.collection<{_id:string}&Document>('usuarios').updateOne({_id:cuentaId},{$set:{estado:'ACTIVO',activo:true}});
+ assert.equal((await consultaCaso.detalle('ordenes',{contexto,bundle:bundleConsulta,id:resultadoCaso.respuesta.id})).id,resultadoCaso.respuesta.id);
+ assert.equal((await consultaCaso.detalle('muestras',{contexto,bundle:bundleConsulta,id:retomaCaso.respuesta.id})).estado,'ACEPTADA');
+ await assert.rejects(consultaCaso.detalle('ordenes',{contexto,bundle:bundleConsulta,id:randomUUID()}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='RECURSO_NO_ENCONTRADO');
+ const cat1=await consultaCaso.catalogo('pruebas',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-PUBLICADA',activo:true,limite:1}});assert.ok(cat1.siguienteCursor);
+ const cat2=await consultaCaso.catalogo('pruebas',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-PUBLICADA',activo:true,limite:1,cursor:cat1.siguienteCursor}});
+ assert.equal(cat2.siguienteCursor,undefined);assert.equal(new Set([...cat1.elementos,...cat2.elementos].map(v=>v.id)).size,2);
+ await assert.rejects(consultaCaso.catalogo('metodos',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-PUBLICADA',activo:true,limite:1,cursor:cat1.siguienteCursor}}));
+ const catAlterado=cat1.siguienteCursor.slice(0,20)+(cat1.siguienteCursor[20]==='A'?'B':'A')+cat1.siguienteCursor.slice(21);
+ await assert.rejects(consultaCaso.catalogo('pruebas',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-PUBLICADA',activo:true,limite:1,cursor:catAlterado}}));
+ await assert.rejects(consultaCaso.catalogo('proveedores',{contexto:contextoVal,bundle:bundleConsulta,entrada:{}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
+ for(const tipo of ['solicitantes','tiposMuestra','metodos','pruebas','proveedores'] as const)assert.ok((await consultaCaso.catalogo(tipo,{contexto,bundle:bundleConsulta,entrada:{limite:100}})).elementos.length>0);
+ assert.equal((await consultaCaso.catalogo('pruebas',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-PUBLICADA',activo:false}})).elementos.length,0);
+ const metodoLeido=(await consultaCaso.catalogo('metodos',{contexto:contextoVal,bundle:bundleConsulta,entrada:{q:'SINT-METODO-PUBLICADO'}})).elementos.find(v=>v.id===metodoId)!;assert.ok('revision' in metodoLeido);assert.equal(metodoLeido.revision,3);assert.equal(metodoLeido.version,1);
+
+
  const rolAdmin=randomUUID(),idAdmin=randomUUID(),uidAdmin=`sintetico-${randomUUID()}`;
  await db.collection<{_id:string}&Document>('roles').insertOne({_id:rolAdmin,revision:1,nombre:'ADMIN_INSTITUCIONAL',permisos:['historial.archivar','ordenes.administrar']});
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:idAdmin,revision:1,auth_uid:uidAdmin,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAdmin],estado:'ACTIVO',activo:true,nombre_usuario:uidAdmin});

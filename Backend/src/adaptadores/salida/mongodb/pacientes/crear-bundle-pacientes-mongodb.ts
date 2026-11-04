@@ -1,3 +1,4 @@
+import {crearConsultasLaboratorioMongodb} from '../laboratorio/consultar-recursos.js';
 import {crearListadosLaboratorioMongodb} from '../laboratorio/listar-recursos.js';
 import {crearLectoresReferenciasMongodb} from '../laboratorio/leer-referencias.js';
 import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
@@ -62,6 +63,7 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
     },
   });
   return Object.freeze({
+    consultasLaboratorio: crearConsultasLaboratorioMongodb(cliente.db),
     listadosLaboratorio: crearListadosLaboratorioMongodb(cliente.db),
     clinica: crearClinicaMongodb(cliente.db),
     institucion: 'LABORATORIO_CLINICO', estadoPersistencia: 'DISPONIBLE', historial: crearHistorialMongodb(cliente.db),

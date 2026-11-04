@@ -71,3 +71,11 @@ export interface ListadosLaboratorio {
  listarOrdenes(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
  listarMuestras(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
 }
+
+export type TipoCatalogoLaboratorio='solicitantes'|'tiposMuestra'|'metodos'|'pruebas'|'proveedores';
+export type ItemCatalogoLaboratorio=SolicitanteLaboratorio|TipoMuestraLaboratorio|(MetodoLaboratorio&{readonly revision:number;readonly descripcion?:string})|ProveedorLaboratorio|(PruebaVersionada&{readonly area:string;readonly revision:number});
+export interface ConsultasLaboratorio {
+ ordenPorId(contexto:import('./contexto-autenticado.js').ContextoAutenticado,id:UUID):Promise<OrdenLaboratorio|null>;
+ muestraPorId(contexto:import('./contexto-autenticado.js').ContextoAutenticado,id:UUID):Promise<Muestra|null>;
+ listarCatalogo(contexto:import('./contexto-autenticado.js').ContextoAutenticado,tipo:TipoCatalogoLaboratorio,filtros:{readonly activo?:boolean;readonly q?:string},pagina:FiltrosPagina):Promise<Pagina<ItemCatalogoLaboratorio>>;
+}

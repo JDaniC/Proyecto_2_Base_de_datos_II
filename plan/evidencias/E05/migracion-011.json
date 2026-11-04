@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-11-03",
+  "fecha": "2026-11-04",
   "zona": "America/Guatemala",
   "comando": "node Backend/scripts/run-clinica-mongodb-integration.mjs --laboratorio011",
   "entorno": "MongoDB real en replica set Docker efímero; datos sintéticos",
@@ -80,10 +80,16 @@
     "muestras por paciente mediante lookup en motor antes de sort/limit, dos páginas sin duplicados y paciente ajeno vacío",
     "página y eventos de custodia leídos con misma transacción snapshot",
     "aceptación real intercalada después de leer documentos: página conserva RECIBIDA, siguiente consulta ve ACEPTADA",
-    "caso de listados revalida permisos/cuenta local y rechaza permiso retirado o cuenta inactiva con contexto inicial antiguo"
+    "caso de listados revalida permisos/cuenta local y rechaza permiso retirado o cuenta inactiva con contexto inicial antiguo",
+    "detalle autorizado de orden/muestra, cuenta inactiva rechazada y UUID inexistente devuelve recurso no encontrado",
+    "cinco catálogos con snapshot, filtros activo/prefijo y páginas por UUID autenticadas",
+    "cursor de catálogo alterado o aplicado a otro catálogo rechazado",
+    "validador lee catálogos técnicos pero no proveedores administrativos",
+    "métodos exponen revisión de control3 separada de versión analítica1"
   ],
   "regresionModeloM03": {
     "pass": 102
   },
-  "limites": "Infraestructura transaccional real con contexto autenticado sintético construido por fixture y cuenta local persistida; no prueba token Firebase, referencias clínicas ni caso HTTP/UI. No acredita cierre E05 ni reglas de archivo/stock/cobro."
+  "limites": "Infraestructura transaccional real con contexto autenticado sintético construido por fixture y cuenta local persistida; no prueba token Firebase, referencias clínicas ni caso HTTP/UI. No acredita cierre E05 ni reglas de archivo/stock/cobro.",
+  "fechaInicial": "2026-11-03"
 }
