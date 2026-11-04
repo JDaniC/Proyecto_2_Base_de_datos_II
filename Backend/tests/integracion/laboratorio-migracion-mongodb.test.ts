@@ -181,6 +181,7 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  assert.equal(resultadoCaso.respuesta.total.centavos,12345);assert.equal(resultadoCaso.respuesta.items[0]!.prueba.version,1);
  assert.deepEqual(await invocarOrden(entradaCaso,claveCaso),resultadoCaso);
  assert.equal(await ordenes.countDocuments({paciente_id:pacienteCaso.id}),1);
+ assert.equal(await db.collection('historial_eventos').countDocuments({paciente_id:pacienteCaso.id,tipo:'ORDEN_LAB'}),1);
  const gestionarCaso=new GestionarMuestraLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
  const altaMuestra={ordenId:resultadoCaso.respuesta.id,versionOrden:1,itemIds:[resultadoCaso.respuesta.items[0]!.id],tipoMuestraId:referenciaIds.tipo,codigo:'SINT-CASO-MUESTRA',recipiente:'Tubo inicial'};
  const claveMuestra=uuidPublico(randomUUID());
@@ -198,6 +199,11 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const carrerasMuestra=await Promise.allSettled([1,2].map(()=>gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(retomaCaso.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:1,versionOrden:6,tipo:'RECEPCION',detalle:'Recepción concurrente'}})));
  assert.equal(carrerasMuestra.filter(r=>r.status==='fulfilled').length,1);assert.equal(carrerasMuestra.filter(r=>r.status==='rejected').length,1);
  assert.equal(await db.collection('eventos_muestra').countDocuments({muestra_id:retomaCaso.respuesta.id}),2);
+ assert.equal((await ordenes.findOne({_id:resultadoCaso.respuesta.id}))!.estado,'EN_PROCESO');
+ const fuenteOrdenes=bundle.historial!.fuentes.find(f=>f.tipo==='ORDEN_LAB')!.fuente;
+ const cronologia=await fuenteOrdenes.leer({pacienteId:pacienteCaso.id,orden:'ASC',cantidad:100});
+ assert.equal(cronologia.length,7);assert.ok(cronologia.every(e=>e.recursoId===resultadoCaso.respuesta.id));
+
  const comando:ComandoEstable={id:uuidPublico(randomUUID()),claveIdempotencia:uuidPublico(randomUUID()),caso:'laboratorio.orden.crear',hashEntrada:'a'.repeat(64),instante:instanteUtc(agregado.instante),ids:{revision:uuidPublico(randomUUID())}};
  const auditoriaId=uuidPublico(randomUUID());const nuevaOrden={...agregado,id:comando.id,registradoPorId:cuenta.id,pacienteId:paciente.id};
  const plan=(cmd:ComandoEstable,ordenDominio:typeof nuevaOrden,p:Paciente):PlanDeEscrituras<typeof nuevaOrden>=>({tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:p.id,versionAnterior:p.version,nuevoEstado:{id:p.id,version:p.version+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:cmd.id,versionAnterior:null,nuevoEstado:ordenDominio}],revisiones:[{id:cmd.ids.revision!,agregado:'pacientes',recursoId:p.id,versionAnterior:versionPositiva(p.version),snapshotAnterior:p}],auditoria:[{id:cmd.ids.auditoria??auditoriaId,actorId:cuenta.id,caso:cmd.caso,recursoId:cmd.id,fechaHora:cmd.instante,correlacion:contexto.correlacion}],resultado:{httpStatus:201,respuesta:ordenDominio,correlacionOriginal:contexto.correlacion}});

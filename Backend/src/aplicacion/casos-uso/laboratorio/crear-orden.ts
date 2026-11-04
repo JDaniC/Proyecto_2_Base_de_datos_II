@@ -23,7 +23,7 @@ export class CrearOrdenLaboratorio {
   const items=e.items.map(v=>{const i=objetoCerrado(v,['pruebaId','centavos']);return {pruebaId:uuidPublico(i.pruebaId),centavos:dinero(i.centavos,e.moneda).centavos};});
   if(new Set(items.map(i=>i.pruebaId)).size!==items.length)throw solicitudInvalida('No se admiten pruebas duplicadas.','items');
   const dto={pacienteId,versionPaciente,solicitanteId,prioridad:e.prioridad as OrdenLaboratorio['prioridad'],indicaciones,moneda:'GTQ',items};
-  const comando=await prepararComandoEstable(p.claveIdempotencia,'laboratorio.orden.crear',dto,['revision','auditoria',...items.map((_,i)=>`item${i}`)],this.deps);
+  const comando=await prepararComandoEstable(p.claveIdempotencia,'laboratorio.orden.crear',dto,['revision','auditoria','historial',...items.map((_,i)=>`item${i}`)],this.deps);
   if(!p.bundle.uow)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Persistencia no disponible.');
   return p.bundle.uow.ejecutar<OrdenLaboratorio>(p.contexto,comando,async lector=>{
    const contexto=await contextoVigente(lector,p.contexto);validarPermiso(contexto.cuenta,'ordenes.administrar');
@@ -44,7 +44,7 @@ export class CrearOrdenLaboratorio {
     seleccion.push({id:comando.ids[`item${i}`]!,prueba,centavos:item.centavos});
    }
    const orden=crearOrdenLaboratorio({id:comando.id,pacienteId,solicitanteId,prioridad:dto.prioridad,indicaciones,registradoPorId:contexto.cuenta.id,instante:comando.instante},seleccion);
-   return {tipo:'CONFIRMAR',cambios:[{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:pacienteId,versionAnterior:versionPaciente,nuevoEstado:{id:pacienteId,version:versionPaciente+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:comando.id,versionAnterior:null,nuevoEstado:orden}],
+   return {tipo:'CONFIRMAR',cambios:[{agregado:'eventosHistorial',tipo:'LABORATORIO',recursoId:comando.ids.historial!,versionAnterior:null,nuevoEstado:{pacienteId,id:comando.ids.historial!,fechaHora:comando.instante,tipo:'ORDEN_LAB',recursoId:orden.id,titulo:'Orden de laboratorio registrada'}},{agregado:'pacientes',tipo:'RESERVAR_ORDEN',recursoId:pacienteId,versionAnterior:versionPaciente,nuevoEstado:{id:pacienteId,version:versionPaciente+1}},{agregado:'ordenes',tipo:'CREAR_ORDEN',recursoId:comando.id,versionAnterior:null,nuevoEstado:orden}],
     revisiones:[{id:comando.ids.revision!,agregado:'pacientes',recursoId:pacienteId,versionAnterior:versionPaciente,snapshotAnterior:paciente}],
     auditoria:[{id:comando.ids.auditoria!,actorId:contexto.cuenta.id,caso:comando.caso,recursoId:comando.id,fechaHora:comando.instante,correlacion:contexto.correlacion}],
     resultado:{httpStatus:201,respuesta:orden,correlacionOriginal:contexto.correlacion}};

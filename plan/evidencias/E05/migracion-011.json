@@ -51,7 +51,10 @@
     "creación por caso confirma snapshot/precio y replay mantiene una orden",
     "casos reales de toma con replay, recepción y rechazo con motivo obligatorio",
     "rectificación con antes/después y retoma en dos agregados sin reemplazar origen",
-    "dos recepciones concurrentes sobre misma revisión: un éxito y un rechazo, sin evento duplicado"
+    "dos recepciones concurrentes sobre misma revisión: un éxito y un rechazo, sin evento duplicado",
+    "orden y comandos de custodia proyectan ORDEN_LAB con índice de historial v1 en misma UoW",
+    "lector común recupera siete eventos del circuito sin duplicados por replay ni intento concurrente fallido",
+    "primera muestra cambia orden CREADA a EN_PROCESO"
   ],
   "regresionModeloM03": {
     "pass": 102

@@ -1,3 +1,5 @@
+import {normalizarInstante} from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
+import {validarEventoHistorial} from '../../historial/proyeccion-historial.js';
 import {validarMuestraEnOrden} from '../../../../dominio/laboratorio/compatibilidad-muestra.js';
 import type {DocumentoPacienteMongo} from '../pacientes/mapear-paciente-mongodb.js';
 import type {Db,ClientSession} from 'mongodb';
@@ -27,11 +29,19 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
+  if(cambio.agregado==='eventosHistorial'&&cambio.tipo==='LABORATORIO'){
+   const {pacienteId,...entrada}=cambio.nuevoEstado as {pacienteId:string}&Record<string,unknown>;
+   const evento=validarEventoHistorial(entrada,'LABORATORIO_CLINICO');
+   const orden=(ordenesNuevas.find(c=>c.recursoId===evento.recursoId)?.nuevoEstado as OrdenLaboratorio|undefined)??ordenes.get(evento.recursoId);
+   if(!orden||orden.pacienteId!==pacienteId||evento.tipo!=='ORDEN_LAB'||evento.id!==cambio.recursoId||evento.fechaHora!==normalizarInstante(comando.instante))throw new ErrorDominio('ESTADO_INVALIDO','Proyección fuera de la orden.');
+   await db.collection<{_id:string}&import('mongodb').Document>('historial_eventos').insertOne({_id:evento.id,paciente_id:pacienteId,tipo:evento.tipo,fecha_hora:evento.fechaHora,contenido:evento},{session});
+   continue;
+  }
   if(cambio.agregado==='ordenes'&&cambio.tipo==='RESERVAR_MUESTRA'){
    const o=ordenes.get(cambio.recursoId);const nuevo=cambio.nuevoEstado as {id:string;version:number};
    if(!contexto.cuenta.permisos.includes('muestras.administrar')||!cambiosMuestra.some(c=>(c.nuevoEstado as Muestra).ordenId===cambio.recursoId))throw new ErrorDominio('SIN_PERMISO','Reserva de orden fuera de ámbito.');
    if(!o||cambio.versionAnterior!==o.version||nuevo.id!==o.id||nuevo.version!==o.version+1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
-   const r=await db.collection<import('./documento-orden.js').DocumentoOrdenLaboratorio>('ordenes').updateOne({_id:o.id,revision:o.version},{$set:{revision:nuevo.version}},{session});
+   const r=await db.collection<import('./documento-orden.js').DocumentoOrdenLaboratorio>('ordenes').updateOne({_id:o.id,revision:o.version},{$set:{revision:nuevo.version,...(o.estado==='CREADA'&&cambiosMuestra.some(c=>(c.nuevoEstado as Muestra).ordenId===o.id&&c.versionAnterior===null)?{estado:'EN_PROCESO' as const}:{})}},{session});
    if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
    continue;
   }

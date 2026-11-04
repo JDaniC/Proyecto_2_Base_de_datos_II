@@ -6,6 +6,8 @@ const ordenar=(v:unknown):unknown=>Array.isArray(v)?v.map(ordenar):v&&typeof v==
 const hash=(v:unknown)=>createHash('sha256').update(JSON.stringify(ordenar(v))).digest('hex');
 export async function verificarLaboratorioMongodb(db:Db):Promise<void>{
  try{
+  const historial=await db.collection('historial_modelo').findOne({id:1});
+  if(!historial||historial.version!==1||historial.estado!=='LISTO')throw new Error('HISTORIAL_NO_LISTO');
   const m=await db.collection('historial_modelo').findOne({id:11});
   if(!m||m.version!==1||m.estado!=='LISTO'||m.huella!==preparacionLaboratorio.huella)throw new Error('MANIFIESTO_NO_LISTO');
   for(const contrato of preparacionLaboratorio.colecciones){

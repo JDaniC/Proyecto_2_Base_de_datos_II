@@ -41,7 +41,7 @@ export class GestionarMuestraLaboratorio{
    e.nuevo=e.campo==='tipoMuestraId'?uuidPublico(e.nuevo):textoClinico(e.nuevo,'nuevo',2000).trim();
   }
   if(accion==='rectificar'||accion==='retomar')e.motivo=textoClinico(e.motivo,'motivo',2000).trim();
-  const comando=await prepararComandoEstable(p.claveIdempotencia,`laboratorio.muestra.${accion}`,{id,entrada:e},['evento','eventoOrigen','revisionOrden','revisionMuestra','auditoria'],this.deps);
+  const comando=await prepararComandoEstable(p.claveIdempotencia,`laboratorio.muestra.${accion}`,{id,entrada:e},['evento','eventoOrigen','revisionOrden','revisionMuestra','auditoria','historial'],this.deps);
   if(!p.bundle.uow)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Persistencia no disponible.');
   return p.bundle.uow.ejecutar<Muestra>(p.contexto,comando,async lector=>{
    const contexto=await contextoVigente(lector,p.contexto);validarPermiso(contexto.cuenta,'muestras.administrar');
@@ -66,7 +66,7 @@ export class GestionarMuestraLaboratorio{
     resultado=accion==='evento'?registrarEventoMuestra(anterior!,anterior!.version,e.tipo as TipoEventoMuestra,e.detalle as string,autor):rectificarMuestra(anterior!,anterior!.version,e.campo as CampoRectificable,e.nuevo as string,e.motivo as string,autor);
     versiones.push({anterior,actual:resultado});
    }
-   const cambios:CambioPlanificado[]=[{agregado:'ordenes',tipo:'RESERVAR_MUESTRA',recursoId:ordenId,versionAnterior:versionOrden,nuevoEstado:{id:ordenId,version:siguienteVersion(versionOrden)}}];
+   const cambios:CambioPlanificado[]=[{agregado:'eventosHistorial',tipo:'LABORATORIO',recursoId:comando.ids.historial!,versionAnterior:null,nuevoEstado:{pacienteId:orden.pacienteId,id:comando.ids.historial!,fechaHora:comando.instante,tipo:'ORDEN_LAB',recursoId:orden.id,titulo:accion==='tomar'?'Toma de muestra registrada':accion==='retomar'?'Retoma de muestra registrada':accion==='rectificar'?'Dato de muestra rectificado':'Custodia de muestra actualizada'}},{agregado:'ordenes',tipo:'RESERVAR_MUESTRA',recursoId:ordenId,versionAnterior:versionOrden,nuevoEstado:{id:ordenId,version:siguienteVersion(versionOrden)}}];
    const revisiones:RevisionPlanificada[]=[{id:comando.ids.revisionOrden!,agregado:'ordenes',recursoId:ordenId,versionAnterior:versionOrden,snapshotAnterior:orden}];
    for(const v of versiones){
     validarMuestraEnOrden(v.actual,orden);
