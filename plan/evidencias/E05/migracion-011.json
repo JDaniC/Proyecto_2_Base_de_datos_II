@@ -4,8 +4,27 @@
   "comando": "node Backend/scripts/run-clinica-mongodb-integration.mjs --laboratorio011",
   "entorno": "MongoDB real en replica set Docker efímero; datos sintéticos",
   "exitCode": 0,
-  "suiteMigracion": {"tests": 1, "pass": 1, "fail": 0},
-  "escenarios": ["escritores no declarados detenidos rechazados", "instalación nueva", "fallo después de cada una de tres colecciones deja MIGRANDO", "recuperación y reejecución", "respaldo original conservado", "orden legada sin snapshot conserva RECONCILIAR", "documento y precio BSON long conservados", "campos nuevos de muestra aceptados y UUID inválido rechazado", "deriva de esquema rechazada sin modificar manifiesto"],
-  "regresionModeloM03": {"pass": 102},
-  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Falta prueba física de índice incompatible específica de 011 y snapshots completos nuevos. La primera ejecución falló en una comparación Long/number del test; se corrigió comparando documento almacenado antes/después y tipo long en motor, y se repitió con exit0."
+  "suiteMigracion": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0
+  },
+  "escenarios": [
+    "escritores no declarados detenidos rechazados",
+    "instalación nueva",
+    "fallo después de cada una de tres colecciones deja MIGRANDO",
+    "recuperación y reejecución",
+    "respaldo original conservado",
+    "orden legada sin snapshot conserva RECONCILIAR",
+    "documento y precio BSON long conservados",
+    "campos nuevos de muestra aceptados y UUID inválido rechazado",
+    "deriva de esquema rechazada sin modificar manifiesto",
+    "índice de orden con mismo nombre y claves incompatibles rechazado sin modificar manifiesto",
+    "snapshot completo nuevo aceptado y conservado tras reejecución",
+    "snapshot con versión0 rechazado por motor"
+  ],
+  "regresionModeloM03": {
+    "pass": 102
+  },
+  "limites": "No acredita casos de uso, autorización, API, UI ni cierre E05. Mapper de escritura tiene prueba unitaria; su recorrido físico por UoW está pendiente. Primera corrida histórica falló por comparación Long/number del test, corregida con comparación almacenada y tipo BSON en motor."
 }

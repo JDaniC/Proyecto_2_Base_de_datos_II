@@ -1,3 +1,5 @@
+import {documentoOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
+import {Long} from 'mongodb';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { crearOrdenLaboratorio, congelarPrueba, type PruebaVersionada } from '../../src/dominio/laboratorio/ordenes.js';
@@ -22,4 +24,12 @@ test('precios enteros, duplicados, catálogo inactivo y total fuera de rango se 
 });
 test('catálogo exige parámetros y tipos únicos y opciones categóricas válidas',()=>{
  for(const p of [{...prueba,parametros:[]},{...prueba,parametros:[prueba.parametros[0]!,prueba.parametros[0]!]},{...prueba,tiposMuestraIds:[id(3),id(3)]},{...prueba,parametros:[{...prueba.parametros[0]!,opciones:[]}]},{...prueba,version:0}]) assert.throws(()=>congelarPrueba(p));
+});
+
+test('mapper de orden conserva snapshot y almacena dinero como BSON long',()=>{
+ const orden=crearOrdenLaboratorio(entrada,[{id:id(9),prueba,centavos:12345}]);
+ const doc=documentoOrdenLaboratorio(orden,'ORD-SINT-1');
+ assert.ok(Long.isLong(doc.items[0]!.precio_acordado));assert.equal(doc.items[0]!.precio_acordado.toString(),'12345');
+ assert.equal(doc.items[0]!.prueba_historica.version,1);assert.deepEqual(doc.items[0]!.prueba_historica.parametros[0].opciones_permitidas,['A','B']);
+ assert.equal(doc.fecha_orden.toISOString(),'2026-11-03T12:00:00.000Z');assert.equal(doc.moneda,'GTQ');
 });
