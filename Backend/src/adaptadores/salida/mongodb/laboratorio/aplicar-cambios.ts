@@ -11,7 +11,7 @@ import type {CambioPlanificado,ComandoEstable} from '../../../../aplicacion/puer
 import type {ContextoAutenticado} from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import {ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import {guardarMuestraMongodb} from './guardar-muestra.js';
-import {documentoOrdenLaboratorio,mapearOrdenLaboratorio} from './documento-orden.js';
+import {documentoOrdenLaboratorio,mapearOrdenLaboratorio,validarTamanoDocumentoOrdenLaboratorio} from './documento-orden.js';
 
 /** Llamado exclusivamente desde UoW después de todas las lecturas y validaciones. */
 export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,contexto:ContextoAutenticado,comando:ComandoEstable,
@@ -89,6 +89,7 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
    const orden=cambio.nuevoEstado as OrdenLaboratorio;
    if(orden.id!==cambio.recursoId||orden.version!==1||orden.estado!=='CREADA'||orden.registradoPorId!==contexto.cuenta.id)throw new ErrorDominio('ESTADO_INVALIDO','Plan de orden incompatible.');
    const doc=documentoOrdenLaboratorio(orden,orden.id);mapearOrdenLaboratorio(doc);
+   validarTamanoDocumentoOrdenLaboratorio(doc);
    await db.collection<import('./documento-orden.js').DocumentoOrdenLaboratorio>('ordenes').insertOne(doc,{session});
   }else if(cambio.agregado==='muestras'&&cambio.tipo==='GUARDAR_MUESTRA'){
    if(!contexto.cuenta.permisos.includes('muestras.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar muestras.');

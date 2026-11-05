@@ -1,4 +1,4 @@
-import {documentoOrdenLaboratorio,mapearOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
+import {documentoOrdenLaboratorio,mapearOrdenLaboratorio,validarTamanoDocumentoOrdenLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/documento-orden.js';
 import {Long} from 'mongodb';
 import {ErrorDominio} from '../../src/dominio/compartido/error-dominio.js';
 import assert from 'node:assert/strict';
@@ -33,6 +33,14 @@ test('mapper de orden conserva snapshot y almacena dinero como BSON long',()=>{
  assert.ok(Long.isLong(doc.items[0]!.precio_acordado));assert.equal(doc.items[0]!.precio_acordado.toString(),'12345');
  assert.equal(doc.items[0]!.prueba_historica.version,1);assert.deepEqual(doc.items[0]!.prueba_historica.parametros[0].opciones_permitidas,['A','B']);
  assert.equal(doc.fecha_orden.toISOString(),'2026-11-03T12:00:00.000Z');assert.equal(doc.moneda,'GTQ');
+});
+
+test('snapshot de orden mayor a 256 KiB se rechaza antes de insertarlo',()=>{
+ const seleccion=Array.from({length:100},(_,i)=>({id:id(100+i),centavos:1,prueba:{...prueba,id:id(1000+i),codigo:`P${i}`,nombre:`Prueba ${i}`,
+  parametros:Array.from({length:100},(_,j)=>({id:id(2000+i*100+j),codigo:`P${j}`,nombre:'Parámetro '.repeat(20),tipo:'TEXTO' as const,obligatorio:true}))}}));
+ const orden=crearOrdenLaboratorio(entrada,seleccion);
+ const doc=documentoOrdenLaboratorio(orden,'ORD-GRANDE');
+ assert.throws(()=>validarTamanoDocumentoOrdenLaboratorio(doc),e=>e instanceof ErrorDominio&&e.codigo==='LIMITE_AGREGADO');
 });
 
 test('lectura de orden reconstruye solo snapshot y rechaza legado o corrupción sin filtrar datos',()=>{

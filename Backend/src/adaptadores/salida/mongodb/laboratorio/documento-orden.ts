@@ -1,4 +1,4 @@
-import {Long, type Document} from 'mongodb';
+import {BSON,Long, type Document} from 'mongodb';
 import {crearOrdenLaboratorio, type OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
 import {ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import {dinero} from '../../../../dominio/compartido/dinero.js';
@@ -32,6 +32,11 @@ export function documentoOrdenLaboratorio(orden: OrdenLaboratorio, numeroOrden: 
   };
   if(orden.indicaciones.trim()) doc.indicaciones=orden.indicaciones;
   return doc;
+}
+
+/** Impide que el snapshot histórico supere el límite físico declarado para órdenes. */
+export function validarTamanoDocumentoOrdenLaboratorio(doc: DocumentoOrdenLaboratorio): void {
+  if(BSON.calculateObjectSize(doc)>262144) throw new ErrorDominio('LIMITE_AGREGADO','La orden excede el límite de tamaño.');
 }
 
 function enteroSeguro(valor: unknown): number {
