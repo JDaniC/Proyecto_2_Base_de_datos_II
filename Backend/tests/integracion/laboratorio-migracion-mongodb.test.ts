@@ -386,6 +386,8 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   assert.equal(fisica![opcionalOmitido],r.datos[opcionalOmitido as keyof typeof r.datos]);
   const revisionRef=await db.collection('revisiones').findOne({tipo_recurso:r.coleccion,recurso_id:idRef,version:1});assert.equal(revisionRef!.contenido_anterior.nombre,r.datos.nombre);
   if('telefono' in r.datos)assert.equal(revisionRef!.contenido_anterior.telefono,r.datos.telefono);
+  const retirada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:{...datosActualizacion,[opcionalOmitido]:null,activo:true},versionEsperada:2,motivo:'Retiro explícito sintético'}});
+  assert.equal(retirada.respuesta.version,3);assert.equal((await db.collection(r.coleccion).findOne({_id:idRef}))![opcionalOmitido],undefined);
   await assert.rejects(referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:r.datos,versionEsperada:1,motivo:'Revisión obsoleta'}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='VERSION_DESACTUALIZADA');
  }
  const estadoHistorial=new CambiarEstadoHistorial({reloj:{ahora:()=>comando.instante},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});

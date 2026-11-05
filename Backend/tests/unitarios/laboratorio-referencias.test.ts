@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {validarReferenciaAdministrativa} from '../../src/dominio/laboratorio/referencias.js';
 test('referencias administrativas tienen campos cerrados y exigencias específicas',()=>{
  assert.deepEqual(validarReferenciaAdministrativa('tipoMuestra',{nombre:' Sangre sintética ',codigo:' SINT ',recipiente:' Tubo ',activo:true}),{nombre:'Sangre sintética',activo:true,codigo:'SINT',recipiente:'Tubo'});
+ assert.deepEqual(validarReferenciaAdministrativa('proveedor',{nombre:'Sintético',tipoIdentificacion:'NIT',numeroIdentificacion:'SINT',telefono:null,activo:true}),{nombre:'Sintético',activo:true,tipoIdentificacion:'NIT',numeroIdentificacion:'SINT',telefono:null});
  assert.throws(()=>validarReferenciaAdministrativa('solicitante',{nombre:'Sintético',tipo:'MEDICO',activo:true}));
  assert.throws(()=>validarReferenciaAdministrativa('solicitante',{nombre:'Sintético',tipo:'INSTITUCION',numeroColegiado:'SINT',activo:true}));
  assert.throws(()=>validarReferenciaAdministrativa('proveedor',{nombre:'Sintético',activo:true}));

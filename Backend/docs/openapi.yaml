@@ -4386,9 +4386,9 @@ components:
         tipo: {type: string, enum: [MEDICO, INSTITUCION]}
         entidadColegiacion: {type: string, maxLength: 200}
         numeroColegiado: {type: string, maxLength: 60}
-        institucion: {type: string, maxLength: 200}
-        telefono: {type: string, maxLength: 40}
-        correo: {type: string, maxLength: 254}
+        institucion: {type: [string, "null"], maxLength: 200}
+        telefono: {type: [string, "null"], maxLength: 40}
+        correo: {type: [string, "null"], maxLength: 254}
         activo: {type: boolean}
     LaboratorioTipoMuestra:
       type: object
@@ -4398,8 +4398,8 @@ components:
         codigo: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
         nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
         recipiente: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
-        descripcion: {type: string, maxLength: 2000}
-        condicionesConservacion: {type: string, maxLength: 2000}
+        descripcion: {type: [string, "null"], maxLength: 2000}
+        condicionesConservacion: {type: [string, "null"], maxLength: 2000}
         activo: {type: boolean}
     LaboratorioProveedor:
       type: object
@@ -4409,9 +4409,9 @@ components:
         nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
         tipoIdentificacion: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
         numeroIdentificacion: {type: string, minLength: 1, maxLength: 80, pattern: '\S'}
-        telefono: {type: string, maxLength: 40}
-        correo: {type: string, maxLength: 254}
-        direccion: {type: string, maxLength: 2000}
+        telefono: {type: [string, "null"], maxLength: 40}
+        correo: {type: [string, "null"], maxLength: 254}
+        direccion: {type: [string, "null"], maxLength: 2000}
         activo: {type: boolean}
     LaboratorioReferenciaCrear:
       type: object

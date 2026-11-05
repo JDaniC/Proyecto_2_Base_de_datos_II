@@ -10,8 +10,9 @@ export async function guardarReferenciaMongodb(db:Db,session:ClientSession,c:Cam
  const datos=validarReferenciaAdministrativa(n.tipoReferencia,n.datos);
  if(n.id!==c.recursoId||colecciones[n.tipoReferencia]!==c.agregado||n.version!==(c.versionAnterior===null?1:c.versionAnterior+1))throw new ErrorDominio('ESTADO_INVALIDO','Plan de referencia incompatible.');
  const campos:Document={revision:n.version};
- for(const [k,v]of Object.entries(datos))campos[n.tipoReferencia==='solicitante'&&k==='nombre'?'nombre_completo':fisicos[k]!]=v;
+ const retirados:Document={};
+ for(const [k,v]of Object.entries(datos)){const campo=n.tipoReferencia==='solicitante'&&k==='nombre'?'nombre_completo':fisicos[k]!;if(v===null)retirados[campo]='';else campos[campo]=v;}
  const col=db.collection<{_id:string}&Document>(c.agregado);
  if(c.versionAnterior===null)await col.insertOne({_id:uuidPublico(n.id),...campos},{session});
- else{const r=await col.updateOne({_id:n.id,revision:c.versionAnterior},{$set:campos},{session});if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La referencia cambió.');}
+ else{const r=await col.updateOne({_id:n.id,revision:c.versionAnterior},Object.keys(retirados).length?{$set:campos,$unset:retirados}:{$set:campos},{session});if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La referencia cambió.');}
 }

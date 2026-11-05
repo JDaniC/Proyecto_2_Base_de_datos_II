@@ -19,6 +19,6 @@ export function validarReferenciaAdministrativa(tipo:TipoReferenciaAdministrativ
   else if(e.entidadColegiacion!==undefined||e.numeroColegiado!==undefined)throw solicitudInvalida('La institución no tiene colegiación individual.');
  }
  const opcionales:Record<string,number>={institucion:200,telefono:40,correo:254,descripcion:2000,condicionesConservacion:2000,direccion:2000};
- for(const k of campos[tipo])if(e[k]!==undefined&&opcionales[k]!==undefined)r[k]=textoClinico(e[k],k,opcionales[k]!).trim();
+ for(const k of campos[tipo])if(e[k]!==undefined&&opcionales[k]!==undefined)r[k]=e[k]===null?null:textoClinico(e[k],k,opcionales[k]!).trim();
  return Object.freeze(r);
 }
