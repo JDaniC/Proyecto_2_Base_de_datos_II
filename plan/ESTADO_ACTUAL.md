@@ -1,6 +1,6 @@
 # Estado para continuar en un chat nuevo
 
-Corte observado: 28/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
+Corte observado: 04/11/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
 
 ## Producto y entradas
 
@@ -116,3 +116,5 @@ sin fallos nuevos. E04-P1-03 y tareas restantes conservan su alcance; consultar
 cola y reservas remotas. No acredita cierre E04 ni módulos de exámenes/pólizas.
 
 Corte 03/11/2026: cierre funcional/documental E04 integrado por PR #75 (`7dea7b4`). Consultar [tablero](06_TABLERO.md) y [evidencia E04](evidencias/E04/) para el estado y las pruebas. La siguiente entrada es E05-P1-01 según la cola. No se acredita laboratorio especializado E05 ni producción Firestore.
+
+Corte E05-P1-01 (04/11/2026, America/Guatemala): PR #76 integrado en `develop` (`a3677a8`), CodeRabbit APPROVED sobre `2135589` y controles `contrato-pr`/`revision-coderabbit` SUCCESS. Backend publica catálogos versionados, órdenes con snapshots/precios, custodia de muestras y referencias administrativas del laboratorio sobre MongoDB, con migración explícita 011 y UoW. Evidencia: 348 runtime/unitarias PASS, migración 011 1/1 y modelo físico 102 PASS; la suite contractual conserva un FAIL basal ajeno de huella Firestore migración010. No acredita resultados/informes, inventario/calidad/cobros ni frontend E05. Consultar tablero, PR abiertos y cola para elegir entre E05-P1-03, E05-P2-01 y E05-P2-02; no asumir disponibilidad sin reserva remota.
