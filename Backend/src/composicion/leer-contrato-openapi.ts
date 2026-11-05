@@ -4,7 +4,7 @@ import type { OpenAPIObject } from '@nestjs/swagger';
 
 export function leerContratoOpenApi(ruta: string): OpenAPIObject {
   const contenido = readFileSync(ruta, 'utf8');
-  const documento: unknown = parse(contenido);
+  const documento: unknown = parse(contenido, { merge: true });
 
   if (
     typeof documento !== 'object' ||

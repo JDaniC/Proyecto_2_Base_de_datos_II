@@ -378,9 +378,12 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   const creada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,claveIdempotencia:claveReferencia,entrada:solicitud});
   assert.deepEqual(await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,claveIdempotencia:claveReferencia,entrada:solicitud}),creada);
   const idRef=creada.respuesta.id;
-  const actualizada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:{...r.datos,nombre:'Nombre actualizado',activo:false},versionEsperada:1,motivo:'Desactivación sintética'}});
+  const datosActualizacion:Record<string,unknown>={...r.datos,nombre:'Nombre actualizado',activo:false};
+  const opcionalOmitido='telefono' in r.datos?'telefono':'descripcion';delete datosActualizacion[opcionalOmitido];
+  const actualizada=await referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:datosActualizacion,versionEsperada:1,motivo:'Desactivación sintética'}});
   assert.equal(actualizada.respuesta.version,2);
   const fisica=await db.collection<{_id:string}&Document>(r.coleccion).findOne({_id:idRef});assert.equal(fisica!.activo,false);assert.equal(fisica!.revision,2);
+  assert.equal(fisica![opcionalOmitido],r.datos[opcionalOmitido as keyof typeof r.datos]);
   const revisionRef=await db.collection('revisiones').findOne({tipo_recurso:r.coleccion,recurso_id:idRef,version:1});assert.equal(revisionRef!.contenido_anterior.nombre,r.datos.nombre);
   if('telefono' in r.datos)assert.equal(revisionRef!.contenido_anterior.telefono,r.datos.telefono);
   await assert.rejects(referenciasAdmin.ejecutar(r.tipo,{contexto:adminContexto,bundle,id:idRef,claveIdempotencia:uuidPublico(randomUUID()),entrada:{datos:r.datos,versionEsperada:1,motivo:'Revisión obsoleta'}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='VERSION_DESACTUALIZADA');

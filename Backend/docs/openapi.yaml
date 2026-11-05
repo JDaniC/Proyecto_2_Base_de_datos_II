@@ -33,11 +33,11 @@ paths:
       parameters:
       - {name: pacienteId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
       - {name: estado, in: query, schema: {type: string, enum: [CREADA, EN_PROCESO, COMPLETADA, CANCELADA]}}
-      - {name: desde, in: query, schema: {type: string, format: date-time}}
-      - {name: hasta, in: query, schema: {type: string, format: date-time}}
+      - {name: desde, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: hasta, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
       - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
       - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
-      - {name: cursor, in: query, schema: {type: string, minLength: 1, maxLength: 4096}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
       responses:
         '200': {description: Página coherente de órdenes.}
         <<: *erroresLaboratorio
@@ -77,11 +77,11 @@ paths:
       - {name: pacienteId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
       - {name: ordenId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
       - {name: estado, in: query, schema: {type: string, enum: [TOMADA, RECIBIDA, ACEPTADA, RECHAZADA, PROCESADA]}}
-      - {name: desde, in: query, schema: {type: string, format: date-time}}
-      - {name: hasta, in: query, schema: {type: string, format: date-time}}
+      - {name: desde, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: hasta, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
       - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
       - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
-      - {name: cursor, in: query, schema: {type: string, minLength: 1, maxLength: 4096}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
       responses:
         '200': {description: Página coherente de muestras.}
         <<: *erroresLaboratorio
@@ -158,11 +158,11 @@ paths:
       x-implementacion: IMPLEMENTED
       parameters:
       - {name: tipo, in: path, required: true, schema: {type: string, enum: [solicitantes, tipos-muestra, metodos, pruebas, proveedores]}}
-      - {name: q, in: query, schema: {type: string, maxLength: 200}}
+      - {name: q, in: query, schema: {type: string, minLength: 1, maxLength: 120}}
       - {name: activo, in: query, schema: {type: boolean}}
       - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
       - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: ASC}}
-      - {name: cursor, in: query, schema: {type: string, minLength: 1, maxLength: 4096}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
       responses:
         '200': {description: Página de catálogo.}
         <<: *erroresLaboratorio

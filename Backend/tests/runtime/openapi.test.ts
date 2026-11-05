@@ -19,6 +19,11 @@ describe('contrato OpenAPI de arranque', () => {
     assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/expediente']?.get), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/laboratorio/ordenes']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/laboratorio/muestras']?.post), 'IMPLEMENTED');
+    const respuestasLaboratorio = contrato.paths['/laboratorio/ordenes']?.get?.responses as Record<string, unknown>;
+    for (const codigo of ['400', '401', '403', '404', '409', '413', '500', '503']) {
+      assert.ok(respuestasLaboratorio[codigo], `Falta respuesta ${codigo} en laboratorio.`);
+    }
+    assert.equal(respuestasLaboratorio['<<'], undefined);
   });
 
   it('falla cerrado para YAML malformado o documento con otra versión', () => {
