@@ -1,0 +1,22 @@
+[
+  {"id":"LAB-ORDEN-OK","schema":"LaboratorioOrdenCrear","valid":true,"value":{"pacienteId":"00000000-0000-4000-8000-000000000001","versionPaciente":1,"solicitanteId":"00000000-0000-4000-8000-000000000002","prioridad":"RUTINA","indicaciones":"Control sintético","moneda":"GTQ","items":[{"pruebaId":"00000000-0000-4000-8000-000000000003","centavos":12500}]}},
+  {"id":"LAB-ORDEN-BAD","schema":"LaboratorioOrdenCrear","valid":false,"value":{}},
+  {"id":"LAB-TOMA-OK","schema":"LaboratorioMuestraTomar","valid":true,"value":{"ordenId":"00000000-0000-4000-8000-000000000004","versionOrden":1,"itemIds":["00000000-0000-4000-8000-000000000005"],"tipoMuestraId":"00000000-0000-4000-8000-000000000006","codigo":"M-SINT-1","recipiente":"Tubo sintético"}},
+  {"id":"LAB-TOMA-BAD","schema":"LaboratorioMuestraTomar","valid":false,"value":{"ordenId":"autoridad-cliente"}},
+  {"id":"LAB-EVENTO-OK","schema":"LaboratorioMuestraEvento","valid":true,"value":{"versionEsperada":1,"versionOrden":2,"tipo":"RECEPCION","detalle":"Recepción sintética"}},
+  {"id":"LAB-EVENTO-BAD","schema":"LaboratorioMuestraEvento","valid":false,"value":{"versionEsperada":0,"versionOrden":0,"tipo":"INVENTADO","detalle":""}},
+  {"id":"LAB-RECTIFICAR-OK","schema":"LaboratorioMuestraRectificar","valid":true,"value":{"versionEsperada":2,"versionOrden":3,"campo":"recipiente","nuevo":"Tubo corregido","motivo":"Corrección sintética"}},
+  {"id":"LAB-RECTIFICAR-BAD","schema":"LaboratorioMuestraRectificar","valid":false,"value":{"versionEsperada":2,"versionOrden":3,"campo":"actorId","nuevo":"otro","motivo":"x"}},
+  {"id":"LAB-RETOMA-OK","schema":"LaboratorioMuestraRetomar","valid":true,"value":{"versionEsperada":3,"versionOrden":4,"tipoMuestraId":"00000000-0000-4000-8000-000000000006","codigo":"M-SINT-2","recipiente":"Tubo sintético","motivo":"Retoma sintética"}},
+  {"id":"LAB-RETOMA-BAD","schema":"LaboratorioMuestraRetomar","valid":false,"value":{}},
+  {"id":"LAB-PRUEBA-OK","schema":"LaboratorioPruebaPublicar","valid":true,"value":{"codigo":"P-SINT","version":1,"nombre":"Prueba sintética","area":"Química","metodoId":"00000000-0000-4000-8000-000000000007","tiposMuestraIds":["00000000-0000-4000-8000-000000000006"],"parametros":[{"id":"00000000-0000-4000-8000-000000000008","codigo":"VAL","nombre":"Valor","tipo":"TEXTO","obligatorio":true}]}},
+  {"id":"LAB-PRUEBA-BAD","schema":"LaboratorioPruebaPublicar","valid":false,"value":{"codigo":"P-SINT","version":0}},
+  {"id":"LAB-ESTADO-OK","schema":"LaboratorioVersionEstado","valid":true,"value":{"versionEsperada":1,"activo":false,"motivo":"Desactivación sintética"}},
+  {"id":"LAB-ESTADO-BAD","schema":"LaboratorioVersionEstado","valid":false,"value":{"versionEsperada":1,"activo":"false","motivo":"x"}},
+  {"id":"LAB-METODO-OK","schema":"LaboratorioMetodoPublicar","valid":true,"value":{"codigo":"MET-SINT","version":1,"nombre":"Método sintético","descripcion":"Solo ensayo"}},
+  {"id":"LAB-METODO-BAD","schema":"LaboratorioMetodoPublicar","valid":false,"value":{"codigo":"","version":0,"nombre":""}},
+  {"id":"LAB-REF-CREAR-OK","schema":"LaboratorioReferenciaCrear","valid":true,"value":{"datos":{"codigo":"TM-SINT","nombre":"Tipo sintético","recipiente":"Tubo","activo":true},"motivo":"Alta sintética"}},
+  {"id":"LAB-REF-CREAR-BAD","schema":"LaboratorioReferenciaCrear","valid":false,"value":{"datos":{"nombre":"Médico sin colegiación","tipo":"MEDICO","activo":true},"motivo":"x"}},
+  {"id":"LAB-REF-ACTUALIZAR-OK","schema":"LaboratorioReferenciaActualizar","valid":true,"value":{"datos":{"nombre":"Proveedor sintético","tipoIdentificacion":"SINT","numeroIdentificacion":"P-1","activo":false},"versionEsperada":1,"motivo":"Desactivación sintética"}},
+  {"id":"LAB-REF-ACTUALIZAR-BAD","schema":"LaboratorioReferenciaActualizar","valid":false,"value":{"datos":{},"versionEsperada":0,"motivo":""}}
+]

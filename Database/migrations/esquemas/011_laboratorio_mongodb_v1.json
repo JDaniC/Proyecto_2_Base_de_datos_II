@@ -1,0 +1,581 @@
+[
+  {
+    "nombre": "ordenes",
+    "validador": {
+      "$and": [
+        {
+          "$jsonSchema": {
+            "bsonType": "object",
+            "additionalProperties": false,
+            "properties": {
+              "_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "revision": {
+                "bsonType": [
+                  "int",
+                  "long"
+                ],
+                "minimum": 1
+              },
+              "numero_orden": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 60,
+                "pattern": "\\S"
+              },
+              "paciente_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "solicitante_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "fecha_orden": {
+                "bsonType": "date"
+              },
+              "registrado_por_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "prioridad": {
+                "bsonType": "string",
+                "enum": [
+                  "RUTINA",
+                  "URGENTE",
+                  "EMERGENCIA"
+                ]
+              },
+              "estado": {
+                "bsonType": "string",
+                "enum": [
+                  "CREADA",
+                  "EN_PROCESO",
+                  "COMPLETADA",
+                  "CANCELADA"
+                ]
+              },
+              "moneda": {
+                "bsonType": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "indicaciones": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              },
+              "items": {
+                "bsonType": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "bsonType": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item_id": {
+                      "bsonType": "string",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "prueba_id": {
+                      "bsonType": "string",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "prioridad": {
+                      "bsonType": "string",
+                      "enum": [
+                        "RUTINA",
+                        "URGENTE",
+                        "EMERGENCIA"
+                      ]
+                    },
+                    "estado": {
+                      "bsonType": "string",
+                      "enum": [
+                        "SOLICITADO",
+                        "EN_PROCESO",
+                        "COMPLETADO",
+                        "CANCELADO"
+                      ]
+                    },
+                    "precio_acordado": {
+                      "bsonType": "long",
+                      "minimum": 0
+                    },
+                    "indicaciones": {
+                      "bsonType": "string",
+                      "minLength": 1,
+                      "maxLength": 4000,
+                      "pattern": "\\S"
+                    }
+                  },
+                  "required": [
+                    "item_id",
+                    "prueba_id",
+                    "prioridad",
+                    "estado",
+                    "precio_acordado"
+                  ]
+                }
+              },
+              "motivo_cancelacion": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "_id",
+              "revision",
+              "numero_orden",
+              "paciente_id",
+              "solicitante_id",
+              "fecha_orden",
+              "registrado_por_id",
+              "prioridad",
+              "estado",
+              "moneda",
+              "items"
+            ],
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "estado": {
+                        "not": {
+                          "enum": [
+                            "CANCELADA"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "motivo_cancelacion"
+                    ],
+                    "properties": {
+                      "estado": {
+                        "enum": [
+                          "CANCELADA"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$expr": {
+            "$lte": [
+              {
+                "$bsonSize": "$$ROOT"
+              },
+              262144
+            ]
+          }
+        },
+        {
+          "$expr": {
+            "$cond": [
+              {
+                "$isArray": "$items"
+              },
+              {
+                "$eq": [
+                  {
+                    "$size": "$items"
+                  },
+                  {
+                    "$size": {
+                      "$setUnion": [
+                        "$items.item_id",
+                        []
+                      ]
+                    }
+                  }
+                ]
+              },
+              false
+            ]
+          }
+        }
+      ]
+    },
+    "indices": [
+      {
+        "name": "uq_orden_numero",
+        "key": {
+          "numero_orden": 1
+        },
+        "unique": true
+      },
+      {
+        "name": "ix_orden_paciente_fecha",
+        "key": {
+          "paciente_id": 1,
+          "fecha_orden": 1,
+          "_id": 1
+        }
+      },
+      {
+        "name": "ix_orden_fecha",
+        "key": {
+          "fecha_orden": 1,
+          "_id": 1
+        }
+      },
+      {
+        "name": "ix_orden_estado_fecha",
+        "key": {
+          "estado": 1,
+          "fecha_orden": 1,
+          "_id": 1
+        }
+      }
+    ]
+  },
+  {
+    "nombre": "muestras",
+    "validador": {
+      "$and": [
+        {
+          "$jsonSchema": {
+            "bsonType": "object",
+            "additionalProperties": false,
+            "properties": {
+              "_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "revision": {
+                "bsonType": [
+                  "int",
+                  "long"
+                ],
+                "minimum": 1
+              },
+              "codigo_barras": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 80,
+                "pattern": "\\S"
+              },
+              "orden_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "item_ids": {
+                "bsonType": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "bsonType": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "uniqueItems": true
+              },
+              "tipo_muestra_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "fecha_toma": {
+                "bsonType": "date"
+              },
+              "tomada_por_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "fecha_recepcion": {
+                "bsonType": "date"
+              },
+              "recibida_por_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "estado": {
+                "bsonType": "string",
+                "enum": [
+                  "TOMADA",
+                  "RECIBIDA",
+                  "ACEPTADA",
+                  "PROCESADA",
+                  "RECHAZADA"
+                ]
+              },
+              "condicion_recepcion": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              },
+              "motivo_rechazo": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "_id",
+              "revision",
+              "codigo_barras",
+              "orden_id",
+              "item_ids",
+              "tipo_muestra_id",
+              "fecha_toma",
+              "tomada_por_id",
+              "estado"
+            ],
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "estado": {
+                        "not": {
+                          "enum": [
+                            "RECHAZADA"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "motivo_rechazo"
+                    ],
+                    "properties": {
+                      "estado": {
+                        "enum": [
+                          "RECHAZADA"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "estado": {
+                        "enum": [
+                          "TOMADA"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "fecha_recepcion",
+                      "recibida_por_id",
+                      "condicion_recepcion"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$expr": {
+            "$lte": [
+              {
+                "$bsonSize": "$$ROOT"
+              },
+              262144
+            ]
+          }
+        },
+        {
+          "$expr": {
+            "$gte": [
+              {
+                "$ifNull": [
+                  "$fecha_recepcion",
+                  "$fecha_toma"
+                ]
+              },
+              "$fecha_toma"
+            ]
+          }
+        }
+      ]
+    },
+    "indices": [
+      {
+        "name": "uq_muestra_barras",
+        "key": {
+          "codigo_barras": 1
+        },
+        "unique": true
+      },
+      {
+        "name": "ix_muestra_orden",
+        "key": {
+          "orden_id": 1,
+          "_id": 1
+        }
+      },
+      {
+        "name": "ix_muestra_estado_fecha",
+        "key": {
+          "estado": 1,
+          "fecha_toma": 1,
+          "_id": 1
+        }
+      }
+    ]
+  },
+  {
+    "nombre": "eventos_muestra",
+    "validador": {
+      "$and": [
+        {
+          "$jsonSchema": {
+            "bsonType": "object",
+            "additionalProperties": false,
+            "properties": {
+              "_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "revision": {
+                "bsonType": [
+                  "int",
+                  "long"
+                ],
+                "minimum": 1
+              },
+              "muestra_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "fecha_hora": {
+                "bsonType": "date"
+              },
+              "tipo_evento": {
+                "bsonType": "string",
+                "enum": [
+                  "TOMA",
+                  "RECEPCION",
+                  "ACEPTACION",
+                  "RECHAZO",
+                  "TRASLADO",
+                  "PROCESAMIENTO",
+                  "RECTIFICACION"
+                ]
+              },
+              "usuario_id": {
+                "bsonType": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "ubicacion": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "pattern": "\\S"
+              },
+              "detalle": {
+                "bsonType": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              },
+              "rectificacion": {
+                "bsonType": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "campo": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "pattern": "\\S"
+                  },
+                  "valor_anterior": {},
+                  "valor_nuevo": {},
+                  "motivo": {
+                    "bsonType": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  }
+                },
+                "required": [
+                  "campo",
+                  "valor_anterior",
+                  "valor_nuevo",
+                  "motivo"
+                ]
+              }
+            },
+            "required": [
+              "_id",
+              "revision",
+              "muestra_id",
+              "fecha_hora",
+              "tipo_evento",
+              "usuario_id"
+            ],
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tipo_evento": {
+                        "not": {
+                          "enum": [
+                            "RECTIFICACION"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "rectificacion"
+                    ],
+                    "properties": {
+                      "tipo_evento": {
+                        "enum": [
+                          "RECTIFICACION"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$expr": {
+            "$lte": [
+              {
+                "$bsonSize": "$$ROOT"
+              },
+              262144
+            ]
+          }
+        }
+      ]
+    },
+    "indices": [
+      {
+        "name": "ix_evento_muestra_fecha",
+        "key": {
+          "muestra_id": 1,
+          "fecha_hora": 1,
+          "_id": 1
+        }
+      }
+    ]
+  }
+]

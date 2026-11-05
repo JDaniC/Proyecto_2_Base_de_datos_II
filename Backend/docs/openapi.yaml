@@ -12,7 +12,238 @@ x-limites:
   max_bytes_utf8: 262144
   max_items: 100
   max_intentos_transitorios: 3
+x-respuestas-error-laboratorio: &erroresLaboratorio
+  '400': { $ref: '#/components/responses/Error400' }
+  '401': { $ref: '#/components/responses/Error401' }
+  '403': { $ref: '#/components/responses/Error403' }
+  '404': { $ref: '#/components/responses/Error404' }
+  '409': { $ref: '#/components/responses/Error409' }
+  '413': { $ref: '#/components/responses/Error413' }
+  '500': { $ref: '#/components/responses/Error500' }
+  '503': { $ref: '#/components/responses/Error503' }
 paths:
+  /laboratorio/ordenes:
+    get:
+      operationId: laboratorioOrdenListar
+      summary: Lista órdenes de laboratorio con cursor autenticado.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - {name: pacienteId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: estado, in: query, schema: {type: string, enum: [CREADA, EN_PROCESO, COMPLETADA, CANCELADA]}}
+      - {name: desde, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: hasta, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
+      responses:
+        '200': {description: Página coherente de órdenes.}
+        <<: *erroresLaboratorio
+    post:
+      operationId: laboratorioOrdenCrear
+      summary: Crea una orden y congela pruebas y precios en una UoW.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioOrdenCrear'}}}}
+      responses:
+        '201': {description: Orden confirmada o replay durable.}
+        <<: *erroresLaboratorio
+  /laboratorio/ordenes/{id}:
+    get:
+      operationId: laboratorioOrdenDetalle
+      summary: Obtiene el snapshot exacto de una orden.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}]
+      responses:
+        '200': {description: Orden encontrada.}
+        <<: *erroresLaboratorio
+  /laboratorio/muestras:
+    get:
+      operationId: laboratorioMuestraListar
+      summary: Lista muestras con sus eventos desde un snapshot coherente.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - {name: pacienteId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: ordenId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: estado, in: query, schema: {type: string, enum: [TOMADA, RECIBIDA, ACEPTADA, RECHAZADA, PROCESADA]}}
+      - {name: desde, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: hasta, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
+      responses:
+        '200': {description: Página coherente de muestras.}
+        <<: *erroresLaboratorio
+    post:
+      operationId: laboratorioMuestraTomar
+      summary: Registra la toma y reserva la revisión de la orden.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioMuestraTomar'}}}}
+      responses:
+        '201': {description: Muestra y evento confirmados.}
+        <<: *erroresLaboratorio
+  /laboratorio/muestras/{id}:
+    get:
+      operationId: laboratorioMuestraDetalle
+      summary: Obtiene una muestra y toda su cadena de custodia.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}]
+      responses:
+        '200': {description: Muestra encontrada.}
+        <<: *erroresLaboratorio
+  /laboratorio/muestras/{id}/eventos:
+    post:
+      operationId: laboratorioMuestraEvento
+      summary: Añade un evento válido a la cadena de custodia.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioMuestraEvento'}}}}
+      responses:
+        '200': {description: Evento confirmado.}
+        <<: *erroresLaboratorio
+  /laboratorio/muestras/{id}/rectificaciones:
+    post:
+      operationId: laboratorioMuestraRectificar
+      summary: Rectifica un dato conservando antes, después y motivo.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioMuestraRectificar'}}}}
+      responses:
+        '200': {description: Rectificación confirmada.}
+        <<: *erroresLaboratorio
+  /laboratorio/muestras/{id}/retomas:
+    post:
+      operationId: laboratorioMuestraRetomar
+      summary: Crea una nueva muestra enlazada al origen rechazado.
+      tags: [laboratorio]
+      x-permisos: [muestras.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioMuestraRetomar'}}}}
+      responses:
+        '201': {description: Retoma confirmada.}
+        <<: *erroresLaboratorio
+  /laboratorio/catalogos/{tipo}:
+    get:
+      operationId: laboratorioCatalogoListar
+      summary: Lista referencias vigentes o históricas por capacidad.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar|muestras.administrar|resultados.analizar|resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - {name: tipo, in: path, required: true, schema: {type: string, enum: [solicitantes, tipos-muestra, metodos, pruebas, proveedores]}}
+      - {name: q, in: query, schema: {type: string, minLength: 1, maxLength: 120}}
+      - {name: activo, in: query, schema: {type: boolean}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: ASC}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
+      responses:
+        '200': {description: Página de catálogo.}
+        <<: *erroresLaboratorio
+  /laboratorio/pruebas:
+    post:
+      operationId: laboratorioPruebaPublicar
+      summary: Publica una versión inmutable de prueba.
+      tags: [laboratorio]
+      x-permisos: [resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioPruebaPublicar'}}}}
+      responses:
+        '201': {description: Versión publicada.}
+        <<: *erroresLaboratorio
+  /laboratorio/pruebas/{id}/estado:
+    patch:
+      operationId: laboratorioPruebaEstado
+      summary: Activa o desactiva una versión sin alterar su contenido.
+      tags: [laboratorio]
+      x-permisos: [resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioVersionEstado'}}}}
+      responses:
+        '200': {description: Estado y revisión actualizados.}
+        <<: *erroresLaboratorio
+  /laboratorio/metodos:
+    post:
+      operationId: laboratorioMetodoPublicar
+      summary: Publica una versión inmutable de método.
+      tags: [laboratorio]
+      x-permisos: [resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioMetodoPublicar'}}}}
+      responses:
+        '201': {description: Versión publicada.}
+        <<: *erroresLaboratorio
+  /laboratorio/metodos/{id}/estado:
+    patch:
+      operationId: laboratorioMetodoEstado
+      summary: Activa o desactiva un método sin alterar su contenido.
+      tags: [laboratorio]
+      x-permisos: [resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioVersionEstado'}}}}
+      responses:
+        '200': {description: Estado y revisión actualizados.}
+        <<: *erroresLaboratorio
+  /laboratorio/referencias/{tipo}:
+    post:
+      operationId: laboratorioReferenciaCrear
+      summary: Crea una referencia administrativa tipada.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: tipo, in: path, required: true, schema: {type: string, enum: [solicitantes, tipos-muestra, proveedores]}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioReferenciaCrear'}}}}
+      responses:
+        '201': {description: Referencia creada.}
+        <<: *erroresLaboratorio
+  /laboratorio/referencias/{tipo}/{id}:
+    patch:
+      operationId: laboratorioReferenciaActualizar
+      summary: Sustituye la revisión vigente conservando la anterior.
+      tags: [laboratorio]
+      x-permisos: [ordenes.administrar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: tipo, in: path, required: true, schema: {type: string, enum: [solicitantes, tipos-muestra, proveedores]}}, {name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioReferenciaActualizar'}}}}
+      responses:
+        '200': {description: Referencia actualizada.}
+        <<: *erroresLaboratorio
   /sesion:
     post:
       operationId: sesionEstablecer
@@ -4039,6 +4270,179 @@ components:
       description: Verificación de firma/emisor/audiencia/vencimiento/revocación más cuenta local/roles actuales.
         Sin autoridad enviada por cliente.
   schemas:
+    LaboratorioOrdenCrear:
+      type: object
+      additionalProperties: false
+      required: [pacienteId, versionPaciente, solicitanteId, prioridad, indicaciones, moneda, items]
+      properties:
+        pacienteId: {$ref: '#/components/schemas/UUID'}
+        versionPaciente: {type: integer, minimum: 1}
+        solicitanteId: {$ref: '#/components/schemas/UUID'}
+        prioridad: {type: string, enum: [RUTINA, URGENTE, EMERGENCIA]}
+        indicaciones: {type: string, maxLength: 2000}
+        moneda: {type: string, const: GTQ}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: object
+            additionalProperties: false
+            required: [pruebaId, centavos]
+            properties:
+              pruebaId: {$ref: '#/components/schemas/UUID'}
+              centavos: {type: integer, minimum: 0, maximum: 9007199254740991}
+    LaboratorioMuestraTomar:
+      type: object
+      additionalProperties: false
+      required: [ordenId, versionOrden, itemIds, tipoMuestraId, codigo, recipiente]
+      properties:
+        ordenId: {$ref: '#/components/schemas/UUID'}
+        versionOrden: {type: integer, minimum: 1}
+        itemIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        tipoMuestraId: {$ref: '#/components/schemas/UUID'}
+        codigo: {type: string, minLength: 1, maxLength: 80, pattern: '\S'}
+        recipiente: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioMuestraEvento:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada, versionOrden, tipo, detalle]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+        versionOrden: {type: integer, minimum: 1}
+        tipo: {type: string, enum: [RECEPCION, ACEPTACION, RECHAZO, TRASLADO, PROCESAMIENTO]}
+        detalle: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioMuestraRectificar:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada, versionOrden, campo, nuevo, motivo]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+        versionOrden: {type: integer, minimum: 1}
+        campo: {type: string, enum: [tipoMuestraId, recipiente]}
+        nuevo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+        motivo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioMuestraRetomar:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada, versionOrden, tipoMuestraId, codigo, recipiente, motivo]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+        versionOrden: {type: integer, minimum: 1}
+        tipoMuestraId: {$ref: '#/components/schemas/UUID'}
+        codigo: {type: string, minLength: 1, maxLength: 80, pattern: '\S'}
+        recipiente: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+        motivo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioParametroPrueba:
+      type: object
+      additionalProperties: false
+      required: [id, codigo, nombre, tipo, obligatorio]
+      properties:
+        id: {$ref: '#/components/schemas/UUID'}
+        codigo: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        tipo: {type: string, enum: [NUMERICO, TEXTO, CATEGORICO]}
+        obligatorio: {type: boolean}
+        unidad: {type: string, maxLength: 60}
+        opciones: {type: array, maxItems: 100, uniqueItems: true, items: {type: string, minLength: 1, maxLength: 200}}
+    LaboratorioPruebaPublicar:
+      type: object
+      additionalProperties: false
+      required: [codigo, version, nombre, area, metodoId, tiposMuestraIds, parametros]
+      properties:
+        codigo: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
+        version: {type: integer, minimum: 1}
+        anteriorId: {$ref: '#/components/schemas/UUID'}
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        area: {type: string, minLength: 1, maxLength: 100, pattern: '\S'}
+        metodoId: {$ref: '#/components/schemas/UUID'}
+        tiposMuestraIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        parametros: {type: array, maxItems: 100, items: {$ref: '#/components/schemas/LaboratorioParametroPrueba'}}
+    LaboratorioMetodoPublicar:
+      type: object
+      additionalProperties: false
+      required: [codigo, version, nombre]
+      properties:
+        codigo: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
+        version: {type: integer, minimum: 1}
+        anteriorId: {$ref: '#/components/schemas/UUID'}
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        descripcion: {type: string, maxLength: 2000}
+    LaboratorioVersionEstado:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada, activo, motivo]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+        activo: {type: boolean}
+        motivo: {type: string, minLength: 1, maxLength: 1000, pattern: '\S'}
+    LaboratorioSolicitante:
+      type: object
+      additionalProperties: false
+      required: [nombre, tipo, activo]
+      allOf:
+      - if:
+          required: [tipo]
+          properties:
+            tipo: {const: MEDICO}
+        then:
+          required: [entidadColegiacion, numeroColegiado]
+      properties:
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        tipo: {type: string, enum: [MEDICO, INSTITUCION]}
+        entidadColegiacion: {type: string, maxLength: 200}
+        numeroColegiado: {type: string, maxLength: 60}
+        institucion: {type: [string, "null"], maxLength: 200, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        telefono: {type: [string, "null"], maxLength: 40, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        correo: {type: [string, "null"], maxLength: 254, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        activo: {type: boolean}
+    LaboratorioTipoMuestra:
+      type: object
+      additionalProperties: false
+      required: [codigo, nombre, recipiente, activo]
+      properties:
+        codigo: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        recipiente: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        descripcion: {type: [string, "null"], maxLength: 2000, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        condicionesConservacion: {type: [string, "null"], maxLength: 2000, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        activo: {type: boolean}
+    LaboratorioProveedor:
+      type: object
+      additionalProperties: false
+      required: [nombre, tipoIdentificacion, numeroIdentificacion, activo]
+      properties:
+        nombre: {type: string, minLength: 1, maxLength: 200, pattern: '\S'}
+        tipoIdentificacion: {type: string, minLength: 1, maxLength: 40, pattern: '\S'}
+        numeroIdentificacion: {type: string, minLength: 1, maxLength: 80, pattern: '\S'}
+        telefono: {type: [string, "null"], maxLength: 40, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        correo: {type: [string, "null"], maxLength: 254, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        direccion: {type: [string, "null"], maxLength: 2000, description: 'En actualización, null retira el valor almacenado y omitirlo lo conserva.'}
+        activo: {type: boolean}
+    LaboratorioReferenciaCrear:
+      type: object
+      additionalProperties: false
+      required: [datos, motivo]
+      properties:
+        datos:
+          oneOf:
+          - {$ref: '#/components/schemas/LaboratorioSolicitante'}
+          - {$ref: '#/components/schemas/LaboratorioTipoMuestra'}
+          - {$ref: '#/components/schemas/LaboratorioProveedor'}
+        motivo: {type: string, minLength: 1, maxLength: 1000, pattern: '\S'}
+    LaboratorioReferenciaActualizar:
+      type: object
+      additionalProperties: false
+      required: [datos, versionEsperada, motivo]
+      properties:
+        datos:
+          oneOf:
+          - {$ref: '#/components/schemas/LaboratorioSolicitante'}
+          - {$ref: '#/components/schemas/LaboratorioTipoMuestra'}
+          - {$ref: '#/components/schemas/LaboratorioProveedor'}
+        versionEsperada: {type: integer, minimum: 1}
+        motivo: {type: string, minLength: 1, maxLength: 1000, pattern: '\S'}
     HospitalOrdenCrear:
       type: object
       additionalProperties: false
