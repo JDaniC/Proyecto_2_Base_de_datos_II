@@ -1,6 +1,6 @@
 # Estado para continuar en un chat nuevo
 
-Corte observado: 28/10/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
+Corte observado: 04/11/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
 
 ## Producto y entradas
 
