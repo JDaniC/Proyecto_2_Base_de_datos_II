@@ -37,7 +37,7 @@ Actualizado: 04/11/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 | Davidix888 | HECHA | Puerta de fase | [PR #76 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/76), `a3677a8`; CodeRabbit APPROVED sobre `2135589`, contrato-pr/revision-coderabbit SUCCESS; 348 backend PASS, migración 011 + 102 modelo MongoDB PASS; [evidencia](evidencias/E05/E05-P1-01.md), [seguimiento](seguimiento/E05-P1-01.md); 04/11/2026 |
 | [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | — | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
 | [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
-| [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | Davidix888 | EN_CURSO | E05-P1-01 | Reservada; rama `codex/e05-p2-01-resultados`; dependencia integrada en `a3677a8`; [seguimiento](seguimiento/E05-P2-01.md); 04/11/2026 |
+| [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | Davidix888 | EN_CURSO | E05-P1-01 | [PR #78 borrador](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78); rama `codex/e05-p2-01-resultados`; dependencia integrada en `a3677a8`; [seguimiento](seguimiento/E05-P2-01.md); 04/11/2026 |
 | [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
 | [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | — | PENDIENTE | E05-P1-02, E05-P1-03, E05-P2-02 | Sin ejecución registrada |
 | [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
