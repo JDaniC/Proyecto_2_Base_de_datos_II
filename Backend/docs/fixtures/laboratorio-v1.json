@@ -16,7 +16,7 @@
   {"id":"LAB-METODO-OK","schema":"LaboratorioMetodoPublicar","valid":true,"value":{"codigo":"MET-SINT","version":1,"nombre":"Método sintético","descripcion":"Solo ensayo"}},
   {"id":"LAB-METODO-BAD","schema":"LaboratorioMetodoPublicar","valid":false,"value":{"codigo":"","version":0,"nombre":""}},
   {"id":"LAB-REF-CREAR-OK","schema":"LaboratorioReferenciaCrear","valid":true,"value":{"datos":{"codigo":"TM-SINT","nombre":"Tipo sintético","recipiente":"Tubo","activo":true},"motivo":"Alta sintética"}},
-  {"id":"LAB-REF-CREAR-BAD","schema":"LaboratorioReferenciaCrear","valid":false,"value":{"datos":{"nombre":"Sin tipo","activo":true},"motivo":"x"}},
+  {"id":"LAB-REF-CREAR-BAD","schema":"LaboratorioReferenciaCrear","valid":false,"value":{"datos":{"nombre":"Médico sin colegiación","tipo":"MEDICO","activo":true},"motivo":"x"}},
   {"id":"LAB-REF-ACTUALIZAR-OK","schema":"LaboratorioReferenciaActualizar","valid":true,"value":{"datos":{"nombre":"Proveedor sintético","tipoIdentificacion":"SINT","numeroIdentificacion":"P-1","activo":false},"versionEsperada":1,"motivo":"Desactivación sintética"}},
   {"id":"LAB-REF-ACTUALIZAR-BAD","schema":"LaboratorioReferenciaActualizar","valid":false,"value":{"datos":{},"versionEsperada":0,"motivo":""}}
 ]
