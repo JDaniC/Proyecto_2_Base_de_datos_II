@@ -1,0 +1,127 @@
+# Auditoría funcional — E05-P1-03
+
+Fecha: 05/11/2026 America/Guatemala. Autorización: petición de ejecutar E05-P1-03 y auditorías obligatorias por Daniel. Alcance: módulo backend de cobros, siete operaciones HTTP y sus conexiones con la UoW común; no todo el producto. Entorno: localhost, dobles explícitos y MongoDB replica set efímero; sin producción ni base compartida.
+
+## 1. Resumen ejecutivo
+
+Resultado final: PASS del alcance auditado, tras corregir dos desviaciones ejecutables y una referencia documental. 42 unidades inventariadas, incluidas 22 clasificadas CRITICAL; 14 requisitos trazados. Los helpers locales se incluyen. Adaptadores/composición/UoW compartidos se revisaron en las líneas de integración y con la regresión completa. Sin requisitos CRITICAL pendientes en esta entrega. No se infiere cumplimiento de E05 completo.
+
+## 2. Inventario y cobertura
+
+Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de entrada; I: integración MongoDB CA14; H: HTTP real con dobles explícitos de persistencia; E: manejo de errores/snapshot y lectores; C: contrato/preflight. Una fila de inventario agrupa sus callbacks bajo la misma unidad: no se cuentan como servicios independientes.
+
+| ID | Unidad y fuente | Riesgo | Requisitos | Entradas / efectos | Tests | Estado |
+|---|---|---|---|---|---|---|
+| U01 | Backend/src/dominio/laboratorio/cobros/factura.ts:13 `receptorFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U02 | Backend/src/dominio/laboratorio/cobros/factura.ts:18 `totalFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U03 | Backend/src/dominio/laboratorio/cobros/factura.ts:32 `emitirFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U04 | Backend/src/dominio/laboratorio/cobros/factura.ts:39 `saldoFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U05 | Backend/src/dominio/laboratorio/cobros/factura.ts:44 `exigirRevisionFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U06 | Backend/src/dominio/laboratorio/cobros/factura.ts:48 `registrarPago` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U07 | Backend/src/dominio/laboratorio/cobros/factura.ts:56 `revertirPago` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U08 | Backend/src/dominio/laboratorio/cobros/factura.ts:61 `anularFactura` | CRITICAL | R01–R07 | Objetos tipados/entrada cerrada; cálculo/estado inmutable | D + I | PASS |
+| U09 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:9 `leerSnapshotCobros` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U10 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:14 `crearConsultasCobros` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U11 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:15 `snapshot` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U12 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:16 `limiteFecha` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U13 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:18 `detalle` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U14 | Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts:19 `listar` | HIGH | R09/R12–R13 | Filtros tipados; lecturas snapshot y cursor | E + I | PASS |
+| U15 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:10 `fallo` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U16 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:11 `entero` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U17 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:12 `fecha` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U18 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:13 `documentoFactura` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U19 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:18 `mapearFactura` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U20 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:25 `documentoPago` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U21 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:28 `mapearPago` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U22 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:35 `crearLectorCobros` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U23 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:37 `facturaPorId` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U24 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:38 `facturaPorOrden` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U25 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:39 `pagoPorId` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U26 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:40 `totalPagado` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U27 | Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts:47 `aplicarCambiosCobros` | CRITICAL | R01–R08/R12–R13 | Documentos internos; mapping/lectura/escritura ligada a session | D + E + I | PASS |
+| U28 | Backend/src/adaptadores/salida/mongodb/cobros/verificar-cobros.ts:6 `ordenar` | MEDIUM | R13 | Metadatos; solo lectura, rechazo ante deriva | C + I | PASS |
+| U29 | Backend/src/adaptadores/salida/mongodb/cobros/verificar-cobros.ts:7 `verificarCobros` | MEDIUM | R13 | Metadatos; solo lectura, rechazo ante deriva | C + I | PASS |
+| U30 | Backend/src/aplicacion/casos-uso/laboratorio/gestionar-cobros.ts:14 `ejecutar` | CRITICAL | R01–R08/R10–R12/R14 | DTO de comando; plan atómico con revisiones/auditoría | D + H + I | PASS |
+| U31 | Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts:11 `contexto` | HIGH | R09/R11/R12 | Contexto/filtros; revalidación de cuenta y consulta | H + I | PASS |
+| U32 | Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts:19 `detalle` | HIGH | R09/R11/R12 | Contexto/filtros; revalidación de cuenta y consulta | H + I | PASS |
+| U33 | Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts:22 `listar` | HIGH | R09/R11/R12 | Contexto/filtros; revalidación de cuenta y consulta | H + I | PASS |
+| U34 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:11 `queryEscalar` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U35 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:20 `listar` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U36 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:22 `detalle` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U37 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:24 `pagos` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U38 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:26 `emitir` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U39 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:28 `pagar` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U40 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:30 `revertir` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U41 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:32 `anular` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U42 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:34 `escribir` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+
+## 3. Matriz requisito → código → test
+
+| Requisito | Fuente | Unidades | Test | Traza / resultado |
+|---|---|---|---|---|
+| R01 | RF-L11; tarea E05-P1-03 §1 | emitirFactura; documentoFactura; GestionarCobrosLaboratorio.ejecutar | unitarios/laboratorio-cobros; integracion/cobros-laboratorio-circuito | CUBIERTO / PASS |
+| R02 | RNF-026; tarea §1 | totalFactura; dinero; totalPagado | unitarios/laboratorio-cobros; unitarios/cobros-lectores; integración CA14 | CUBIERTO / PASS |
+| R03 | RF-L11; CA14; tarea §2 | registrarPago; saldoFactura; gestionar-cobros | unitarios/laboratorio-cobros; integración CA14 | CUBIERTO / PASS |
+| R04 | RNF-023/027; CA14 | prepararComandoEstable; UoW MongoDB | integración CA14 (replay de las cuatro operaciones); unitarios/UoW MongoDB | CUBIERTO / PASS |
+| R05 | RNF-027; CA14; tarea excepciones | aplicarCambiosCobros; UoW MongoDB | integración CA14 (Promise.allSettled, dos sesiones) | CUBIERTO / PASS |
+| R06 | RF-L11; tarea §3; diseño §3.4.2 | revertirPago; documentoPago; aplicarCambiosCobros | unitarios/laboratorio-cobros; integración CA14 | CUBIERTO / PASS |
+| R07 | RF-L11; tarea §3; RNF-024 | anularFactura; aplicarCambiosCobros; guardarRevisiones | unitarios/laboratorio-cobros; integración CA14 | CUBIERTO / PASS |
+| R08 | RNF-027; tarea criterio | UnidadDeTrabajoMongodb; aplicarCambiosCobros | integración CA14 (fallo auditoría y conteos previos/posteriores) | CUBIERTO / PASS |
+| R09 | RF-L12; tarea §4; plan/03 §7 | ConsultarCobrosLaboratorio; crearConsultasCobros; controller | integración CA14 (ambas páginas, fechas, ámbito); runtime/cobros-http | CUBIERTO / PASS |
+| R10 | plan/01 DEC; tarea §4 | GestionarCobrosLaboratorio | integración CA14 (archivar antes de carrera/pagos/reversión/anulación) | CUBIERTO / PASS |
+| R11 | AGENTS; plan/03 §7 | guardias HTTP; contextoVigente; ConsultarCobrosLaboratorio.contexto | runtime/cobros-http; unitarios/identidad-y-provision; integración CA14 | CUBIERTO / PASS |
+| R12 | plan/03 §7; tarea fallos | queryEscalar; gestionar-cobros; leerSnapshotCobros; mappers | runtime/cobros-http; unitarios/cobros-snapshot; unitarios/cobros-lectores | CUBIERTO / PASS |
+| R13 | AGENTS persistencia; M03 | verificarCobros; preparacion; mappers | contratos/cobros-esquema; integración CA14 (collMod temporal y restauración); unitarios/cobros-lectores | CUBIERTO / PASS |
+| R14 | plan/02; AGENTS arquitectura | puertos/cobros; casos; composición; adapter | npm run lint/architecture:check; integración rollback/carrera | CUBIERTO / PASS |
+
+## 4. Desviaciones detectadas
+
+| ID | Tipo / severidad | Evidencia antes | Corrección / regresión | Estado final |
+|---|---|---|---|---|
+| F01 | DIVERGENTE / HIGH | Controller retornaba Pagina interna; interceptor generaba data.siguienteCursor, contrario a meta.siguiente_cursor documentado; ambas listas | Controller publica data como elementos y cursor opcional en meta; prueba HTTP de primera/final de ambas rutas | PASS corregido |
+| F02 | DIVERGENTE / MEDIUM | abortTransaction fallando ocultaba error original y evitaba traducción503 | leerSnapshotCobros conserva error original; doble provoca fallo de lectura + aborto, comprueba código/saneamiento y cierre | PASS corregido |
+| F03 | DOC_DESACTUALIZADA / LOW | plan/03 §7 intercambiaba responsabilidades de P1-03/P2-02 frente a archivos de tareas | Se alinean facturas/pagos→P1-03 y calidad/inventario→P2-02 | PASS corregido |
+
+Factura se emite en un comando atómico directamente como EMITIDA; BORRADOR es estado del esquema, sin endpoint de borrador exigido por la tarea. No se permite editar líneas/receptor emitidos; anulación conserva documento y snapshot previo append-only. Es la concreción del trabajo de E05-P1-03, sin módulo fiscal ni cambio al diseño de resultados/informes.
+
+## 5. Evidencia de correcciones y criterio
+
+F01 se demuestra con peticiones GET a ambas rutas y aserciones del sobre exacto; sin cursor al terminar. F02 con error de dominio y driver más fallo de aborto; salida sigue siendo SIN_PERMISO o PERSISTENCIA_NO_DISPONIBLE y session se cierra. F03 por comparación con tarea detallada, ID estable y plan/03 corregido. La suite anterior al añadido de fronteras mostró un fallo del test de tamaño: el fixture de100 líneas Unicode seguía bajo256KiB; se reemplazó por un objeto explícitamente sobredimensionado para medir el límite real. No se relajó el límite ni se borraron datos.
+
+## 6. Pruebas añadidas y matriz por categoría
+
+Archivos: tests/unitarios/laboratorio-cobros.test.ts, cobros-lectores.test.ts, cobros-snapshot.test.ts; tests/runtime/cobros-http.test.ts; tests/contratos/cobros-esquema.test.mjs; tests/integracion/cobros-laboratorio-circuito.ts, llamado por la suite física011 con --cobros.
+
+| Categorías de la matriz de la skill | Aplicación y prueba |
+|---|---|
+| 1–2 entrada/tipos | DTO cerrado; campos ausentes/null/tipo/extra; importes/moneda/receptor/número/motivo/versiones y UUID. D/H/I PASS |
+| 3 negocio | Total, centavo final, sobrepago, rango seguro, descuento y overflow. D/I PASS |
+| 4 estado | EMITIDA→pagos/reversión/anulación; ANULADA rechaza; pago CONFIRMADO→ANULADO sin segunda reversión; orden cancelada rechaza emisión. D/I PASS |
+| 5 persistencia | Snapshots preservados, número único, una factura por orden, revisiones y rollback de datos/operación/auditoría. I/C PASS |
+| 6 salida | BSON long↔centavos; fecha UTC; data/meta/cursor en ambas listas y código durable. D/H/I PASS |
+| 7 errores | 400/401/403/404/409/413/500/503, driver saneado, aborto no oculta error. H/E/I PASS |
+| 8 límites | Número60/61; receptor200/201,40/41,80/81,4000/4001; líneas0/1/100/101; importes0/1/MAX/overflow, página1/100/101 y body256KiB. D/H/I PASS |
+| 9 normalización | UUID canónico y JCS de comando compartidos; sin conversión/trim implícito de números/moneda; filtros normalizados en ámbito. C/H/I PASS |
+| 10 dependencia | MongoDB real y fallo de auditoría; lectura corrupta/driver/aborto y preflight con deriva. E/I PASS |
+| 11 concurrencia | Dos sesiones por último saldo, reenvío de las cuatro mutaciones, fallo sin escrituras parciales. I PASS |
+| 12 filtros/página | Facturas/pagos en páginas de1 sin duplicados; estado/paciente/rango, cursor alterado/otra cuenta/otro filtro, vacío e inválidos. H/I PASS |
+| 13 fecha/moneda | GTQ explícito, rangos [desde,hasta), fracción nanosegundo sobre BSON milisegundos y reversión anterior al pago rechazada. D/I PASS |
+
+Funciones puras no tienen categorías5/10/11 como efectos propios (NOT_APPLICABLE); se verifican a través del caso compuesto. Factories/formatters no aceptan identidad externa directamente; autorización se comprueba en controller/caso. No se requieren uploads, emails, locale de moneda ni conversión de divisas en el módulo.
+
+## 7. Bloqueos
+
+Ninguno para el alcance backend de E05-P1-03. UI E05-P2-03, resultados/informes/inventario y ejecución cloud real quedan fuera de esta entrega; no se acreditan con estos tests.
+
+## 8. Matriz final
+
+| Grupo | Resultado | Evidencia |
+|---|---|---|
+| R01–R14 | PASS | Matriz anterior, pruebas ejecutadas y resultado.json |
+| F01–F03 | PASS tras corrección | Regresiones y comparación de fuentes |
+| Bloqueadas/no implementadas dentro de alcance | 0 | Inventario y trazas |
+| Suite común | PASS | Resultado saneado en resultado.json |
+
+## 9. Riesgos residuales
+
+HTTP de seguridad usa identidades sintéticas y dobles explícitos; persistencia y concurrencia se acreditan aparte con MongoDB real y usuario de aplicación. No es prueba de firma real Firebase ni despliegue en producción. Índices heredados se conservan; no se afirma rendimiento de carga. Auditoría de la política documental nueva: prevalece la petición humana sobre reserva en borrador anterior y se registra la excepción temporal del PR79 ya abierto, sin fingir auditorías anteriores a su creación.

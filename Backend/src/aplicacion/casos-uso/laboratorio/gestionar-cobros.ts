@@ -33,7 +33,7 @@ export class GestionarCobrosLaboratorio {
     if(orden.version!==version)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
     if(await cobros.facturaPorOrden(id))throw new ErrorDominio('ESTADO_INVALIDO','La orden ya tiene una factura.');
     const factura=emitirFactura(orden,{id:comando.id,numero:datos.numero!,receptor:datos.receptor!,fecha:comando.instante,actorId:c.cuenta.id,lineaIds:orden.items.filter(i=>i.estado!=='CANCELADO').map((_,i)=>comando.ids[`linea${i}`]!)});
-    cambios.push({agregado:'ordenes',tipo:'RESERVAR_FACTURA',recursoId:id,versionAnterior:version,nuevoEstado:{id,version:version+1}},{agregado:'facturas',tipo:'EMITIR_FACTURA',recursoId:comando.id,versionAnterior:null,nuevoEstado:factura});
+    cambios.push({agregado:'ordenes',tipo:'RESERVAR_FACTURA',recursoId:id,versionAnterior:version,nuevoEstado:{id,version:versionPositiva(version+1)}},{agregado:'facturas',tipo:'EMITIR_FACTURA',recursoId:comando.id,versionAnterior:null,nuevoEstado:factura});
     return {tipo:'CONFIRMAR' as const,cambios,revisiones:[],auditoria:[{id:comando.ids.auditoria!,actorId:c.cuenta.id,caso:comando.caso,recursoId:comando.id,fechaHora:comando.instante,correlacion:c.correlacion}],resultado:{httpStatus:201,respuesta:{factura},correlacionOriginal:c.correlacion}};
    }
    const anterior=await cobros.facturaPorId(id);

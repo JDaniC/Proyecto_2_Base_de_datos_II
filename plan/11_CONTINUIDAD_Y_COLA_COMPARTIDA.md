@@ -2,6 +2,10 @@
 
 Política vigente desde el 24/10/2026. Daniel (JDaniC) y David (Davidix888) pueden ejecutar cualquier tarea; no necesitan autorización del otro por tratarse de un ID del lote P1 o P2. El trabajo sigue dependencias técnicas, no disponibilidad de una persona concreta.
 
+## Puerta previa a PR — decisión humana 05/11/2026
+
+Antes de abrir cualquier PR, incluido borrador y documental, ejecutar las skills security-auditor y functional-requirements-auditor sobre el alcance de la entrega. Ambas deben quedar PASS con evidencia reproducible en plan/evidencias, inventario/trazabilidad y sin fallos aplicables pendientes. Un cambio posterior que afecte el veredicto exige revalidación. Esta puerta sustituye cualquier paso de este protocolo que indique abrir primero un borrador. Publicar rama/seguimiento y comprobar reservas antes de trabajar y otra vez antes de abrir el PR; una rama publicada no garantiza exclusividad. CodeRabbit se mantiene después de abrir el PR. PR ya abierto al recibir la decisión: auditar antes de continuar revisión/integración; no cerrar y reabrir para simular cumplimiento previo.
+
 ## 1. Fuentes de verdad y carga inicial
 
 Antigravity debe abrir la raíz del repositorio, donde están AGENTS.md y .agents/rules/00-continuidad.md. La regla `always_on` y AGENTS dirigen cada chat al contexto guardado en archivos. Estos archivos deben estar versionados y actualizados en ambos equipos. No se depende de la memoria del chat anterior ni de rutas Downloads de Daniel.
@@ -33,7 +37,7 @@ Una tarea tiene un ejecutor activo, una rama y un PR. Una modificación del tabl
 1. Consultar `git status`, actualizar referencias remotas sin sobrescribir cambios y revisar PR abiertos a develop. Si el checkout contiene trabajo ajeno, conservarlo; usar otro checkout/worktree apropiado, nunca reset/clean.
 2. Crear rama temporal `codex/e00-p2-02-descripcion` desde develop actualizado. No usar ramas permanentes por persona o área.
 3. En el tablero de esa rama registrar ejecutor GitHub real, estado EN_CURSO y evidencia `reservada; rama; fecha`. Crear seguimiento desde la plantilla con la siguiente acción y archivos comunes que ocupará. No atribuir la identidad a partir de P1/P2: obtenerla de la cuenta activa o de la instrucción humana.
-4. Guardar ese avance y publicar la rama; abrir PR borrador con título `[E00-P2-02] descripción`. Antes de implementar, volver a listar PR para detectar duplicados. El número/enlace del PR se registra en seguimiento y tablero.
+4. Guardar ese avance y publicar la rama; aplicar la puerta de auditorías previa a PR y solo con ambas PASS abrir PR con título `[E00-P2-02] descripción`. Antes de implementar y antes de abrirlo, volver a listar PR para detectar duplicados. El número/enlace del PR se registra en seguimiento y tablero.
 5. Si dos personas reservaron casi a la vez, prevalece el PR abierto con menor número. El segundo no continúa en paralelo: conserva sus cambios, libera su reserva y toma otra tarea. Esta es una regla de coordinación, no un candado distribuido automático.
 
 Las reservas de PR abiertos se consultan además del tablero de develop, que solo recoge lo integrado. No crear otro tablero de estados: el seguimiento describe avance y el PR hace visible la reserva. Un PR borrador no está terminado; convertirlo a listo para revisión cuando cumpla los criterios.

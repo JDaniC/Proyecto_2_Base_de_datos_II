@@ -26,20 +26,29 @@ export async function probarCobros(db:Db,bundle:BundleInstitucional,base:OrdenLa
  const orden={...base,id:randomUUID(),pacienteId:paciente.id,version:1};
  await db.collection<{_id:string}&Document>('ordenes').insertOne(documentoOrdenLaboratorio(orden,orden.id));
  await verificarCobros(db);
+ const esquemaFactura=await db.listCollections({name:'facturas'}).next();assert.ok(esquemaFactura&&'options' in esquemaFactura);
+ try{await db.command({collMod:'facturas',validator:{$jsonSchema:{bsonType:'object'}},validationLevel:'strict',validationAction:'error'});await assert.rejects(verificarCobros(db),codigo('PERSISTENCIA_NO_DISPONIBLE'));}
+ finally{await db.command({collMod:'facturas',validator:esquemaFactura.options.validator,validationLevel:esquemaFactura.options.validationLevel,validationAction:esquemaFactura.options.validationAction});}
+
  const comandos=new GestionarCobrosLaboratorio(deps),consulta=new ConsultarCobrosLaboratorio();
  const invocar=(accion:'emitir'|'pagar'|'revertir'|'anular',entrada:unknown,id?:string,clave=uuidPublico(randomUUID()))=>comandos.ejecutar(accion,{contexto,bundle,entrada,claveIdempotencia:clave,...(id?{id:uuidPublico(id)}:{})});
  const entrada={ordenId:orden.id,versionOrden:1,numero:`SINT-${randomUUID()}`,receptor:{nombre:'Receptor sintético',tipoIdentificacion:'SINT',numeroIdentificacion:'SINT'}};
+ const segundaOrden={...orden,id:randomUUID()};await db.collection<{_id:string}&Document>('ordenes').insertOne(documentoOrdenLaboratorio(segundaOrden,segundaOrden.id));
  const clave=uuidPublico(randomUUID()),emitida=await invocar('emitir',entrada,undefined,clave);const f=emitida.respuesta.factura;
  assert.deepEqual(await invocar('emitir',entrada,undefined,clave),emitida);
  await assert.rejects(invocar('emitir',{...entrada,versionOrden:2}),codigo('ESTADO_INVALIDO'));
  await assert.rejects(invocar('emitir',{...entrada,numero:'OTRO'},undefined,clave),codigo('CLAVE_REUTILIZADA'));
+ const otra=await invocar('emitir',{...entrada,ordenId:segundaOrden.id,numero:`SINT-${randomUUID()}`});
+ const facturaB=otra.respuesta.factura;
  const ver=()=>consulta.detalle({contexto,bundle,id:f.id});
  assert.equal((await ver()).total,base.total.centavos);assert.equal((await ver()).saldo,base.total.centavos);
  const pagoDto={versionEsperada:1,importe:100,moneda:'GTQ',metodo:'EFECTIVO'};
  for(const v of [{...pagoDto,moneda:'USD'},{...pagoDto,importe:0},{...pagoDto,importe:1.01}])await assert.rejects(invocar('pagar',v,f.id),codigo('SOLICITUD_INVALIDA'));
  await db.collection<{_id:string}&Document>('ordenes').updateOne({_id:orden.id},{$set:{'items.0.prueba_historica.nombre':'Nombre futuro'}});assert.equal((await ver()).factura.lineas[0]!.descripcion,base.items[0]!.prueba.nombre);
  const clavePago=uuidPublico(randomUUID()),pago=await invocar('pagar',pagoDto,f.id,clavePago);
- assert.deepEqual(await invocar('pagar',pagoDto,f.id,clavePago),pago);assert.equal((await ver()).saldo,base.total.centavos-100);
+ assert.deepEqual(await invocar('pagar',pagoDto,f.id,clavePago),pago);
+ await assert.rejects(invocar('revertir',{versionEsperada:1,pagoId:pago.respuesta.pago!.id,motivo:'Cruce de factura'},facturaB.id),codigo('RECURSO_NO_ENCONTRADO'));
+ assert.equal((await consulta.detalle({contexto,bundle,id:facturaB.id})).pagado,0);assert.equal((await ver()).saldo,base.total.centavos-100);
  // Auditoría falla después de datos: deben revertirse factura, pago, revisión y operación.
  const audit=await db.listCollections({name:'auditoria'}).next();assert.ok(audit&&'options' in audit);const opciones=audit.options;
  const antes=await ver();const nPagos=await db.collection('pagos').countDocuments({factura_id:f.id}),nRevisiones=await db.collection('revisiones').countDocuments({recurso_id:f.id});const claveFallida=uuidPublico(randomUUID());
@@ -55,14 +64,25 @@ export async function probarCobros(db:Db,bundle:BundleInstitucional,base:OrdenLa
  await assert.rejects(invocar('pagar',{...pagoDto,versionEsperada:3,importe:1},f.id),codigo('SALDO_INSUFICIENTE'));
  await assert.rejects(invocar('anular',{versionEsperada:3,motivo:'Anulación sintética'},f.id),codigo('ESTADO_INVALIDO'));
  const pagos=await consulta.listar('pagos',{contexto,bundle,id:f.id,entrada:{limite:1}});assert.equal(pagos.elementos.length,1);assert.ok(pagos.siguienteCursor);
+ const uidB=`cobros-b-${randomUUID()}`,actorB=randomUUID();
+ await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:actorB,revision:1,auth_uid:uidB,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rol],estado:'ACTIVO',activo:true,nombre_usuario:uidB});
+ const cuentaB=await bundle.cuenta!.porUid(uidB);assert.ok(cuentaB);const contextoB=crearContextoAutenticado({uid:uidB,institucion:'LABORATORIO_CLINICO',emitidoEn:fecha},cuentaB,uuidPublico(randomUUID()));
+ assert.equal((await consulta.detalle({contexto:contextoB,bundle,id:f.id})).factura.id,f.id); // Alcance institucional, no propiedad por cajero.
+ await assert.rejects(consulta.listar('pagos',{contexto:contextoB,bundle,id:f.id,entrada:{limite:1,cursor:pagos.siguienteCursor}}),codigo('SOLICITUD_INVALIDA'));
+ await assert.rejects(consulta.listar('pagos',{contexto,bundle,id:f.id,entrada:{limite:1,cursor:pagos.siguienteCursor+'X'}}),codigo('SOLICITUD_INVALIDA'));
  const siguientes=await consulta.listar('pagos',{contexto,bundle,id:f.id,entrada:{limite:1,cursor:pagos.siguienteCursor}});assert.equal(siguientes.elementos.length,1);assert.notEqual(pagos.elementos[0]!.id,siguientes.elementos[0]!.id);
  await assert.rejects(consulta.listar('pagos',{contexto,bundle,id:f.id,entrada:{limite:1,cursor:pagos.siguienteCursor,estado:'CONFIRMADO'}}),codigo('SOLICITUD_INVALIDA'));
  let revision=3;
- for(const p of [...pagos.elementos,...siguientes.elementos]){await invocar('revertir',{versionEsperada:revision++,pagoId:p.id,motivo:'Reversión sintética'},f.id);}
+ for(const p of [...pagos.elementos,...siguientes.elementos]){const dto={versionEsperada:revision++,pagoId:p.id,motivo:'Reversión sintética'},clave=uuidPublico(randomUUID()),r=await invocar('revertir',dto,f.id,clave);assert.deepEqual(await invocar('revertir',dto,f.id,clave),r);}
  assert.equal((await ver()).saldo,base.total.centavos);
  await assert.rejects(invocar('revertir',{versionEsperada:revision,pagoId:pagos.elementos[0]!.id,motivo:'Duplicada'},f.id),codigo('ESTADO_INVALIDO'));
- await invocar('anular',{versionEsperada:revision,motivo:'Anulación sintética'},f.id);assert.equal((await ver()).factura.estado,'ANULADA');assert.equal((await ver()).saldo,0);
- assert.equal((await consulta.listar('facturas',{contexto,bundle,entrada:{pacienteId:paciente.id}})).elementos.length,1);
+ const claveAnular=uuidPublico(randomUUID()),dtoAnular={versionEsperada:revision,motivo:'Anulación sintética'},anulada=await invocar('anular',dtoAnular,f.id,claveAnular);assert.deepEqual(await invocar('anular',dtoAnular,f.id,claveAnular),anulada);assert.equal((await ver()).factura.estado,'ANULADA');assert.equal((await ver()).saldo,0);
+ assert.equal((await consulta.listar('facturas',{contexto,bundle,entrada:{pacienteId:paciente.id}})).elementos.length,2);
+ const primeraPagina=await consulta.listar('facturas',{contexto,bundle,entrada:{limite:1}}),segundaPagina=await consulta.listar('facturas',{contexto,bundle,entrada:{limite:1,cursor:primeraPagina.siguienteCursor}});assert.notEqual(primeraPagina.elementos[0]!.id,segundaPagina.elementos[0]!.id);
+ assert.equal((await consulta.listar('facturas',{contexto,bundle,entrada:{desde:fecha,hasta:'2026-11-05T12:00:00.001Z'}})).elementos.length,2);
+ assert.equal((await consulta.listar('facturas',{contexto,bundle,entrada:{desde:'2026-11-05T12:00:00.000000001Z'}})).elementos.length,0);
+ assert.equal((await consulta.listar('facturas',{contexto,bundle,entrada:{hasta:'2026-11-05T12:00:00.000000001Z'}})).elementos.length,2);
+ await assert.rejects(consulta.listar('facturas',{contexto,bundle,entrada:{desde:fecha,hasta:fecha}}),codigo('SOLICITUD_INVALIDA'));
  await db.collection<{_id:string}&Document>('usuarios').updateOne({_id:actor},{$set:{estado:'INACTIVO',activo:false}});
  await assert.rejects(invocar('emitir',entrada,undefined,clave));await assert.rejects(ver());
  console.log('PASS cobros: emisión, centavos, replay, rollback auditoría, archivo, carrera, paginación, reversión, anulación, cuenta actual.');

@@ -5,12 +5,14 @@ import {saldoFactura,totalFactura} from '../../../../dominio/laboratorio/cobros/
 import {crearLectorCobros,mapearFactura,mapearPago,type DocumentoCobro} from './persistencia-cobros.js';
 import {verificarCobros} from './verificar-cobros.js';
 import {CursorCatalogoLaboratorio} from '../laboratorio/cursor-catalogo.js';
+/** Session propia de lectura: un fallo al abortar no sustituye el error original. */
+export async function leerSnapshotCobros<T>(db:Db,leer:(s:ClientSession)=>Promise<T>,verificar=verificarCobros):Promise<T>{
+ await verificar(db);const s=db.client.startSession();
+ try{s.startTransaction({readConcern:{level:'snapshot'}});const r=await leer(s);await s.commitTransaction();return r;}
+ catch(e){if(s.inTransaction()){try{await s.abortTransaction();}catch{/* conservar el error original */}}if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No se pudieron consultar cobros.');}finally{await s.endSession();}
+}
 export function crearConsultasCobros(db:Db,codec=new CursorCatalogoLaboratorio()):ConsultasCobros {
- async function snapshot<T>(leer:(s:ClientSession)=>Promise<T>):Promise<T>{
-  await verificarCobros(db);const s=db.client.startSession();
-  try{s.startTransaction({readConcern:{level:'snapshot'}});const r=await leer(s);await s.commitTransaction();return r;}
-  catch(e){if(s.inTransaction())await s.abortTransaction();if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No se pudieron consultar cobros.');}finally{await s.endSession();}
- }
+ const snapshot=<T>(leer:(s:ClientSession)=>Promise<T>)=>leerSnapshotCobros(db,leer);
  const limiteFecha=(v:string)=>{const d=new Date(v);const fraccion=v.match(/\.(\d+)Z$/)?.[1]??'';return new Date(d.getTime()+(/[1-9]/.test(fraccion.slice(3))?1:0));};
  return {
   detalle(id){return snapshot(async s=>{const l=crearLectorCobros(db,s),factura=await l.facturaPorId(id);if(!factura)return null;const pagado=await l.totalPagado(id);return {factura,pagado,saldo:saldoFactura(factura,pagado),total:totalFactura(factura)};});},

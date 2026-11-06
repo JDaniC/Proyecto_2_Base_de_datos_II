@@ -18,11 +18,11 @@ function queryEscalar(q:unknown){
 export class CobrosLaboratorioController {
  constructor(private readonly comandos:GestionarCobrosLaboratorio,private readonly consultas:ConsultarCobrosLaboratorio){}
  @Get()
- listar(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Query() query:unknown){return this.consultas.listar('facturas',{contexto,bundle,entrada:queryEscalar(query)});}
+ async listar(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Query() query:unknown){const pagina=await this.consultas.listar('facturas',{contexto,bundle,entrada:queryEscalar(query)});return {data:pagina.elementos,meta:{correlacion:contexto.correlacion,...(pagina.siguienteCursor?{siguiente_cursor:pagina.siguienteCursor}:{})}};}
  @Get(':id')
  detalle(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){objetoCerrado(query,[]);return this.consultas.detalle({contexto,bundle,id:uuidPublico(id)});}
  @Get(':id/pagos')
- pagos(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){return this.consultas.listar('pagos',{contexto,bundle,id:uuidPublico(id),entrada:queryEscalar(query)});}
+ async pagos(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){const pagina=await this.consultas.listar('pagos',{contexto,bundle,id:uuidPublico(id),entrada:queryEscalar(query)});return {data:pagina.elementos,meta:{correlacion:contexto.correlacion,...(pagina.siguienteCursor?{siguiente_cursor:pagina.siguienteCursor}:{})}};}
  @Post()
  emitir(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Body() entrada:unknown,@Headers('idempotency-key') clave:string,@Query() query:unknown,@Res({passthrough:true}) res:Response){objetoCerrado(query,[]);return this.escribir('emitir',contexto,bundle,entrada,clave,res);}
  @Post(':id/pagos')
