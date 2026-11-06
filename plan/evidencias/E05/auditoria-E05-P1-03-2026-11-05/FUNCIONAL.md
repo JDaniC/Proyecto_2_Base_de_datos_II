@@ -73,7 +73,7 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | R12 | plan/03 §7; tarea fallos | queryEscalar; gestionar-cobros; leerSnapshotCobros; mappers | runtime/cobros-http; unitarios/cobros-snapshot; unitarios/cobros-lectores | CUBIERTO / PASS |
 | R13 | AGENTS persistencia; M03 | verificarCobros; preparacion; mappers | contratos/cobros-esquema; integración CA14 (collMod temporal y restauración); unitarios/cobros-lectores | CUBIERTO / PASS |
 | R14 | plan/02; AGENTS arquitectura | puertos/cobros; casos; composición; adapter | npm run lint/architecture:check; integración rollback/carrera | CUBIERTO / PASS |
-| R15 | Instrucción humana05/11 + plan/11 | Auditorías antes de cualquier PR y reserva exclusiva antes de implementar | AGENTS/plan11; test_reserva_documental.py (2 pruebas) y revisión de contrato REST de GitHub | CUBIERTO / PASS |
+| R15 | Instrucción humana05/11 + plan/11 | PR nuevos: auditorías antes de abrir y reserva exclusiva antes de implementar; PR79 ya abierto: auditar antes de continuar y conservar reserva existente | AGENTS/plan11; test_reserva_documental.py (2 pruebas) y revisión de contrato REST de GitHub | CUBIERTO / PASS |
 
 ## 4. Desviaciones detectadas
 
@@ -135,3 +135,5 @@ HTTP de seguridad usa identidades sintéticas y dobles explícitos; persistencia
 La primera auditoría no había comprobado explícitamente el snapshot previo de orden al reservar factura: CodeRabbit detectó ese hueco (F04). Se corrigió el plan tipando la unión de snapshots de orden/factura y la integración exige contenido_anterior exacto, versión1 y un registro incluso tras replay. F05 resuelve el conflicto introducido por la nueva política humana: referencia remota exclusiva codex/reserva-ID creada con POST antes de implementación; el segundo no empieza aunque leyera la cola antes. Prueba Git temporal con dos creadores y borrado con SHA ajeno rechazado; contrato REST contrastado con documentación primaria de GitHub. No se publicó una reserva ficticia de esta tarea ni se probó contra GitHub real.
 
 Revalidación:362 runtime/unitarias +42 contratos,2 pruebas de reserva documental, MongoDB CA14/migración0111/1 y modelo102PASS; lint/arquitectura/build PASS. La documentación de funciones nuevas mejora su contrato sin cambiar comportamiento. Ambas auditorías se mantienen PASS sobre el incremento; inventario/hashes actualizados, sin nuevos hallazgos pendientes.
+
+Revalidación documental tras216c909: AGENTS alinea la prioridad de tareas nuevas con la primera creación atómica; el número de PR solo desempata PR heredados competidores. R15 explicita la excepción de PR79 ya abierto: auditorías antes de continuar, reserva por el PR existente. No se atribuye cumplimiento retroactivo. Las2 pruebas documentales/creación exclusiva verifican también esta consistencia; código backend y sus huellas permanecen iguales al incremento probado. Ambas auditorías siguen PASS del alcance.

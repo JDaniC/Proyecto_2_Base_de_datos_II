@@ -44,6 +44,13 @@ class ReservaExclusivaTest(unittest.TestCase):
                       'antes de implementar', 'borrado con lease',
                       'Nunca usar actualización/force-push']:
             self.assertIn(frase, texto)
+        raiz = pathlib.Path(__file__).resolve().parents[2]
+        agentes = (raiz / 'AGENTS.md').read_text()
+        self.assertIn('primera creación atómica exitosa', agentes)
+        self.assertIn('Solo entre PR heredados competidores', agentes)
+        requisitos = (raiz / 'plan/evidencias/E05/auditoria-E05-P1-03-2026-11-05/REQUISITOS.md').read_text()
+        self.assertIn('Excepción PR79', requisitos)
+        self.assertIn('auditar antes de continuar revisión/integración', requisitos)
 
 
 if __name__ == '__main__':

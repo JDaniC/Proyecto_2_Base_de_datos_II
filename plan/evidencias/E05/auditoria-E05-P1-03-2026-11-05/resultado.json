@@ -3,7 +3,7 @@
   "fecha_local": "2026-11-05",
   "zona": "America/Guatemala",
   "auditoria_funcional": "PASS",
-  "auditoria_seguridad": "PASS_DEL_ALCANCE",
+  "auditoria_seguridad": "PASS",
   "unidades": 42,
   "unidades_critical": 22,
   "requisitos_trazados": 15,
@@ -73,5 +73,7 @@
     "fail": 0
   },
   "ultima_revalidacion": "F04 snapshot previo de orden y F05 adquisición exclusiva antes de código; casos verificados después de revisión de 7cbb5ae.",
-  "huella_test_reserva": "a88fdcdcc51b6986ff2b8fac45338f0884fff4c95b1406c0d34781e31db1595b"
+  "huella_test_reserva": "c0b85ec0c878b242ca601788c4aed5fb4dda8a8d89d897ccc6538cd775d0b16a",
+  "alcance": "Modulo backend E05-P1-03 y coherencia de politica documental; riesgos heredados expresos en SEGURIDAD.md.",
+  "ultima_revalidacion_documental": "Prioridad exclusiva en AGENTS y excepcion temporal PR79 explicita en R15;2 tests PASS, backend identico a las huellas probadas."
 }
