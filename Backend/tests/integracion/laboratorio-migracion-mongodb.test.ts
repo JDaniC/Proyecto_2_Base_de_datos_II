@@ -46,6 +46,7 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const importar=(nombre:string)=>import(pathToFileURL(resolve('..','Database','migrations',nombre)).href);
  const {prepararHistorialMongodb}=await importar('004_historial_documental.mjs');
  const {migrarLaboratorioMongodb}=await importar('011_laboratorio_mongodb.mjs');
+ const {migrarResultadosLaboratorioMongodb}=await importar('012_resultados_laboratorio_mongodb.mjs');
  await prepararHistorialMongodb(db);
  await assert.rejects(verificarLaboratorioMongodb(db));
  await assert.rejects(migrarLaboratorioMongodb(db),/DETENER_ESCRITORES/);
@@ -55,6 +56,12 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   await assert.rejects(verificarLaboratorioMongodb(db));
   assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
  }
+ await assert.rejects(verificarLaboratorioMongodb(db));
+ await assert.rejects(migrarResultadosLaboratorioMongodb(db),/DETENER_ESCRITORES/);
+ await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true,despuesDeValidador:()=>{throw new Error('FALLO_012_INYECTADO');}}),/FALLO_012_INYECTADO/);
+ assert.equal((await db.collection('historial_modelo').findOne({id:12}))!.estado,'MIGRANDO');
+ await assert.rejects(verificarLaboratorioMongodb(db));
+ assert.equal((await migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
  await verificarLaboratorioMongodb(db);
  const referenciaIds={solicitante:randomUUID(),tipo:randomUUID(),metodo:randomUUID(),prueba:randomUUID(),proveedor:randomUUID()};
  await db.collection<{_id:string}&Document>('solicitantes').insertOne({_id:referenciaIds.solicitante,revision:1,nombre_completo:'Solicitante sintético',tipo:'MEDICO',entidad_colegiacion:'Entidad sintética',numero_colegiado:'SINT-REF',activo:true});

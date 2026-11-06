@@ -7,15 +7,18 @@ import type {DocumentoPacienteMongo} from '../pacientes/mapear-paciente-mongodb.
 import type {Db,ClientSession} from 'mongodb';
 import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
 import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
+import type {ResultadoLaboratorio} from '../../../../dominio/laboratorio/resultados/resultado.js';
+import {verificarProcedenciaResultado} from '../../../../dominio/laboratorio/resultados/resultado.js';
 import type {CambioPlanificado,ComandoEstable} from '../../../../aplicacion/puertos/nucleo.js';
 import type {ContextoAutenticado} from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import {ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import {guardarMuestraMongodb} from './guardar-muestra.js';
 import {documentoOrdenLaboratorio,mapearOrdenLaboratorio,validarTamanoDocumentoOrdenLaboratorio} from './documento-orden.js';
+import {documentoResultadoLaboratorio} from './documento-resultado.js';
 
 /** Llamado exclusivamente desde UoW después de todas las lecturas y validaciones. */
 export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,contexto:ContextoAutenticado,comando:ComandoEstable,
- cambios:readonly CambioPlanificado[],originales:ReadonlyMap<string,Muestra>,pacientes:ReadonlyMap<string,DocumentoPacienteMongo>,ordenes:ReadonlyMap<string,OrdenLaboratorio>):Promise<void>{
+ cambios:readonly CambioPlanificado[],originales:ReadonlyMap<string,Muestra>,pacientes:ReadonlyMap<string,DocumentoPacienteMongo>,ordenes:ReadonlyMap<string,OrdenLaboratorio>,resultados:ReadonlyMap<string,ResultadoLaboratorio>=new Map()):Promise<void>{
  if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!comando.caso.startsWith('laboratorio.'))throw new ErrorDominio('SIN_PERMISO','Operación fuera del ámbito de laboratorio.');
  const ordenesNuevas=cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='CREAR_ORDEN');
  for(const cambio of ordenesNuevas){
@@ -29,6 +32,14 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   if(!o)throw new ErrorDominio('REFERENCIA_INCOMPATIBLE','La orden debe leerse en la transacción.');
   validarMuestraEnOrden(m,o);
   if(cambios.filter(c=>c.agregado==='ordenes'&&c.tipo==='RESERVAR_MUESTRA'&&c.recursoId===o.id).length!==1)throw new ErrorDominio('ESTADO_INVALIDO','La muestra requiere reserva de revisión de orden.');
+ }
+ const cambiosResultado=cambios.filter(c=>c.agregado==='resultados'&&c.tipo==='GUARDAR_RESULTADO');
+ for(const cambio of cambiosResultado){
+  const resultado=cambio.nuevoEstado as ResultadoLaboratorio,orden=ordenes.get(resultado.ordenId);
+  if(!orden)throw new ErrorDominio('REFERENCIA_INCOMPATIBLE','La orden del resultado debe leerse en la transacción.');
+  const procedencia=resultado.procedencia.map(v=>originales.get(v.muestraId));
+  if(procedencia.some(v=>!v))throw new ErrorDominio('REFERENCIA_INCOMPATIBLE','Las muestras del resultado deben leerse en la transacción.');
+  verificarProcedenciaResultado(resultado,orden,procedencia as Muestra[],new Map(resultado.procedencia.map(v=>[v.tipoMuestraId,v.tipoMuestraNombre])));
  }
  for(const cambio of cambios){
   if(['solicitantes','tipos_muestra','proveedores'].includes(cambio.agregado)&&cambio.tipo==='GUARDAR_REFERENCIA'){
@@ -73,6 +84,33 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
    if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
    continue;
   }
+  if(cambio.agregado==='resultados'&&cambio.tipo==='GUARDAR_RESULTADO'){
+   const resultado=cambio.nuevoEstado as ResultadoLaboratorio,anterior=originalesResultado(resultados,cambio.recursoId);
+   const validacion=comando.caso==='laboratorio.resultado.validar';
+   if(validacion){if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar')||resultado.estado!=='VALIDADO'||resultado.validadorId!==contexto.cuenta.id)throw new ErrorDominio('SIN_PERMISO','No puede validar resultados.');}
+   else if(!contexto.cuenta.roles.includes('ANALISTA_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.analizar')||resultado.analistaId!==contexto.cuenta.id)throw new ErrorDominio('SIN_PERMISO','No puede capturar resultados.');
+   if(resultado.id!==cambio.recursoId)throw new ErrorDominio('ESTADO_INVALIDO','Plan de resultado incompatible.');
+   const doc=documentoResultadoLaboratorio(resultado);
+   if(cambio.versionAnterior===null){
+    if(anterior||resultado.revision!==1||resultado.estado!=='BORRADOR')throw new ErrorDominio('ESTADO_INVALIDO','El resultado nuevo debe iniciar como borrador.');
+    await db.collection<import('./documento-resultado.js').DocumentoResultadoLaboratorio>('resultados').insertOne(doc,{session});
+   }else{
+    if(!anterior||anterior.revision!==cambio.versionAnterior||resultado.revision!==anterior.revision+1||anterior.estado!=='BORRADOR'||resultado.id!==anterior.id||resultado.serieId!==anterior.serieId||resultado.version!==anterior.version)throw new ErrorDominio('VERSION_DESACTUALIZADA','El resultado cambió.');
+    const r=await db.collection<import('./documento-resultado.js').DocumentoResultadoLaboratorio>('resultados').replaceOne({_id:resultado.id,revision:cambio.versionAnterior,estado:'BORRADOR'},doc,{session});
+    if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','El resultado cambió.');
+   }
+   continue;
+  }
+  if(cambio.agregado==='ordenes'&&cambio.tipo==='ACTUALIZAR_POR_RESULTADO'){
+   if(!contexto.cuenta.roles.includes('VALIDADOR_LABORATORIO')||!contexto.cuenta.permisos.includes('resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede completar ítems por resultado.');
+   const anterior=ordenes.get(cambio.recursoId),orden=cambio.nuevoEstado as OrdenLaboratorio;
+   const validado=cambiosResultado.some(v=>{const r=v.nuevoEstado as ResultadoLaboratorio;return r.ordenId===orden.id&&r.estado==='VALIDADO';});
+   if(!anterior||!validado||cambio.versionAnterior!==anterior.version||orden.version!==anterior.version+1||orden.id!==anterior.id)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
+   const doc=documentoOrdenLaboratorio(orden,orden.id);
+   const r=await db.collection<import('./documento-orden.js').DocumentoOrdenLaboratorio>('ordenes').updateOne({_id:orden.id,revision:anterior.version},{$set:{revision:orden.version,estado:orden.estado,items:doc.items}},{session});
+   if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
+   continue;
+  }
 
   if(cambio.agregado==='pacientes'&&cambio.tipo==='RESERVAR_ORDEN'){
    if(!contexto.cuenta.permisos.includes('ordenes.administrar')||!ordenesNuevas.some(c=>(c.nuevoEstado as OrdenLaboratorio).pacienteId===cambio.recursoId))throw new ErrorDominio('SIN_PERMISO','Reserva fuera del comando de orden.');
@@ -99,3 +137,5 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   }else throw new ErrorDominio('ESTADO_INVALIDO','Cambio de laboratorio no implementado.');
  }
 }
+
+function originalesResultado(resultados:ReadonlyMap<string,ResultadoLaboratorio>,id:string):ResultadoLaboratorio|null{return resultados.get(id)??null;}

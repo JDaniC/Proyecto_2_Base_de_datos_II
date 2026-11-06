@@ -227,3 +227,13 @@ El manifiesto independiente exige LISTO para habilitar la extensión. Legado sin
 procedencia se respalda íntegro y conserva RECONCILIAR; no se convierte en ausencia
 verificada de alergias ni se inventan fechas/autores. Reejecutar retoma cursor sin
 eliminar datos; revertir el servidor conserva respaldos y versiones.
+
+## 012 · Resultados de laboratorio (E05-P2-01)
+
+Después de 011, aplicar `migrarResultadosLaboratorioMongodb` de
+[012_resultados_laboratorio_mongodb.mjs](012_resultados_laboratorio_mongodb.mjs)
+también en instalaciones nuevas. Requiere administración, respaldo externo y
+escritores detenidos. Amplía el validador de `resultados` sin modificar M03 ni
+documentos existentes y añade índices parciales de paciente y repetición. Las
+precondiciones, recuperación reanudable y límites de backfill se documentan en
+[012_resultados_laboratorio_mongodb.md](012_resultados_laboratorio_mongodb.md).

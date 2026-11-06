@@ -17,11 +17,11 @@ export class ConsultarRecursosLaboratorio{
   if(!permisos.some(v=>cuenta.permisos.includes(v)))throw new ErrorDominio('SIN_PERMISO','No puede consultar este recurso.');
   return contexto;
  }
- async detalle(recurso:'ordenes'|'muestras',p:Parametros&{id:unknown}){
-  if(!['ordenes','muestras'].includes(recurso))throw solicitudInvalida('Recurso inválido.');
-  const contexto=await this.contexto(p,[recurso==='ordenes'?'ordenes.administrar':'muestras.administrar']);
+ async detalle(recurso:'ordenes'|'muestras'|'resultados',p:Parametros&{id:unknown}){
+  if(!['ordenes','muestras','resultados'].includes(recurso))throw solicitudInvalida('Recurso inválido.');
+  const contexto=await this.contexto(p,recurso==='ordenes'?['ordenes.administrar']:recurso==='muestras'?['muestras.administrar']:['resultados.analizar','resultados.validar']);
   const id=uuidPublico(p.id),repo=p.bundle.consultasLaboratorio!;
-  const dato=recurso==='ordenes'?await repo.ordenPorId(contexto,id):await repo.muestraPorId(contexto,id);
+  const dato=recurso==='ordenes'?await repo.ordenPorId(contexto,id):recurso==='muestras'?await repo.muestraPorId(contexto,id):await repo.resultadoPorId(contexto,id);
   if(!dato)throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Recurso no encontrado.');return dato;
  }
  async catalogo(tipo:TipoCatalogoLaboratorio,p:Parametros&{entrada:unknown}){

@@ -22,8 +22,10 @@ export interface ProcedenciaResultado {
   readonly muestraId: string;
   readonly codigo: string;
   readonly tipoMuestraId: string;
+  readonly tipoMuestraNombre: string;
   readonly fechaToma: string;
   readonly fechaRecepcion: string;
+  readonly fechaAceptacion: string;
 }
 
 export interface ResultadoLaboratorio {
@@ -123,7 +125,7 @@ function itemDeOrden(orden: OrdenLaboratorio, itemId: string): ItemOrden {
   return item;
 }
 
-function normalizarProcedencia(orden: OrdenLaboratorio, item: ItemOrden, muestras: readonly Muestra[]): readonly ProcedenciaResultado[] {
+function normalizarProcedencia(orden: OrdenLaboratorio, item: ItemOrden, muestras: readonly Muestra[], tiposMuestra:ReadonlyMap<string,string>): readonly ProcedenciaResultado[] {
   if (!Array.isArray(muestras) || muestras.length < 1 || muestras.length > 100) throw solicitudInvalida('El resultado requiere de 1 a 100 muestras.', 'muestraIds');
   const ids = muestras.map(v => uuidPublico(v.id, 'muestraIds'));
   if (new Set(ids).size !== ids.length) throw solicitudInvalida('No se admiten muestras duplicadas.', 'muestraIds');
@@ -131,10 +133,34 @@ function normalizarProcedencia(orden: OrdenLaboratorio, item: ItemOrden, muestra
     if (muestra.ordenId !== orden.id || !muestra.itemIds.includes(item.id)) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La muestra no corresponde a la orden y al ítem.');
     if (muestra.estado !== 'ACEPTADA' && muestra.estado !== 'PROCESADA') throw new ErrorDominio('ESTADO_INVALIDO', 'La muestra no está apta para análisis.');
     if (!muestra.tipoMuestraId || !item.prueba.tiposMuestraIds.includes(muestra.tipoMuestraId)) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'El tipo de muestra no es compatible con la prueba congelada.');
-    if (!muestra.fechaRecepcion) throw new ErrorDominio('ESTADO_INVALIDO', 'La muestra apta carece de recepción verificable.');
-    return Object.freeze({ muestraId: uuidPublico(muestra.id), codigo: muestra.codigo, tipoMuestraId: uuidPublico(muestra.tipoMuestraId),
-      fechaToma: instanteUtc(muestra.fechaToma), fechaRecepcion: instanteUtc(muestra.fechaRecepcion) });
+    const nombreTipo=tiposMuestra.get(muestra.tipoMuestraId),aceptacion=[...muestra.eventos].reverse().find(v=>v.tipo==='ACEPTACION');
+    if (!muestra.fechaRecepcion || !aceptacion || !nombreTipo?.trim()) throw new ErrorDominio('ESTADO_INVALIDO', 'La muestra apta carece de recepción, aceptación o tipo histórico verificable.');
+    return Object.freeze({ muestraId: uuidPublico(muestra.id), codigo: muestra.codigo, tipoMuestraId: uuidPublico(muestra.tipoMuestraId),tipoMuestraNombre:nombreTipo.trim(),
+      fechaToma: instanteUtc(muestra.fechaToma), fechaRecepcion: instanteUtc(muestra.fechaRecepcion),fechaAceptacion:instanteUtc(aceptacion.instante) });
   }));
+}
+
+/** Revalida dentro de la UoW que la procedencia guardada siga siendo la misma y apta. */
+export function verificarProcedenciaResultado(resultado: ResultadoLaboratorio, orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): void {
+  if (orden.id !== resultado.ordenId || orden.pacienteId !== resultado.pacienteId) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La orden o el paciente no corresponden al resultado.');
+  const item = itemDeOrden(orden, resultado.itemId);
+  if (item.prueba.id !== resultado.pruebaId) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La prueba no corresponde al resultado.');
+  const procedencia = normalizarProcedencia(orden, item, muestras,tiposMuestra);
+  if (procedencia.length !== resultado.procedencia.length || procedencia.some((p, i) => {
+    const guardada = resultado.procedencia[i];
+    return !guardada || p.muestraId !== guardada.muestraId || p.codigo !== guardada.codigo || p.tipoMuestraId !== guardada.tipoMuestraId ||
+      p.tipoMuestraNombre!==guardada.tipoMuestraNombre||p.fechaToma !== guardada.fechaToma || p.fechaRecepcion !== guardada.fechaRecepcion||p.fechaAceptacion!==guardada.fechaAceptacion;
+  })) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La procedencia de muestras cambió o no coincide con el resultado.');
+}
+
+/** Completa el ítem al validar por primera vez y deriva el estado global sin tocar cancelados. */
+export function completarOrdenPorResultado(orden: OrdenLaboratorio, resultado: ResultadoLaboratorio): OrdenLaboratorio {
+  if (resultado.estado !== 'VALIDADO' || resultado.ordenId !== orden.id) throw new ErrorDominio('ESTADO_INVALIDO', 'La orden solo puede completarse con un resultado validado propio.');
+  const item = itemDeOrden(orden, resultado.itemId);
+  if (item.estado === 'COMPLETADO') return orden;
+  const items = orden.items.map(v => v.id === item.id ? Object.freeze({ ...v, estado: 'COMPLETADO' as const }) : v);
+  const estado = items.every(v => v.estado === 'COMPLETADO' || v.estado === 'CANCELADO') ? 'COMPLETADA' as const : 'EN_PROCESO' as const;
+  return Object.freeze({ ...orden, version: orden.version + 1, estado, items: Object.freeze(items) });
 }
 
 function componentesDe(item: ItemOrden, entradas: readonly EntradaComponenteResultado[]): readonly ComponenteResultado[] {
@@ -151,27 +177,27 @@ function componentesDe(item: ItemOrden, entradas: readonly EntradaComponenteResu
   return Object.freeze(componentes);
 }
 
-function crearBase(entrada: EntradaCapturaResultado, orden: OrdenLaboratorio, muestras: readonly Muestra[]): ResultadoLaboratorio {
+function crearBase(entrada: EntradaCapturaResultado, orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
   const item = itemDeOrden(orden, entrada.itemId);
   const observaciones = textoOpcional(entrada.observaciones, 4000, 'observaciones');
   return Object.freeze({ id: uuidPublico(entrada.id), revision: 1, serieId: uuidPublico(entrada.serieId, 'serieId'), version: 1,
     ordenId: uuidPublico(orden.id), itemId: item.id, pruebaId: item.prueba.id, pacienteId: uuidPublico(orden.pacienteId),
-    procedencia: normalizarProcedencia(orden, item, muestras), ...(entrada.equipoId === undefined ? {} : { equipoId: uuidPublico(entrada.equipoId, 'equipoId') }),
+    procedencia: normalizarProcedencia(orden, item, muestras,tiposMuestra), ...(entrada.equipoId === undefined ? {} : { equipoId: uuidPublico(entrada.equipoId, 'equipoId') }),
     analistaId: uuidPublico(entrada.analistaId, 'analistaId'), fechaAnalisis: instanteUtc(entrada.instante), estado: 'BORRADOR' as const,
     componentes: componentesDe(item, entrada.componentes), ...(observaciones === undefined ? {} : { observaciones }) });
 }
 
 /** Primera captura: la identidad de serie se fija fuera de la UoW y nunca viene del catálogo. */
-export function crearBorradorResultado(entrada: EntradaCapturaResultado, orden: OrdenLaboratorio, muestras: readonly Muestra[]): ResultadoLaboratorio {
-  return crearBase(entrada, orden, muestras);
+export function crearBorradorResultado(entrada: EntradaCapturaResultado, orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
+  return crearBase(entrada, orden, muestras,tiposMuestra);
 }
 
 /** Edita únicamente un BORRADOR y conserva identidad, serie y versión clínica. */
 export function guardarBorradorResultado(actual: ResultadoLaboratorio, revisionEsperada: number, entrada: Omit<EntradaCapturaResultado, 'id' | 'serieId' | 'itemId'>,
-  orden: OrdenLaboratorio, muestras: readonly Muestra[]): ResultadoLaboratorio {
+  orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
   if (actual.estado !== 'BORRADOR') throw new ErrorDominio('ESTADO_INVALIDO', 'Un resultado validado no puede sobrescribirse.');
   if (!Number.isSafeInteger(revisionEsperada) || revisionEsperada !== actual.revision) throw new ErrorDominio('VERSION_DESACTUALIZADA', 'El resultado cambió; recargue antes de continuar.');
-  const base = crearBase({ ...entrada, id: actual.id, serieId: actual.serieId, itemId: actual.itemId }, orden, muestras);
+  const base = crearBase({ ...entrada, id: actual.id, serieId: actual.serieId, itemId: actual.itemId }, orden, muestras,tiposMuestra);
   if (base.ordenId !== actual.ordenId || base.pruebaId !== actual.pruebaId || base.pacienteId !== actual.pacienteId) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La edición no puede cambiar la procedencia clínica del resultado.');
   return Object.freeze({ ...base, revision: actual.revision + 1, version: actual.version });
 }
@@ -185,19 +211,19 @@ export function validarResultado(actual: ResultadoLaboratorio, revisionEsperada:
 }
 
 export function crearCorreccionResultado(anterior: ResultadoLaboratorio, entrada: EntradaCapturaResultado, motivo: string,
-  orden: OrdenLaboratorio, muestras: readonly Muestra[]): ResultadoLaboratorio {
+  orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
   if (anterior.estado !== 'VALIDADO') throw new ErrorDominio('ESTADO_INVALIDO', 'Solo un resultado validado puede corregirse.');
   const razon = textoOpcional(motivo, 2000, 'motivoCorreccion');
   if (!razon) throw solicitudInvalida('La corrección requiere motivo.', 'motivoCorreccion');
-  const base = crearBase({ ...entrada, serieId: anterior.serieId, itemId: anterior.itemId }, orden, muestras);
+  const base = crearBase({ ...entrada, serieId: anterior.serieId, itemId: anterior.itemId }, orden, muestras,tiposMuestra);
   if (base.id === anterior.id || base.ordenId !== anterior.ordenId || base.pruebaId !== anterior.pruebaId || base.pacienteId !== anterior.pacienteId) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La corrección debe conservar la procedencia clínica y usar nueva identidad.');
   return Object.freeze({ ...base, version: anterior.version + 1, resultadoAnteriorId: anterior.id, motivoCorreccion: razon });
 }
 
 export function crearRepeticionResultado(anterior: ResultadoLaboratorio, entrada: EntradaCapturaResultado,
-  orden: OrdenLaboratorio, muestras: readonly Muestra[]): ResultadoLaboratorio {
+  orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
   if (anterior.estado !== 'VALIDADO') throw new ErrorDominio('ESTADO_INVALIDO', 'Solo un resultado validado puede repetirse.');
-  const base = crearBase({ ...entrada, itemId: anterior.itemId }, orden, muestras);
+  const base = crearBase({ ...entrada, itemId: anterior.itemId }, orden, muestras,tiposMuestra);
   if (base.id === anterior.id || base.serieId === anterior.serieId || base.ordenId !== anterior.ordenId || base.pruebaId !== anterior.pruebaId || base.pacienteId !== anterior.pacienteId) throw new ErrorDominio('REFERENCIA_INCOMPATIBLE', 'La repetición requiere identidades nuevas y la misma procedencia clínica.');
   return Object.freeze({ ...base, resultadoRepetidoDeId: anterior.id });
 }
