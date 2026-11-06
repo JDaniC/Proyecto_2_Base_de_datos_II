@@ -1,0 +1,260 @@
+[
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 14,
+    "unidad": "receptorFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 19,
+    "unidad": "totalFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 34,
+    "unidad": "emitirFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 42,
+    "unidad": "saldoFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 48,
+    "unidad": "exigirRevisionFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 53,
+    "unidad": "registrarPago",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 62,
+    "unidad": "revertirPago",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/dominio/laboratorio/cobros/factura.ts",
+    "linea": 68,
+    "unidad": "anularFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 9,
+    "unidad": "leerSnapshotCobros",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 15,
+    "unidad": "crearConsultasCobros",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 16,
+    "unidad": "snapshot",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 17,
+    "unidad": "limiteFecha",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 20,
+    "unidad": "detalle",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts",
+    "linea": 22,
+    "unidad": "listar",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 10,
+    "unidad": "fallo",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 12,
+    "unidad": "entero",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 14,
+    "unidad": "fecha",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 16,
+    "unidad": "documentoFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 22,
+    "unidad": "mapearFactura",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 30,
+    "unidad": "documentoPago",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 34,
+    "unidad": "mapearPago",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 42,
+    "unidad": "crearLectorCobros",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 45,
+    "unidad": "facturaPorId",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 47,
+    "unidad": "facturaPorOrden",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 49,
+    "unidad": "pagoPorId",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 51,
+    "unidad": "totalPagado",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts",
+    "linea": 58,
+    "unidad": "aplicarCambiosCobros",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/verificar-cobros.ts",
+    "linea": 6,
+    "unidad": "ordenar",
+    "riesgo": "MEDIUM"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/salida/mongodb/cobros/verificar-cobros.ts",
+    "linea": 8,
+    "unidad": "verificarCobros",
+    "riesgo": "MEDIUM"
+  },
+  {
+    "archivo": "Backend/src/aplicacion/casos-uso/laboratorio/gestionar-cobros.ts",
+    "linea": 16,
+    "unidad": "ejecutar",
+    "riesgo": "CRITICAL"
+  },
+  {
+    "archivo": "Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts",
+    "linea": 12,
+    "unidad": "contexto",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts",
+    "linea": 21,
+    "unidad": "detalle",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts",
+    "linea": 25,
+    "unidad": "listar",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 12,
+    "unidad": "queryEscalar",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 22,
+    "unidad": "listar",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 25,
+    "unidad": "detalle",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 28,
+    "unidad": "pagos",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 31,
+    "unidad": "emitir",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 34,
+    "unidad": "pagar",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 37,
+    "unidad": "revertir",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 40,
+    "unidad": "anular",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts",
+    "linea": 43,
+    "unidad": "escribir",
+    "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/composicion/crear-bundles-institucionales.ts",
+    "linea": 38,
+    "unidad": "crearBundlesInstitucionales",
+    "riesgo": "HIGH"
+  }
+]

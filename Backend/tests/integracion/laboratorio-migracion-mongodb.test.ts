@@ -1,3 +1,5 @@
+import {crearBundlesInstitucionales} from '../../src/composicion/crear-bundles-institucionales.js';
+import {probarCobros} from './cobros-laboratorio-circuito.js';
 import {crearConsultasLaboratorioMongodb} from '../../src/adaptadores/salida/mongodb/laboratorio/consultar-recursos.js';
 import {CursorCatalogoLaboratorio} from '../../src/adaptadores/salida/mongodb/laboratorio/cursor-catalogo.js';
 import {ConsultarRecursosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-recursos.js';
@@ -413,6 +415,7 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await assert.rejects(bundle.uow!.ejecutar(contexto,posterior,async lector=>{const p=await lector.pacientes.porId(uuidPublico(paciente.id)) as Paciente;return plan(posterior,{...nuevaOrden,id:posterior.id},p);}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='ESTADO_INVALIDO');
  assert.equal(await ordenes.findOne({_id:posterior.id}),null);
  assert.deepEqual(await db.collection('pacientes').findOne({_id:paciente.id} as Document),archivado);
+ if(process.env.PROBAR_COBROS==='1')await probarCobros(db,crearBundlesInstitucionales(['LABORATORIO_CLINICO'],{LABORATORIO_CLINICO:{...bundle,cuenta:bundle.cuenta}})[0]!,resultadoCaso.respuesta);
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  await assert.rejects(verificarLaboratorioMongodb(db));
