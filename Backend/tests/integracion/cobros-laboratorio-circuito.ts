@@ -1,3 +1,10 @@
+import {AppModule} from '../../src/composicion/app.module.js';
+import {crearAplicacionHttp} from '../../src/composicion/crear-aplicacion-http.js';
+import {leerContratoOpenApi} from '../../src/composicion/leer-contrato-openapi.js';
+import {parsearConfiguracion} from '../../src/configuracion/entorno.js';
+import {VerificadorIdentidadMemoria} from '../../src/adaptadores/salida/identidad/verificador-identidad-memoria.js';
+import {resolve} from 'node:path';
+import type {AddressInfo} from 'node:net';
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import type {Db,Document} from 'mongodb';
@@ -64,6 +71,15 @@ export async function probarCobros(db:Db,bundle:BundleInstitucional,base:OrdenLa
  assert.equal(carrera.filter(r=>r.status==='fulfilled').length,1);assert.equal((await ver()).saldo,0);assert.equal(await db.collection('pagos').countDocuments({factura_id:f.id}),2);
  await assert.rejects(invocar('pagar',{...pagoDto,versionEsperada:3,importe:1},f.id),codigo('SALDO_INSUFICIENTE'));
  await assert.rejects(invocar('anular',{versionEsperada:3,motivo:'Anulación sintética'},f.id),codigo('ESTADO_INVALIDO'));
+ const config=parsearConfiguracion({APP_ENV:'test',HOST:'127.0.0.1',PORT:'3000',INSTITUTIONS:'HOSPITAL_GENERAL,CLINICA_ODONTOLOGICA,LABORATORIO_CLINICO,CENTRO_MEDICO_PEDIATRICO'});
+ const token=`cobros-http-sintetico-${randomUUID()}`;
+ const http=await crearAplicacionHttp(AppModule.registrar(config,{bundles:[bundle],verificadorIdentidad:new VerificadorIdentidadMemoria([{token,uid,institucion:'LABORATORIO_CLINICO'}])}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
+ try{
+  await http.listen(0,'127.0.0.1');const url=`http://127.0.0.1:${(http.getHttpServer().address() as AddressInfo).port}/api/v1/laboratorio/facturas`,headers={authorization:`Bearer ${token}`};
+  const laboratorioUrl=url.slice(0,url.lastIndexOf('/'));for(const ruta of ['/ordenes?limite=1','/catalogos/pruebas?limite=1'])assert.equal((await fetch(laboratorioUrl+ruta,{headers})).status,200,ruta);
+  const detalle=await fetch(`${url}/${f.id}`,{headers});assert.equal(detalle.status,200);assert.equal(((await detalle.json()) as {data:{saldo:number}}).data.saldo,0);
+  for(const ruta of ['',`/${f.id}/pagos`]){const r=await fetch(`${url}${ruta}?limite=1`,{headers});assert.equal(r.status,200);const body=await r.json() as {data:unknown[];meta:{siguiente_cursor?:string}};assert.equal(body.data.length,1);assert.ok(body.meta.siguiente_cursor);const next=await fetch(`${url}${ruta}?limite=1&cursor=${encodeURIComponent(body.meta.siguiente_cursor)}`,{headers});assert.equal(next.status,200);}
+ }finally{await http.close();}
  const pagos=await consulta.listar('pagos',{contexto,bundle,id:f.id,entrada:{limite:1}});assert.equal(pagos.elementos.length,1);assert.ok(pagos.siguienteCursor);
  const uidB=`cobros-b-${randomUUID()}`,actorB=randomUUID();
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:actorB,revision:1,auth_uid:uidB,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rol],estado:'ACTIVO',activo:true,nombre_usuario:uidB});

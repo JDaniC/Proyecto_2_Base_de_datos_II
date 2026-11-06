@@ -15,6 +15,9 @@ import type { PuertosClinicos } from '../aplicacion/puertos/clinica.js';
 import type { PuertosHospital } from '../aplicacion/puertos/hospital.js';
 
 export interface RepositoriosInstitucion {
+  readonly cobros?: BundleInstitucional['cobros'];
+  readonly consultasLaboratorio?: BundleInstitucional['consultasLaboratorio'];
+  readonly listadosLaboratorio?: BundleInstitucional['listadosLaboratorio'];
   readonly vacunasPediatricas?: BundleInstitucional['vacunasPediatricas'];
   readonly antecedentesPediatricos?: BundleInstitucional['antecedentesPediatricos'];
   readonly responsablesPediatricos?: BundleInstitucional['responsablesPediatricos'];
@@ -47,6 +50,9 @@ export function crearBundlesInstitucionales(
       ...(repos?.pacientes ? { pacientes: repos.pacientes } : {}),
       ...(repos?.historial ? { historial: repos.historial } : {}),
       ...(repos?.uow ? { uow: repos.uow } : {}),
+      ...(repos?.cobros ? { cobros: repos.cobros } : {}),
+      ...(repos?.consultasLaboratorio ? { consultasLaboratorio: repos.consultasLaboratorio } : {}),
+      ...(repos?.listadosLaboratorio ? { listadosLaboratorio: repos.listadosLaboratorio } : {}),
       ...(repos?.vacunasPediatricas ? {vacunasPediatricas:repos.vacunasPediatricas} : {}),
       ...(repos?.antecedentesPediatricos ? {antecedentesPediatricos:repos.antecedentesPediatricos} : {}),
       ...(repos?.responsablesPediatricos ? {responsablesPediatricos:repos.responsablesPediatricos} : {}),

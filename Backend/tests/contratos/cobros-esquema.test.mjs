@@ -19,3 +19,10 @@ test('OpenAPI publica las siete operaciones de cobros con autorización y errore
  for(const o of operaciones){assert.deepEqual(o['x-permisos'],['cobros.administrar']);assert.deepEqual(o['x-instituciones'],['LABORATORIO_CLINICO']);for(const c of ['400','401','403','404','409','413','500','503'])assert.ok(o.responses[c]);}
  for(const dto of ['CobrosEmitir','CobrosPagar','CobrosRevertir','CobrosAnular','CobrosReceptor'])assert.equal(api.components.schemas[dto].additionalProperties,false);
 });
+
+test('mapa UI conserva cobros en P1-03 e inventario/calidad en P2-02',()=>{
+ const mapa=JSON.parse(readFileSync(new URL('../../docs/mapa-ui-v1.json',import.meta.url),'utf8'));
+ for(const [responsable,metodos]of [['E05-P1-03',['obtenerFacturas','obtenerFacturaPorId','obtenerFacturaPorOrden','registrarPagoFactura','revertirPagoFactura','anularFactura']],['E05-P2-02',['obtenerEquipos','cambiarEstadoEquipo','registrarEquipo','obtenerControlesCalidad','registrarControlCalidad','obtenerLotesReactivos','obtenerMovimientosInventario','registrarMovimientoInventario','registrarNuevoLoteReactivo']]]){
+  for(const metodo of metodos){const e=mapa.find(x=>x.metodo===`LaboratoryRepository.${metodo}`);assert.ok(e,metodo);assert.equal(e.responsable,responsable,metodo);}
+ }
+});

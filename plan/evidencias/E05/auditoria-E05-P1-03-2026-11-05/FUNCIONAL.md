@@ -4,7 +4,7 @@ Fecha: 05/11/2026 America/Guatemala. Autorización: petición de ejecutar E05-P1
 
 ## 1. Resumen ejecutivo
 
-Resultado final: PASS del alcance auditado, tras corregir tres desviaciones ejecutables/documentales y dos inconsistencias de coordinación/fuentes. 42 unidades inventariadas, incluidas 22 clasificadas CRITICAL; 15 requisitos trazados. Los helpers locales se incluyen. Adaptadores/composición/UoW compartidos se revisaron en las líneas de integración y con la regresión completa. Sin requisitos CRITICAL pendientes en esta entrega. No se infiere cumplimiento de E05 completo.
+Resultado final: PASS del alcance auditado, tras corregir siete desviaciones verificadas. 43 unidades inventariadas (42 propias y la proyección institucional compartida), incluidas 22 clasificadas CRITICAL; 16 requisitos trazados. Los helpers locales se incluyen. Adaptadores/composición/UoW compartidos se revisaron en las líneas de integración y con la regresión completa. Sin requisitos CRITICAL pendientes en esta entrega. No se infiere cumplimiento de E05 completo.
 
 ## 2. Inventario y cobertura
 
@@ -54,6 +54,7 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | U40 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:37`revertir` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
 | U41 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:40`anular` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
 | U42 | Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts:43`escribir` | HIGH | R09/R11/R12 | HTTP no confiable; delegación cerrada y sobre data/meta | H + C | PASS |
+| U43 | Backend/src/composicion/crear-bundles-institucionales.ts:38 `crearBundlesInstitucionales` | HIGH | R09/R11/R14 | Repositorios confiables; conserva extensiones en bundle productivo | laboratorio-composicion + HTTP por composición + MongoDB/HTTP real | PASS |
 
 ## 3. Matriz requisito → código → test
 
@@ -74,6 +75,7 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | R13 | AGENTS persistencia; M03 | verificarCobros; preparacion; mappers | contratos/cobros-esquema; integración CA14 (collMod temporal y restauración); unitarios/cobros-lectores | CUBIERTO / PASS |
 | R14 | plan/02; AGENTS arquitectura | puertos/cobros; casos; composición; adapter | npm run lint/architecture:check; integración rollback/carrera | CUBIERTO / PASS |
 | R15 | Instrucción humana05/11 + plan/11 | PR nuevos: auditorías antes de abrir y reserva exclusiva antes de implementar; PR79 ya abierto: auditar antes de continuar y conservar reserva existente | AGENTS/plan11; test_reserva_documental.py (2 pruebas) y revisión de contrato REST de GitHub | CUBIERTO / PASS |
+| R16 | plan/03 §2/§7 y tareas E05 | Mapa UI asigna las seis acciones de cobros a P1-03 y nueve de inventario/calidad a P2-02 sin alterar otros campos | contratos/cobros-esquema + comparación JSON antes/después | CUBIERTO / PASS |
 
 ## 4. Desviaciones detectadas
 
@@ -84,8 +86,11 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | F03 | DOC_DESACTUALIZADA / LOW | plan/03 §7 intercambiaba responsabilidades de P1-03/P2-02 frente a archivos de tareas | Se alinean facturas/pagos→P1-03 y calidad/inventario→P2-02 | PASS corregido |
 | F04 | SUB_IMPLEMENTADO / MEDIUM | La emisión reservaba revisión de orden sin guardar su snapshot previo; UoW solo guarda revisiones planificadas | Se añade revisión de orden al mismo plan; MongoDB confirma snapshot completo versión1 una sola vez incluso en replay | PASS corregido |
 | F05 | DIVERGENTE / HIGH | Mover PR tras auditorías dejaba sin desempate exclusivo previo a implementación | Creación atómica de referencia compartida única antes de código, prioridades heredadas y borrado con lease; dos competidores Git aislados, solo uno adquiere | PASS corregido |
+| F06 | SUB_IMPLEMENTADO / HIGH | crearBundlesInstitucionales descartaba cobros y puertos de lecturas de laboratorio; consultas productivas terminaban503 aunque adaptadores aislados pasaran | Se preservan los tres puertos; test de identidad de proyección, runtime HTTP usando esa proyección y HTTP con MongoDB real a factura/saldo/pagos/órdenes/catálogos | PASS corregido |
+| F07 | DOC_DESACTUALIZADA / LOW | Mapa UI mantenía los responsables intercambiados después de corregir plan03 | Se actualizan solo15 campos responsable; test contractual de6 acciones de cobros y9 de inventario/calidad | PASS corregido |
 
 Factura se emite en un comando atómico directamente como EMITIDA; BORRADOR es estado del esquema, sin endpoint de borrador exigido por la tarea. No se permite editar líneas/receptor emitidos; anulación conserva documento y snapshot previo append-only. Es la concreción del trabajo de E05-P1-03, sin módulo fiscal ni cambio al diseño de resultados/informes.
+
 
 
 ## 5. Evidencia de correcciones y criterio
@@ -121,8 +126,8 @@ Ninguno para el alcance backend de E05-P1-03. UI E05-P2-03, resultados/informes/
 
 | Grupo | Resultado | Evidencia |
 |---|---|---|
-| R01–R15 | PASS | Matriz anterior, pruebas ejecutadas y resultado.json |
-| F01–F05 | PASS tras corrección | Regresiones y comparación de fuentes |
+| R01–R16 | PASS | Matriz anterior, pruebas ejecutadas y resultado.json |
+| F01–F07 | PASS tras corrección | Regresiones y comparación de fuentes |
 | Bloqueadas/no implementadas dentro de alcance | 0 | Inventario y trazas |
 | Suite común | PASS | Resultado saneado en resultado.json |
 
@@ -137,3 +142,9 @@ La primera auditoría no había comprobado explícitamente el snapshot previo de
 Revalidación:362 runtime/unitarias +42 contratos,2 pruebas de reserva documental, MongoDB CA14/migración0111/1 y modelo102PASS; lint/arquitectura/build PASS. La documentación de funciones nuevas mejora su contrato sin cambiar comportamiento. Ambas auditorías se mantienen PASS sobre el incremento; inventario/hashes actualizados, sin nuevos hallazgos pendientes.
 
 Revalidación documental tras216c909: AGENTS alinea la prioridad de tareas nuevas con la primera creación atómica; el número de PR solo desempata PR heredados competidores. R15 explicita la excepción de PR79 ya abierto: auditorías antes de continuar, reserva por el PR existente. No se atribuye cumplimiento retroactivo. Las2 pruebas documentales/creación exclusiva verifican también esta consistencia; código backend y sus huellas permanecen iguales al incremento probado. Ambas auditorías siguen PASS del alcance.
+
+## Revalidación de composición productiva tras revisión completa de a6670bc
+
+La auditoría previa usaba bundles directos y no había probado la proyección empleada por crearDependenciasBackend. CodeRabbit detectó F06. Se reabrió R09/R14 y se añadieron cobertura de la proyección productiva, runtime HTTP con esa proyección y peticiones HTTP de factura/saldo/ambas páginas de facturas/pagos frente a MongoDB real. También responden200 órdenes y catálogo de pruebas por los puertos de laboratorio previos preservados. No se afirma haber usado Firebase real: la identidad HTTP es un doble explícito, mientras cuenta/roles y persistencia son reales y sintéticos en MongoDB.
+
+F07 corrige exactamente15 asignaciones del mapa UI: se compararon todos los demás campos con el commit anterior, sin diferencias. Regresión363 runtime/unitarias +43 contratos PASS;2 tests de coordinación PASS; MongoDB/HTTP CA14 y migración0111/1, modelo102PASS. Build/lint/arquitectura PASS. Auditorías de requisitos y seguridad revalidadas PASS sobre el incremento;43 unidades y16 requisitos.

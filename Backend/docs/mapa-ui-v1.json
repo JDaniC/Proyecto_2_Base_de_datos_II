@@ -949,7 +949,7 @@
     "metodo": "LaboratoryRepository.obtenerEquipos",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/QualityControlPage.tsx:77`",
     "propuesta_inventario": "`GET /api/v1/laboratorio/equipos`"
@@ -958,7 +958,7 @@
     "metodo": "LaboratoryRepository.cambiarEstadoEquipo",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/QualityControlPage.tsx:189`",
     "propuesta_inventario": "`PATCH /api/v1/laboratorio/equipos/{equipoId}/estado`"
@@ -967,7 +967,7 @@
     "metodo": "LaboratoryRepository.registrarEquipo",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/QualityControlPage.tsx:161`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/equipos`"
@@ -976,7 +976,7 @@
     "metodo": "LaboratoryRepository.obtenerControlesCalidad",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/QualityControlPage.tsx:78`",
     "propuesta_inventario": "`GET /api/v1/laboratorio/controles-calidad?equipoId={id}&evaluacion={ev}&q={busqueda}`"
@@ -985,7 +985,7 @@
     "metodo": "LaboratoryRepository.registrarControlCalidad",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/QualityControlPage.tsx:119`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/controles-calidad`"
@@ -994,7 +994,7 @@
     "metodo": "LaboratoryRepository.obtenerLotesReactivos",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/InventoryPage.tsx:82`, `142`, `204`",
     "propuesta_inventario": "`GET /api/v1/laboratorio/inventario/lotes`"
@@ -1003,7 +1003,7 @@
     "metodo": "LaboratoryRepository.obtenerMovimientosInventario",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/InventoryPage.tsx:83`, `205`",
     "propuesta_inventario": "`GET /api/v1/laboratorio/inventario/movimientos?loteId={loteId}`"
@@ -1012,7 +1012,7 @@
     "metodo": "LaboratoryRepository.registrarMovimientoInventario",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/InventoryPage.tsx:129`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/inventario/movimientos`"
@@ -1021,7 +1021,7 @@
     "metodo": "LaboratoryRepository.registrarNuevoLoteReactivo",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P1-03",
+    "responsable": "E05-P2-02",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/InventoryPage.tsx:187`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/inventario/lotes`"
@@ -1030,7 +1030,7 @@
     "metodo": "LaboratoryRepository.obtenerFacturas",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:77`",
     "propuesta_inventario": "`GET /api/v1/laboratorio/facturas`"
@@ -1039,21 +1039,21 @@
     "metodo": "LaboratoryRepository.obtenerFacturaPorId",
     "categoria": "SIN_USO_DIRECTO_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
   },
   {
     "metodo": "LaboratoryRepository.obtenerFacturaPorOrden",
     "categoria": "SIN_USO_DIRECTO_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre."
   },
   {
     "metodo": "LaboratoryRepository.registrarPagoFactura",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:183`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/pagos`"
@@ -1062,7 +1062,7 @@
     "metodo": "LaboratoryRepository.revertirPagoFactura",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:229`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/pagos/{pagoId}/reversion`"
@@ -1071,7 +1071,7 @@
     "metodo": "LaboratoryRepository.anularFactura",
     "categoria": "VIGENTE_UI",
     "destino": "EXTENSION_PENDIENTE",
-    "responsable": "E05-P2-02",
+    "responsable": "E05-P1-03",
     "regla": "Contrato especializado obligatorio antes de implementar/conectar: DTO cerrado, permisos, versiones, idempotencia, errores, proyección y fixtures positivos/negativos. No endpoint comodín ni respuesta libre.",
     "fuente_ui": "`features/laboratory/BillingPaymentsPage.tsx:275`",
     "propuesta_inventario": "`POST /api/v1/laboratorio/facturas/{facturaId}/anulacion`"

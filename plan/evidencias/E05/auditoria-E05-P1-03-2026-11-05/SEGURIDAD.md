@@ -10,7 +10,7 @@ Resultado: PASS del alcance de esta entrega después de correcciones y regresion
 
 ## 2. Inventario, activos y fronteras
 
-42 unidades nuevas inventariadas en inventario.json; siete operaciones bajo `/api/v1/laboratorio/facturas`: POST/GET base, GET detalle, GET/POST pagos, POST reversiones, POST anulación. Todas protegidas por `cobros.administrar` y capacidad LABORATORIO. Superficie compartida revisada: GuardiaAutenticacion, GuardiaAutorizacion, EstablecerSesion, VerificadorIdentidadFirebase, contextoVigente, RespuestaInterceptor, parser JSON, UoW MongoDB y CursorCatalogoLaboratorio. No hay upload/download, ruta/URL externa, shell, plantillas ni archivos controlados por el solicitante en este módulo.
+43 unidades inventariadas (42 propias y una proyección compartida) en inventario.json; siete operaciones bajo `/api/v1/laboratorio/facturas`: POST/GET base, GET detalle, GET/POST pagos, POST reversiones, POST anulación. Todas protegidas por `cobros.administrar` y capacidad LABORATORIO. Superficie compartida revisada: GuardiaAutenticacion, GuardiaAutorizacion, EstablecerSesion, VerificadorIdentidadFirebase, contextoVigente, RespuestaInterceptor, parser JSON, UoW MongoDB y CursorCatalogoLaboratorio. No hay upload/download, ruta/URL externa, shell, plantillas ni archivos controlados por el solicitante en este módulo.
 
 Activos: identidad/claims, cuenta/roles actuales, receptor de factura, líneas históricas, saldo, pagos, claves idempotentes, revisiones y auditoría, secreto de cursor. No se aceptan desde el cliente institución, actor, rol, total ni saldo.
 
@@ -88,3 +88,9 @@ Se revisó el cambio de guardar revisión previa de orden en la misma UoW: no am
 Resultado de revalidación del incremento: PASS del alcance, sin nuevos candidatos aplicables. No hay cambios de dependencias; el registro SCA heredado y sus límites siguen vigentes.
 
 Revalidación documental tras216c909: prioridad por adquisición exclusiva nueva, desempate de PR solo para heredados, y excepción temporal de PR79 explícita. Sin cambio de superficie/ejecución/dependencias backend; se mantiene PASS del alcance y el registro de riesgos heredados.
+
+## Revalidación de composición tras revisión completa de a6670bc
+
+Se preservan cobros/consultasLaboratorio/listadosLaboratorio desde repositorios confiables de servidor hasta el bundle productivo. No se seleccionan por body ni se amplían roles; los guards institucionales y permisos/cuenta de los casos se mantienen. El runtime HTTP ahora atraviesa crearBundlesInstitucionales para sus pruebas de401/403/DTO/inyección, y la prueba física atraviesa esa misma proyección para peticiones HTTP contra factura/saldo/pagos y lecturas previas del laboratorio con MongoDB real. Se verificó que un puerto no configurado siga ausente.
+
+F06 era un defecto de disponibilidad/funcionalidad (503 a usuarios legítimos), sin camino de acceso indebido demostrado. Corregido y revalidado sin hallazgos de seguridad aplicables pendientes. Mapa UI solo cambia15 etiquetas de responsables, sin código de permisos ni datos de usuarios. Sin nuevas dependencias ni cambios al análisis SCA heredado. Resultado de seguridad del incremento: PASS del alcance.

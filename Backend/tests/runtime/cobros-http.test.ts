@@ -1,3 +1,4 @@
+import {crearBundlesInstitucionales,type MapaRepositoriosInstitucion} from '../../src/composicion/crear-bundles-institucionales.js';
 import assert from 'node:assert/strict';
 import {after,before,describe,it} from 'node:test';
 import {resolve} from 'node:path';
@@ -18,7 +19,8 @@ describe('cobros HTTP aplica identidad institucional, cuenta y contrato cerrado'
   for(const s of escenarios)s.cuenta={...s.cuenta,roles:['ADMIN_INSTITUCIONAL'],permisos:[...s.cuenta.permisos,'cobros.administrar']};
   const bundles=escenarios.map((s,i)=>i===0?{...s.bundle,cobros:{async detalle(){return null;},async listar(){if(!disponible)throw new Error('FALLO_INTERNO_SINTETICO');return {elementos:[],...(cursor?{siguienteCursor:'cursor-sintetico'}:{})};}}}:s.bundle);
   const config=parsearConfiguracion({APP_ENV:'test',HOST:'127.0.0.1',PORT:'3000',INSTITUTIONS:'HOSPITAL_GENERAL,CLINICA_ODONTOLOGICA,LABORATORIO_CLINICO,CENTRO_MEDICO_PEDIATRICO'});
-  app=await crearAplicacionHttp(AppModule.registrar(config,{bundles,verificadorIdentidad:new VerificadorIdentidadMemoria(tokens)}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
+  const mapa:MapaRepositoriosInstitucion=Object.fromEntries(bundles.map(b=>[b.institucion,{...b,cuenta:b.cuenta!}]));
+  app=await crearAplicacionHttp(AppModule.registrar(config,{bundles:crearBundlesInstitucionales(config.instituciones,mapa),verificadorIdentidad:new VerificadorIdentidadMemoria(tokens)}),leerContratoOpenApi(resolve('docs/openapi.yaml')));
   await app.listen(0,'127.0.0.1');url=`http://127.0.0.1:${(app.getHttpServer().address() as AddressInfo).port}/api/v1/laboratorio/facturas`;
  });
  after(async()=>app?.close());

@@ -19,3 +19,4 @@ Fuentes: Agente/REQUERIMIENTOS_FUNCIONALES.md RF-L11/L12; Agente/REQUERIMIENTOS_
 | R13 | AGENTS persistencia; M03 | Reutilizar esquema/índices; fallar cerrado ante deriva/legado incompatible, sin modificar inicializadores. | HIGH |
 | R14 | plan/02; AGENTS arquitectura | Dominio/aplicación puros, session compartida y efectos externos fuera de callbacks. | HIGH |
 | R15 | Petición humana05/11 y plan/11 | Para PR nuevos: ambas auditorías PASS antes de abrir y reserva exclusiva adquirida antes de implementar, con desempate por primera creación atómica y liberación con SHA esperado. Excepción PR79, ya abierto al recibirse la política: auditar antes de continuar revisión/integración y conservar su reserva por el PR existente, sin adquisición retroactiva | HIGH |
+| R16 | plan/03 §2/§7 y tareas E05 | Las seis acciones de cobros del mapa UI pertenecen a E05-P1-03 y las nueve de inventario/calidad a E05-P2-02; otros campos permanecen iguales | MEDIUM |

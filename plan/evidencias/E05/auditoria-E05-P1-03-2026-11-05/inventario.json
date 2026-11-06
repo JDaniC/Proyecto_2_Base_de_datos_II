@@ -250,5 +250,11 @@
     "linea": 43,
     "unidad": "escribir",
     "riesgo": "HIGH"
+  },
+  {
+    "archivo": "Backend/src/composicion/crear-bundles-institucionales.ts",
+    "linea": 38,
+    "unidad": "crearBundlesInstitucionales",
+    "riesgo": "HIGH"
   }
 ]
