@@ -18,3 +18,4 @@ Fuentes: Agente/REQUERIMIENTOS_FUNCIONALES.md RF-L11/L12; Agente/REQUERIMIENTOS_
 | R12 | plan/03 §7; tarea fallos | Entrada cerrada, versiones UUID y límites; errores saneados, sin éxito ante caída. | HIGH |
 | R13 | AGENTS persistencia; M03 | Reutilizar esquema/índices; fallar cerrado ante deriva/legado incompatible, sin modificar inicializadores. | HIGH |
 | R14 | plan/02; AGENTS arquitectura | Dominio/aplicación puros, session compartida y efectos externos fuera de callbacks. | HIGH |
+| R15 | Petición humana05/11 y plan/11 | Ambas auditorías PASS antes de abrir PR; reserva compartida exclusiva y desempate antes de implementar, liberación solo con SHA propio esperado | HIGH |

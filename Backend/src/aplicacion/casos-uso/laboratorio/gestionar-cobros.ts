@@ -1,3 +1,4 @@
+import type {OrdenLaboratorio} from '../../../dominio/laboratorio/ordenes.js';
 import {objetoCerrado,textoClinico} from '../../../dominio/clinica/consulta.js';
 import {uuidPublico} from '../../../dominio/compartido/uuid.js';
 import {versionPositiva} from '../../../dominio/compartido/version.js';
@@ -11,6 +12,7 @@ import type {CambioPlanificado} from '../../puertos/nucleo.js';
 
 export class GestionarCobrosLaboratorio {
  constructor(private readonly deps:DependenciasClinicas){}
+ /** Revalida la cuenta y planifica una operación de cobro atómica e idempotente. */
  async ejecutar(accion:'emitir'|'pagar'|'revertir'|'anular',p:ParametrosClinicos&{id?:unknown}){
   if(!['emitir','pagar','revertir','anular'].includes(accion))throw solicitudInvalida('Acción inválida.');
   if(p.contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||p.bundle.institucion!=='LABORATORIO_CLINICO')throw new ErrorDominio('SIN_PERMISO','Capacidad exclusiva de laboratorio.');
@@ -23,7 +25,7 @@ export class GestionarCobrosLaboratorio {
   if(accion==='pagar'&&(e.moneda!=='GTQ'||e.importe===0||!['EFECTIVO','TARJETA','TRANSFERENCIA','OTRO'].includes(e.metodo as string)))throw solicitudInvalida('Pago inválido.');
   const comando=await prepararComandoEstable(p.claveIdempotencia,`laboratorio.cobros.${accion}`,{id,version,...datos},['revision','auditoria','pago',...Array.from({length:100},(_,i)=>`linea${i}`)],this.deps);
   if(!p.bundle.uow)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Persistencia no disponible.');
-  return p.bundle.uow.ejecutar(p.contexto,comando,async lector=>{
+  return p.bundle.uow.ejecutar<{factura:Factura;pago?:Pago},unknown,Factura|OrdenLaboratorio>(p.contexto,comando,async lector=>{
    const c=await contextoVigente(lector,p.contexto);validarPermiso(c.cuenta,'cobros.administrar');
    const cobros=lector.cobros;if(!cobros)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Cobros no preparados.');
    const cambios:CambioPlanificado[]=[];
@@ -34,7 +36,7 @@ export class GestionarCobrosLaboratorio {
     if(await cobros.facturaPorOrden(id))throw new ErrorDominio('ESTADO_INVALIDO','La orden ya tiene una factura.');
     const factura=emitirFactura(orden,{id:comando.id,numero:datos.numero!,receptor:datos.receptor!,fecha:comando.instante,actorId:c.cuenta.id,lineaIds:orden.items.filter(i=>i.estado!=='CANCELADO').map((_,i)=>comando.ids[`linea${i}`]!)});
     cambios.push({agregado:'ordenes',tipo:'RESERVAR_FACTURA',recursoId:id,versionAnterior:version,nuevoEstado:{id,version:versionPositiva(version+1)}},{agregado:'facturas',tipo:'EMITIR_FACTURA',recursoId:comando.id,versionAnterior:null,nuevoEstado:factura});
-    return {tipo:'CONFIRMAR' as const,cambios,revisiones:[],auditoria:[{id:comando.ids.auditoria!,actorId:c.cuenta.id,caso:comando.caso,recursoId:comando.id,fechaHora:comando.instante,correlacion:c.correlacion}],resultado:{httpStatus:201,respuesta:{factura},correlacionOriginal:c.correlacion}};
+    return {tipo:'CONFIRMAR' as const,cambios,revisiones:[{id:comando.ids.revision!,agregado:'ordenes',recursoId:id,versionAnterior:version,snapshotAnterior:orden}],auditoria:[{id:comando.ids.auditoria!,actorId:c.cuenta.id,caso:comando.caso,recursoId:comando.id,fechaHora:comando.instante,correlacion:c.correlacion}],resultado:{httpStatus:201,respuesta:{factura},correlacionOriginal:c.correlacion}};
    }
    const anterior=await cobros.facturaPorId(id);
    if(!anterior)throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Factura no encontrada.');

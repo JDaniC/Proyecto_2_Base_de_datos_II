@@ -80,3 +80,9 @@ Ninguno para la validación segura del módulo. Firma real del proveedor, TLS/cl
 ## 9. Riesgos residuales
 
 Avisos transitivos del lockfile y diferencia del árbol instalado/lógico quedan expresos; no se certifica seguridad global ni se descartan otros sinks en módulos ajenos. Autenticación se verificó por código y dobles de SDK; firma real externa no probada. No hay hallazgos aplicables abiertos en el alcance nuevo. La política nueva antes de PR se aplica a futuros PR y al avance del PR79 ya abierto; no se afirma que estas auditorías ocurrieran antes de crearlo.
+
+## Revalidación incremental tras revisión de 7cbb5ae
+
+Se revisó el cambio de guardar revisión previa de orden en la misma UoW: no amplía permisos, no introduce llamadas externas y conserva atomicidad; prueba física exige snapshot/versionado único tras replay. La reserva anterior a código usa creación exclusiva de una ref por ID, sin PR previo a auditorías y sin sobreescritura para reclamarla. Borrado con lease protege una transferencia posterior; se verificaron dos competidores y SHA ajeno en Git temporal. test_reserva_documental.py invoca Git con lista de argumentos constantes y carpeta temporal propia, no interpola entrada de usuario ni credenciales. El contrato de creación de refs fue contrastado con [documentación primaria GitHub](https://docs.github.com/en/rest/git/refs#create-a-reference); no se ejecutaron mutaciones de prueba en el remoto.
+
+Resultado de revalidación del incremento: PASS del alcance, sin nuevos candidatos aplicables. No hay cambios de dependencias; el registro SCA heredado y sus límites siguen vigentes.

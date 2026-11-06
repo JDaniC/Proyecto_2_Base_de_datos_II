@@ -4,6 +4,7 @@ import {ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import {preparacionCobros} from './preparacion.js';
 import {verificarLaboratorioMongodb} from '../laboratorio/verificar-preparacion.js';
 const ordenar=(v:unknown):unknown=>Array.isArray(v)?v.map(ordenar):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordenar((v as Record<string,unknown>)[k])])):v;
+/** Comprueba validadores e índices exactos sin alterar el esquema persistido. */
 export async function verificarCobros(db:Db):Promise<void>{
  await verificarLaboratorioMongodb(db);
  try{for(const d of preparacionCobros){

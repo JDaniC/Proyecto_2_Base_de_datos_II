@@ -8,6 +8,7 @@ import {normalizarInstante} from '../historiales/consultar-historial.js';
 import {validarPermiso} from '../../../dominio/clinica/politicas-institucionales.js';
 type Parametros={contexto:ContextoAutenticado;bundle:BundleInstitucional};
 export class ConsultarCobrosLaboratorio {
+ /** Reconstruye autorización desde la cuenta institucional vigente. */
  private async contexto(p:Parametros){
   if(p.contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||p.bundle.institucion!=='LABORATORIO_CLINICO')throw new ErrorDominio('SIN_PERMISO','Capacidad exclusiva de laboratorio.');
   if(!p.bundle.cuenta||!p.bundle.cobros)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Cobros no preparados.');
@@ -16,9 +17,11 @@ export class ConsultarCobrosLaboratorio {
   if(cuenta.id!==p.contexto.cuenta.id)throw new ErrorDominio('SIN_PERMISO','La cuenta cambió.');
   const c=crearContextoAutenticado(p.contexto.identidad,cuenta,p.contexto.correlacion);validarPermiso(c.cuenta,'cobros.administrar');return c;
  }
+ /** Obtiene el detalle autorizado sin reconstruir snapshots desde el catálogo actual. */
  async detalle(p:Parametros&{id:unknown}){
   await this.contexto(p);const d=await p.bundle.cobros!.detalle(uuidPublico(p.id));if(!d)throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Factura no encontrada.');return d;
  }
+ /** Filtra y pagina recursos dentro del ámbito de cuenta e institución. */
  async listar(recurso:'facturas'|'pagos',p:Parametros&{entrada:unknown;id?:unknown}){
   const c=await this.contexto(p);
   const e=objetoCerrado(p.entrada,[...(recurso==='facturas'?['ordenId','pacienteId']:[]),'estado','desde','hasta','limite','orden','cursor']);

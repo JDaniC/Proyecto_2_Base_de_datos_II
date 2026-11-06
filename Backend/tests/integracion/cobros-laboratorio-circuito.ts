@@ -36,6 +36,7 @@ export async function probarCobros(db:Db,bundle:BundleInstitucional,base:OrdenLa
  const segundaOrden={...orden,id:randomUUID()};await db.collection<{_id:string}&Document>('ordenes').insertOne(documentoOrdenLaboratorio(segundaOrden,segundaOrden.id));
  const clave=uuidPublico(randomUUID()),emitida=await invocar('emitir',entrada,undefined,clave);const f=emitida.respuesta.factura;
  assert.deepEqual(await invocar('emitir',entrada,undefined,clave),emitida);
+ const revisionesOrden=await db.collection('revisiones').find({tipo_recurso:'ordenes',recurso_id:orden.id,version:1}).toArray();assert.equal(revisionesOrden.length,1);assert.deepEqual(revisionesOrden[0]!.contenido_anterior,orden);
  await assert.rejects(invocar('emitir',{...entrada,versionOrden:2}),codigo('ESTADO_INVALIDO'));
  await assert.rejects(invocar('emitir',{...entrada,numero:'OTRO'},undefined,clave),codigo('CLAVE_REUTILIZADA'));
  const otra=await invocar('emitir',{...entrada,ordenId:segundaOrden.id,numero:`SINT-${randomUUID()}`});

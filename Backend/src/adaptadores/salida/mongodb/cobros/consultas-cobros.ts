@@ -11,11 +11,14 @@ export async function leerSnapshotCobros<T>(db:Db,leer:(s:ClientSession)=>Promis
  try{s.startTransaction({readConcern:{level:'snapshot'}});const r=await leer(s);await s.commitTransaction();return r;}
  catch(e){if(s.inTransaction()){try{await s.abortTransaction();}catch{/* conservar el error original */}}if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No se pudieron consultar cobros.');}finally{await s.endSession();}
 }
+/** Construye consultas snapshot y páginas acotadas con cursores autenticados. */
 export function crearConsultasCobros(db:Db,codec=new CursorCatalogoLaboratorio()):ConsultasCobros {
  const snapshot=<T>(leer:(s:ClientSession)=>Promise<T>)=>leerSnapshotCobros(db,leer);
  const limiteFecha=(v:string)=>{const d=new Date(v);const fraccion=v.match(/\.(\d+)Z$/)?.[1]??'';return new Date(d.getTime()+(/[1-9]/.test(fraccion.slice(3))?1:0));};
  return {
+  /** Obtiene el detalle autorizado sin reconstruir snapshots desde el catálogo actual. */
   detalle(id){return snapshot(async s=>{const l=crearLectorCobros(db,s),factura=await l.facturaPorId(id);if(!factura)return null;const pagado=await l.totalPagado(id);return {factura,pagado,saldo:saldoFactura(factura,pagado),total:totalFactura(factura)};});},
+  /** Filtra y pagina recursos dentro del ámbito de cuenta e institución. */
   listar(c,recurso,f,p,facturaId){return snapshot(async s=>{
    if(c.cuenta.institucion!=='LABORATORIO_CLINICO'||!c.cuenta.permisos.includes('cobros.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede consultar cobros.');
    if(recurso==='pagos'&&(!facturaId||!await crearLectorCobros(db,s).facturaPorId(facturaId)))throw new ErrorDominio('RECURSO_NO_ENCONTRADO','Factura no encontrada.');
