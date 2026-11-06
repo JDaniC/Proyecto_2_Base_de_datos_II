@@ -1,3 +1,6 @@
+import {CobrosLaboratorioController} from '../adaptadores/entrada/http/laboratorio/cobros.controller.js';
+import {GestionarCobrosLaboratorio} from '../aplicacion/casos-uso/laboratorio/gestionar-cobros.js';
+import {ConsultarCobrosLaboratorio} from '../aplicacion/casos-uso/laboratorio/consultar-cobros.js';
 import { GestionarCatalogoVacunas } from '../aplicacion/casos-uso/pediatria/gestionar-catalogo-vacunas.js';
 import { AsignarEsquemaVacuna } from '../aplicacion/casos-uso/pediatria/asignar-esquema.js';
 import { VacunasController } from '../adaptadores/entrada/http/pediatria/vacunas.controller.js';
@@ -95,7 +98,7 @@ const VERIFICADOR_NO_CONFIGURADO: VerificadorIdentidad = Object.freeze({
   },
 });
 
-@Module({ controllers: [LaboratorioController, VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
+@Module({ controllers: [CobrosLaboratorioController, LaboratorioController, VacunasController, AntecedentesController, ResponsablesController, ServiciosHospitalariosController, HospitalController, ConsultasController, CitasController, CatalogosController, HealthController, SesionController, PacientesController, HistorialesController] })
 export class AppModule {
   static registrar(
     configuracion: ConfiguracionAplicacion,
@@ -106,6 +109,8 @@ export class AppModule {
     return {
       module: AppModule,
       providers: [
+        {provide:GestionarCobrosLaboratorio,useFactory:()=>new GestionarCobrosLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:ConsultarCobrosLaboratorio,useFactory:()=>new ConsultarCobrosLaboratorio()},
         {provide:CrearOrdenLaboratorio,useFactory:()=>new CrearOrdenLaboratorio(dependenciasComandoPorDefecto)},
         {provide:GestionarMuestraLaboratorio,useFactory:()=>new GestionarMuestraLaboratorio(dependenciasComandoPorDefecto)},
         {provide:GestionarResultadoLaboratorio,useFactory:()=>new GestionarResultadoLaboratorio(dependenciasComandoPorDefecto)},

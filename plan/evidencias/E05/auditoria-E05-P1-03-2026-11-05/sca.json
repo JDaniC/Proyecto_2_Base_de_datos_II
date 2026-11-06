@@ -1,0 +1,38 @@
+{
+  "comando": "npm audit --omit=dev --json",
+  "alcance": "lockfile Backend sin cambios respecto a develop; no es una prueba de explotación",
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 10,
+      "high": 0,
+      "critical": 0,
+      "total": 10
+    },
+    "dependencies": {
+      "prod": 209,
+      "dev": 91,
+      "optional": 101,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 400
+    }
+  },
+  "advisories": [
+    {
+      "name": "glob",
+      "title": "Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal",
+      "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4",
+      "severity": "moderate",
+      "range": ">=9.0.0 <=14.0.1"
+    },
+    {
+      "name": "minimatch",
+      "title": "minimatch has potential denial of service via globparts amplification",
+      "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+      "severity": "moderate",
+      "range": ">=7.0.0 <11.0.1"
+    }
+  ]
+}

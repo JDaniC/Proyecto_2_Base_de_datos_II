@@ -234,3 +234,5 @@ operación durable, revisión anterior, auditoría y evento HOSPITALIZACION ató
 Requiere preparación 004 y compatibilidad SQL 007 vigentes; no añade esquema ni
 modifica inicializadores. Validación offline especializada:
 `python scripts/validar-contrato-hospital.py` con requirements-contrato.txt.
+
+- [Cobros de laboratorio v1](cobros-laboratorio-v1.md): factura, pagos, reversiones, saldo y recuperación E05-P1-03.

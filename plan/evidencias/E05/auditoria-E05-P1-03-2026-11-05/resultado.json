@@ -1,0 +1,82 @@
+{
+  "tarea": "E05-P1-03",
+  "fecha_local": "2026-11-05",
+  "zona": "America/Guatemala",
+  "auditoria_funcional": "PASS",
+  "auditoria_seguridad": "PASS",
+  "unidades": 43,
+  "unidades_critical": 22,
+  "requisitos_trazados": 16,
+  "hallazgos_aplicables_pendientes": 0,
+  "regresion": {
+    "runtime_unitarios": {
+      "pass": 363,
+      "fail": 0
+    },
+    "contractuales": {
+      "pass": 43,
+      "fail": 0
+    }
+  },
+  "mongodb_aislado": {
+    "suite_migracion011_y_CA14": {
+      "pass": 1,
+      "fail": 0
+    },
+    "modelo_M03": {
+      "pass": 102,
+      "fail": 0
+    }
+  },
+  "build": "PASS",
+  "lint_arquitectura": "PASS",
+  "sca": {
+    "avisos_raiz_heredados": 2,
+    "entradas_propagadas_lock": 10,
+    "severidad_scanner": "moderate",
+    "camino_explotable_confirmado_en_cobros": false,
+    "detalle": "SEGURIDAD.md y sca.json; no se afirma scanner limpio ni seguridad global"
+  },
+  "huellas_sha256_entrega_backend": {
+    "Backend/docs/README.md": "0d835a1dfd37452f31ef6b4a90962c30191639693508708b77e4103a345989ee",
+    "Backend/docs/cobros-laboratorio-v1.md": "57006059c3462eb5efdc07ea6619520a8bb256bc149492ecc45920c44f0d2cc7",
+    "Backend/docs/mapa-ui-v1.json": "09cb2c7f619b49a136c9413edbfc5dcab7769bf31eeacb39793753c6f1426d4e",
+    "Backend/docs/openapi.yaml": "48a974456f7b42ab38011e10a2945de1bc6e000edeee95be088ecbf04064e0cf",
+    "Backend/scripts/run-clinica-mongodb-integration.mjs": "d24c61d52a06af9377d883101cf02addf07a90f5be76731ecad77a6f7ab0371c",
+    "Backend/src/adaptadores/entrada/http/laboratorio/cobros.controller.ts": "3134c4bea3cd9078fea8fc299bc44cc839c99def20a2081fb8e79d3d5440b3f8",
+    "Backend/src/adaptadores/salida/mongodb/cobros/consultas-cobros.ts": "37f2d1429cf17ca024cc08ee9d884c84cf85bb0ef2bb40f5af9033418c2d4666",
+    "Backend/src/adaptadores/salida/mongodb/cobros/persistencia-cobros.ts": "e645e441290cb69c8799e99618a569ac3b442a0eddc8f6d08bce553abf34ec06",
+    "Backend/src/adaptadores/salida/mongodb/cobros/preparacion.ts": "15867f01b6129e6d5b46c079c5ec77eeb8406fc2bac391fe1d9c48801b4c830e",
+    "Backend/src/adaptadores/salida/mongodb/cobros/verificar-cobros.ts": "ba65dd3bdffeef9008d354196dc9405f50caac059a7deb65d27167c1bda053c3",
+    "Backend/src/adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.ts": "0657e86497e8ee73c2fc613161aa74e5695868d1a2776a9ac9623eb091c2626d",
+    "Backend/src/adaptadores/salida/mongodb/unidad-de-trabajo-mongodb.ts": "6db929b22aaa4ae52eb22fce02b3d53012ed81929ce43c29929f5deb89924b18",
+    "Backend/src/aplicacion/casos-uso/laboratorio/consultar-cobros.ts": "6951190cdd589555d6e0503549ba694368053bf9441e7b26ded077ba5155b2d0",
+    "Backend/src/aplicacion/casos-uso/laboratorio/gestionar-cobros.ts": "245a1b523a5122d0a69771f1739719e1a30361315d4ede17587de2ab175c12c0",
+    "Backend/src/aplicacion/puertos/bundle-institucional.ts": "aa07b3b797c771c4c9ba085900148a6d41824a6f6fd282f89cbd07647d4acb32",
+    "Backend/src/aplicacion/puertos/cobros.ts": "59949c2267a602caf72cd4d22c1bc134555fc3e27fb2bcd46d9aef51d1a493ce",
+    "Backend/src/aplicacion/puertos/nucleo.ts": "bdcccca73c1bae5658cfdd9f3e28996a726b4c27ad67ee315627c2c8dbce8738",
+    "Backend/src/composicion/app.module.ts": "c8103839217c1a743dad4e941daca9dd0238a29e63802a3886fd15226953e0fc",
+    "Backend/src/composicion/crear-bundles-institucionales.ts": "010448077fb0e2f163bb7e9b061a563837151a30414d49ef85eb0349dc3b84db",
+    "Backend/src/dominio/laboratorio/cobros/factura.ts": "e5270d2fb692ad080a053d2d305af4ee61e1e2209136b7634a673ac446911a62",
+    "Backend/tests/contratos/cobros-esquema.test.mjs": "d1e6d0234b0b2fd05c864ff61b9017b5ee73ab62fc6d3d73bfe32af4b090b32c",
+    "Backend/tests/integracion/cobros-laboratorio-circuito.ts": "11d59cea49b160a06002e699d192632d04f1ef410f959de065b17e5726dc6140",
+    "Backend/tests/integracion/laboratorio-migracion-mongodb.test.ts": "6dca522832297fbb983afcd91e64d07462368cd5b0290d272e4bb9cf6e0863e2",
+    "Backend/tests/runtime/cobros-http.test.ts": "01b857bc663ee826cf62e2838f302d7eedec8d62f01307bc343d5e5e4d36c4fb",
+    "Backend/tests/runtime/http.test.ts": "aacd05ae9480c2447b9d0f4f82a034e6439c2b64cb9c66bbe81bf1f7277c0ff1",
+    "Backend/tests/runtime/openapi.test.ts": "96f11df84afec55ff253cae2d988b192a93216e6470e1cff8c7a2fec888ca4bb",
+    "Backend/tests/runtime/startup.test.ts": "37d89a8141048e95ac284e1244f486be86005f0c4678b72818b97baf18e3cfd0",
+    "Backend/tests/unitarios/cobros-lectores.test.ts": "1b58beb03dd612f2d68b54509f899e42178dd8a2ed5776b91d88547e272bf64d",
+    "Backend/tests/unitarios/cobros-snapshot.test.ts": "20b09e95d73969628bc8d5213f790cf6579d6dbec8a236966db199b887278ace",
+    "Backend/tests/unitarios/laboratorio-cobros.test.ts": "e1e098d791b7be3cea058783d1fc2ea8dd6539a42b7febbbff99add00f056601",
+    "Backend/tests/unitarios/laboratorio-composicion.test.ts": "0b622075017df9d7cf767b58d34a287819b4f6192d6a32cddbe6c81e6af8dd2a"
+  },
+  "nota": "Auditorías realizadas después de abrir PR79 por instrucción humana recibida con PR ya existente; antes de publicar la corrección/reanudar revisión. Política persistida para siguientes PR.",
+  "pruebas_reserva_git_aislada": {
+    "pass": 2,
+    "fail": 0
+  },
+  "ultima_revalidacion": "F06 proyeccion productiva con HTTP/MongoDB real y F07 mapa UI15 asignaciones; ambas auditorias PASS del alcance.",
+  "huella_test_reserva": "d51591e439b32fec092b49c203aa257dee3a8cb842520703cbbc3ee5743330d8",
+  "alcance": "Modulo backend E05-P1-03 y coherencia de politica documental; riesgos heredados expresos en SEGURIDAD.md.",
+  "ultima_revalidacion_documental": "F08: traspaso cambia SHA/UUID por CAS con lease; identidades nuevas evitan ABA;2 tests Git aislados PASS; backend conserva huellas probadas."
+}

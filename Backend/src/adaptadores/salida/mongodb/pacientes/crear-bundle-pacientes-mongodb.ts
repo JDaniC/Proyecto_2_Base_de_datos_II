@@ -1,3 +1,5 @@
+import {crearConsultasCobros} from '../cobros/consultas-cobros.js';
+import {crearLectorCobros,aplicarCambiosCobros} from '../cobros/persistencia-cobros.js';
 import {crearConsultasLaboratorioMongodb} from '../laboratorio/consultar-recursos.js';
 import {crearListadosLaboratorioMongodb} from '../laboratorio/listar-recursos.js';
 import {crearLectoresReferenciasMongodb} from '../laboratorio/leer-referencias.js';
@@ -58,15 +60,20 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
       const resultados=new Map<string,ResultadoLaboratorio>();originalesResultados.set(session,resultados);
       const cacheOrdenes=new Map<string,OrdenLaboratorio>();originalesOrdenes.set(session,cacheOrdenes);
       const ordenes=crearLectorOrdenMongodb(db,session);const lectorMuestras=crearLectorMuestraMongodb(db,session);const lectorResultados=crearLectorResultadoMongodb(db,session);
-      return {...lector,laboratorio:{...crearLectoresReferenciasMongodb(db,session),async ordenPorId(id){const o=await ordenes.porId(id);if(o)cacheOrdenes.set(id,o);return o;},async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;},async resultadoPorId(id){const r=await lectorResultados.porId(id);if(r)resultados.set(id,r);return r;},async ultimoResultadoPorSerie(id){const r=await lectorResultados.ultimoPorSerie(id);if(r)resultados.set(r.id,r);return r;}}, clinica: crearClinicaMongodb(db, session, cache)};
+      return {...lector,cobros:crearLectorCobros(db,session),laboratorio:{...crearLectoresReferenciasMongodb(db,session),async ordenPorId(id){const o=await ordenes.porId(id);if(o)cacheOrdenes.set(id,o);return o;},async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;},async resultadoPorId(id){const r=await lectorResultados.porId(id);if(r)resultados.set(id,r);return r;},async ultimoResultadoPorSerie(id){const r=await lectorResultados.ultimoPorSerie(id);if(r)resultados.set(r.id,r);return r;}}, clinica: crearClinicaMongodb(db, session, cache)};
     },
     async aplicarCambios(db, session, contexto, comando, cambios) {
+      if(comando.caso.startsWith('laboratorio.cobros.')){
+        if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!contexto.cuenta.permisos.includes('cobros.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar cobros.');
+        return aplicarCambiosCobros(db,session,cambios);
+      }
       if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map(),originalesOrdenes.get(session)??new Map(),originalesResultados.get(session)??new Map());
       if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },
   });
   return Object.freeze({
+    cobros:crearConsultasCobros(cliente.db),
     consultasLaboratorio: crearConsultasLaboratorioMongodb(cliente.db),
     listadosLaboratorio: crearListadosLaboratorioMongodb(cliente.db),
     clinica: crearClinicaMongodb(cliente.db),

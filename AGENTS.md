@@ -26,7 +26,7 @@ Consigna: `Proyecto final bases II (1) (5).pdf`, resumida en plan/01 para no dep
 - Daniel (JDaniC) y David (Davidix888) pueden ejecutar cualquier tarea. `P1`/`P2` son lotes históricos dentro de IDs permanentes; no indican dueño ni permisos. No renumerar al cambiar de ejecutor.
 - Estado y ejecutor actual solo en `plan/06_TABLERO.md`: PENDIENTE, EN_CURSO, EN_REVISION, HECHA, BLOQUEADA. El ID, orden y dependencias siguen vigentes.
 - Elegir la primera disponible por dependencias y puerta de fase, consultando ambos lotes y PR abiertos. Los cambios dependientes deben estar integrados, no solo presentes en otra rama.
-- Una tarea, un ejecutor activo y una rama/PR. Publicar reserva en PR borrador antes de implementación; el tablero de una rama privada no coordina dos equipos. Ante reservas simultáneas, prevalece el primer PR abierto por número y el segundo elige otra tarea.
+- Una tarea, un ejecutor activo y una rama/PR. Antes de implementar adquirir la referencia compartida exclusiva `codex/reserva-ID` mediante creación atómica en GitHub, según plan/11; un PR previo activo mantiene prioridad. El tablero de una rama privada no coordina dos equipos. Las auditorías del 05/11/2026 deben pasar antes de abrir el PR. En tareas nuevas prevalece la primera creación atómica exitosa de `codex/reserva-ID`; un PR posterior no desplaza a quien adquirió esa referencia. Solo entre PR heredados competidores anteriores a esta política prevalece el menor número; el segundo conserva sus cambios y elige otra tarea.
 - Retomar el trabajo del otro conservando ID, rama, commits y evidencia cuando esté liberado o exista traspaso/petición humana. No asumir abandono por tiempo transcurrido ni editar simultáneamente la misma tarea. Una tarea pendiente/libre de cualquier lote no necesita permiso del otro.
 - El ejecutor de la tarea coordina los archivos comunes; reservarlos en el seguimiento. No hay carpetas exclusivas de una persona.
 - Conservar cambios ajenos. No restaurar archivos ni limpiar volúmenes para obtener pruebas verdes. No marcar HECHA ni inventar revisión o evidencia.
@@ -65,6 +65,12 @@ Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se
 ## Política de integración vigente
 
 Por decisión humana del 24/10/2026 no se requieren aprobaciones del compañero para fusionar. CodeRabbit es el revisor automático. El responsable valida pruebas y criterios y registra cierre real; puede solicitar revisión cruzada opcional. Esta política sustituye cualquier referencia anterior a revisión humana obligatoria.
+
+## Auditorías obligatorias antes de cada PR
+
+Instrucción humana del 05/11/2026: cada entrega debe pasar una auditoría de seguridad (`security-auditor`) y una auditoría de requisitos (`functional-requirements-auditor`) antes de abrir cualquier PR, también borrador. Guardar inventario, trazabilidad requisito→código→test, hallazgos, correcciones y resultados reproducibles en `plan/evidencias/`. Solo abrir el PR cuando ambas auditorías del alcance entregado estén PASS, sin hallazgos aplicables pendientes ni pruebas obligatorias bloqueadas. No sustituir estas auditorías por CodeRabbit ni por una suite verde. Si hay fallos, corregir y repetir lo afectado antes de abrirlo.
+
+Esta instrucción sustituye la secuencia anterior de reserva mediante PR borrador previo a implementación. Consultar reservas/PR existentes, publicar rama/seguimiento y adquirir la referencia remota exclusiva `codex/reserva-ID` por creación atómica antes de implementar; si ya existe, no trabajar esa tarea. Volver a comprobar duplicados antes de abrir el PR después de las auditorías. Para un PR ya abierto al recibir esta instrucción (como #79), aplicar ambas auditorías antes de continuar revisión/integración. CodeRabbit sigue siendo la revisión automática posterior al PR.
 
 ## Cierre de cada chat de ejecución
 

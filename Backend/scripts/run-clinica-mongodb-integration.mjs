@@ -41,9 +41,9 @@ try {
   console.log('Preparando MongoDB aislado:', proyecto);
   await run('docker', [...compose, 'up', '-d', '--wait', '--wait-timeout', '180', 'mongodb']);
   console.log(await run('docker', [...compose, 'run', '--rm', '--no-deps', 'mongo-init']));
-  const salida = await run(process.execPath, ['--test', process.argv.includes('--laboratorio011') ? 'dist-test/tests/integracion/laboratorio-migracion-mongodb.test.js' : 'dist-test/tests/integracion/clinica-mongodb.test.js'], {
+  const salida = await run(process.execPath, ['--test', (process.argv.includes('--laboratorio011')||process.argv.includes('--cobros')) ? 'dist-test/tests/integracion/laboratorio-migracion-mongodb.test.js' : 'dist-test/tests/integracion/clinica-mongodb.test.js'], {
     cwd: backend, timeout: 180_000,
-    env: {...env, MONGO_TEST_PORT: String(port), MONGO_TEST_SECRET_FILE: join(secretos, 'mongo_app_password'),
+    env: {...env, MONGO_TEST_PORT: String(port), PROBAR_COBROS:process.argv.includes('--cobros')?'1':'0', CURSOR_SIGNING_SECRET:randomBytes(32).toString('hex'), MONGO_TEST_SECRET_FILE: join(secretos, 'mongo_app_password'),
       MONGO_ADMIN_TEST_SECRET_FILE: join(secretos, 'mongo_admin_password'), MONGO_TEST_CONTAINER: `${proyecto}-mongodb-1`},
   });
   console.log(salida);
