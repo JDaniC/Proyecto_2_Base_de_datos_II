@@ -180,10 +180,12 @@ function componentesDe(item: ItemOrden, entradas: readonly EntradaComponenteResu
 function crearBase(entrada: EntradaCapturaResultado, orden: OrdenLaboratorio, muestras: readonly Muestra[],tiposMuestra:ReadonlyMap<string,string>): ResultadoLaboratorio {
   const item = itemDeOrden(orden, entrada.itemId);
   const observaciones = textoOpcional(entrada.observaciones, 4000, 'observaciones');
+  const fechaAnalisis=instanteUtc(entrada.instante),procedencia=normalizarProcedencia(orden, item, muestras,tiposMuestra);
+  if(procedencia.some(v=>Date.parse(v.fechaAceptacion)>Date.parse(fechaAnalisis)))throw solicitudInvalida('El análisis no puede preceder a la aceptación de la muestra.','instante');
   return Object.freeze({ id: uuidPublico(entrada.id), revision: 1, serieId: uuidPublico(entrada.serieId, 'serieId'), version: 1,
     ordenId: uuidPublico(orden.id), itemId: item.id, pruebaId: item.prueba.id, pacienteId: uuidPublico(orden.pacienteId),
-    procedencia: normalizarProcedencia(orden, item, muestras,tiposMuestra), ...(entrada.equipoId === undefined ? {} : { equipoId: uuidPublico(entrada.equipoId, 'equipoId') }),
-    analistaId: uuidPublico(entrada.analistaId, 'analistaId'), fechaAnalisis: instanteUtc(entrada.instante), estado: 'BORRADOR' as const,
+    procedencia, ...(entrada.equipoId === undefined ? {} : { equipoId: uuidPublico(entrada.equipoId, 'equipoId') }),
+    analistaId: uuidPublico(entrada.analistaId, 'analistaId'), fechaAnalisis, estado: 'BORRADOR' as const,
     componentes: componentesDe(item, entrada.componentes), ...(observaciones === undefined ? {} : { observaciones }) });
 }
 
