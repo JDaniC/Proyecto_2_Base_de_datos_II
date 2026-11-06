@@ -1,3 +1,4 @@
+import {verificarCobros} from './cobros/verificar-cobros.js';
 import {verificarLaboratorioMongodb} from './laboratorio/verificar-preparacion.js';
 import { verificarClinicaMongodb } from './consultas/clinica-mongodb.js';
 import type {
@@ -58,6 +59,7 @@ export function crearUnidadDeTrabajoMongodb<
         throw new ErrorDominio('SIN_PERMISO', 'La institución del contexto no corresponde a Laboratorio.');
       }
 
+      if(comando.caso.startsWith('laboratorio.cobros.'))await verificarCobros(db);
       if(comando.caso.startsWith('laboratorio.'))await verificarLaboratorioMongodb(db);
       if (comando.caso.startsWith('consulta.')) await verificarClinicaMongodb(db);
 

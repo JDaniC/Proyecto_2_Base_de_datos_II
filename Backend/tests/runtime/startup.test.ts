@@ -102,7 +102,7 @@ describe('arranque del servidor', () => {
       const documento = await contrato.json() as { openapi: string; paths: object };
       assert.equal(contrato.status, 200);
       assert.equal(documento.openapi, '3.1.0');
-      assert.equal(Object.keys(documento.paths).length, 79);
+      assert.equal(Object.keys(documento.paths).length, 84);
     } finally {
       if (proceso.exitCode === null && proceso.signalCode === null) {
         const salida = once(proceso, 'exit');

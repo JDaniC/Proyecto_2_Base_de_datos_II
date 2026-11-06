@@ -14,6 +14,7 @@ import type { PuertosHospital } from './hospital.js';
 export type EstadoPersistenciaInicial = 'NO_CONFIGURADA' | 'DISPONIBLE';
 
 export interface BundleInstitucional {
+  readonly cobros?: import('./cobros.js').ConsultasCobros;
   readonly consultasLaboratorio?: import('./laboratorio.js').ConsultasLaboratorio;
   readonly listadosLaboratorio?: import('./laboratorio.js').ListadosLaboratorio;
   readonly responsablesPediatricos?: {porDocumento(documento:import('../../dominio/clinica/paciente.js').Identificacion):Promise<import('../../dominio/clinica/paciente.js').ResponsableDetalle|null>};

@@ -74,6 +74,7 @@ export interface LectorTransaccional<
   TProfesional = unknown,
   TEvento = unknown,
 > {
+  readonly cobros?: import('./cobros.js').PuertoCobros;
   readonly laboratorio?: Pick<import('./laboratorio.js').PuertosLaboratorio, 'ordenPorId' | 'muestraPorId' | 'solicitantePorId' | 'tipoMuestraPorId' | 'metodoPorId' | 'proveedorPorId' | 'pruebaPorId' | 'revisionPruebaPorId' | 'revisionMetodoPorId'>;
   readonly clinica?: PuertosClinicos;
   readonly antecedentesPediatricos?: PuertoAntecedentesPediatricos;
