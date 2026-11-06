@@ -76,7 +76,7 @@
     "fail": 0
   },
   "ultima_revalidacion": "F06 proyeccion productiva con HTTP/MongoDB real y F07 mapa UI15 asignaciones; ambas auditorias PASS del alcance.",
-  "huella_test_reserva": "c0b85ec0c878b242ca601788c4aed5fb4dda8a8d89d897ccc6538cd775d0b16a",
+  "huella_test_reserva": "3e0a0d59fc5d66d69fb774c7f66daa0f5e3dc0bc85764fbef236b20fe85765ad",
   "alcance": "Modulo backend E05-P1-03 y coherencia de politica documental; riesgos heredados expresos en SEGURIDAD.md.",
-  "ultima_revalidacion_documental": "Prioridad exclusiva en AGENTS y excepcion temporal PR79 explicita en R15;2 tests PASS, backend identico a las huellas probadas."
+  "ultima_revalidacion_documental": "F08: traspaso cambia SHA/UUID por CAS con lease; identidades nuevas evitan ABA;2 tests Git aislados PASS; backend conserva huellas probadas."
 }

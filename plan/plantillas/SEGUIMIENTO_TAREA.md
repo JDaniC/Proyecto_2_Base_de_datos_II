@@ -11,6 +11,8 @@ Copiar a `plan/seguimiento/ID.md` al reservar una tarea real. Reemplazar ID/tít
 - Último commit disponible en remoto:
 - Cambios locales no publicados (rutas/commits o ninguno):
 - Reserva: activa / liberada para retoma; motivo y evidencia:
+- Referencia exclusiva / UUID público de reserva / SHA esperado (PR previos: indicar excepción):
+- Traspaso de reserva, si aplica: SHA/UUID anterior → nuevo, motivo, resultado CAS con lease y confirmación remota antes de continuar:
 - Archivos comunes reservados:
 - Dependencias verificadas y commits integrados:
 

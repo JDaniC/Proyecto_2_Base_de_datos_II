@@ -4,7 +4,7 @@ Fecha: 05/11/2026 America/Guatemala. Autorización: petición de ejecutar E05-P1
 
 ## 1. Resumen ejecutivo
 
-Resultado final: PASS del alcance auditado, tras corregir siete desviaciones verificadas. 43 unidades inventariadas (42 propias y la proyección institucional compartida), incluidas 22 clasificadas CRITICAL; 16 requisitos trazados. Los helpers locales se incluyen. Adaptadores/composición/UoW compartidos se revisaron en las líneas de integración y con la regresión completa. Sin requisitos CRITICAL pendientes en esta entrega. No se infiere cumplimiento de E05 completo.
+Resultado final: PASS del alcance auditado, tras corregir ocho desviaciones verificadas. 43 unidades inventariadas (42 propias y la proyección institucional compartida), incluidas 22 clasificadas CRITICAL; 16 requisitos trazados. Los helpers locales se incluyen. Adaptadores/composición/UoW compartidos se revisaron en las líneas de integración y con la regresión completa. Sin requisitos CRITICAL pendientes en esta entrega. No se infiere cumplimiento de E05 completo.
 
 ## 2. Inventario y cobertura
 
@@ -88,6 +88,7 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | F05 | DIVERGENTE / HIGH | Mover PR tras auditorías dejaba sin desempate exclusivo previo a implementación | Creación atómica de referencia compartida única antes de código, prioridades heredadas y borrado con lease; dos competidores Git aislados, solo uno adquiere | PASS corregido |
 | F06 | SUB_IMPLEMENTADO / HIGH | crearBundlesInstitucionales descartaba cobros y puertos de lecturas de laboratorio; consultas productivas terminaban503 aunque adaptadores aislados pasaran | Se preservan los tres puertos; test de identidad de proyección, runtime HTTP usando esa proyección y HTTP con MongoDB real a factura/saldo/pagos/órdenes/catálogos | PASS corregido |
 | F07 | DOC_DESACTUALIZADA / LOW | Mapa UI mantenía los responsables intercambiados después de corregir plan03 | Se actualizan solo15 campos responsable; test contractual de6 acciones de cobros y9 de inventario/calidad | PASS corregido |
+| F08 | DIVERGENTE / HIGH | Un traspaso que solo cambiara metadatos y conservara SHA permitía al antiguo propietario borrar la reserva con su lease previo | Traspaso autorizado actualiza SHA/UUID por CAS con lease; nuevo ejecutor espera confirmación; adquisiciones siempre nuevas evitan ABA. Prueba Git aislada de traspaso, borrado viejo y readquisición | PASS corregido |
 
 Factura se emite en un comando atómico directamente como EMITIDA; BORRADOR es estado del esquema, sin endpoint de borrador exigido por la tarea. No se permite editar líneas/receptor emitidos; anulación conserva documento y snapshot previo append-only. Es la concreción del trabajo de E05-P1-03, sin módulo fiscal ni cambio al diseño de resultados/informes.
 
@@ -127,7 +128,7 @@ Ninguno para el alcance backend de E05-P1-03. UI E05-P2-03, resultados/informes/
 | Grupo | Resultado | Evidencia |
 |---|---|---|
 | R01–R16 | PASS | Matriz anterior, pruebas ejecutadas y resultado.json |
-| F01–F07 | PASS tras corrección | Regresiones y comparación de fuentes |
+| F01–F08 | PASS tras corrección | Regresiones y comparación de fuentes |
 | Bloqueadas/no implementadas dentro de alcance | 0 | Inventario y trazas |
 | Suite común | PASS | Resultado saneado en resultado.json |
 
@@ -148,3 +149,9 @@ Revalidación documental tras216c909: AGENTS alinea la prioridad de tareas nueva
 La auditoría previa usaba bundles directos y no había probado la proyección empleada por crearDependenciasBackend. CodeRabbit detectó F06. Se reabrió R09/R14 y se añadieron cobertura de la proyección productiva, runtime HTTP con esa proyección y peticiones HTTP de factura/saldo/ambas páginas de facturas/pagos frente a MongoDB real. También responden200 órdenes y catálogo de pruebas por los puertos de laboratorio previos preservados. No se afirma haber usado Firebase real: la identidad HTTP es un doble explícito, mientras cuenta/roles y persistencia son reales y sintéticos en MongoDB.
 
 F07 corrige exactamente15 asignaciones del mapa UI: se compararon todos los demás campos con el commit anterior, sin diferencias. Regresión363 runtime/unitarias +43 contratos PASS;2 tests de coordinación PASS; MongoDB/HTTP CA14 y migración0111/1, modelo102PASS. Build/lint/arquitectura PASS. Auditorías de requisitos y seguridad revalidadas PASS sobre el incremento;43 unidades y16 requisitos.
+
+## Revalidación de traspaso de reserva tras fc5a3c5
+
+La revisión incremental no añadió hallazgos al backend. F08 identifica un hueco en el procedimiento de traspaso: la identidad remota debe cambiar, no solo el nombre en seguimiento. Se exige commit descendiente con nuevo UUID/ejecutor/motivo y cambio atómico de SHA mediante lease; si no se confirma, el nuevo ejecutor no continúa. Cada nueva adquisición usa UUID/commit distintos para evitar ABA. Plantilla de seguimiento recoge ambos SHA y resultado de confirmación.
+
+Test Git temporal: dos competidores iniciales, un ganador; borrado con SHA ajeno falla; cambio de identidad por CAS en traspaso; borrado tardío del ganador anterior falla; readquisición con identidad nueva y limpieza vieja falla. Dos tests de coordinación/documentación PASS. Huellas de todos los archivos backend idénticas a las pruebas363+43 y HTTP/MongoDB1+102 acreditadas. Revisión funcional y de seguridad del delta documental PASS; ningún hallazgo aplicable pendiente.
