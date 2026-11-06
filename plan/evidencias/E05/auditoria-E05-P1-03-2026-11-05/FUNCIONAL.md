@@ -74,7 +74,7 @@ Inventario exacto de archivo/línea: inventario.json. D: dominio y fronteras de 
 | R12 | plan/03 §7; tarea fallos | queryEscalar; gestionar-cobros; leerSnapshotCobros; mappers | runtime/cobros-http; unitarios/cobros-snapshot; unitarios/cobros-lectores | CUBIERTO / PASS |
 | R13 | AGENTS persistencia; M03 | verificarCobros; preparacion; mappers | contratos/cobros-esquema; integración CA14 (collMod temporal y restauración); unitarios/cobros-lectores | CUBIERTO / PASS |
 | R14 | plan/02; AGENTS arquitectura | puertos/cobros; casos; composición; adapter | npm run lint/architecture:check; integración rollback/carrera | CUBIERTO / PASS |
-| R15 | Instrucción humana05/11 + plan/11 | PR nuevos: auditorías antes de abrir y reserva exclusiva antes de implementar; PR79 ya abierto: auditar antes de continuar y conservar reserva existente | AGENTS/plan11; test_reserva_documental.py (2 pruebas) y revisión de contrato REST de GitHub | CUBIERTO / PASS |
+| R15 | Instrucción humana05/11 + plan/11 | Todo PR nuevo: auditorías antes de abrir; tarea nueva: reserva exclusiva antes de implementar; cierre: continúa reserva existente; PR79 ya abierto: auditar antes de continuar y conservar reserva existente | AGENTS/plan11; test_reserva_documental.py (2 pruebas) y revisión de contrato REST de GitHub | CUBIERTO / PASS |
 | R16 | plan/03 §2/§7 y tareas E05 | Mapa UI asigna las seis acciones de cobros a P1-03 y nueve de inventario/calidad a P2-02 sin alterar otros campos | contratos/cobros-esquema + comparación JSON antes/después | CUBIERTO / PASS |
 
 ## 4. Desviaciones detectadas
