@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 04/11/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 05/11/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
@@ -36,7 +36,7 @@ Actualizado: 04/11/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E04-P2-03](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 | JDaniC | HECHA | E04-P1-01, E04-P1-03, E04-P2-02 | [PR #74 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/74), `8c2a5d1`; CodeRabbit APPROVED sobre `94d86ed`, revision-coderabbit SUCCESS; 87 integral PASS con huella final; [seguimiento](seguimiento/E04-P2-03.md);02/11/2026 |
 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 | Davidix888 | HECHA | Puerta de fase | [PR #76 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/76), `a3677a8`; CodeRabbit APPROVED sobre `2135589`, contrato-pr/revision-coderabbit SUCCESS; 348 backend PASS, migración 011 + 102 modelo MongoDB PASS; [evidencia](evidencias/E05/E05-P1-01.md), [seguimiento](seguimiento/E05-P1-01.md); 04/11/2026 |
 | [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | — | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
-| [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | JDaniC | EN_REVISION | E05-P1-01 | [PR #79](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/79); implementación `2338925`; 357+42 pruebas y MongoDB aislado PASS; revisión pendiente |
+| [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | JDaniC | HECHA | E05-P1-01 | [PR #79 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/79), `78fea1a`; CodeRabbit APPROVED sobre `fc5a3c5`, controles SUCCESS; auditorías seguridad/requisitos PASS del alcance;363+43 tests y MongoDB/HTTP1+102 PASS; [evidencia](evidencias/E05/E05-P1-03.md);05/11/2026 |
 | [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
 | [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
 | [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | — | PENDIENTE | E05-P1-02, E05-P1-03, E05-P2-02 | Sin ejecución registrada |
