@@ -7,21 +7,25 @@ import unittest
 
 
 class ReservaExclusivaTest(unittest.TestCase):
+    """Comprueba exclusión y continuidad de identidad usando solo Git temporal."""
     def test_primera_creacion_gana_y_borrado_ajeno_no_libera(self):
         """Dos competidores comparten ref; solo uno adquiere y el lease protege."""
         with tempfile.TemporaryDirectory(prefix='bdii-reserva-') as temporal:
             def git(*args, entrada=None, check=True):
+                """Ejecuta argumentos Git constantes dentro del repositorio aislado."""
                 return subprocess.run(['git', '-C', temporal, *args], input=entrada,
                                       text=True, capture_output=True, check=check)
             git('init', '--bare')
             arbol = git('mktree', entrada='').stdout.strip()
             def commit(mensaje, padre=None):
+                """Crea una identidad sintética nueva y conserva el padre al transferir."""
                 return git('-c', 'user.name=Reserva sintetica', '-c',
                            'user.email=reserva@example.invalid', 'commit-tree',
                            arbol, *(['-p', padre] if padre else []), entrada=mensaje).stdout.strip()
             primero, segundo = commit('Primero\n'), commit('Segundo\n')
             ref = 'refs/heads/codex/reserva-TEST'
             def adquirir(sha):
+                """Crea la referencia solo si continúa ausente mediante comparación atómica."""
                 return git('update-ref', ref, sha, '0' * 40, check=False)
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as equipo:
                 resultados = list(equipo.map(adquirir, [primero, segundo]))
