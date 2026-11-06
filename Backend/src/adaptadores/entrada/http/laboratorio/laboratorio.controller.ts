@@ -1,7 +1,8 @@
-import {Body,Controller,Get,Headers,HttpCode,Param,Patch,Post,Query,Res} from '@nestjs/common';
+import {Body,Controller,Get,Headers,HttpCode,Param,Patch,Post,Put,Query,Res} from '@nestjs/common';
 import type {Response} from 'express';
 import {CrearOrdenLaboratorio} from '../../../../aplicacion/casos-uso/laboratorio/crear-orden.js';
 import {GestionarMuestraLaboratorio,type AccionMuestra} from '../../../../aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
+import {GestionarResultadoLaboratorio,type AccionResultado} from '../../../../aplicacion/casos-uso/laboratorio/gestionar-resultado.js';
 import {ConsultarListadosLaboratorio} from '../../../../aplicacion/casos-uso/laboratorio/consultar-listados.js';
 import {ConsultarRecursosLaboratorio} from '../../../../aplicacion/casos-uso/laboratorio/consultar-recursos.js';
 import {PublicarPruebaLaboratorio} from '../../../../aplicacion/casos-uso/laboratorio/publicar-prueba.js';
@@ -41,6 +42,7 @@ export class LaboratorioController{
  constructor(
   private readonly crearOrden:CrearOrdenLaboratorio,
   private readonly gestionarMuestra:GestionarMuestraLaboratorio,
+  private readonly gestionarResultado:GestionarResultadoLaboratorio,
   private readonly listados:ConsultarListadosLaboratorio,
   private readonly recursos:ConsultarRecursosLaboratorio,
   private readonly publicarPrueba:PublicarPruebaLaboratorio,
@@ -72,6 +74,21 @@ export class LaboratorioController{
  @Get('muestras/:id') @RequiereAcceso({permisos:['muestras.administrar'],capacidad:'LABORATORIO'})
  muestraDetalle(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){consultaEscalarVacia(query);return this.recursos.detalle('muestras',{contexto,bundle,id});}
 
+ @Post('resultados') @HttpCode(201) @RequiereAcceso({permisos:['resultados.analizar'],capacidad:'LABORATORIO'})
+ capturarResultado(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.resultado('capturar',c,b,undefined,k,e,r);}
+ @Put('resultados/:id/borrador') @RequiereAcceso({permisos:['resultados.analizar'],capacidad:'LABORATORIO'})
+ editarResultado(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Param('id') id:string,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.resultado('editar',c,b,id,k,e,r);}
+ @Post('resultados/:id/validaciones') @RequiereAcceso({permisos:['resultados.validar'],capacidad:'LABORATORIO'})
+ validarResultado(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Param('id') id:string,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.resultado('validar',c,b,id,k,e,r);}
+ @Post('resultados/:id/correcciones') @HttpCode(201) @RequiereAcceso({permisos:['resultados.analizar'],capacidad:'LABORATORIO'})
+ corregirResultado(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Param('id') id:string,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.resultado('corregir',c,b,id,k,e,r);}
+ @Post('resultados/:id/repeticiones') @HttpCode(201) @RequiereAcceso({permisos:['resultados.analizar'],capacidad:'LABORATORIO'})
+ repetirResultado(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Param('id') id:string,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.resultado('repetir',c,b,id,k,e,r);}
+ @Get('resultados') @RequiereAcceso({permisos:['resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
+ listarResultados(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Query() query:unknown){return this.listados.ejecutar('resultados',{contexto,bundle,entrada:consultaEscalar(query)});}
+ @Get('resultados/:id') @RequiereAcceso({permisos:['resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
+ resultadoDetalle(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){consultaEscalarVacia(query);return this.recursos.detalle('resultados',{contexto,bundle,id});}
+
  @Get('catalogos/:tipo')
  @RequiereAcceso({permisos:['ordenes.administrar','muestras.administrar','resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
  catalogo(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('tipo') tipo:string,@Query() query:unknown){return this.recursos.catalogo(tipoCatalogo(tipo),{contexto,bundle,entrada:consultaEscalar(query)});}
@@ -91,6 +108,7 @@ export class LaboratorioController{
  actualizarReferencia(@Contexto() c:ContextoAutenticado,@Bundle() b:BundleInstitucional,@Param('tipo') tipo:string,@Param('id') id:string,@Headers('idempotency-key') k:string,@Body() e:unknown,@Res({passthrough:true}) r:Response){return this.referencia(tipo,c,b,id,k,e,r);}
 
  private async muestra(accion:AccionMuestra,contexto:ContextoAutenticado,bundle:BundleInstitucional,id:string|undefined,clave:string,entrada:unknown,res:Response){return this.escribir(this.gestionarMuestra.ejecutar(accion,{contexto,bundle,...(id?{id:uuidPublico(id)}:{}),claveIdempotencia:uuidPublico(clave),entrada}),clave,res);}
+ private async resultado(accion:AccionResultado,contexto:ContextoAutenticado,bundle:BundleInstitucional,id:string|undefined,clave:string,entrada:unknown,res:Response){return this.escribir(this.gestionarResultado.ejecutar(accion,{contexto,bundle,...(id?{id:uuidPublico(id)}:{}),claveIdempotencia:uuidPublico(clave),entrada}),clave,res);}
  private referencia(tipo:string,contexto:ContextoAutenticado,bundle:BundleInstitucional,id:string|undefined,clave:string,entrada:unknown,res:Response){return this.escribir(this.guardarReferencia.ejecutar(tipoReferencia(tipo),{contexto,bundle,...(id?{id:uuidPublico(id)}:{}),claveIdempotencia:uuidPublico(clave),entrada}),clave,res);}
  private async escribir(promesa:Promise<Escritura>,clave:string,res:Response){const resultado=await promesa;res.set('idempotency-key',clave);res.status(resultado.httpStatus);return resultado.respuesta;}
 }

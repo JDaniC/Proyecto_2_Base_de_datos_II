@@ -1,10 +1,11 @@
 import type {Db,Document,Filter,ClientSession} from 'mongodb';
 import type {ContextoAutenticado} from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import type {FiltrosPagina,Pagina} from '../../../../aplicacion/puertos/nucleo.js';
-import type {FiltrosOrdenesLaboratorio,FiltrosMuestrasLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
+import type {FiltrosOrdenesLaboratorio,FiltrosMuestrasLaboratorio,FiltrosResultadosLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
 import type {CodecCursorHistorial} from '../../../../aplicacion/puertos/historial.js';
 import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
 import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
+import type {ResultadoLaboratorio} from '../../../../dominio/laboratorio/resultados/resultado.js';
 import {uuidPublico} from '../../../../dominio/compartido/uuid.js';
 import {instanteUtc} from '../../../../dominio/compartido/instante-utc.js';
 import {solicitudInvalida,ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
@@ -13,6 +14,7 @@ import {CursorHistorialCifrado} from '../../historial/cursor-historial.js';
 import {verificarLaboratorioMongodb} from './verificar-preparacion.js';
 import {mapearOrdenLaboratorio,type DocumentoOrdenLaboratorio} from './documento-orden.js';
 import {mapearMuestra} from './documento-muestra.js';
+import {mapearResultadoLaboratorio,type DocumentoResultadoLaboratorio} from './documento-resultado.js';
 /** Mongo guarda milisegundos: ceil conserva límites [desde,hasta) con fracciones más precisas. */
 function limiteFecha(valor:string):Date{
  instanteUtc(valor);const fecha=new Date(valor);const fraccion=valor.split('.')[1]?.slice(0,-1)??'';
@@ -20,17 +22,18 @@ function limiteFecha(valor:string):Date{
  return fecha;
 }
 export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial=new CursorHistorialCifrado(),ensayo:{despuesDeLeerDocumentos?:()=>Promise<void>}={}){
- async function listar<T>(recurso:'ordenes'|'muestras',contexto:ContextoAutenticado,f:{pacienteId?:string;ordenId?:string;estado?:string;desde?:string;hasta?:string},p:FiltrosPagina,mapear:(d:Document,session:ClientSession)=>Promise<T>):Promise<Pagina<T>>{
-  const permiso=recurso==='ordenes'?'ordenes.administrar':'muestras.administrar';
-  if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!contexto.cuenta.permisos.includes(permiso))throw new ErrorDominio('SIN_PERMISO','No puede consultar este recurso de laboratorio.');
+ async function listar<T>(recurso:'ordenes'|'muestras'|'resultados',contexto:ContextoAutenticado,f:{pacienteId?:string;ordenId?:string;itemId?:string;serieId?:string;estado?:string;desde?:string;hasta?:string},p:FiltrosPagina,mapear:(d:Document,session:ClientSession)=>Promise<T>):Promise<Pagina<T>>{
+  const autorizado=recurso==='ordenes'?contexto.cuenta.permisos.includes('ordenes.administrar'):recurso==='muestras'?contexto.cuenta.permisos.includes('muestras.administrar'):contexto.cuenta.permisos.some(v=>v==='resultados.analizar'||v==='resultados.validar');
+  if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!autorizado)throw new ErrorDominio('SIN_PERMISO','No puede consultar este recurso de laboratorio.');
   if(!Number.isInteger(p.limite)||p.limite<1||p.limite>100||!['ASC','DESC'].includes(p.orden))throw solicitudInvalida('Paginación inválida.');
-  const estados=recurso==='ordenes'?['CREADA','EN_PROCESO','COMPLETADA','CANCELADA']:['TOMADA','RECIBIDA','ACEPTADA','RECHAZADA','PROCESADA'];
+  const estados=recurso==='ordenes'?['CREADA','EN_PROCESO','COMPLETADA','CANCELADA']:recurso==='muestras'?['TOMADA','RECIBIDA','ACEPTADA','RECHAZADA','PROCESADA']:['BORRADOR','VALIDADO'];
   if(f.estado!==undefined&&!estados.includes(f.estado))throw solicitudInvalida('Estado inválido.');
-  if(Object.keys(f).some(k=>!(recurso==='ordenes'?['pacienteId','estado','desde','hasta']:['pacienteId','ordenId','estado','desde','hasta']).includes(k)))throw solicitudInvalida('Filtro no admitido.');
+  const permitidos=recurso==='ordenes'?['pacienteId','estado','desde','hasta']:recurso==='muestras'?['pacienteId','ordenId','estado','desde','hasta']:['pacienteId','ordenId','itemId','serieId','estado','desde','hasta'];
+  if(Object.keys(f).some(k=>!permitidos.includes(k)))throw solicitudInvalida('Filtro no admitido.');
   if(f.desde!==undefined&&f.hasta!==undefined&&normalizarInstante(f.desde)>=normalizarInstante(f.hasta))throw solicitudInvalida('Rango inválido.');
-  const campoFecha=recurso==='ordenes'?'fecha_orden':'fecha_toma';const filtro:Filter<Document>={};
-  const filtros={...(f.pacienteId!==undefined?{pacienteId:uuidPublico(f.pacienteId)}:{}),...(f.ordenId!==undefined?{ordenId:uuidPublico(f.ordenId)}:{}),...(f.estado?{estado:f.estado}:{}),...(f.desde!==undefined?{desde:normalizarInstante(f.desde)}:{}),...(f.hasta!==undefined?{hasta:normalizarInstante(f.hasta)}:{})};
-  if(filtros.pacienteId&&recurso==='ordenes')filtro.paciente_id=filtros.pacienteId;if(filtros.ordenId)filtro.orden_id=filtros.ordenId;if(filtros.estado)filtro.estado=filtros.estado;
+  const campoFecha=recurso==='ordenes'?'fecha_orden':recurso==='muestras'?'fecha_toma':'fecha_analisis';const filtro:Filter<Document>={};
+  const filtros={...(f.pacienteId!==undefined?{pacienteId:uuidPublico(f.pacienteId)}:{}),...(f.ordenId!==undefined?{ordenId:uuidPublico(f.ordenId)}:{}),...(f.itemId!==undefined?{itemId:uuidPublico(f.itemId)}:{}),...(f.serieId!==undefined?{serieId:uuidPublico(f.serieId)}:{}),...(f.estado?{estado:f.estado}:{}),...(f.desde!==undefined?{desde:normalizarInstante(f.desde)}:{}),...(f.hasta!==undefined?{hasta:normalizarInstante(f.hasta)}:{})};
+  if(filtros.pacienteId&&(recurso==='ordenes'||recurso==='resultados'))filtro.paciente_id=filtros.pacienteId;if(filtros.ordenId)filtro.orden_id=filtros.ordenId;if(filtros.itemId)filtro.item_id=filtros.itemId;if(filtros.serieId)filtro.serie_resultado_id=filtros.serieId;if(filtros.estado)filtro.estado=filtros.estado;
   if(f.desde!==undefined||f.hasta!==undefined)filtro[campoFecha]={...(f.desde!==undefined?{$gte:limiteFecha(f.desde)}:{}),...(f.hasta!==undefined?{$lt:limiteFecha(f.hasta)}:{})};
   const ambito=JSON.stringify(['LABORATORIO_CLINICO',contexto.cuenta.id,contexto.cuenta.version,[...contexto.cuenta.permisos].sort(),recurso,p.orden,filtros]);
   if(p.cursor!==undefined){const ultima=codec.decodificar(p.cursor,ambito);const comparador=p.orden==='ASC'?'$gt':'$lt';filtro.$and=[{$or:[{[campoFecha]:{[comparador]:new Date(ultima.fechaHora)}},{[campoFecha]:new Date(ultima.fechaHora),_id:{[comparador]:ultima.id}}]}];}
@@ -54,5 +57,6 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
  return {
   listarOrdenes:(c:ContextoAutenticado,f:FiltrosOrdenesLaboratorio,p:FiltrosPagina)=>listar<OrdenLaboratorio>('ordenes',c,f,p,async d=>mapearOrdenLaboratorio(d as DocumentoOrdenLaboratorio)),
   listarMuestras:(c:ContextoAutenticado,f:FiltrosMuestrasLaboratorio,p:FiltrosPagina)=>listar<Muestra>('muestras',c,f,p,async(d,session)=>mapearMuestra(d,await db.collection('eventos_muestra').find({muestra_id:d._id},{maxTimeMS:3000,session}).sort({orden_evento:1}).toArray())),
+  listarResultados:(c:ContextoAutenticado,f:FiltrosResultadosLaboratorio,p:FiltrosPagina)=>listar<ResultadoLaboratorio>('resultados',c,f,p,async d=>mapearResultadoLaboratorio(d as DocumentoResultadoLaboratorio)),
  };
 }

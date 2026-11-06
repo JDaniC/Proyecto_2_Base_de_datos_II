@@ -8,6 +8,8 @@ import {crearLectorOrdenMongodb} from '../laboratorio/leer-orden.js';
 import {crearLectorMuestraMongodb} from '../laboratorio/leer-muestra.js';
 import {aplicarCambiosLaboratorio} from '../laboratorio/aplicar-cambios.js';
 import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
+import type {ResultadoLaboratorio} from '../../../../dominio/laboratorio/resultados/resultado.js';
+import {crearLectorResultadoMongodb} from '../laboratorio/leer-resultado.js';
 import { crearClinicaMongodb, aplicarCambiosClinicosMongodb } from '../consultas/clinica-mongodb.js';
 import { crearHistorialMongodb } from '../../historial/historial-mongodb.js';
 import type { ClientSession, Db } from 'mongodb';
@@ -47,6 +49,7 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
   const originales = new WeakMap<ClientSession, Map<string, DocumentoPacienteMongo>>();
   const originalesOrdenes = new WeakMap<ClientSession,Map<string,OrdenLaboratorio>>();
   const originalesMuestras = new WeakMap<ClientSession, Map<string,Muestra>>();
+  const originalesResultados = new WeakMap<ClientSession, Map<string,ResultadoLaboratorio>>();
   const uow = crearUnidadDeTrabajoMongodb({
     cliente,
     crearLector(db, session, usuarioId) {
@@ -54,16 +57,17 @@ export async function crearBundlePacientesMongodb(cliente: ClienteMongodb): Prom
       originales.set(session, cache);
       const lector = crearLectorPacientesMongodb(db, session, usuarioId, cache);
       const muestras=new Map<string,Muestra>();originalesMuestras.set(session,muestras);
+      const resultados=new Map<string,ResultadoLaboratorio>();originalesResultados.set(session,resultados);
       const cacheOrdenes=new Map<string,OrdenLaboratorio>();originalesOrdenes.set(session,cacheOrdenes);
-      const ordenes=crearLectorOrdenMongodb(db,session);const lectorMuestras=crearLectorMuestraMongodb(db,session);
-      return {...lector,cobros:crearLectorCobros(db,session),laboratorio:{...crearLectoresReferenciasMongodb(db,session),async ordenPorId(id){const o=await ordenes.porId(id);if(o)cacheOrdenes.set(id,o);return o;},async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;}}, clinica: crearClinicaMongodb(db, session, cache)};
+      const ordenes=crearLectorOrdenMongodb(db,session);const lectorMuestras=crearLectorMuestraMongodb(db,session);const lectorResultados=crearLectorResultadoMongodb(db,session);
+      return {...lector,cobros:crearLectorCobros(db,session),laboratorio:{...crearLectoresReferenciasMongodb(db,session),async ordenPorId(id){const o=await ordenes.porId(id);if(o)cacheOrdenes.set(id,o);return o;},async muestraPorId(id){const m=await lectorMuestras.porId(id);if(m)muestras.set(id,m);return m;},async resultadoPorId(id){const r=await lectorResultados.porId(id);if(r)resultados.set(id,r);return r;},async ultimoResultadoPorSerie(id){const r=await lectorResultados.ultimoPorSerie(id);if(r)resultados.set(r.id,r);return r;}}, clinica: crearClinicaMongodb(db, session, cache)};
     },
     async aplicarCambios(db, session, contexto, comando, cambios) {
       if(comando.caso.startsWith('laboratorio.cobros.')){
         if(contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||!contexto.cuenta.permisos.includes('cobros.administrar'))throw new ErrorDominio('SIN_PERMISO','No puede administrar cobros.');
         return aplicarCambiosCobros(db,session,cambios);
       }
-      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map(),originalesOrdenes.get(session)??new Map());
+      if(comando.caso.startsWith('laboratorio.'))return aplicarCambiosLaboratorio(db,session,contexto,comando,cambios,originalesMuestras.get(session)??new Map(),originales.get(session)??new Map(),originalesOrdenes.get(session)??new Map(),originalesResultados.get(session)??new Map());
       if (comando.caso.startsWith('consulta.')) return aplicarCambiosClinicosMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
       return aplicarCambiosPacientesMongodb(db, session, contexto, comando, cambios, originales.get(session) ?? new Map());
     },
