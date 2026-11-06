@@ -38,7 +38,7 @@ Actualizado: 05/11/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | — | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
 | [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | JDaniC | HECHA | E05-P1-01 | [PR #79 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/79), `78fea1a`; [cierre documental #80](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/80); CodeRabbit APPROVED sobre `fc5a3c5`, controles SUCCESS; auditorías seguridad/requisitos PASS del alcance;363+43 tests y MongoDB/HTTP1+102 PASS; [evidencia](evidencias/E05/E05-P1-03.md);05/11/2026 |
 | [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
-| [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
+| [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | JDaniC | EN_CURSO | E05-P1-01 | Reserva previa a PR; `codex/e05-p2-02-inventario-calidad`;05/11/2026 |
 | [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | — | PENDIENTE | E05-P1-02, E05-P1-03, E05-P2-02 | Sin ejecución registrada |
 | [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
 | [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 | — | PENDIENTE | E06-P1-01, E06-P2-01, E06-P2-02 | Sin ejecución registrada |
