@@ -173,7 +173,7 @@ paths:
       - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
       - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
       responses:
-        '200': {description: Página con identidad, serie, versión y referencias aplicadas.}
+        '200': {description: Página con identidad, serie, revision optimista del documento, version clínica y referencias aplicadas.}
         <<: *erroresLaboratorio
     post:
       operationId: laboratorioResultadoCapturar
@@ -197,7 +197,7 @@ paths:
       x-implementacion: IMPLEMENTED
       parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}]
       responses:
-        '200': {description: Resultado con serie, versión, procedencia y referencias.}
+        '200': {description: Resultado con serie, revision optimista del documento, version clínica, procedencia y referencias.}
         <<: *erroresLaboratorio
   /laboratorio/resultados/{id}/borrador:
     put:
@@ -4417,7 +4417,7 @@ components:
       additionalProperties: false
       required: [versionEsperada, versionOrden, tipo, detalle]
       properties:
-        versionEsperada: {type: integer, minimum: 1}
+        versionEsperada: {type: integer, minimum: 1, description: Debe coincidir con revision; no corresponde a la versión clínica version.}
         versionOrden: {type: integer, minimum: 1}
         tipo: {type: string, enum: [RECEPCION, ACEPTACION, RECHAZO, TRASLADO, PROCESAMIENTO]}
         detalle: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
@@ -4426,7 +4426,7 @@ components:
       additionalProperties: false
       required: [versionEsperada, versionOrden, campo, nuevo, motivo]
       properties:
-        versionEsperada: {type: integer, minimum: 1}
+        versionEsperada: {type: integer, minimum: 1, description: Debe coincidir con revision; no corresponde a la versión clínica version.}
         versionOrden: {type: integer, minimum: 1}
         campo: {type: string, enum: [tipoMuestraId, recipiente]}
         nuevo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}

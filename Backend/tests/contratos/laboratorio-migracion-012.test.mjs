@@ -40,6 +40,7 @@ test('012 exige escritores detenidos y recupera una interrupción posterior a co
  assert.equal(final.estado,'LISTO');assert.equal(ensayo.manifiestos.get(12).estado,'LISTO');
  assert.ok(ensayo.estado.indices.some(v=>v.name==='ix_resultado_paciente_fecha'));
  assert.ok(ensayo.estado.indices.some(v=>v.name==='ix_resultado_repeticion'));
+ for(const nombre of ['ix_resultado_fecha','ix_resultado_orden_fecha','ix_resultado_item_fecha','ix_resultado_serie_fecha'])assert.ok(ensayo.estado.indices.some(v=>v.name===nombre));
  const esquema=ensayo.estado.validador.$and[0].$jsonSchema;
  assert.ok(esquema.properties.paciente_id);assert.ok(esquema.properties.resultado_repetido_de_id);
 });

@@ -40,6 +40,8 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
   const procedencia=resultado.procedencia.map(v=>originales.get(v.muestraId));
   if(procedencia.some(v=>!v))throw new ErrorDominio('REFERENCIA_INCOMPATIBLE','Las muestras del resultado deben leerse en la transacción.');
   verificarProcedenciaResultado(resultado,orden,procedencia as Muestra[],new Map(resultado.procedencia.map(v=>[v.tipoMuestraId,v.tipoMuestraNombre])));
+  const reservas=cambios.filter(c=>c.agregado==='ordenes'&&c.recursoId===orden.id&&(c.tipo==='RESERVAR_RESULTADO'||c.tipo==='ACTUALIZAR_POR_RESULTADO'));
+  if(reservas.length!==1)throw new ErrorDominio('ESTADO_INVALIDO','El resultado requiere reserva de revisión de orden.');
  }
  for(const cambio of cambios){
   if(['solicitantes','tipos_muestra','proveedores'].includes(cambio.agregado)&&cambio.tipo==='GUARDAR_REFERENCIA'){
@@ -99,6 +101,14 @@ export async function aplicarCambiosLaboratorio(db:Db,session:ClientSession,cont
     const r=await db.collection<import('./documento-resultado.js').DocumentoResultadoLaboratorio>('resultados').replaceOne({_id:resultado.id,revision:cambio.versionAnterior,estado:'BORRADOR'},doc,{session});
     if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','El resultado cambió.');
    }
+   continue;
+  }
+  if(cambio.agregado==='ordenes'&&cambio.tipo==='RESERVAR_RESULTADO'){
+   const anterior=ordenes.get(cambio.recursoId),nuevo=cambio.nuevoEstado as {id:string;version:number};
+   const resultado=cambiosResultado.find(v=>(v.nuevoEstado as ResultadoLaboratorio).ordenId===cambio.recursoId);
+   if(!anterior||!resultado||cambio.versionAnterior!==anterior.version||nuevo.id!==anterior.id||nuevo.version!==anterior.version+1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
+   const r=await db.collection<import('./documento-orden.js').DocumentoOrdenLaboratorio>('ordenes').updateOne({_id:anterior.id,revision:anterior.version},{$set:{revision:nuevo.version}},{session});
+   if(r.matchedCount!==1)throw new ErrorDominio('VERSION_DESACTUALIZADA','La orden cambió.');
    continue;
   }
   if(cambio.agregado==='ordenes'&&cambio.tipo==='ACTUALIZAR_POR_RESULTADO'){

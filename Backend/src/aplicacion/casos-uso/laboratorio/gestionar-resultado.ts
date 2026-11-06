@@ -81,10 +81,13 @@ export class GestionarResultadoLaboratorio{
    const cambios:CambioPlanificado[]=[{agregado:'resultados',tipo:'GUARDAR_RESULTADO',recursoId:uuidPublico(resultado.id),versionAnterior:accion==='editar'||accion==='validar'?versionPositiva(anterior!.revision):null,nuevoEstado:resultado}];
    const revisiones:RevisionPlanificada[]=[];
    if(accion==='editar'||accion==='validar')revisiones.push({id:comando.ids.revisionResultado!,agregado:'resultados',recursoId:uuidPublico(anterior!.id),versionAnterior:versionPositiva(anterior!.revision),snapshotAnterior:anterior!});
+   let ordenActualizada=false;
    if(accion==='validar'){
     const actualizada=completarOrdenPorResultado(orden,resultado);
-    if(actualizada!==orden){cambios.push({agregado:'ordenes',tipo:'ACTUALIZAR_POR_RESULTADO',recursoId:uuidPublico(orden.id),versionAnterior:versionPositiva(orden.version),nuevoEstado:actualizada});revisiones.push({id:comando.ids.revisionOrden!,agregado:'ordenes',recursoId:uuidPublico(orden.id),versionAnterior:versionPositiva(orden.version),snapshotAnterior:orden});}
+    if(actualizada!==orden){ordenActualizada=true;cambios.push({agregado:'ordenes',tipo:'ACTUALIZAR_POR_RESULTADO',recursoId:uuidPublico(orden.id),versionAnterior:versionPositiva(orden.version),nuevoEstado:actualizada});}
    }
+   if(!ordenActualizada)cambios.push({agregado:'ordenes',tipo:'RESERVAR_RESULTADO',recursoId:uuidPublico(orden.id),versionAnterior:versionPositiva(orden.version),nuevoEstado:{id:orden.id,version:orden.version+1}});
+   revisiones.push({id:comando.ids.revisionOrden!,agregado:'ordenes',recursoId:uuidPublico(orden.id),versionAnterior:versionPositiva(orden.version),snapshotAnterior:orden});
    return {tipo:'CONFIRMAR',cambios,revisiones,auditoria:[{id:comando.ids.auditoria!,actorId:contexto.cuenta.id,caso:comando.caso,recursoId:uuidPublico(resultado.id),fechaHora:comando.instante,correlacion:contexto.correlacion,...(e.motivo?{motivo:e.motivo as string}:{})}],
     resultado:{httpStatus:accion==='capturar'||accion==='corregir'||accion==='repetir'?201:200,respuesta:resultado,correlacionOriginal:contexto.correlacion}};
   });

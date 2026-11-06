@@ -10,6 +10,10 @@ const indicesOrigen=[
  {name:'ix_resultado_estado_fecha',key:{estado:1,fecha_analisis:1,_id:1}},
 ];
 const indicesDestino=[...indicesOrigen,
+ {name:'ix_resultado_fecha',key:{fecha_analisis:1,_id:1}},
+ {name:'ix_resultado_orden_fecha',key:{orden_id:1,fecha_analisis:1,_id:1}},
+ {name:'ix_resultado_item_fecha',key:{item_id:1,fecha_analisis:1,_id:1}},
+ {name:'ix_resultado_serie_fecha',key:{serie_resultado_id:1,fecha_analisis:1,_id:1}},
  {name:'ix_resultado_paciente_fecha',key:{paciente_id:1,fecha_analisis:1,_id:1},partialFilterExpression:{paciente_id:{$type:'string'}}},
  {name:'ix_resultado_repeticion',key:{resultado_repetido_de_id:1,fecha_analisis:1,_id:1},partialFilterExpression:{resultado_repetido_de_id:{$type:'string'}}},
 ];

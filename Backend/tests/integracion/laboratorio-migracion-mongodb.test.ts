@@ -40,7 +40,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomUUID} from 'node:crypto';
-import {MongoClient, Long, type Document} from 'mongodb';
+import {Decimal128, MongoClient, Long, type Document} from 'mongodb';
 const port=process.env.MONGO_TEST_PORT;
 test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{skip:!port},async t=>{
  assert.match(process.env.MONGO_TEST_CONTAINER!,/^bdii-e03-p2-01-[a-f0-9]{10}-mongodb-1$/);
@@ -61,6 +61,10 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  }
  await assert.rejects(verificarLaboratorioMongodb(db));
  await assert.rejects(migrarResultadosLaboratorioMongodb(db),/DETENER_ESCRITORES/);
+ const resultadoIncompatible={_id:randomUUID(),revision:1,serie_resultado_id:randomUUID(),version:1,orden_id:randomUUID(),item_id:randomUUID(),prueba_id:randomUUID(),analista_id:randomUUID(),fecha_analisis:new Date('2026-11-03T12:00:00Z'),estado:'BORRADOR',paciente_id:'no-es-uuid',procedencia_muestras:[{muestra_id:randomUUID(),codigo_barras_historico:'SINT-MIG-012',tipo_muestra_id:randomUUID(),tipo_muestra_nombre_historico:'Sintética',fecha_toma:new Date('2026-11-03T10:00:00Z'),fecha_recepcion:new Date('2026-11-03T11:00:00Z'),fecha_aceptacion:new Date('2026-11-03T11:30:00Z')}],componentes:[{parametro_id:randomUUID(),valor_numerico:Decimal128.fromString('1.25')}]};
+ await db.collection<{_id:string}&Document>('resultados').insertOne(resultadoIncompatible,{bypassDocumentValidation:true});
+ await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true}),/DOCUMENTOS_RESULTADOS_INCOMPATIBLES/);
+ await db.collection<{_id:string}&Document>('resultados').deleteOne({_id:resultadoIncompatible._id});
  await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true,despuesDeValidador:()=>{throw new Error('FALLO_012_INYECTADO');}}),/FALLO_012_INYECTADO/);
  assert.equal((await db.collection('historial_modelo').findOne({id:12}))!.estado,'MIGRANDO');
  await assert.rejects(verificarLaboratorioMongodb(db));
@@ -372,9 +376,21 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  const repetido=await gestionarResultado.ejecutar('repetir',{contexto:contextoAnalista,bundle,id:uuidPublico(validado.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{muestraIds:[retomaCaso.respuesta.id],componentes:[componenteResultado]}});
  assert.equal(repetido.respuesta.version,1);assert.notEqual(repetido.respuesta.serieId,validado.respuesta.serieId);assert.equal(repetido.respuesta.resultadoRepetidoDeId,validado.respuesta.id);
  assert.equal(await db.collection('resultados').countDocuments({orden_id:resultadoCaso.respuesta.id}),4);
+ const ordenCarrera=await invocarOrden({...entradaCaso,versionPaciente:3},uuidPublico(randomUUID()));
+ const muestraCarrera=await gestionarCaso.ejecutar('tomar',{contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:{ordenId:ordenCarrera.respuesta.id,versionOrden:1,itemIds:[ordenCarrera.respuesta.items[0]!.id],tipoMuestraId:referenciaIds.tipo,codigo:`SINT-CARRERA-${randomUUID()}`,recipiente:'Tubo carrera'}});
+ await gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(muestraCarrera.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:1,versionOrden:2,tipo:'RECEPCION',detalle:'Recibida para carrera'}});
+ await gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(muestraCarrera.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:2,versionOrden:3,tipo:'ACEPTACION',detalle:'Aceptada para carrera'}});
+ const entradaCarrera={ordenId:ordenCarrera.respuesta.id,itemId:ordenCarrera.respuesta.items[0]!.id,muestraIds:[muestraCarrera.respuesta.id],componentes:[componenteResultado]};
+ const carreraMuestraResultado=await Promise.allSettled([
+  gestionarResultado.ejecutar('capturar',{contexto:contextoAnalista,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:entradaCarrera}),
+  gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(muestraCarrera.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:3,versionOrden:4,tipo:'RECHAZO',detalle:'Rechazo concurrente'}}),
+ ]);
+ assert.equal(carreraMuestraResultado.filter(v=>v.status==='fulfilled').length,1);assert.equal(carreraMuestraResultado.filter(v=>v.status==='rejected').length,1);
+ const muestraTrasCarrera=await db.collection<{_id:string}&Document>('muestras').findOne({_id:muestraCarrera.respuesta.id});
+ assert.equal(await db.collection('resultados').countDocuments({orden_id:ordenCarrera.respuesta.id}),muestraTrasCarrera!.estado==='RECHAZADA'?0:1);
  const consultaCaso=new ConsultarRecursosLaboratorio();const bundleConsulta={...bundle,consultasLaboratorio:crearConsultasLaboratorioMongodb(app.db,new CursorCatalogoLaboratorio(()=>secretoCursor))};
  const consultarListados=new ConsultarListadosLaboratorio();const bundleListados={...bundle,listadosLaboratorio:paginas};
- assert.equal((await consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{pacienteId:pacienteCaso.id,limite:100}})).elementos.length,2);
+ assert.equal((await consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{pacienteId:pacienteCaso.id,limite:100}})).elementos.length,3);
  await assert.rejects(consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{actorId:cuenta.id}}));
  await db.collection<{_id:string}&Document>('roles').updateOne({_id:rolId},{$set:{permisos:['ordenes.administrar','pacientes.administrar']}});
  await assert.rejects(consultarListados.ejecutar('muestras',{contexto,bundle:bundleListados,entrada:{}}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
