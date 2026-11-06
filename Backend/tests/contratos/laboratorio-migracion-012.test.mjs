@@ -51,3 +51,10 @@ test('012 rechaza deriva de validador antes de escribir manifiesto',async()=>{
  await assert.rejects(migrarResultadosLaboratorioMongodb(ensayo.db,{escritoresDetenidos:true}),/ESQUEMA_RESULTADOS_DESCONOCIDO/);
  assert.equal(ensayo.manifiestos.has(12),false);
 });
+
+test('012 rechaza un índice destino con cotejamiento incompatible antes de MIGRANDO',async()=>{
+ const {migrarResultadosLaboratorioMongodb}=await import(pathToFileURL(resolve('..','Database','migrations','012_resultados_laboratorio_mongodb.mjs')).href);
+ const ensayo=base();ensayo.estado.indices.push({name:'ix_resultado_fecha',key:{fecha_analisis:1,_id:1},collation:{locale:'en',strength:2}});
+ await assert.rejects(migrarResultadosLaboratorioMongodb(ensayo.db,{escritoresDetenidos:true}),/INDICE_RESULTADOS_INCOMPATIBLE/);
+ assert.equal(ensayo.manifiestos.has(12),false);
+});

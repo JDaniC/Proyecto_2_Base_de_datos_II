@@ -386,8 +386,12 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
   gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(muestraCarrera.respuesta.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:3,versionOrden:4,tipo:'RECHAZO',detalle:'Rechazo concurrente'}}),
  ]);
  assert.equal(carreraMuestraResultado.filter(v=>v.status==='fulfilled').length,1);assert.equal(carreraMuestraResultado.filter(v=>v.status==='rejected').length,1);
+ const rechazoCarrera=carreraMuestraResultado.find(v=>v.status==='rejected');assert.ok(rechazoCarrera?.status==='rejected');
+ assert.ok(rechazoCarrera.reason instanceof Error&&'codigo' in rechazoCarrera.reason&&['VERSION_DESACTUALIZADA','ESTADO_INVALIDO'].includes(String(rechazoCarrera.reason.codigo)));
+ const capturaGano=carreraMuestraResultado[0]!.status==='fulfilled';
  const muestraTrasCarrera=await db.collection<{_id:string}&Document>('muestras').findOne({_id:muestraCarrera.respuesta.id});
- assert.equal(await db.collection('resultados').countDocuments({orden_id:ordenCarrera.respuesta.id}),muestraTrasCarrera!.estado==='RECHAZADA'?0:1);
+ assert.equal(muestraTrasCarrera!.estado,capturaGano?'ACEPTADA':'RECHAZADA');
+ assert.equal(await db.collection('resultados').countDocuments({orden_id:ordenCarrera.respuesta.id}),capturaGano?1:0);
  const consultaCaso=new ConsultarRecursosLaboratorio();const bundleConsulta={...bundle,consultasLaboratorio:crearConsultasLaboratorioMongodb(app.db,new CursorCatalogoLaboratorio(()=>secretoCursor))};
  const consultarListados=new ConsultarListadosLaboratorio();const bundleListados={...bundle,listadosLaboratorio:paginas};
  assert.equal((await consultarListados.ejecutar('ordenes',{contexto,bundle:bundleListados,entrada:{pacienteId:pacienteCaso.id,limite:100}})).elementos.length,3);
