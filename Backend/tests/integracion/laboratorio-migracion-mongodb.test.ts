@@ -65,6 +65,26 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await db.collection<{_id:string}&Document>('resultados').insertOne(resultadoIncompatible,{bypassDocumentValidation:true});
  await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true}),/DOCUMENTOS_RESULTADOS_INCOMPATIBLES/);
  await db.collection<{_id:string}&Document>('resultados').deleteOne({_id:resultadoIncompatible._id});
+ const validadorOrigenResultados=(await db.listCollections({name:'resultados'},{nameOnly:false}).toArray())[0]!.options!.validator;
+ const recrearResultadosInicial=async(collation?:{locale:string;strength?:number})=>{
+  await db.collection('resultados').drop();
+  await db.createCollection('resultados',{validator:validadorOrigenResultados,validationLevel:'strict',validationAction:'error',...(collation?{collation}:{})});
+  await db.collection('resultados').createIndex({serie_resultado_id:1,version:1},{name:'uq_resultado_serie_version',unique:true});
+  await db.collection('resultados').createIndex({orden_id:1,item_id:1,fecha_analisis:1,_id:1},{name:'ix_resultado_orden_item'});
+  await db.collection('resultados').createIndex({estado:1,fecha_analisis:1,_id:1},{name:'ix_resultado_estado_fecha'});
+ };
+ await recrearResultadosInicial({locale:'es',strength:1});
+ await db.collection('resultados').createIndex({fecha_analisis:1,_id:1},{name:'ix_resultado_fecha',collation:{locale:'simple'}});
+ await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true}),/INDICE_RESULTADOS_INCOMPATIBLE/);
+ assert.equal(await db.collection('historial_modelo').findOne({id:12}),null);
+ await db.collection('resultados').dropIndex('ix_resultado_fecha');
+ assert.equal((await migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'LISTO');
+ await verificarLaboratorioMongodb(db);
+ await db.collection('resultados').dropIndex('ix_resultado_fecha');
+ await db.collection('resultados').createIndex({fecha_analisis:1,_id:1},{name:'ix_resultado_fecha',collation:{locale:'simple'}});
+ await assert.rejects(verificarLaboratorioMongodb(db));
+ await recrearResultadosInicial();
+ await db.collection('historial_modelo').deleteOne({id:12});
  await assert.rejects(migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos:true,despuesDeValidador:()=>{throw new Error('FALLO_012_INYECTADO');}}),/FALLO_012_INYECTADO/);
  assert.equal((await db.collection('historial_modelo').findOne({id:12}))!.estado,'MIGRANDO');
  await assert.rejects(verificarLaboratorioMongodb(db));

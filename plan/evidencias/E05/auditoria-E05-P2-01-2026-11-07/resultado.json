@@ -1,0 +1,64 @@
+{
+  "tarea": "E05-P2-01",
+  "fecha_local": "2026-11-07",
+  "zona": "America/Guatemala",
+  "auditoria_funcional": "PASS",
+  "auditoria_seguridad": "PASS",
+  "unidades": 40,
+  "unidades_critical": 23,
+  "requisitos_trazados": 14,
+  "hallazgos_aplicables_pendientes": 0,
+  "regresion": {
+    "runtime_unitarios": {
+      "pass": 371,
+      "fail": 0
+    },
+    "contractuales": {
+      "pass": 46,
+      "fail": 0
+    }
+  },
+  "mongodb_aislado": {
+    "suite_migracion011_012_y_CA12_13_16": {
+      "pass": 1,
+      "fail": 0
+    },
+    "modelo_M03": {
+      "pass": 102,
+      "fail": 0
+    }
+  },
+  "build": "PASS",
+  "lint_arquitectura": "PASS",
+  "sca": {
+    "avisos_raiz_heredados": 2,
+    "entradas_propagadas_lock": 10,
+    "severidad_scanner": "moderate",
+    "camino_explotable_confirmado_en_resultados": false,
+    "detalle": "SEGURIDAD.md y sca.json; no se afirma scanner limpio ni seguridad global"
+  },
+  "huellas_sha256_entrega_backend": {
+    "Backend/docs/openapi.yaml": "c3d42848abfa4da93c17b5625018d81cbab6baa44853382c523596eca279f314",
+    "Backend/src/dominio/laboratorio/resultados/resultado.ts": "7728ed6eda5e470dbe50fb551a21c90a0db1fb362e2328ebc8f8d880a83b4b18",
+    "Backend/src/aplicacion/casos-uso/laboratorio/gestionar-resultado.ts": "729e9f3b56b6a36516ed2fd9669b66f7212fa30c9c53b775eb78729bdc59b359",
+    "Backend/src/aplicacion/casos-uso/laboratorio/consultar-listados.ts": "eec1a7bd54116d26ac90808f7bb7103f62403dda954ae8f63fc41ead492fc117",
+    "Backend/src/aplicacion/casos-uso/laboratorio/consultar-recursos.ts": "c69fc9ff623768bf5283315ce8986eb61cb1044d87f24d637e2347d2a737905a",
+    "Backend/src/aplicacion/puertos/laboratorio.ts": "b1694a29247a7b1dfb946e279a819bd9a20ce4c2ef6e9291d624f41300821b33",
+    "Backend/src/aplicacion/puertos/nucleo.ts": "f3adeda27c58901f9f8cc4d45ef90dfee0922fd3bda5f577b54313ba2564d223",
+    "Backend/src/adaptadores/entrada/http/laboratorio/laboratorio.controller.ts": "c3b840e6b6e59651de7619e462690fe59ce54da78bd44f127483c6345201bae8",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/aplicar-cambios.ts": "40591ffff1295a855a7ffc94850b02f2f4b1462bf54ac91f631bad6da6cebd2d",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/consultar-recursos.ts": "ee19b8d065e24c42b93e93a9f7ee0f2f6ba69755da9426bdc68039b7201c5af7",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/documento-resultado.ts": "1d071901b8bc162d8fe50c2c7a184fb6e6200976a3f657c2e9858cc0ab3c735a",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/leer-resultado.ts": "6c512b55d5dacdbac528b7445134c5b75ec86b30ab6137f88522d46ace68534e",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/listar-recursos.ts": "bac8fa2a5ef6fc21be858f2c4beb373363a8309596d36b9714f0fb75e7a17396",
+    "Backend/src/adaptadores/salida/mongodb/laboratorio/verificar-preparacion.ts": "25833d61fa3e556079c9c1cb2adf54c4d81ae052fba55081c89da58c25fe3faa",
+    "Backend/src/adaptadores/salida/mongodb/pacientes/crear-bundle-pacientes-mongodb.ts": "415b9551992d02e36cd75a4c4b49275a13d821018a437b661e298caf1d922587",
+    "Backend/src/adaptadores/salida/mongodb/unidad-de-trabajo-mongodb.ts": "6aff3e6d10cbf7e726e3e8b4da4ecaa47a0fc923c5ca06604b2f0e69256b2555",
+    "Backend/src/composicion/app.module.ts": "e7d830d9db8526434724edb3cbac91888f73adad3fcf11e872a08a10f42a1a92",
+    "Database/migrations/012_resultados_laboratorio_mongodb.mjs": "d3585425fa4ae48a7b7693f22b80ef97d18b9606e8b760d21ed829bff5cdac10",
+    "Backend/tests/contratos/laboratorio-migracion-012.test.mjs": "efe9e9c643af0bc9a3345b9d6959b9bf9b05ef3dab6ccaf09fcc7dbd0d6ad92f",
+    "Backend/tests/integracion/laboratorio-migracion-mongodb.test.ts": "e82f9f57151e5e4f16c9f600592a2f267f295ee54cbfbb396ba6ac919e4a5af5",
+    "Backend/tests/unitarios/laboratorio-resultados.test.ts": "9fbe2d4f946322cfbb4b41a159278c7887bb972332cc1ef0c075bc5477d541c5"
+  },
+  "nota": "Auditorías ejecutadas para el PR #78 (abierto antes de la política del 05/11/2026) antes de continuar la revisión/integración, tras corregir el cotejamiento efectivo de índices en la migración 012 y verificar-preparacion."
+}

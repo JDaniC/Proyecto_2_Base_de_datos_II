@@ -27,8 +27,8 @@ function destinoDesde(origen){
  json.allOf.push({anyOf:[{not:{required:['resultado_repetido_de_id']}},{properties:{version:{enum:[1]}},not:{required:['resultado_anterior_id']}}]});
  return destino;
 }
-function collationEfectiva(indice,coleccion){return indice?.collation??coleccion??{locale:'simple'};}
-function indiceCompatible(actual,esperado,collationColeccion){return actual&&JSON.stringify(actual.key)===JSON.stringify(esperado.key)&&Boolean(actual.unique)===Boolean(esperado.unique)&&hash(actual.partialFilterExpression??null)===hash(esperado.partialFilterExpression??null)&&hash(collationEfectiva(actual,collationColeccion))===hash(collationEfectiva(esperado,collationColeccion));}
+/** En listIndexes un índice sin collation usa simple; el esperado sin collation hereda la colección. */
+function indiceCompatible(actual,esperado,collationColeccion={locale:'simple'}){return actual&&JSON.stringify(actual.key)===JSON.stringify(esperado.key)&&Boolean(actual.unique)===Boolean(esperado.unique)&&hash(actual.partialFilterExpression??null)===hash(esperado.partialFilterExpression??null)&&hash(actual.collation??{locale:'simple'})===hash(esperado.collation??collationColeccion);}
 
 /** ADMIN, respaldo externo verificado y escritores de resultados detenidos. No modifica documentos clínicos. */
 export async function migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos=false,despuesDeValidador}={}){
@@ -47,7 +47,7 @@ export async function migrarResultadosLaboratorioMongodb(db,{escritoresDetenidos
   if(!respaldo||hash(respaldo)!==HUELLA_ORIGEN)throw new Error('ESQUEMA_RESULTADOS_DESCONOCIDO');
   destino=destinoDesde(respaldo);if(hash(origen)!==hash(destino))throw new Error('ESQUEMA_RESULTADOS_DESCONOCIDO');
  }
- const indices=await db.collection('resultados').listIndexes().toArray(),collationColeccion=info.options?.collation;
+ const indices=await db.collection('resultados').listIndexes().toArray(),collationColeccion=info.options?.collation??{locale:'simple'};
  for(const esperado of indicesOrigen)if(!indiceCompatible(indices.find(v=>v.name===esperado.name),esperado,collationColeccion))throw new Error('INDICE_RESULTADOS_INCOMPATIBLE');
  for(const esperado of indicesDestino){const actual=indices.find(v=>v.name===esperado.name);if(actual&&!indiceCompatible(actual,esperado,collationColeccion))throw new Error('INDICE_RESULTADOS_INCOMPATIBLE');if(!actual&&indices.some(v=>JSON.stringify(v.key)===JSON.stringify(esperado.key)))throw new Error('INDICE_RESULTADOS_INCOMPATIBLE');}
  if(await db.collection('resultados').countDocuments({$nor:[destino]}))throw new Error('DOCUMENTOS_RESULTADOS_INCOMPATIBLES');

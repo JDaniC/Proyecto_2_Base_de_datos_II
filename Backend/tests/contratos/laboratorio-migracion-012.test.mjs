@@ -13,18 +13,19 @@ function validadorInicialResultados(){
  return structuredClone(definiciones.find(v=>v.nombre==='resultados').validador);
 }
 
-function base(){
+function base(collation){
+ const extra=collation?{collation}:{};
  const manifiestos=new Map([[11,{id:11,version:1,estado:'LISTO'}]]),estado={validador:validadorInicialResultados(),indices:[
-  {name:'_id_',key:{_id:1}},{name:'uq_resultado_serie_version',key:{serie_resultado_id:1,version:1},unique:true},
-  {name:'ix_resultado_orden_item',key:{orden_id:1,item_id:1,fecha_analisis:1,_id:1}},
-  {name:'ix_resultado_estado_fecha',key:{estado:1,fecha_analisis:1,_id:1}},
+  {name:'_id_',key:{_id:1}},{name:'uq_resultado_serie_version',key:{serie_resultado_id:1,version:1},unique:true,...extra},
+  {name:'ix_resultado_orden_item',key:{orden_id:1,item_id:1,fecha_analisis:1,_id:1},...extra},
+  {name:'ix_resultado_estado_fecha',key:{estado:1,fecha_analisis:1,_id:1},...extra},
  ]};
  const historial={findOne:async f=>structuredClone(manifiestos.get(f.id)??null),updateOne:async(f,u)=>{
   const actual=manifiestos.get(f.id),nuevo={...(actual??{}),...(!actual?u.$setOnInsert??{}:{}),...(u.$set??{})};manifiestos.set(f.id,structuredClone(nuevo));return {matchedCount:actual?1:0,upsertedCount:actual?0:1};
  }};
  const resultados={listIndexes:()=>({toArray:async()=>structuredClone(estado.indices)}),countDocuments:async()=>0,
-  createIndex:async(key,opciones)=>{if(!estado.indices.some(v=>v.name===opciones.name))estado.indices.push({key,...opciones});return opciones.name;}};
- const db={collection:nombre=>nombre==='historial_modelo'?historial:resultados,listCollections:()=>({toArray:async()=>[{name:'resultados',options:{validator:structuredClone(estado.validador),validationLevel:'strict',validationAction:'error'}}]}),
+  createIndex:async(key,opciones)=>{if(!estado.indices.some(v=>v.name===opciones.name))estado.indices.push({key,...extra,...opciones});return opciones.name;}};
+ const db={collection:nombre=>nombre==='historial_modelo'?historial:resultados,listCollections:()=>({toArray:async()=>[{name:'resultados',options:{validator:structuredClone(estado.validador),validationLevel:'strict',validationAction:'error',...extra}}]}),
   command:async cmd=>{estado.validador=structuredClone(cmd.validator);return {ok:1};}};
  return {db,manifiestos,estado};
 }
@@ -57,4 +58,10 @@ test('012 rechaza un índice destino con cotejamiento incompatible antes de MIGR
  const ensayo=base();ensayo.estado.indices.push({name:'ix_resultado_fecha',key:{fecha_analisis:1,_id:1},collation:{locale:'en',strength:2}});
  await assert.rejects(migrarResultadosLaboratorioMongodb(ensayo.db,{escritoresDetenidos:true}),/INDICE_RESULTADOS_INCOMPATIBLE/);
  assert.equal(ensayo.manifiestos.has(12),false);
+ const noSimple=base({locale:'es',strength:1});noSimple.estado.indices.push({name:'ix_resultado_fecha',key:{fecha_analisis:1,_id:1}});
+ await assert.rejects(migrarResultadosLaboratorioMongodb(noSimple.db,{escritoresDetenidos:true}),/INDICE_RESULTADOS_INCOMPATIBLE/);
+ assert.equal(noSimple.manifiestos.has(12),false);
+ const compatible=base({locale:'es',strength:1});compatible.estado.indices.push({name:'ix_resultado_fecha',key:{fecha_analisis:1,_id:1},collation:{locale:'es',strength:1}});
+ assert.equal((await migrarResultadosLaboratorioMongodb(compatible.db,{escritoresDetenidos:true})).estado,'LISTO');
+ assert.equal(compatible.manifiestos.get(12).estado,'LISTO');
 });

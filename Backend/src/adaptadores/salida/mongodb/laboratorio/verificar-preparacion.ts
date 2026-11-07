@@ -36,7 +36,7 @@ export async function verificarLaboratorioMongodb(db:Db):Promise<void>{
   ]){
    const actual=indicesResultado.find(v=>v.name===esperado.name);
    const collationColeccion=infoResultado.options?.collation??{locale:'simple'};
-   if(!actual||JSON.stringify(actual.key)!==JSON.stringify(esperado.key)||Boolean(actual.unique)!==Boolean(esperado.unique)||hash(actual.partialFilterExpression??null)!==hash(esperado.partialFilterExpression??null)||hash(actual.collation??collationColeccion)!==hash((esperado as {collation?:unknown}).collation??collationColeccion))throw new Error('INDICE_RESULTADOS_INCOMPATIBLE');
+   if(!actual||JSON.stringify(actual.key)!==JSON.stringify(esperado.key)||Boolean(actual.unique)!==Boolean(esperado.unique)||hash(actual.partialFilterExpression??null)!==hash(esperado.partialFilterExpression??null)||hash(actual.collation??{locale:'simple'})!==hash((esperado as {collation?:unknown}).collation??collationColeccion))throw new Error('INDICE_RESULTADOS_INCOMPATIBLE');
   }
  }catch{throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Laboratorio requiere migraciones 011/012 LISTO y esquema compatible.');}
 }
