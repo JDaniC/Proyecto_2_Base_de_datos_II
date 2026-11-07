@@ -6,11 +6,11 @@ import { describe, it } from 'node:test';
 import { leerContratoOpenApi } from '../../src/composicion/leer-contrato-openapi.js';
 
 describe('contrato OpenAPI de arranque', () => {
-  it('lee el contrato canónico con las 84 rutas, incluidas las extensiones hospitalaria, pediátrica y de laboratorio v1', () => {
+  it('lee el contrato canónico con las 90 rutas, incluidas las extensiones hospitalaria, pediátrica y de laboratorio v1', () => {
     const contrato = leerContratoOpenApi(resolve(process.cwd(), 'docs/openapi.yaml'));
 
     assert.equal(contrato.openapi, '3.1.0');
-    assert.equal(Object.keys(contrato.paths).length, 84);
+    assert.equal(Object.keys(contrato.paths).length, 90);
     assert.equal(contrato.servers?.[0]?.url, '/api/v1');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/sesion']?.get), 'IMPLEMENTED');
@@ -19,6 +19,8 @@ describe('contrato OpenAPI de arranque', () => {
     assert.equal(extensionImplementacion(contrato.paths['/pacientes/{id}/expediente']?.get), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/laboratorio/ordenes']?.post), 'IMPLEMENTED');
     assert.equal(extensionImplementacion(contrato.paths['/laboratorio/muestras']?.post), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/laboratorio/resultados']?.post), 'IMPLEMENTED');
+    assert.equal(extensionImplementacion(contrato.paths['/laboratorio/resultados/{id}/validaciones']?.post), 'IMPLEMENTED');
     const respuestasLaboratorio = contrato.paths['/laboratorio/ordenes']?.get?.responses as Record<string, unknown>;
     for (const codigo of ['400', '401', '403', '404', '409', '413', '500', '503']) {
       assert.ok(respuestasLaboratorio[codigo], `Falta respuesta ${codigo} en laboratorio.`);

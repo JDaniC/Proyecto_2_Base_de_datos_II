@@ -4,6 +4,7 @@ import type {Response} from 'express';
 import {LaboratorioController} from '../../src/adaptadores/entrada/http/laboratorio/laboratorio.controller.js';
 import type {CrearOrdenLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/crear-orden.js';
 import type {GestionarMuestraLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
+import type {GestionarResultadoLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/gestionar-resultado.js';
 import type {ConsultarListadosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-listados.js';
 import type {ConsultarRecursosLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/consultar-recursos.js';
 import type {PublicarPruebaLaboratorio} from '../../src/aplicacion/casos-uso/laboratorio/publicar-prueba.js';
@@ -21,6 +22,7 @@ function controlador(captura:{listado?:unknown[];orden?:unknown[];muestra?:unkno
  return new LaboratorioController(
   escritura as unknown as CrearOrdenLaboratorio,
   muestra as unknown as GestionarMuestraLaboratorio,
+  muestra as unknown as GestionarResultadoLaboratorio,
   listados as unknown as ConsultarListadosLaboratorio,
   recursos as unknown as ConsultarRecursosLaboratorio,
   escritura as unknown as PublicarPruebaLaboratorio,

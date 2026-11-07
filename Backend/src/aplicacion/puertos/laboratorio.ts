@@ -2,6 +2,7 @@ import type { UUID } from '../../dominio/compartido/uuid.js';
 import type { Version } from '../../dominio/compartido/version.js';
 import type { OrdenLaboratorio, PruebaVersionada } from '../../dominio/laboratorio/ordenes.js';
 import type { Muestra } from '../../dominio/laboratorio/muestras.js';
+import type { ResultadoLaboratorio } from '../../dominio/laboratorio/resultados/resultado.js';
 import type { FiltrosPagina, Pagina } from './nucleo.js';
 
 export interface SolicitanteLaboratorio {
@@ -41,6 +42,15 @@ export interface FiltrosMuestrasLaboratorio {
   readonly desde?: string;
   readonly hasta?: string;
 }
+export interface FiltrosResultadosLaboratorio {
+  readonly pacienteId?: UUID;
+  readonly ordenId?: UUID;
+  readonly itemId?: UUID;
+  readonly serieId?: UUID;
+  readonly estado?: ResultadoLaboratorio['estado'];
+  readonly desde?: string;
+  readonly hasta?: string;
+}
 /** Lectores ligados a una única session dentro de la UoW; sin escrituras internas. */
 export interface PuertosLaboratorio {
   solicitantePorId(id: UUID): Promise<SolicitanteLaboratorio | null>;
@@ -53,14 +63,19 @@ export interface PuertosLaboratorio {
   ordenPorId(id: UUID): Promise<OrdenLaboratorio | null>;
   muestraPorId(id: UUID): Promise<Muestra | null>;
   muestraPorCodigo(codigo: string): Promise<Muestra | null>;
+  resultadoPorId(id: UUID): Promise<ResultadoLaboratorio | null>;
+  ultimoResultadoPorSerie(serieId: UUID): Promise<ResultadoLaboratorio | null>;
   listarOrdenes(filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
   listarMuestras(filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
+  listarResultados(filtros: FiltrosResultadosLaboratorio, pagina: FiltrosPagina): Promise<Pagina<ResultadoLaboratorio>>;
 }
 
 /** Extensión tipada: el adaptador aplica todos los cambios junto a operación y auditoría. */
 export type CambioLaboratorio =
   | { readonly tipo: 'CREAR_ORDEN'; readonly orden: OrdenLaboratorio }
   | { readonly tipo: 'GUARDAR_MUESTRA'; readonly versionAnterior: number | null; readonly muestra: Muestra }
+  | { readonly tipo: 'GUARDAR_RESULTADO'; readonly versionAnterior: number | null; readonly resultado: ResultadoLaboratorio }
+  | { readonly tipo: 'ACTUALIZAR_POR_RESULTADO'; readonly versionAnterior: number; readonly orden: OrdenLaboratorio }
   | { readonly tipo: 'PUBLICAR_PRUEBA'; readonly prueba: PruebaVersionada }
   | { readonly tipo: 'GUARDAR_SOLICITANTE'; readonly versionAnterior: number | null; readonly solicitante: SolicitanteLaboratorio }
   | { readonly tipo: 'GUARDAR_TIPO_MUESTRA'; readonly versionAnterior: number | null; readonly tipoMuestra: TipoMuestraLaboratorio }
@@ -70,6 +85,7 @@ export type CambioLaboratorio =
 export interface ListadosLaboratorio {
  listarOrdenes(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
  listarMuestras(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
+ listarResultados(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosResultadosLaboratorio, pagina: FiltrosPagina): Promise<Pagina<ResultadoLaboratorio>>;
 }
 
 export type TipoCatalogoLaboratorio='solicitantes'|'tiposMuestra'|'metodos'|'pruebas'|'proveedores';
@@ -77,5 +93,6 @@ export type ItemCatalogoLaboratorio=SolicitanteLaboratorio|TipoMuestraLaboratori
 export interface ConsultasLaboratorio {
  ordenPorId(contexto:import('./contexto-autenticado.js').ContextoAutenticado,id:UUID):Promise<OrdenLaboratorio|null>;
  muestraPorId(contexto:import('./contexto-autenticado.js').ContextoAutenticado,id:UUID):Promise<Muestra|null>;
+ resultadoPorId(contexto:import('./contexto-autenticado.js').ContextoAutenticado,id:UUID):Promise<ResultadoLaboratorio|null>;
  listarCatalogo(contexto:import('./contexto-autenticado.js').ContextoAutenticado,tipo:TipoCatalogoLaboratorio,filtros:{readonly activo?:boolean;readonly q?:string},pagina:FiltrosPagina):Promise<Pagina<ItemCatalogoLaboratorio>>;
 }

@@ -8,6 +8,7 @@ import {ErrorDominio,solicitudInvalida} from '../../../../dominio/compartido/err
 import {verificarLaboratorioMongodb} from './verificar-preparacion.js';
 import {crearLectorOrdenMongodb} from './leer-orden.js';
 import {crearLectorMuestraMongodb} from './leer-muestra.js';
+import {crearLectorResultadoMongodb} from './leer-resultado.js';
 import {crearLectoresReferenciasMongodb} from './leer-referencias.js';
 import {CursorCatalogoLaboratorio} from './cursor-catalogo.js';
 const colecciones={solicitantes:'solicitantes',tiposMuestra:'tipos_muestra',metodos:'metodos',pruebas:'pruebas',proveedores:'proveedores'} as const;
@@ -21,6 +22,7 @@ export function crearConsultasLaboratorioMongodb(db:Db,codec=new CursorCatalogoL
  return {
   async ordenPorId(c,id){exigir(c,['ordenes.administrar']);return snapshot(s=>crearLectorOrdenMongodb(db,s).porId(uuidPublico(id)));},
   async muestraPorId(c,id){exigir(c,['muestras.administrar']);return snapshot(s=>crearLectorMuestraMongodb(db,s).porId(uuidPublico(id)));},
+  async resultadoPorId(c,id){exigir(c,['resultados.analizar','resultados.validar']);return snapshot(s=>crearLectorResultadoMongodb(db,s).porId(uuidPublico(id)));},
   async listarCatalogo(c,tipo,f,p){
    if(!Object.hasOwn(colecciones,tipo))throw solicitudInvalida('Catálogo no admitido.');
    exigir(c,tipo==='solicitantes'||tipo==='proveedores'?['ordenes.administrar']:['ordenes.administrar','muestras.administrar','resultados.analizar','resultados.validar']);

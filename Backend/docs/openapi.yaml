@@ -153,6 +153,104 @@ paths:
       responses:
         '201': {description: Retoma confirmada.}
         <<: *erroresLaboratorio
+  /laboratorio/resultados:
+    get:
+      operationId: laboratorioResultadoListar
+      summary: Lista resultados sin convertirlos en diagnósticos.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar|resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - {name: pacienteId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: ordenId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: itemId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: serieId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: estado, in: query, schema: {type: string, enum: [BORRADOR, VALIDADO]}}
+      - {name: desde, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: hasta, in: query, schema: {$ref: '#/components/schemas/InstanteUTC'}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: orden, in: query, schema: {type: string, enum: [ASC, DESC], default: DESC}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
+      responses:
+        '200': {description: Página con identidad, serie, revision optimista del documento, version clínica y referencias aplicadas.}
+        <<: *erroresLaboratorio
+    post:
+      operationId: laboratorioResultadoCapturar
+      summary: Crea un BORRADOR según la prueba congelada en la orden.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioResultadoCapturar'}}}}
+      responses:
+        '201': {description: Borrador y procedencia histórica confirmados.}
+        <<: *erroresLaboratorio
+  /laboratorio/resultados/{id}:
+    get:
+      operationId: laboratorioResultadoDetalle
+      summary: Obtiene una versión exacta de resultado.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar|resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}]
+      responses:
+        '200': {description: Resultado con serie, revision optimista del documento, version clínica, procedencia y referencias.}
+        <<: *erroresLaboratorio
+  /laboratorio/resultados/{id}/borrador:
+    put:
+      operationId: laboratorioResultadoEditarBorrador
+      summary: Sustituye únicamente un BORRADOR con revisión optimista.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioResultadoEditar'}}}}
+      responses:
+        '200': {description: Nueva revisión del borrador.}
+        <<: *erroresLaboratorio
+  /laboratorio/resultados/{id}/validaciones:
+    post:
+      operationId: laboratorioResultadoValidar
+      summary: Valida sin sobrescribir y completa ítem/orden cuando corresponde.
+      tags: [laboratorio]
+      x-permisos: [resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioResultadoValidar'}}}}
+      responses:
+        '200': {description: Resultado validado por la cuenta actual.}
+        <<: *erroresLaboratorio
+  /laboratorio/resultados/{id}/correcciones:
+    post:
+      operationId: laboratorioResultadoCorregir
+      summary: Crea la siguiente versión en la misma serie.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioResultadoCorregir'}}}}
+      responses:
+        '201': {description: Borrador de corrección con nueva versión clínica.}
+        <<: *erroresLaboratorio
+  /laboratorio/resultados/{id}/repeticiones:
+    post:
+      operationId: laboratorioResultadoRepetir
+      summary: Crea una serie nueva vinculada al resultado origen.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters: [{name: id, in: path, required: true, schema: {$ref: '#/components/schemas/UUID'}}, {$ref: '#/components/parameters/Idempotencia'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LaboratorioResultadoRepetir'}}}}
+      responses:
+        '201': {description: Borrador de repetición con serie nueva.}
+        <<: *erroresLaboratorio
   /laboratorio/catalogos/{tipo}:
     get:
       operationId: laboratorioCatalogoListar
@@ -4319,7 +4417,7 @@ components:
       additionalProperties: false
       required: [versionEsperada, versionOrden, tipo, detalle]
       properties:
-        versionEsperada: {type: integer, minimum: 1}
+        versionEsperada: {type: integer, minimum: 1, description: Debe coincidir con revision; no corresponde a la versión clínica version.}
         versionOrden: {type: integer, minimum: 1}
         tipo: {type: string, enum: [RECEPCION, ACEPTACION, RECHAZO, TRASLADO, PROCESAMIENTO]}
         detalle: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
@@ -4328,7 +4426,7 @@ components:
       additionalProperties: false
       required: [versionEsperada, versionOrden, campo, nuevo, motivo]
       properties:
-        versionEsperada: {type: integer, minimum: 1}
+        versionEsperada: {type: integer, minimum: 1, description: Debe coincidir con revision; no corresponde a la versión clínica version.}
         versionOrden: {type: integer, minimum: 1}
         campo: {type: string, enum: [tipoMuestraId, recipiente]}
         nuevo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
@@ -4344,6 +4442,71 @@ components:
         codigo: {type: string, minLength: 1, maxLength: 80, pattern: '\S'}
         recipiente: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
         motivo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioComponenteResultado:
+      type: object
+      additionalProperties: false
+      required: [parametroId, indicador]
+      oneOf:
+      - required: [valorNumerico]
+        not: {required: [valorTexto]}
+      - required: [valorTexto]
+        not: {required: [valorNumerico]}
+      properties:
+        parametroId: {$ref: '#/components/schemas/UUID'}
+        valorNumerico: {type: number}
+        valorTexto: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+        unidadAplicada: {type: string, minLength: 1, maxLength: 60, pattern: '\S'}
+        referenciaInferior: {type: number}
+        referenciaSuperior: {type: number}
+        referenciaTexto: {type: string, minLength: 1, maxLength: 500, pattern: '\S'}
+        indicador: {type: string, enum: [NORMAL, BAJO, ALTO, CRITICO, NO_APLICA]}
+        observaciones: {type: string, maxLength: 2000}
+    LaboratorioResultadoCapturar:
+      type: object
+      additionalProperties: false
+      required: [ordenId, itemId, muestraIds, componentes]
+      properties:
+        ordenId: {$ref: '#/components/schemas/UUID'}
+        itemId: {$ref: '#/components/schemas/UUID'}
+        muestraIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        equipoId: {$ref: '#/components/schemas/UUID'}
+        componentes: {type: array, minItems: 1, maxItems: 100, items: {$ref: '#/components/schemas/LaboratorioComponenteResultado'}}
+        observaciones: {type: string, maxLength: 4000}
+    LaboratorioResultadoEditar:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada, muestraIds, componentes]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+        muestraIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        equipoId: {$ref: '#/components/schemas/UUID'}
+        componentes: {type: array, minItems: 1, maxItems: 100, items: {$ref: '#/components/schemas/LaboratorioComponenteResultado'}}
+        observaciones: {type: string, maxLength: 4000}
+    LaboratorioResultadoValidar:
+      type: object
+      additionalProperties: false
+      required: [versionEsperada]
+      properties:
+        versionEsperada: {type: integer, minimum: 1}
+    LaboratorioResultadoCorregir:
+      type: object
+      additionalProperties: false
+      required: [muestraIds, componentes, motivo]
+      properties:
+        muestraIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        equipoId: {$ref: '#/components/schemas/UUID'}
+        componentes: {type: array, minItems: 1, maxItems: 100, items: {$ref: '#/components/schemas/LaboratorioComponenteResultado'}}
+        observaciones: {type: string, maxLength: 4000}
+        motivo: {type: string, minLength: 1, maxLength: 2000, pattern: '\S'}
+    LaboratorioResultadoRepetir:
+      type: object
+      additionalProperties: false
+      required: [muestraIds, componentes]
+      properties:
+        muestraIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {$ref: '#/components/schemas/UUID'}}
+        equipoId: {$ref: '#/components/schemas/UUID'}
+        componentes: {type: array, minItems: 1, maxItems: 100, items: {$ref: '#/components/schemas/LaboratorioComponenteResultado'}}
+        observaciones: {type: string, maxLength: 4000}
     LaboratorioParametroPrueba:
       type: object
       additionalProperties: false

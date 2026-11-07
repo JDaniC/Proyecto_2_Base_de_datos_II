@@ -506,6 +506,16 @@ test('UoW MongoDB: conflicto 11000 con búsqueda exitosa que devuelve null se pr
   );
 });
 
+test('UoW MongoDB: dos correcciones de la misma serie traducen la unicidad a VERSION_DESACTUALIZADA', async () => {
+  const { cliente } = crearMockMongodb({operacionExistente:null});
+  const uow=crearUnidadDeTrabajoMongodb({cliente,crearLector:()=>({cuentas:{porUid:async()=>crearCuentaBase()}} as unknown as LectorTransaccional),
+    aplicarCambios:async()=>{throw Object.assign(new Error('E11000 resultado serie/version'),{code:11000,keyPattern:{serie_resultado_id:1,version:1}});}});
+  await assert.rejects(()=>uow.ejecutar(crearContextoPrueba(),crearComandoPrueba(),async()=>({tipo:'CONFIRMAR',cambios:[],revisiones:[],auditoria:[],
+    resultado:{httpStatus:201,respuesta:{},correlacionOriginal:UUID_CORRELACION}})),(err:unknown)=>{
+      assert.ok(err instanceof ErrorDominio);assert.equal(err.codigo,'VERSION_DESACTUALIZADA');return true;
+    });
+});
+
 test('mapearCuentaMongodb: resuelve médico clínico desde solicitante_medico_id y verifica tipo y estado', () => {
   const usuarioDoc = {
     _id: UUID_ACTOR,

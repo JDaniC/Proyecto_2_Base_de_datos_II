@@ -146,6 +146,9 @@ export function crearUnidadDeTrabajoMongodb<
               (('keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'numero_documento' in error.keyPattern) ||
                 ('message' in error && typeof error.message === 'string' && error.message.includes('identidades_paciente')));
             if (identidad) throw new ErrorDominio('PACIENTE_DUPLICADO', 'La identificación ya está registrada.', ['identificacion']);
+            const serieResultado = typeof error === 'object' && error !== null && 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null &&
+              'serie_resultado_id' in error.keyPattern && 'version' in error.keyPattern;
+            if(serieResultado)throw new ErrorDominio('VERSION_DESACTUALIZADA','Ya existe la siguiente versión de la serie de resultado.');
             throw new ErrorDominio('ESTADO_INVALIDO', 'El cambio entra en conflicto con datos ya existentes.');
           }
 

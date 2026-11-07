@@ -40,6 +40,7 @@ import { CatalogosController } from '../adaptadores/entrada/http/catalogos/catal
 import { LaboratorioController } from '../adaptadores/entrada/http/laboratorio/laboratorio.controller.js';
 import { CrearOrdenLaboratorio } from '../aplicacion/casos-uso/laboratorio/crear-orden.js';
 import { GestionarMuestraLaboratorio } from '../aplicacion/casos-uso/laboratorio/gestionar-muestra.js';
+import { GestionarResultadoLaboratorio } from '../aplicacion/casos-uso/laboratorio/gestionar-resultado.js';
 import { ConsultarListadosLaboratorio } from '../aplicacion/casos-uso/laboratorio/consultar-listados.js';
 import { ConsultarRecursosLaboratorio } from '../aplicacion/casos-uso/laboratorio/consultar-recursos.js';
 import { PublicarPruebaLaboratorio } from '../aplicacion/casos-uso/laboratorio/publicar-prueba.js';
@@ -112,6 +113,7 @@ export class AppModule {
         {provide:ConsultarCobrosLaboratorio,useFactory:()=>new ConsultarCobrosLaboratorio()},
         {provide:CrearOrdenLaboratorio,useFactory:()=>new CrearOrdenLaboratorio(dependenciasComandoPorDefecto)},
         {provide:GestionarMuestraLaboratorio,useFactory:()=>new GestionarMuestraLaboratorio(dependenciasComandoPorDefecto)},
+        {provide:GestionarResultadoLaboratorio,useFactory:()=>new GestionarResultadoLaboratorio(dependenciasComandoPorDefecto)},
         {provide:ConsultarListadosLaboratorio,useClass:ConsultarListadosLaboratorio},
         {provide:ConsultarRecursosLaboratorio,useClass:ConsultarRecursosLaboratorio},
         {provide:PublicarPruebaLaboratorio,useFactory:()=>new PublicarPruebaLaboratorio(dependenciasComandoPorDefecto)},
