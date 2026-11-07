@@ -18,7 +18,7 @@ def validar(title, branch, base, paths, board):
             raise ValueError("MANTENIMIENTO permite limpieza UI/documental/configuración, no cambios de Backend o Database")
         return
     if title.startswith("[CONFIG-GITHUB] "):
-        if not paths or any(not (p.startswith((".github/", "scripts/github/", "plan/", ".agents/rules/")) or p in {"docs/FLUJO_GITHUB.md", "AGENTS.md", "README.md"}) for p in paths):
+        if not paths or any(not (p.startswith((".github/", "scripts/github/", "plan/", ".agents/rules/")) or p in {".coderabbit.yaml", "docs/FLUJO_GITHUB.md", "AGENTS.md", "README.md"}) for p in paths):
             raise ValueError("CONFIG-GITHUB solo permite configuración del flujo y guía de agentes")
         return
     if title.startswith("[PLAN] "):

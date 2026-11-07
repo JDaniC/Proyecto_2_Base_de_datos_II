@@ -1,0 +1,15 @@
+name: Señal de revisión de CodeRabbit
+
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions: {}
+
+jobs:
+  avisar:
+    if: github.event.review.user.id == 136622811
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo "Cambio de revisión recibido"

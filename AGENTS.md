@@ -54,6 +54,7 @@ Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PAS
 
 ## Code Review Rules
 
+- Revisar los cambios contra el alcance y los criterios del ID vigente del PR. Tratar fases históricas y ampliaciones fuera de la tarea como contexto. Atribuir cada hallazgo al comportamiento y archivo que lo sustentan.
 - Verificar que institución y permisos procedan de token verificado y cuenta local; nunca confiar en actor, rol o institución enviados por la UI. Dominio y aplicación sin dependencias de HTTP, SDK o motores.
 - Señalar pérdida de historia, escrituras parciales o carreras de saldo/stock. Comandos deben preservar atomicidad por motor, idempotencia y versiones; archivar impide nuevas atenciones pero permite finalizar anteriores con autorización.
 - Exigir migraciones para volúmenes existentes cuando cambien inicializadores. Distinguir pruebas reales, offline y simuladas; no aceptar que un éxito de mocks acredite persistencia ni que se eliminen datos para conseguir pruebas verdes.

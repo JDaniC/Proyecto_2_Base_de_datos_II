@@ -2,7 +2,7 @@ name: Fusion automatica de PR
 
 on:
   workflow_run:
-    workflows: [Validación del proyecto]
+    workflows: [Validación del proyecto, Señal de revisión de CodeRabbit]
     types: [completed]
   check_run:
     types: [completed]
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: Número de PR; vacío para comprobar todos los abiertos
+        description: Número de PR a priorizar al comprobar los abiertos
         required: false
         type: string
 
@@ -21,16 +21,16 @@ permissions:
   issues: read
   statuses: write
 
-concurrency:
-  group: auto-merge-${{ github.event.check_run.pull_requests[0].number || github.event.issue.number || github.event.workflow_run.head_branch || inputs.pr || 'todos' }}
-  cancel-in-progress: false
-
 jobs:
   evaluar:
     name: Verificar CodeRabbit y activar integración
     if: >-
-      github.event_name != 'issue_comment' ||
-      github.event.issue.pull_request != null
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request != null) &&
+      (github.event_name != 'check_run' ||
+      (github.event.check_run.app.id == 347564 && github.event.check_run.name == 'CodeRabbit'))
+    concurrency:
+      group: auto-merge
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -41,4 +41,5 @@ jobs:
       - name: Comprobar revisión del commit actual y activar auto-merge
         env:
           GH_TOKEN: ${{ github.token }}
+          CODERABBIT_ROLLOUT_PAUSED: ${{ vars.CODERABBIT_ROLLOUT_PAUSED }}
         run: python3 scripts/github/auto_merge.py
