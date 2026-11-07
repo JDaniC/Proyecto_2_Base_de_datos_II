@@ -8,7 +8,7 @@ La consigna vigente es `Proyecto final bases II (1) (5).pdf`, aportada el 24/10/
 
 Mantener `DISENO_PROYECTO.md`, `REQUERIMIENTOS_FUNCIONALES.md` y `REQUERIMIENTOS_NO_FUNCIONALES.md` coherentes con implementación y DEC del plan. Distinguir obligación académica, proceso de Entrega I, decisión técnica y pendiente docente. No atribuir a la rúbrica Firebase Auth, NestJS, límites documentales o roles elegidos por el equipo.
 
-## Alcance que debe conservarse
+## Modelo de partida por institución
 
 | Institución | Motor | Procesos |
 |---|---|---|
@@ -17,7 +17,7 @@ Mantener `DISENO_PROYECTO.md`, `REQUERIMIENTOS_FUNCIONALES.md` y `REQUERIMIENTOS
 | Laboratorio | MongoDB | Órdenes/muestras/eventos, resultados/versiones/series, informes, equipos/calidad, reactivos/stock, cobros/cuentas y núcleo clínico por médico autorizado |
 | Pediatría | Firestore | Menores/responsables/autorización, consultas/crecimiento/recetas, vacunas/esquemas/aplicaciones y archivo/reactivación |
 
-UI común por capacidad institucional, no por motor. Sin agenda visible de laboratorio, reactivación fuera de pediatría ni editor de permisos. No añadir pantalla por cada entidad. Catálogos hospital/dental pueden prepararse mediante seed y mostrarse en selectores. Los cuatro resúmenes de Database documentan entidades/atributos/relaciones originales y cambios adoptados.
+Para el desarrollo restante aplica DEC20 de [plan/01](../plan/01_ALCANCE_Y_DECISIONES.md#dec20--cierre-técnico-compacto-07112026). La tabla conserva el contexto del modelo. La interfaz presenta capacidades de la institución con el mismo recorrido común para los cuatro motores. Sin agenda visible de laboratorio, reactivación fuera de pediatría ni editor de permisos. No añadir pantalla por cada entidad. Catálogos hospital/dental pueden prepararse mediante seed y mostrarse en selectores. Los cuatro resúmenes de Database documentan entidades/atributos/relaciones originales y cambios adoptados.
 
 ## Mejoras y reglas
 
@@ -27,10 +27,6 @@ Pediatría admite varios principales y exige al menos uno; autorización es otra
 
 ## Estado observado y documentación honesta
 
-Al 24/10/2026 existen los cuatro modelos y React simulado; Backend está vacío. No repetir el inventario antiguo de solo dos SQL. A-F01 PG está pendiente en E00-P1-02; las auditorías tienen bloqueos de ejecución que deben cerrarse. Tablas o pantallas no acreditan operaciones completas.
+En el corte del 07/11/2026, el backend y el núcleo clínico ya están integrados en los cuatro motores. El estado operativo y la evidencia por fase están en [plan/ESTADO_ACTUAL.md](../plan/ESTADO_ACTUAL.md) y el [tablero](../plan/06_TABLERO.md). Los conteos históricos conservan su fecha, commit y entorno.
 
-Resultados históricos conservan fecha/commit. La implementación futura aporta evidencia propia y actualiza modelos/comparativo. `../plan/07_AUDITORIA_AGENTES.md` documenta esta revisión. Las contradicciones históricas de diseño/RF se reconciliarán en E00-P1-01 con las precisiones DEC del plan.
-
-## Cierre académico
-
-Comparativo por motor con asignación, normalización o embebido/referencias, consistencia/transacción, seguridad, versiones y resultados observados. Cada observación docente recibida tiene cambio/prueba o justificación. Si falta fuente, mantener pendiente sin inventar observaciones. Enlazar tareas/evidencia y usar español claro para dominio y documentación.
+El cierre técnico se verifica en E05. El comparativo, los modelos para presentación y la retroalimentación docente pertenecen a la preparación académica separada de Daniel. Una observación docente que implique un cambio técnico debe aportar su fuente y un criterio verificable.

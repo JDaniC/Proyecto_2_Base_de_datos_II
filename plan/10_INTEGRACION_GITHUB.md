@@ -1,18 +1,22 @@
 # Integración y revisión vigente
 
-CodeRabbit revisa los PR. El responsable verifica el alcance y la evidencia. La revisión del compañero es opcional.
+Por decisión humana del 01/11/2026, CodeRabbit sustituye a Codex como revisor.
+No se espera ni se exige revisión de Codex. La evidencia histórica se conserva.
 
-1. Para una tarea nueva, adquirir la reserva exclusiva según [plan/11](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md).
-2. Obtener PASS en las auditorías de seguridad y requisitos antes de abrir cualquier PR.
-3. Verificar `contrato-pr`, el check nativo `CodeRabbit` y una revisión `APPROVED` de CodeRabbit sobre el commit actual. Resolver los hilos aplicables.
-4. Confirmar la integración en `develop`, verificar el resultado y registrar el cierre en el tablero.
+1. Para una tarea nueva, adquirir primero la reserva remota exclusiva según [plan/11](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). Implementar y verificar con evidencia real.
+2. Obtener PASS en las auditorías de seguridad y requisitos antes de abrir cualquier PR. Comprobar `contrato-pr` y el check nativo `CodeRabbit` del SHA actual.
+3. Resolver hallazgos aplicables y conversaciones; repetir pruebas afectadas.
+4. Con controles satisfechos, integrar sin aprobaciones obligatorias del compañero.
+5. Confirmar MERGED y la integración en `develop`. Verificar el resultado integrado antes de registrar la tarea HECHA. Para cerrar una fase, aplicar la [demostración y el acta](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md#cerrar-la-fase).
 
-El check nativo de la app 347564 acredita que su ejecución terminó. La revisión de la cuenta `coderabbitai[bot]` acredita el veredicto. `revision-coderabbit` combina ambos requisitos y retira la solicitud de auto-merge si la aprobación falta, es anterior, se descarta o hay cambios solicitados. GitHub exige además conversaciones resueltas y `contrato-pr`. [Significado del check nativo](https://docs.coderabbit.ai/pr-reviews/status-check)
+Las reglas remotas vigentes exigen `contrato-pr` (GitHub Actions, app 15368) y
+`CodeRabbit` (app 347564), PR y conversaciones resueltas. No exigen revision-codex.
+La automatización valida el check nativo de esa app y del commit actual; resultados
+anteriores, cancelados o ausentes no habilitan integración automática.
+Los borradores y tareas sin implementación no se integran como trabajo terminado.
+Ante falta de revisión se registra el estado, sin inventar aprobación ni evidencia.
 
-La configuración vive en [`.coderabbit.yaml`](../.coderabbit.yaml). `develop` recibe revisiones como rama predeterminada. `main` se incluye de forma explícita. La señal de una revisión nueva o descartada se ejecuta con permisos vacíos. El flujo que puede escribir estados y solicitar la fusión ejecuta el script de la rama predeterminada. La descripción y la cobertura de docstrings generan avisos. Los requisitos de título, alcance y auditorías siguen el contrato y el protocolo del repositorio.
-
-## Puesta en marcha
-
-1. Abrir una ventana de cambio y pausar las demás fusiones. Desactivar el workflow anterior de auto-merge. Cancelar o esperar sus ejecuciones pendientes y en curso y confirmar que todas terminaron. Establecer la variable de repositorio `CODERABBIT_ROLLOUT_PAUSED=true` y retirar las solicitudes en espera. Guardar el valor previo de auto-merge de GitHub y desactivarlo temporalmente.
-2. Integrar únicamente el PR de automatización tras la aprobación real de CodeRabbit y las protecciones existentes. Habilitar el workflow actualizado en `develop` y reevaluar todos los PR elegibles. Con la variable activa, tanto los eventos automáticos como la ejecución manual publican estados y retiran solicitudes existentes. Una aprobación comprobada se publica como pendiente durante la pausa para mantener cerrado el control de fusión.
-3. Comprobar estados del SHA actual y la ausencia de solicitudes de auto-merge. Exigir `revision-coderabbit` con origen GitHub Actions en el ruleset de `develop` y `main`. Conservar los checks nativos y los hilos obligatorios. Confirmar la regla antes de restaurar el auto-merge de GitHub y retirar la variable de pausa. Ejecutar `gh workflow run auto-merge.yml --ref develop` para reevaluar los PR abiertos con la configuración normal.
+Verificación remota 01/11/2026: ruleset 25800933 activo para develop/main,
+`required_review_thread_resolution: true`, cero aprobaciones humanas obligatorias.
+Un check CodeRabbit success puede coexistir con hallazgos; resolver las conversaciones
+y validar los criterios sigue siendo obligatorio antes de integrar.

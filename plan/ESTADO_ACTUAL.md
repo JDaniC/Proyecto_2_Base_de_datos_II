@@ -1,128 +1,27 @@
 # Estado para continuar en un chat nuevo
 
-Corte observado: 04/11/2026, America/Guatemala. Es un índice de orientación; verificar con código, Git y PR antes de actuar. Los estados de tareas y ejecutores viven únicamente en [el tablero](06_TABLERO.md).
+**Corte observado:** 07/11/2026, America/Guatemala. Base remota comprobada: `origin/develop` en `29dd2ca` (con `E05-P2-01` integrada por PR #78). Verificar de nuevo Git y PR al abrir un chat. [El tablero](06_TABLERO.md) es la fuente de estados y ejecutores.
 
-## Producto y entradas
+## 1. Producto integrado
 
-- Entrega final objetivo: 05/11/2026; [cronograma](09_CRONOGRAMA_HASTA_05_NOV.md). La estimación original excede la capacidad supuesta; recalibrar en E00.
-- Cuatro modelos y herramientas en Database/. Hospital→PostgreSQL, dental→MySQL, laboratorio→MongoDB y pediatría→Firestore.
-- Frontend/ React conecta sesión y pacientes por HTTP en modo API: alta, búsqueda, edición y expediente/cronología paginados. Backend/ incluye servidor/casos/adaptadores reales de esas capacidades para cuatro motores. Clínica y módulos E03–E05 continúan según sus tareas; no afirmar que estén integrados por el recorrido de pacientes. Reutilizar UI; no reconstruirla desde cero.
-- [Alcance portable](01_ALCANCE_Y_DECISIONES.md), [arquitectura](02_ARQUITECTURA_HEXAGONAL.md), [contratos](03_CONTRATOS_Y_FLUJOS.md) y [plan maestro](00_PLAN_MAESTRO.md).
+- Hospital → PostgreSQL, odontología → MySQL, laboratorio → MongoDB y pediatría → Firestore. El backend verifica Firebase Auth y la cuenta institucional y selecciona el adaptador automáticamente.
+- E00–E04 están cerradas. En modo API están integrados pacientes, expediente/cronología, atención con diagnóstico, tratamiento y receta, y archivo con historia. E04 acreditó los recorridos especializados de hospital, odontología y pediatría.
+- En laboratorio, órdenes, muestras, cobros y resultados (`E05-P1-01`, `E05-P1-03`, `E05-P2-01`) ya están integrados en `develop`. Queda conectar el circuito analítico a la interfaz existente (`E05-P2-03`).
+- La [auditoría del 07/11](evidencias/AUDITORIA_ENTREGA_II_2026-11-07.md) distingue pruebas actuales e históricas. Los 406 PASS de backend, 158 PASS del subconjunto UI y 20 PASS de clínica Firestore emulada corresponden a `0f6d245`, y el PR #78 (`29dd2ca`) sumó 371+46 PASS de backend y 1+102 PASS en MongoDB 8.0 aislado. El recorrido conjunto del candidato todavía requiere Docker y los cuatro entornos aislados.
 
-## Estado técnico que no debe confundirse con pruebas actuales
+## 2. Ruta de cierre vigente
 
-- Auditoría Database del 24/10: 234 comprobaciones, 232 PASS y dos FAIL asociados al archivo PG A-F01. Ver Database/auditoria/2026-10-24/informe.md; corrección planificada en E00-P1-02.
-- MySQL/emulador Firestore tuvieron bloqueos en esa auditoría. Una primera ejecución Docker en GitHub mostró timeout de salud MySQL/MongoDB. No se corrigió al retirar esas ejecuciones del workflow de integración; E00-P2-01 debe validar los entornos.
-- Compilación frontend y 35 pruebas de producto pasaron en la consolidación anterior. No representan la suite histórica completa ni integración con cuatro motores. Ejecutar pruebas nuevas ante cambios.
+1. **E05-P2-01**. Integrada en `develop` ([PR #78](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78), `29dd2ca`), con revisión `APPROVED` de CodeRabbit sobre `34a5f93` y ambas auditorías en PASS.
+2. **E05-P2-03**. En curso por `JDaniC` en `codex/e05-p2-03-circuito-analitico-ui` ([seguimiento](seguimiento/E05-P2-03.md)). Conectar el circuito orden → muestra → captura → validación → consulta de resultados en modo API.
+3. **E05-P1-04**. Instalar el mismo candidato desde cero en otro equipo y verificar los recorridos en los cuatro motores. Depende de E05-P2-03 integrada. Con evidencia satisfactoria, completar el [acta de fase](plantillas/CIERRE_ENTREGA.md) y verificar su integración y el cierre en el tablero.
 
-## Git e integración observados al preparar estas reglas
+Consultar [plan maestro](00_PLAN_MAESTRO.md), [alcance DEC20](01_ALCANCE_Y_DECISIONES.md#dec20--cierre-técnico-compacto-07112026), [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y [revisión](10_INTEGRACION_GITHUB.md). Ejecutar `python3 scripts/github/cola.py` y cotejar con PR y reservas remotas. Inventario E05-P2-02 queda fuera de esta ruta y conserva su [seguimiento y reserva](seguimiento/E05-P2-02.md). E06 y E07 son históricas.
 
-- Ramas permanentes deseadas: main y develop. Ramas de tarea temporales.
-- La consolidación de frontend/documentación PR #2 fue fusionada en GitHub el 24/10/2026 a las 17:46 (America/Guatemala), commit `92ba015`. Fuente: https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/2. develop remoto ya contiene esa consolidación; obtener su versión actual antes de iniciar tareas.
-- La continuidad/cola compartida del PR #3 ya está fusionada en develop, commit `997c3ec`. La rama temporal se eliminó. Las modificaciones de limpieza se integran después, mediante su propio PR de mantenimiento; verificar referencias actuales.
-- Las ramas Frontend, Backend y codex/flujo-github-tareas ya se retiraron del remoto. Las nuevas ramas de trabajo se eliminan tras su integración para terminar cada flujo con main y develop.
-- GitHub exige PR y contrato-pr; cero aprobaciones humanas obligatorias. Codex es el revisor automático elegido. El propietario confirmó activar su configuración; en el último corte no había respuesta del bot en PR #2. Verificar el estado actual antes de marcar revisión completa.
-- El check contrato-pr acredita el contrato; revision-codex acredita el resultado nativo del bot para el SHA actual. Ninguno sustituye las pruebas funcionales de la tarea.
+## 3. Referencias para verificar y retomar
 
-## Próxima entrada de trabajo
+- [Cierres E00](evidencias/E00/CIERRE.md), [E01](evidencias/E01/CIERRE.md), [E02](evidencias/E02/CIERRE.md), [E03](evidencias/E03/CIERRE.md) y [E04](evidencias/E04/CIERRE.md). La evidencia corresponde a los commits y entornos indicados. Firestore se probó en emulador.
+- [Órdenes y muestras E05-P1-01](evidencias/E05/E05-P1-01.md) y [cobros E05-P1-03](evidencias/E05/E05-P1-03.md). Los PR #76 y #79/#80 están integrados en `develop`.
+- [Guía única de la interfaz](../Frontend/README.md), [arquitectura](02_ARQUITECTURA_HEXAGONAL.md), [contratos](03_CONTRATOS_Y_FLUJOS.md) y [migraciones explícitas](../Database/migrations/README.md).
+- [Cortes anteriores del estado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/blob/0f6d245af79e64e5b3c2965db46475d4a9bd32e4/plan/ESTADO_ACTUAL.md), incluida la trazabilidad de respaldos locales. Conservar los respaldos y cambios en curso.
 
-La consolidación inicial ya se integró en el corte indicado; verificar referencias remotas y obtener la versión actual de develop. No iniciar desde una copia anterior a esos cambios.
-
-La tarea E00-P1-01 ya tiene cambios documentales integrados por PR #4, commit 3dffdd8. Su cierre y la revisión se verifican en el tablero y seguimiento; no marcarla HECHA desde la limpieza. Las siguientes candidatas dependen de ese estado real: ejecutar el helper en lugar de repetir el listado inicial. Los seguimientos existentes son de tareas efectivamente iniciadas.
-
-Leer [continuidad y cola compartida](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md); ejecutar `python3 scripts/github/cola.py`. Daniel y David pueden tomar cualquier lote. Para una tarea activa leer también `plan/seguimiento/ID.md` y su rama/PR.
-
-## Cómo mantener este archivo
-
-Corte de persistencia MongoDB (27/10/2026, America/Guatemala): PR #42 integrado en develop (`56752b2`), con revisión nativa de Codex sin hallazgos sobre `9b8c543`. Backend incorpora pacientes/identidades reales del laboratorio, índices de búsqueda y migración 003 para volúmenes existentes. La evidencia nueva acredita MongoDB aislado, migración/recuperación, carreras y reinicio, no UI→API→BD completa ni los otros motores de E02. Estado oficial y dependencias: tablero; detalles: `plan/evidencias/E02/E02-P2-01.md`. El bundle requiere la preparación compatible; no aplicar inicializadores como sustituto de la migración.
-
-Actualizar al cambiar producto, bloqueos generales o estado de integración. Registrar fecha, fuente/commit/PR observado y próxima entrada. Evitar copiar estados por tarea o logs completos. No incorporar secretos ni depender de mensajes privados del chat.
-
-## Documentación de interfaz
-
-La guía única es Frontend/README.md. Las especificaciones de creación y el informe narrativo de UI se retiraron; sus resultados históricos se resumen allí y la evidencia JSON se conserva en plan/evidencias/UI/2026-10-23/. Los tokens y componentes reales son la referencia de diseño vigente.
-
-Corte E00 (25/10/2026, America/Guatemala): las seis tareas E00 están HECHA; sus PR #4, #7, #11, #13, #15 y #17 están integrados en `develop` (`3196160`). La demostración y auditoría funcional están en `plan/evidencias/E00/CIERRE.md` y `plan/evidencias/E00/auditoria-cierre-2026-10-25/`. El cierre de fase se integró mediante PR #20 (`566e75c`), con `contrato-pr` y `revision-codex` success; la sincronización del tablero está en este PR documental.
-
-Corte E01 (26/10/2026, America/Guatemala): las seis tareas E01 están HECHA (E01-P1-01, E01-P1-02, E01-P1-03, E01-P2-01, E01-P2-02 y E01-P2-03); sus PR correspondientes están integrados en `develop` (`465cb89`). Backend fundacional operativo con 4 motores (PostgreSQL, MySQL, MongoDB replica set, Firestore emulator), 165 pruebas backend PASS, y frontend conectado mediante cliente HTTP con transporte real y gestión de sesión (66 pruebas frontend PASS). El cierre formal de fase se integró mediante PR #39, habilitando la puerta de entrada a la fase E02.
-
-
-Corte de lectura de historial (28/10/2026, America/Guatemala): PR #45 integrado en develop (`4217236`), Codex sin hallazgos sobre `f0a4750`. Backend expone historial/expediente paginados con cuatro adaptadores, proyección v1 y migración 004 independiente de M01–M04. CA07 acredita 24 comprobaciones con PG/MySQL/Mongo reales aislados y emulador Firestore; [evidencia](evidencias/E02/E02-P2-03.md). Preparar también instalaciones nuevas con la migración explícita; legado clínico sin procedencia/versiones verificables queda RECONCILIAR/503. Los escritores E03–E05 y la conexión UI E02-P1-03 conservan su alcance futuro; no se acredita clínica UI→API→BD completa. Consultar tablero/cola para seleccionar la próxima tarea; no abrir automáticamente toda la fase.
-
-
-Corte de integración React de pacientes y cierre E02 (28/10/2026, America/Guatemala): PR #47 MERGED en develop (`41082c9`), revisión nativa Codex sin hallazgos sobre `bfbc38a`; cierre individual PR #48 (`4e50533`). Alta/búsqueda/PATCH/perfil administrativo y expediente paginado usan HTTP; 99 pruebas frontend y 32 comprobaciones con navegador y cuatro motores aislados/emulados PASS, con recarga, responsables compartidos, reintentos y reinicio del backend. [Evidencia](evidencias/E02/E02-P1-03.md). Los eventos del recorrido son fixtures del índice de lectura, sin acreditar escritores clínicos E03–E05. La demostración conjunta y auditoría de cierre de fase E02 están en `plan/evidencias/E02/CIERRE.md` y `plan/evidencias/E02/auditoria-cierre-2026-10-28/`; el cierre se integró mediante PR #49 (`c1a932a`), con revisión nativa de Codex sin hallazgos sobre `a09fb9f` y `contrato-pr`/`revision-codex` success, habilitando la puerta de entrada a la fase E03 (`E03-P1-01`).
-
-
-Corte E03-P1-01 (28/10/2026, America/Guatemala): PR #51 integrado en develop
-(`896972b`), implementación por Davidix888 con Codex tras traspaso autorizado de
-JDaniC comunicado por el usuario. Revisión nativa limpia sobre `9763450` después de
-dos correcciones con regresión. Backend incorpora dominio/casos comunes de atención,
-recetas y agenda y sus endpoints; 268 runtime/unitarias +32 contractuales PASS,
-lint/build y build postintegración PASS. Las pruebas clínicas usan UoW e identidad
-sintéticas: adaptadores clínicos físicos y sus migraciones se implementan en
-E03-P1-02/E03-P2-01/E03-P2-02; producción falla con 503 mientras falte la extensión
-clínica. Estado oficial/dependencias en tablero; evidencia E03/E03-P1-01.md.
-
-
-Corte de clínica MongoDB (29/10/2026, America/Guatemala): PR #55 MERGED en develop (`5ad9561`), Codex nativo sin hallazgos sobre `ac01fef`, contrato-pr/revision-codex SUCCESS. Laboratorio incorpora atención común, receta histórica y versiones/proyección en una UoW real; 301 pruebas backend, 9 resultados clínicos MongoDB, 17 regresiones de pacientes y 102 comprobaciones físicas PASS. Migración explícita 005 y 004 son obligatorias también en instalaciones nuevas; no habilitar clínica con manifiesto MIGRANDO/RECONCILIAR. [Evidencia](evidencias/E03/E03-P2-01.md). No acredita UI ni los adaptadores clínicos de las otras instituciones; consultar cola y PR abiertos, incluido #54 reservado para SQL.
-
-
-Corte de clínica pediátrica (29/10/2026, America/Guatemala): PR #57 integrado
-en develop (`6dcdde0`), revisión nativa de Codex sin hallazgos sobre `31b41da`.
-Firestore incorpora clínica/agenda transaccional, autorización histórica,
-signos comunes y snapshots exactos por versión. Preparar M04 v2 y migraciones
-004/006 explícitas; legado sin procedencia conserva puerta RECONCILIAR.
-[Evidencia](evidencias/E03/E03-P2-02.md): 302 backend, 12 clínica +8 pacientes
-emulador y 82 modelo offline +99 emulador PASS; build postmerge PASS. No se
-acredita UI clínica ni cierre E03. SQL continúa reservado en PR #54, activo en
-otro chat por confirmación humana; conservar su checkout. La siguiente tarea
-dependiente requiere esa integración, según tablero y PR abiertos.
-
-## Sincronización del 29/10/2026
-
-GitHub/develop `801f787` incorpora E03-P1-01 (#51/#53), E03-P2-01 (#55/#56) y E03-P2-02 (#57/#58). E03-P1-02 mantiene reserva activa de JDaniC en PR #54 borrador; falta integrar SQL, archivo, conexión UI y cierre de E03. El tablero registra 21/48 tareas HECHA (43,75 % por conteo, no cobertura de requisitos).
-
-La copia raíz estaba en una rama antigua. Sus cambios clínicos pendientes se preservaron en un stash identificado como `Respaldo previo a sincronizar tablero 2026-10-29 E03-P1-01`; no aplicar sobre develop sin comparar con #51. No se descartó código. Las ramas permanentes son main/develop; la tarea SQL conserva su rama y worktree activos.
-
-Corte E03-P1-03 (29/10/2026): PR #61 integrado en develop `d2fda3c`, revisión nativa
-sin hallazgos sobre `7b2d7db`. Backend habilita archivo, reactivación pediátrica y
-corrección histórica/versiones en cuatro motores. SQL requiere actualización
-explícita 007 a v5; leer DEC18 para el snapshot canónico vigente y la historia
-física inmutable. 311 backend, 6 integración SQL, 11 Mongo real y 14 emulador
-Firestore PASS; modelos SQL nueva/existente PASS. React clínico corresponde a
-E03-P2-03; módulos especializados y cierre E03 conservan su alcance pendiente.
-
-
-Corte E03-P2-03 y cierre E03 (31/10/2026, America/Guatemala): PR #63 MERGED en develop
-`eb2a83e`, revisión nativa limpia sobre `e363835`; cierre individual PR #64 (`e6e8310`). La ficha HTTP registra atención
-completa, receta, corrección versionada, archivo y reactivación pediátrica; el
-historial enlaza el detalle y sus snapshots. 114 pruebas frontend PASS, 49
-comprobaciones de navegador con PG/MySQL/MongoDB aislados y Firestore/Auth
-emulados PASS; build postmerge PASS. [Evidencia](evidencias/E03/E03-P2-03.md).
-La agenda integra lectura para vincular citas, con filtros simulados y gestión
-pendiente deshabilitados en API. No acredita módulos E04–E05 ni producción
-Firestore. La demostración conjunta y auditoría de cierre de fase E03 están en `plan/evidencias/E03/CIERRE.md` y `plan/evidencias/E03/auditoria-cierre-2026-10-31/`; el cierre se integró mediante PR #65 (`f516156`), con revisión nativa de Codex sin hallazgos sobre `66e5f46` y `contrato-pr`/`revision-codex` success, habilitando la puerta de entrada a la fase E04 (`E04-P1-01`, `E04-P1-02`, `E04-P2-01`). Consultar tablero y plan/11.
-
-
-Corte E04-P1-02 (01/11/2026, America/Guatemala): PR #68 integrado en develop
-(`baa763e`), revisión nativa de Codex sin hallazgos sobre `20f22bb`.
-Hospitalizaciones PostgreSQL y React HTTP operativas: ingreso, evolución,
-traslado/liberación y egreso con UoW, idempotencia, revisiones, auditoría y
-cronología; autor y permisos clínicos vigentes. Requiere preparación 004/007
-existente; no modifica inicializadores ni M01–M09. Evidencia E04/E04-P1-02.md:
-293+32 backend, 6 suites SQL, 79 HTTP, 58 UI cuatro motores/emuladores y 20
-fixtures PASS. Suite frontend histórica conserva los mismos 131 FAIL que base,
-sin fallos nuevos. E04-P1-03 y tareas restantes conservan su alcance; consultar
-cola y reservas remotas. No acredita cierre E04 ni módulos de exámenes/pólizas.
-
-Corte 03/11/2026: cierre funcional/documental E04 integrado por PR #75 (`7dea7b4`). Consultar [tablero](06_TABLERO.md) y [evidencia E04](evidencias/E04/) para el estado y las pruebas. La siguiente entrada es E05-P1-01 según la cola. No se acredita laboratorio especializado E05 ni producción Firestore.
-
-Corte E05-P1-01 (04/11/2026, America/Guatemala): PR #76 integrado en `develop` (`a3677a8`), CodeRabbit APPROVED sobre `2135589` y controles `contrato-pr`/`revision-coderabbit` SUCCESS. Backend publica catálogos versionados, órdenes con snapshots/precios, custodia de muestras y referencias administrativas del laboratorio sobre MongoDB, con migración explícita 011 y UoW. Evidencia: 348 runtime/unitarias PASS, migración 011 1/1 y modelo físico 102 PASS; la suite contractual conserva un FAIL basal ajeno de huella Firestore migración010. No acredita resultados/informes, inventario/calidad/cobros ni frontend E05. Consultar tablero, PR abiertos y cola para elegir entre E05-P1-03, E05-P2-01 y E05-P2-02; no asumir disponibilidad sin reserva remota.
-
-## Cobros de laboratorio y política de auditorías —05/11/2026
-
-PR79 integrado en develop (`78fea1a`), revisión CodeRabbit APPROVED sobre `fc5a3c5`, contrato-pr y revisión nativa SUCCESS. Backend emite facturas con snapshots de orden, pagos parciales, reversión y anulación, saldo y consultas HTTP paginadas; MongoDB conserva revisión/operación/auditoría atómicas.363 runtime/unitarias +43 contratos, HTTP→composición→MongoDB CA14/migración0111/1 y102 comprobaciones de modelo PASS. Build postintegración PASS y huellas backend idénticas a las auditadas. No acredita frontend de cobros, resultados/informes/inventario ni cierre E05.
-
-Auditorías de seguridad y requisitos en `plan/evidencias/E05/auditoria-E05-P1-03-2026-11-05/`: PASS del alcance,43 unidades/16 requisitos; registro transparente de dos advisories transitivos heredados sin camino explotable identificado desde cobros. No es certificación global ni scanner limpio. La última corrección de protocolo de traspasos se publicó después del merge automático (`36d729f`) y se incorpora en el [PR documental80](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/80), rama `codex/cierre-e05-p1-03`; no se presenta como parte del SHA backend aprobado.
-
-Por petición humana05/11, antes de abrir cualquier PR (incluido borrador/documental) deben pasar ambas auditorías. AGENTS y plan/11 son la referencia: reserva exclusiva previa por creación atómica, identidades nuevas en adquisición/traspaso y lease para transferir/liberar; excepción explícita para PR ya abiertos como79. UI y tareas restantes se consultan por tablero/PR, incluido78 reservado para resultados.
+Actualizar este índice al cambiar el producto, un bloqueo general o el estado de integración. Registrar fecha, commit observado y la próxima entrada. Los estados por tarea viven en el tablero y los pasos de retoma en su seguimiento.

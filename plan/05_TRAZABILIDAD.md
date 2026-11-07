@@ -2,25 +2,27 @@
 
 Esta matriz asigna cobertura prevista; **no declara requisitos cumplidos**. Estado de ejecución en [tablero](06_TABLERO.md), resultado de escenarios en cierres/evidencias. Cada enlace lleva al trabajo detallado del responsable; los casos de aceptación se desarrollan en [pruebas](04_PRUEBAS_Y_ENTREGA.md).
 
-## 1. Consigna final
+## 1. Consigna final y cierre técnico
 
-| Criterio | Entrega esperada | Tareas |
+| Criterio | Entrega esperada | Cobertura de la ruta técnica |
 |---|---|---|
-| EF01 | Cuatro motores/asignación | [E00-P1-01](entregas/E00_base_y_contratos/01_P1.md#e00-p1-01), [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02), [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01) |
-| EF02 | Aplicación cliente-servidor/hexagonal | [E01-P1-01](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01), [E06-P2-01](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01), [E07-P1-02](entregas/E07_entrega_final/01_P1.md#e07-p1-02) |
-| EF03 | Modelos corregidos y retroalimentación | [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02), [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01), [E07-P2-01](entregas/E07_entrega_final/02_P2.md#e07-p2-01) |
-| EF04 | Equivalencia | [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03), [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) |
-| EF05 | Embebido/referencia justificados | [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01) |
-| EF06 | UI coherente e información ordenada | [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03), [E06-P2-01](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01), [E06-P2-02](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) |
-| EF07 | Paciente nuevo/historial | [E02-P1-01](entregas/E02_pacientes_historial/01_P1.md#e02-p1-01), [E02-P1-03](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03) |
-| EF08 | Mantenimiento clínico | [E03-P1-01](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-01), [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03), [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03) |
-| EF09 | Archivo | [E00-P1-02](entregas/E00_base_y_contratos/01_P1.md#e00-p1-02), [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03) |
-| EF10 | Enrutamiento por usuario | [E01-P1-03](entregas/E01_fundacion_backend/01_P1.md#e01-p1-03), [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) |
-| EF11 | Comparativo | [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01), [E07-P2-03](entregas/E07_entrega_final/02_P2.md#e07-p2-03) |
+| EF01 | Cuatro motores distintos y asignación | [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04) verifica los cuatro adaptadores y su enrutamiento. |
+| EF02 | Aplicación cliente-servidor/hexagonal | [E01-P1-01](entregas/E01_fundacion_backend/01_P1.md#e01-p1-01), [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) y [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04). |
+| EF03 | Modelos corregidos y retroalimentación | Las correcciones técnicas integradas conservan su evidencia en las fases de origen y se instalan mediante las migraciones aplicables en E05-P1-04. |
+| EF04 | Equivalencia | [E03-P2-03](entregas/E03_nucleo_clinico/02_P2.md#e03-p2-03), revalidada en E05-P1-04. |
+| EF05 | Embebido y referencias justificados | Modelos [MongoDB](../Database/ANALISIS_MONGODB.md) y [Firestore](../Database/ANALISIS_FIREBASE.md) ya implementados. |
+| EF06 | UI coherente e información ordenada | [E02-P2-03](entregas/E02_pacientes_historial/02_P2.md#e02-p2-03) para el historial, [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) y E05-P2-03 para resultados de laboratorio. |
+| EF07 | Paciente nuevo e historial | [E02-P1-03](entregas/E02_pacientes_historial/01_P1.md#e02-p1-03), revalidada en E05-P1-04. |
+| EF08 | Mantenimiento clínico | E03-P2-03, revalidada en E05-P1-04. |
+| EF09 | Archivo con historia | [E03-P1-03](entregas/E03_nucleo_clinico/01_P1.md#e03-p1-03), revalidada en E05-P1-04. |
+| EF10 | Enrutamiento por usuario | [E01-P1-03](entregas/E01_fundacion_backend/01_P1.md#e01-p1-03), revalidada en E05-P1-04. |
+| EF11 | Comparativo | Criterio académico sin tarea en la cola técnica. |
+
+Las secciones siguientes conservan las asignaciones originales de RF, RNF y CA. Las referencias a ampliaciones, E06 y E07 permiten rastrear el plan anterior. El [tablero vigente](06_TABLERO.md) decide qué trabajo se ejecuta.
 
 ## 2. Los 69 requisitos funcionales
 
-Texto de [RF del proyecto](../Agente/REQUERIMIENTOS_FUNCIONALES.md), con las precisiones de alcance de este plan. Las asignaciones incluyen implementación o coordinación; pruebas finales E06 y cierre E07 completan la cobertura.
+Texto de [RF del proyecto](../Agente/REQUERIMIENTOS_FUNCIONALES.md), con las precisiones de alcance de este plan. Las asignaciones originales incluyen implementación o coordinación.
 
 | ID | Requisito de origen | Tareas responsables | Precisión de alcance |
 |---|---|---|---|

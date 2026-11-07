@@ -1,7 +1,7 @@
 # Cierre de tarea
 
 - ID y título:
-- Ejecutor actual / revisión automática de Codex:
+- Ejecutor actual / revisión automática de CodeRabbit:
 - Estado solicitado: EN_REVISION / BLOQUEADA.
 - Fecha, rama y commit:
 - Dependencias verificadas:
@@ -28,7 +28,7 @@ Causa, evidencia, dependencia, responsable y trabajo independiente. No convertir
 
 ## Revisión automática e integración
 
-PR, SHA revisado por Codex, enlace y resultado real; correcciones y nueva revisión cuando aplique. Registrar PASS/FAIL/BLOCKED sin inventar aprobación. La revisión del compañero es opcional. HECHA exige criterios y pruebas cumplidos, integración real y verificación posterior por el ejecutor; un PR abierto sigue EN_REVISION.
+Enlaces a ambas auditorías del alcance, PR, SHA revisado por CodeRabbit, resultado real, hilos resueltos y commit integrado. Registrar PASS/FAIL/BLOCKED sin inventar aprobación. La revisión del compañero es opcional. HECHA exige criterios y pruebas cumplidos, integración real y verificación posterior por el ejecutor; un PR abierto sigue EN_REVISION.
 
 ## Continuidad
 

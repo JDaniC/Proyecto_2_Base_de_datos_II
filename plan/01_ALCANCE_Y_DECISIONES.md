@@ -9,9 +9,9 @@ Consigna actual: `Proyecto final bases II (1) (5).pdf`, cuatro páginas, aportad
 | [Diseño](../Agente/DISENO_PROYECTO.md) | Reglas M01–M09 y CA01–CA20. Su inventario del 19/10 es histórico y algunas capacidades visibles se acotaron después. |
 | [RF](../Agente/REQUERIMIENTOS_FUNCIONALES.md), [RNF](../Agente/REQUERIMIENTOS_NO_FUNCIONALES.md) | 69 + 40 requisitos. Aplicar las precisiones de esta guía; no convertir cada verbo «administrar» en una nueva pantalla. |
 | [Auditoría Database](../Database/auditoria/2026-10-24/informe.md) | 234 comprobaciones históricas: 232 PASS, 2 FAIL por A-F01. MySQL/emulador Firestore bloqueados en ese corte. No repetir el conteo antiguo de 350 como prueba actual. |
-| [Guía UI y evidencia](../Frontend/README.md) | Alcance visible conservado, 35 pruebas específicas y build en ese corte; usa simuladores. Referencia un adjunto de alcance anterior no presente: no atribuir su texto al PDF nuevo. |
+| [Guía UI y evidencia](../Frontend/README.md) | Interfaz vigente, uso del modo API y límites por capacidad. Consultar el entorno y commit de cada prueba. |
 | [Servicios React](../Frontend/src/services/contracts.ts), [ámbito UI](../Frontend/src/app/productScope.ts) | Implementación actual de la presentación. Tiene contratos sobrantes; no todos representan acciones vigentes. |
-| [Database](../Database/README.md) | Cuatro modelos y herramientas existentes. Backend contiene solo `.gitkeep`; Frontend sí tiene aplicación React. |
+| [Database](../Database/README.md) | Cuatro modelos, inicializadores y herramientas. El estado de integración del backend y React se comprueba en [ESTADO_ACTUAL](ESTADO_ACTUAL.md). |
 
 Prioridad: instrucciones actuales del usuario; consigna final para criterios académicos; decisiones documentadas y alcance de UI auditado para implementación; modelos/scripts para almacenamiento. Si una fuente contradice otra, registrar la decisión y su efecto en pruebas. Código existente no convierte un defecto en requisito.
 
@@ -31,7 +31,7 @@ Prioridad: instrucciones actuales del usuario; consigna final para criterios aca
 | EF10 | Motor resuelto automáticamente por institución del usuario autenticado | p. 4 |
 | EF11 | Documento breve de modelado, consistencia, seguridad y asignación | p. 4 |
 
-La consigna permite elegir tecnología. NestJS, Firebase Authentication, UUID, revisiones, idempotencia y límites de documentos son decisiones del proyecto, no citas textuales de la rúbrica. La fecha objetivo indicada por el usuario es el 05/11/2026. No se dispone de retroalimentación docente identificable; registrar su recepción en E07-P2-01 y actuar antes si llega durante otra fase.
+La consigna permite elegir tecnología. NestJS, Firebase Authentication, UUID, revisiones, idempotencia y límites de documentos son decisiones del proyecto, no citas textuales de la rúbrica. La verificación técnica restante sigue la fase E05. Los criterios académicos de la tabla conservan su fuente y alcance.
 
 ## 3. Decisiones de trabajo que E00 debe reflejar en contratos
 
@@ -75,16 +75,18 @@ Acta y revisión cruzada: [evidencia E00-P1-01](evidencias/E00/E00-P1-01.md). Ca
 | DEC09 | 24/10/2026 | UI pacientes/cronología | Búsqueda vacía inválida; orden API ascendente estable. | 400 en búsqueda vacía; cursor por orden | Estado inicial antes de buscar | E00-P1-03, E02-P2-03; CA07 |
 | DEC10 | 24/10/2026 | M04; auditoría UI | Responsables pediátricos referenciados; principal ≠ autorización; snapshot en consulta. | Vínculo con `es_principal` y `autoriza_atencion` separados | Pestaña Responsables | E02-P2-02, E04-P2-01; CA09 |
 | DEC11 | 24/10/2026 | Contratos UI sobrantes | Roles fijos, sin editor de permisos ni CRUD de médicos/camas; catálogos hospital/dental por seed. | No publicar endpoints retirados | Sin pantallas nuevas | E00-P2-02; CA18 |
-| DEC12 | 24/10/2026 | Suite UI histórica | Reconciliar pruebas obsoletas con tabla de sustitución. | Ninguno | Pruebas por alcance vigente | E06-P2-02 |
+| DEC12 | 24/10/2026 | Suite UI histórica | Reconciliar pruebas obsoletas con tabla de sustitución. | Ninguno | Pruebas por alcance vigente | E05-P1-04 |
 | DEC13 | 24/10/2026 | `mockUserRepository.ts` | Roles por institución fijos (sección 7). Los roles mock con `institucionesPermitidas` cruzadas (odontólogo, laboratorio y pediatra en hospital) y `MEDICO` en laboratorio no son norma. | Seed y guards usan la sección 7 | Simuladores se ajustan al conectar API | E00-P2-02, E01-P1-03, E05-P2-03 |
 | DEC14 | 24/10/2026 | SHA-256 de PDF `(4)` y `(5)` | Son el mismo archivo (`bab63053…0b382`). Las citas del diseño a `(4)` siguen válidas; la fuente nominal es `(5)`. | Ninguno | Ninguno | Revisión documental |
 | DEC15 | 24/10/2026 | Diseño §1 | `Agente/AUDITORIA_DISENO_PROYECTO.md` no está en el repositorio. Su referencia queda histórica; la sección 15 del diseño es la traza vigente. | Ninguno | Ninguno | Revisión documental |
 | DEC16 | 25/10/2026 | Contraste OpenAPI con SQL, consultas_clinicas M03 y raíz M04 en revisión de #15 | Conservar contrato común con extensiones tipadas y migraciones explícitas E02/E03 antes de habilitar adaptadores; capturar apellido de contacto, conservar legado desconocido sin inventarlo | Signos comunes preservados, contacto explícito, lecturas legadas nullable; DTO sin truncamiento | E02/E03 adaptan captura y “Sin dato”; se conserva diseño vigente | [Compatibilidad física](../Backend/docs/COMPATIBILIDAD_PERSISTENCIA_V1.md), pruebas nueva/existente y recuperación antes de publicar adaptador |
 | DEC17 | 28/10/2026 | E02-P2-03, plan/03 §Cronología y AF03 | Usar proyección transaccional de lectura v1 con manifiesto propio y migración 004 aditiva, conservando M01–M04. Legado clínico sin procedencia/versiones verificables exige reconciliación antes de leer. | Cursor cifrado; consulta acotada por tipo; escritores E03–E05 insertan evento y snapshot en su misma UoW | Se conservan endpoints y UI previstos | CA07 en cuatro motores; [migración](../Database/migrations/README.md), [evidencia](evidencias/E02/E02-P2-03.md) |
 
-Retroalimentación docente de Entrega I: PENDIENTE DE FUENTE. No se atribuyen cambios al docente (EF03, RF-D06, RNF-040); se registrará en E07-P2-01 o antes si llega.
+Retroalimentación docente de Entrega I: PENDIENTE DE FUENTE en el corte revisado (EF03, RF-D06, RNF-040).
 
 ## 6. Matriz de capacidades por institución
+
+La matriz registra el alcance original y las capacidades que ya se integraron. La ruta de cierre pendiente se delimita en DEC20.
 
 Las capacidades se habilitan por política institucional, nunca por nombre de motor. Motores sin repetición: PostgreSQL, MySQL, MongoDB y Firestore aparecen una vez cada uno.
 
@@ -150,3 +152,8 @@ v1 amplían historia; no borran ni reinterpretan filas previas. El legado especi
 sin procedencia/snapshots queda RECONCILIAR hasta conciliación administrativa
 verificable, sin habilitación automática ni datos inferidos. Fuente y reproducción:
 Backend/docs/servicios-hospitalarios-v1.md. Decisión del proyecto, no observación docente.
+
+
+### DEC20 · Cierre técnico compacto (07/11/2026)
+
+El trabajo pendiente se concentra en E05. Para laboratorio se verifica el circuito clínico de orden, muestra, resultado variable, validación y consulta por usuario autorizado. Los resultados validados se muestran por orden con la procedencia y versión disponibles. Emisión de archivos oficiales, inventario/calidad, nuevas pantallas de cobros, administración de cuentas y visor de auditoría pertenecen al alcance histórico, fuera de la ruta técnica. Se conservan el modelo, la provisión controlada, la auditoría de servidor y el trabajo ya integrado. La verificación final se ejecuta en E05-P1-04.

@@ -4,7 +4,7 @@ Guía única del frontend vigente. Sustituye los documentos usados para construi
 
 ## Estado real
 
-React 19, TypeScript y Vite. En modo API están conectados sesión, alta, búsqueda, edición de pacientes y expediente/cronología paginados para las cuatro instituciones. El servidor verifica identidad y cuenta local y resuelve la institución. Las capacidades clínicas E03–E05 continúan según el plan; los simuladores solo se usan cuando se elige explícitamente ese modo.
+React 19, TypeScript y Vite. En modo API están conectados sesión, pacientes, expediente, atención y archivo en las cuatro instituciones. El servidor verifica identidad y cuenta local y resuelve la institución. La conexión del circuito analítico de laboratorio corresponde a E05. Para probar el candidato, configurar `VITE_SERVICE_MODE=api` explícitamente. La interfaz usa el modo de simulación si falta ese valor.
 
 ## Ejecutar y comprobar
 

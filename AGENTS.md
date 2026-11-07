@@ -17,15 +17,15 @@ No ejecutar automáticamente todo el plan por leerlo. Completar el alcance autor
 
 ## Estado y fuentes
 
-Corte 24/10/2026: cuatro modelos, infraestructura local y frontend React simulado; Backend solo `.gitkeep`. Inspeccionar de nuevo al empezar. Auditoría Database: 234 comprobaciones, 232 PASS y dos FAIL por A-F01; MySQL/emulador Firestore bloqueados en ese corte. Auditoría UI acredita presentación/simulación, no persistencia real. No rehacer frontend ni afirmar que backend existe.
+El estado operativo se verifica en [plan/ESTADO_ACTUAL.md](plan/ESTADO_ACTUAL.md), Git y los PR. En el corte del 07/11/2026, E00–E04 están cerradas: React y el backend hexagonal ya integran pacientes, expediente, atención y archivo en los cuatro motores. E05 concentra el cierre técnico. La secuencia vigente es E05-P2-01 (PR #78) → E05-P2-03 → E05-P1-04. E06, E07 y las ampliaciones retiradas son referencias históricas. La documentación académica la prepara Daniel por separado.
 
-Consigna: `Proyecto final bases II (1) (5).pdf`, resumida en plan/01 para no depender de Downloads. Modelos iniciales/resúmenes en Database; M01–M09 en diseño; RF/RNF y auditorías complementan. Inventarios/conteos antiguos son históricos. Ante contradicción, registrar fuente, resolución y prueba; aplicar DEC del plan al alcance previsto hasta reconciliar diseño en E00.
+La consigna, sus páginas y EF01–EF11 están resumidos en [plan/01_ALCANCE_Y_DECISIONES.md](plan/01_ALCANCE_Y_DECISIONES.md). Los modelos iniciales están en Database y las decisiones en M01–M09 y DEC. Para lo que queda por implementar aplica DEC20 y la ficha vigente del ID. Ante contradicción, distinguir fecha, alcance y evidencia antes de actuar.
 
 ## Cola compartida y continuidad
 
 - Daniel (JDaniC) y David (Davidix888) pueden ejecutar cualquier tarea. `P1`/`P2` son lotes históricos dentro de IDs permanentes; no indican dueño ni permisos. No renumerar al cambiar de ejecutor.
 - Estado y ejecutor actual solo en `plan/06_TABLERO.md`: PENDIENTE, EN_CURSO, EN_REVISION, HECHA, BLOQUEADA. El ID, orden y dependencias siguen vigentes.
-- Elegir la primera disponible por dependencias y puerta de fase, consultando ambos lotes y PR abiertos. Los cambios dependientes deben estar integrados, no solo presentes en otra rama.
+- Elegir la primera disponible por dependencias y puerta de fase, consultando ambos lotes y PR abiertos. Los cambios dependientes deben estar integrados en `develop`. Si la cola no ofrece tareas, identificar el PR o la condición que desbloquea el siguiente ID. El alcance de la solicitud y la reserva existente determinan quién puede retomarlo.
 - Una tarea, un ejecutor activo y una rama/PR. Antes de implementar adquirir la referencia compartida exclusiva `codex/reserva-ID` mediante creación atómica en GitHub, según plan/11; un PR previo activo mantiene prioridad. El tablero de una rama privada no coordina dos equipos. Las auditorías del 05/11/2026 deben pasar antes de abrir el PR. En tareas nuevas prevalece la primera creación atómica exitosa de `codex/reserva-ID`; un PR posterior no desplaza a quien adquirió esa referencia. Solo entre PR heredados competidores anteriores a esta política prevalece el menor número; el segundo conserva sus cambios y elige otra tarea.
 - Retomar el trabajo del otro conservando ID, rama, commits y evidencia cuando esté liberado o exista traspaso/petición humana. No asumir abandono por tiempo transcurrido ni editar simultáneamente la misma tarea. Una tarea pendiente/libre de cualquier lote no necesita permiso del otro.
 - El ejecutor de la tarea coordina los archivos comunes; reservarlos en el seguimiento. No hay carpetas exclusivas de una persona.
@@ -50,18 +50,17 @@ Inicializador modificado no migra volúmenes. Preparar migración explícita, aj
 
 Pruebas con datos sintéticos y entornos aislados; sin bases compartidas/proyectos reales. No guardar secretos/datos clínicos en Git, logs, errores o capturas. Evidencia saneada en `plan/evidencias/`; logs crudos pueden quedar ignorados.
 
-Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PASS/FAIL/BLOCKED/NOT_IMPLEMENTED/NOT_APPLICABLE, mock/emulador/motor y prueba histórica/actual. Un test obsoleto requiere justificación/cobertura sustituta. Cierre final: instalación en otro equipo, cuatro motores, comparativo y retroalimentación docente trazable.
+Ejecutar éxito/fallo/excepción y comprobaciones proporcionales. Distinguir PASS/FAIL/BLOCKED/NOT_IMPLEMENTED/NOT_APPLICABLE, mock/emulador/motor y prueba histórica/actual. Un test obsoleto requiere justificación/cobertura sustituta. El cierre técnico exige una instalación limpia en otro equipo y los recorridos de E05 sobre el mismo candidato, distinguiendo motores y emuladores.
 
 ## Code Review Rules
 
-- Revisar los cambios contra el alcance y los criterios del ID vigente del PR. Tratar fases históricas y ampliaciones fuera de la tarea como contexto. Atribuir cada hallazgo al comportamiento y archivo que lo sustentan.
 - Verificar que institución y permisos procedan de token verificado y cuenta local; nunca confiar en actor, rol o institución enviados por la UI. Dominio y aplicación sin dependencias de HTTP, SDK o motores.
 - Señalar pérdida de historia, escrituras parciales o carreras de saldo/stock. Comandos deben preservar atomicidad por motor, idempotencia y versiones; archivar impide nuevas atenciones pero permite finalizar anteriores con autorización.
 - Exigir migraciones para volúmenes existentes cuando cambien inicializadores. Distinguir pruebas reales, offline y simuladas; no aceptar que un éxito de mocks acredite persistencia ni que se eliminen datos para conseguir pruebas verdes.
 
 ## Ramas y documentación vigentes
 
-Las ramas permanentes son main y develop. Las ramas de tarea son temporales y se eliminan al integrar. El plan/ es la fuente de ejecución; Frontend/README.md es la guía única de la interfaz vigente. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.
+Las ramas permanentes son `main` y `develop`. Retirar ramas temporales cuando el trabajo y su cierre estén integrados y se haya comprobado que la punta no avanzó. Proteger PR abiertos, reservas activas, worktrees en uso y commits locales sin integración demostrada. Para una reserva usar únicamente la liberación con lease de plan/11. El plan/ es la fuente de ejecución; Frontend/README.md es la guía única de la interfaz vigente. La antigua planificación interfaz/ y el diseño visual v1.0 se retiraron porque fueron sustituidos. Los documentos históricos no acreditan el estado actual.
 
 ## Política de integración vigente
 
@@ -73,6 +72,8 @@ Instrucción humana del 05/11/2026: cada entrega debe pasar una auditoría de se
 
 Esta instrucción sustituye la secuencia anterior de reserva mediante PR borrador previo a implementación. Consultar reservas/PR existentes, publicar rama/seguimiento y adquirir la referencia remota exclusiva `codex/reserva-ID` por creación atómica antes de implementar; si ya existe, no trabajar esa tarea. Volver a comprobar duplicados antes de abrir el PR después de las auditorías. Para un PR ya abierto al recibir esta instrucción (como #79), aplicar ambas auditorías antes de continuar revisión/integración. CodeRabbit sigue siendo la revisión automática posterior al PR.
 
-## Cierre de cada chat de ejecución
+## Cierre de tarea, fase y chat
 
-Seguir plan/11 hasta implementación, pruebas, PR, revisión automática real e integración cuando esté autorizada y disponible. Si falta entorno, acceso o respuesta del bot, dejar seguimiento con causa, último commit, próxima acción exacta y estado real; no presentar el bloqueo como terminado. No ejecutar todo el plan por abrir un chat.
+1. **Tarea.** Registrar pruebas y ambas auditorías de alcance. Verificar el resultado de CodeRabbit para el SHA actual, los hilos resueltos y la integración autorizada. Confirmar el cambio y las comprobaciones posteriores en `develop`; actualizar evidencia, seguimiento y tablero antes de darla por HECHA.
+2. **Fase.** Cuando sus tareas vigentes estén HECHAS, ejecutar la demostración integrada sobre el candidato y registrar commit, entorno, pruebas y decisión en `plan/evidencias/EXX/CIERRE.md`. Actualizar el cierre del tablero y verificar que el acta esté integrada. Un FAIL o BLOCKED obligatorio mantiene la fase abierta. En E05 usar los criterios de E05-P1-04 y la [plantilla de cierre](plan/plantillas/CIERRE_ENTREGA.md).
+3. **Chat.** Seguir plan/11 hasta implementación, pruebas, PR, revisión automática real e integración cuando esté autorizada y disponible. Si falta entorno, acceso o respuesta del bot, dejar seguimiento con causa, último commit, próxima acción exacta y estado real; no presentar el bloqueo como terminado. No ejecutar todo el plan por abrir un chat.

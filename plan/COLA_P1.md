@@ -1,8 +1,8 @@
 # Cola compartida · Lote histórico P1
 
-Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan para los enlaces, no indican propiedad. Leer [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md), [plan maestro](00_PLAN_MAESTRO.md), [tablero](06_TABLERO.md) y contrato. Codex revisa el PR; el compañero puede revisar de forma opcional.
+Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan para los enlaces, no indican propiedad. Leer [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md), [plan maestro](00_PLAN_MAESTRO.md), [tablero](06_TABLERO.md) y contrato. CodeRabbit revisa el PR; el compañero puede revisar de forma opcional.
 
-24 tareas; estimación inicial agregada: **61 sesiones de 2–4 horas** (122–244 horas-persona). Es una previsión de trabajo, no plazo calendario ni compromiso; incluye implementación/pruebas de cada tarea y debe recalibrarse en E00. Revisión automática y bloqueos pueden agregar tiempo.
+E00–E04 se conservan como historial de ejecución. E05 contiene la ruta técnica vigente. Las sesiones previas son estimaciones originales.
 
 | Orden | ID / trabajo detallado | Dependencia interna directa | Sesiones |
 |---|---|---|---|
@@ -22,13 +22,7 @@ Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan par
 | 14 | [E04-P1-02 · Hospitalizaciones y ocupación de camas](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02) | Puerta de fase | 3 |
 | 15 | [E04-P1-03 · Exámenes, procedimientos y coberturas hospitalarias](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03) | E04-P1-02 | 3 |
 | 16 | [E05-P1-01 · Catálogos, órdenes y trazabilidad de muestras](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | Puerta de fase | 3 |
-| 17 | [E05-P1-02 · Generar informes inmutables y descarga autorizada](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | E05-P2-01 | 3 |
 | 18 | [E05-P1-03 · Facturación, pagos y reversiones con saldo consistente](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | E05-P1-01 | 3 |
-| 19 | [E06-P1-01 · Revisar autorización y recuperar fallos de identidad](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | Puerta de fase | 3 |
-| 20 | [E06-P1-02 · Demostrar equivalencia, atomicidad y concurrencia en cuatro motores](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | E06-P1-01, E06-P2-01, E06-P2-02 | 3 |
-| 21 | [E06-P1-03 · Instalación reproducible, respaldo y restauración](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03) | Puerta de fase | 3 |
-| 22 | [E07-P1-01 · Redactar comparativo final y modelos corregidos](entregas/E07_entrega_final/01_P1.md#e07-p1-01) | Puerta de fase | 2 |
-| 23 | [E07-P1-02 · Preparar paquete instalable desde cero](entregas/E07_entrega_final/01_P1.md#e07-p1-02) | E07-P1-01, E07-P2-01, E07-P2-02 | 2 |
-| 24 | [E07-P1-03 · Ensayar defensa y demostración final con ambos integrantes](entregas/E07_entrega_final/01_P1.md#e07-p1-03) | E07-P1-02 | 2 |
+| 19 | [E05-P1-04 · Instalar y verificar el candidato en los cuatro motores](entregas/E05_laboratorio/01_P1.md#e05-p1-04) | E05-P2-03 | — |
 
-Todos los estados iniciales son PENDIENTE. Consultar y actualizar [tablero](06_TABLERO.md), no duplicar estados aquí. La puerta de fase previa sigue aplicando aunque la columna no enumere sus seis tareas.
+El [tablero](06_TABLERO.md) registra los estados y ejecutores. La puerta de la fase anterior se verifica sobre las tareas vigentes y su cierre.

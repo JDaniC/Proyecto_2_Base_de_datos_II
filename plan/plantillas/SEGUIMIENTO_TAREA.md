@@ -26,7 +26,8 @@ Qué quedó implementado/revisado y qué falta para los criterios del ID. Distin
 |---|---|---|---|
 | Completar al ejecutar | | PASS / FAIL / BLOCKED / NOT_IMPLEMENTED / NOT_APPLICABLE | |
 
-- Revisión Codex: PR, SHA revisado, enlace y observaciones; pendiente si no ocurrió.
+- Auditorías de seguridad y requisitos: alcance, commit, estado y enlaces.
+- Revisión CodeRabbit: PR, SHA revisado, enlace y observaciones; pendiente si no ocurrió.
 - Integración: commit/PR y estado comprobado; no inventar merge.
 - Resultado de verificación tras integrar:
 

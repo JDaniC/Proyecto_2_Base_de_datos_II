@@ -466,7 +466,7 @@ Seguir las fases, dependencias y tareas del [plan maestro](../plan/00_PLAN_MAEST
 
 ## 11. Estado y trabajo pendiente
 
-El estado vigente se mantiene en [plan/ESTADO_ACTUAL.md](../plan/ESTADO_ACTUAL.md) y [tablero](../plan/06_TABLERO.md). Existe React simulado y cuatro modelos; Backend sigue pendiente. La sección 16 conserva un corte histórico de Database y no acredita ejecución actual. Pruebas clínicas reales, migraciones, cuatro adaptadores y comparativo final se verifican en las tareas del plan. La retroalimentación docente sigue pendiente de fuente identificable.
+El estado vigente se mantiene en [plan/ESTADO_ACTUAL.md](../plan/ESTADO_ACTUAL.md) y el [tablero](../plan/06_TABLERO.md). Para el desarrollo restante aplica DEC20 y la fase E05. La sección 16 conserva un corte histórico de Database. Las pruebas y migraciones de cada fase se consultan en sus evidencias. La retroalimentación docente sigue pendiente de fuente identificable en el corte revisado.
 
 ## 12. Referencias oficiales de tecnologías
 

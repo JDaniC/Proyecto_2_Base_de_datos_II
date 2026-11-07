@@ -1,8 +1,8 @@
 # Cola compartida · Lote histórico P2
 
-Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan para los enlaces, no indican propiedad. Leer [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md), [plan maestro](00_PLAN_MAESTRO.md), [tablero](06_TABLERO.md) y contrato. Codex revisa el PR; el compañero puede revisar de forma opcional.
+Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan para los enlaces, no indican propiedad. Leer [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md), [plan maestro](00_PLAN_MAESTRO.md), [tablero](06_TABLERO.md) y contrato. CodeRabbit revisa el PR; el compañero puede revisar de forma opcional.
 
-24 tareas; estimación inicial agregada: **62 sesiones de 2–4 horas** (124–248 horas-persona). Es una previsión de trabajo, no plazo calendario ni compromiso; incluye implementación/pruebas de cada tarea y debe recalibrarse en E00. Revisión automática y bloqueos pueden agregar tiempo.
+E00–E04 se conservan como historial de ejecución. E05 contiene la ruta técnica vigente. Las sesiones previas son estimaciones originales.
 
 | Orden | ID / trabajo detallado | Dependencia interna directa | Sesiones |
 |---|---|---|---|
@@ -22,13 +22,6 @@ Cualquiera de los dos puede ejecutar estas tareas. El lote e ID se conservan par
 | 14 | [E04-P2-02 · Versionar vacunas y registrar aplicaciones únicas](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | E04-P2-01 | 3 |
 | 15 | [E04-P2-03 · Cerrar integración institucional de agendas y pediatría](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | E04-P1-01, E04-P1-03, E04-P2-02 | 2 |
 | 16 | [E05-P2-01 · Captura, validación, corrección y repetición de resultados](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | E05-P1-01 | 3 |
-| 17 | [E05-P2-02 · Inventario de reactivos, equipos y control de calidad](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | E05-P1-01 | 3 |
-| 18 | [E05-P2-03 · Integrar laboratorio y administración mínima de cuentas](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | E05-P1-02, E05-P1-03, E05-P2-02 | 3 |
-| 19 | [E06-P2-01 · Cerrar todas las fronteras HTTP y eliminar simulación en entrega](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01) | Puerta de fase | 3 |
-| 20 | [E06-P2-02 · Actualizar regresiones de UI y ejecutar recorridos completos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) | Puerta de fase | 3 |
-| 21 | [E06-P2-03 · Auditar candidato integrado y cerrar defectos](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-03) | E06-P1-02, E06-P1-03 | 2 |
-| 22 | [E07-P2-01 · Cerrar retroalimentación docente y trazabilidad académica](entregas/E07_entrega_final/02_P2.md#e07-p2-01) | Puerta de fase | 2 |
-| 23 | [E07-P2-02 · Escribir manuales de uso y operación para la entrega](entregas/E07_entrega_final/02_P2.md#e07-p2-02) | Puerta de fase | 2 |
-| 24 | [E07-P2-03 · Verificar y cerrar el paquete final](entregas/E07_entrega_final/02_P2.md#e07-p2-03) | E07-P1-03 | 1 |
+| 18 | [E05-P2-03 · Conectar el circuito analítico a la interfaz existente](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | E05-P1-01, E05-P2-01 | — |
 
-Todos los estados iniciales son PENDIENTE. Consultar y actualizar [tablero](06_TABLERO.md), no duplicar estados aquí. La puerta de fase previa sigue aplicando aunque la columna no enumere sus seis tareas.
+El [tablero](06_TABLERO.md) registra los estados y ejecutores. La puerta de la fase anterior se verifica sobre las tareas vigentes y su cierre.

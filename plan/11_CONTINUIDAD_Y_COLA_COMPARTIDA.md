@@ -24,7 +24,7 @@ La primera respuesta de ejecución indica: estado observado, ID, ejecutor actual
 
 Los índices `COLA_P1.md`/`COLA_P2.md` y `entregas/*/01_P1.md`/`02_P2.md` son agrupaciones históricas. No cambiar IDs ni copiar la tarea al otro lote cuando cambie el ejecutor.
 
-Ejecutar `python3 scripts/github/cola.py` (o `--json`) para calcular disponibilidad con el tablero local. El helper es de lectura: no reserva, no comprueba GitHub y no cambia estados. Una tarea está disponible cuando está PENDIENTE, sin ejecutor, todas sus dependencias están HECHA y la fase anterior tiene sus seis tareas y cierre HECHA. E00 no requiere fase previa. Si falla la lectura/consistencia del tablero, corregir la fuente antes de elegir; no asumir que todo está libre.
+Ejecutar `python3 scripts/github/cola.py` (o `--json`) para calcular disponibilidad con el tablero local. El helper es de lectura: no reserva, no comprueba GitHub y no cambia estados. Una tarea está disponible cuando está PENDIENTE, sin ejecutor, todas sus dependencias están HECHA y la fase anterior tiene sus tareas vigentes y su cierre en HECHA. Las referencias históricas o el trabajo fuera de la cola no son elegibles. E00 no requiere fase previa. Si falla la lectura/consistencia del tablero, corregir la fuente antes de elegir; no asumir que todo está libre.
 
 Antes de modificar código comprobar además que las dependencias están integradas realmente en develop, que no existe PR abierto para el mismo ID y que no hay reserva de archivos comunes. Primero retomar la tarea propia activa cuando corresponda; en otro caso priorizar la primera libre de la fase más temprana y, dentro de ella, la que desbloquea trabajo. No tomar una tarea bloqueada sin resolver su causa.
 
@@ -64,12 +64,19 @@ Para liberar una tarea empezada, subir los commits propios y el seguimiento, dej
 1. Leer el trabajo concreto, dependencias, rutas y criterios del ID; resolver supuestos usando fuentes y decisiones del plan. No ampliar el alcance sin necesidad.
 2. Implementar con los límites hexagonales y preservar la UI vigente. Reservar archivos comunes en el seguimiento; no están asignados de forma exclusiva a Daniel o David.
 3. Ejecutar pruebas proporcionales de éxito, rechazo y excepción, y compilación cuando corresponda. Usar datos sintéticos y motores aislados. Registrar resultados nuevos y distinguir mocks, emuladores y motores.
-4. Completar cierre de tarea y seguimiento, publicar commits y pasar a EN_REVISION; convertir el PR a listo. Comprobar contrato-pr y el resultado real de CodeRabbit para el SHA actual. Si el disparador automático no cubre ese evento, solicitar `@coderabbitai full review` una vez y verificar que aparece el check del SHA actual; no repetir comentarios en bucle.
+4. Completar evidencia y seguimiento. Ejecutar ambas auditorías del alcance y, con PASS, comprobar duplicados y abrir el PR. Registrar EN_REVISION al enviar a revisión. En un PR existente aplicar la puerta previa antes de continuar. Comprobar contrato-pr y el resultado real de CodeRabbit para el SHA actual. Si el disparador automático no cubre ese evento, solicitar `@coderabbitai full review` una vez y verificar que aparece el check del SHA actual; no repetir comentarios en bucle.
 5. Ante hallazgos, reproducir/corregir y repetir pruebas/revisión afectadas. Cero aprobaciones humanas obligatorias. La puerta exige el check CodeRabbit exitoso del SHA actual y conversaciones resueltas mediante el ruleset remoto «Revision y pruebas de entregas» (25800933), aplicable a develop/main; el responsable valida y corrige los hallazgos aplicables, sin afirmar que success equivale a ausencia de hallazgos; contrato-pr por separado no acredita la revisión.
 6. Con criterios satisfechos, revisión automática real y merge autorizado por la petición de ejecución, fusionar el PR sin bypass de las protecciones vigentes. «Ejecuta la tarea hasta terminar el flujo» incluye rama, PR e integración de esa tarea; una solicitud de plan/revisión no autoriza fusionar código. Si solo se autorizó preparar PR, detenerse allí.
 7. Confirmar en GitHub que el PR está MERGED y que develop contiene el cambio; actualizar referencias y verificar el flujo integrado. Solo entonces registrar HECHA y evidencia de integración. Para registrar el cierre puede publicarse un PR documental `[PLAN] Cerrar ID`, conservando trazabilidad al PR de implementación, sin fingir que el cierre ya se integró. Eliminar la rama de tarea una vez integrado todo su trabajo propio y sin descartar cambios locales.
 
-El cierre de fase también exige su demostración y evidencia; las seis tareas HECHA no reemplazan el criterio integrado. Una sesión cierra una tarea autorizada; no arranca las 48 por defecto.
+### Cerrar la fase
+
+1. Verificar en `develop` el cierre de la fase previa y que todas las tareas vigentes figuran HECHAS con integración y evidencia. Consultar la ficha de la fase para sus criterios de salida.
+2. Ejecutar la demostración integrada sobre el candidato y registrar su SHA, entorno y resultados en `plan/evidencias/EXX/CIERRE.md`. En E05, usar la instalación y los recorridos de E05-P1-04 sobre el mismo candidato. Repetir lo afectado si cambia código, esquema o configuración. Cuando el cambio posterior solo registra el acta y el tablero, comprobar que los archivos del candidato probado coinciden.
+3. Si una prueba obligatoria falla o está bloqueada, dejar abierta la fase y registrar la causa, responsable y siguiente acción en la tarea afectada. Con criterios satisfechos, actualizar el cierre del tablero mediante el flujo autorizado de integración. Declarar la fase HECHA una vez confirmada la integración del acta y el tablero.
+4. Retirar ramas temporales solo con prueba de integración. Para un squash, comprobar que la punta actual está cubierta por el PR fusionado y que el commit de integración pertenece a `develop` o `main`. Preservar puntas nuevas, ramas en worktrees activos y PR abiertos. Una reserva se libera con el procedimiento de §3.
+
+Una sesión de ejecución cierra la tarea o fase autorizada.
 
 ## 6. Salida cuando falta algo
 
@@ -85,7 +92,7 @@ En un chat nuevo se puede escribir:
 - «Retoma E00-P2-02 desde su último seguimiento».
 - «Solo revisa el estado; no implementes todavía».
 
-Verificar la carga una vez abriendo un chat nuevo en la raíz y pidiendo: «Sin editar archivos, dime el estado actual, las tareas disponibles y el protocolo de reserva». Debe mencionar backend pendiente, ambos lotes abiertos a cualquiera, dependencias, reservas y revisión automática. Si no lo hace, comprobar en Customizations → Rules que la regla de workspace esté activa y abrir la raíz correcta. No se modifican reglas globales ni permisos personales de Antigravity.
+Verificar la carga una vez abriendo un chat nuevo en la raíz y pidiendo: «Sin editar archivos, dime el estado actual, las tareas disponibles y el protocolo de reserva». Debe mencionar el backend integrado, la ruta de cierre E05, ambos lotes abiertos a cualquiera, dependencias, reservas y revisión automática. Si no lo hace, comprobar en Customizations → Rules que la regla de workspace esté activa y abrir la raíz correcta. No se modifican reglas globales ni permisos personales de Antigravity.
 
 Las reglas aportan instrucciones persistentes; no arrancan trabajo por abrir la aplicación, no recuperan chats anteriores y no garantizan ejecución infalible. La memoria portable está en Git y seguimiento. Cada equipo necesita obtener los commits más recientes.
 
