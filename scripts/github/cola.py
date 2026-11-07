@@ -94,12 +94,16 @@ def main():
     args = parser.parse_args()
     try:
         tareas, cierres = cargar((ROOT / "plan/06_TABLERO.md").read_text())
-        if len(tareas) != 48 or set(cierres) != {f"E{n:02d}" for n in range(8)}:
-            raise ValueError("Se esperan 48 tareas y ocho cierres en el plan vigente")
-        for fase in cierres:
+        fases_previas = {f"E{n:02d}" for n in range(5)}
+        if set(cierres) != fases_previas | {"E05"}:
+            raise ValueError("Se esperan los cierres de E00 a E05 en el plan vigente")
+        for fase in fases_previas:
             esperadas = {f"{fase}-P{lote}-{n:02d}" for lote in (1, 2) for n in (1, 2, 3)}
             if {t for t in tareas if t.startswith(fase + "-")} != esperadas:
                 raise ValueError(f"Inventario inválido en {fase}")
+        cierre_tecnico = {"E05-P1-01", "E05-P1-03", "E05-P1-04", "E05-P2-01", "E05-P2-03"}
+        if {t for t in tareas if t[:3] not in fases_previas} != cierre_tecnico:
+            raise ValueError("Inventario inválido del cierre técnico E05")
         resultado = evaluar(tareas, cierres)
     except (OSError, ValueError) as error:
         parser.exit(2, f"No se puede elegir tarea: {error}\n")

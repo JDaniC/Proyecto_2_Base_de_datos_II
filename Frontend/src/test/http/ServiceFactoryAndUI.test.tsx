@@ -12,12 +12,12 @@ import { HttpClient } from '../../services/http/httpClient';
 import { HttpAuthRepository } from '../../services/http/httpAuthRepository';
 
 describe('ServiceFactory y Flujos de Interfaz en Modo API (E01-P2-03)', () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>>;
 
   beforeEach(() => {
     TokenStorage.limpiar();
-    mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    mockFetch = vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>();
+    globalThis.fetch = mockFetch as typeof fetch;
   });
 
   afterEach(() => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { isRouteInInstitution, patientTabs } from '../../app/productScope';
+import { isRouteDeliveredInApi, isRouteInInstitution, patientTabs } from '../../app/productScope';
 import { MockCatalogRepository } from '../../mocks/mockCatalogRepository';
 import { MockLaboratoryRepository } from '../../mocks/mockLaboratoryRepository';
 import { MockPatientRepository } from '../../mocks/mockPatientRepository';
@@ -28,6 +28,13 @@ describe('Producto final: límites de vistas', () => {
     render(<BrowserRouter><Sidebar sesion={session} collapsed={false} onToggleCollapse={() => {}} /></BrowserRouter>);
     for (const link of screen.getAllByRole('link')) expect(isRouteInInstitution(new URL(link.getAttribute('href')!, 'http://localhost').pathname, institution)).toBe(true);
     expect(screen.queryByText(/Matriz de Roles|Personal de laboratorio/)).not.toBeInTheDocument();
+  });
+  it('limita el laboratorio API al circuito entregable DEC20', () => {
+    expect(isRouteDeliveredInApi('/laboratorio/resultados/validacion', 'LABORATORIO_CLINICO')).toBe(true);
+    expect(isRouteDeliveredInApi('/laboratorio/calidad', 'LABORATORIO_CLINICO')).toBe(false);
+    expect(isRouteDeliveredInApi('/laboratorio/cobros', 'LABORATORIO_CLINICO')).toBe(false);
+    expect(isRouteDeliveredInApi('/laboratorio/informes/orden-1', 'LABORATORIO_CLINICO')).toBe(false);
+    expect(isRouteDeliveredInApi('/laboratorio/calidad', 'HOSPITAL_GENERAL')).toBe(true);
   });
   it('el acceso solo solicita cuenta y contraseña', async () => {
     window.history.replaceState({}, '', '/acceso'); render(<App />);

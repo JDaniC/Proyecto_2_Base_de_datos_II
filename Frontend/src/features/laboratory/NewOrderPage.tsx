@@ -25,7 +25,7 @@ import {
 export const NewOrderPage: React.FC = () => {
   const navigate = useNavigate();
   const { sesion } = useAuthSession();
-  const { laboratoryRepository, patientRepository, catalogRepository } = useServices();
+  const { mode, laboratoryRepository, patientRepository, catalogRepository } = useServices();
   const institucionId = sesion?.institucionId || 'LABORATORIO_CLINICO';
 
   // Datos de catálogo
@@ -64,14 +64,26 @@ export const NewOrderPage: React.FC = () => {
         setPacientes(resPacientes.items);
         setPruebasCatalogo(resPruebas.filter(p => p.estado === 'ACTIVO'));
         setSolicitantes(resSolicitantes.filter(r => r.estado === 'ACTIVO'));
-      } catch {
-        // Fallback
+      } catch (error) {
+        setError(getErrorMessage(error, 'No se pudieron cargar pacientes y catálogos desde la API.'));
       } finally {
         setCargandoInicial(false);
       }
     };
     cargar();
   }, [institucionId, patientRepository, catalogRepository]);
+
+  useEffect(() => {
+    const termino = busquedaPaciente.trim();
+    if (termino.length < 2) return;
+    let vigente = true;
+    const timer = window.setTimeout(() => {
+      patientRepository.buscar(institucionId, { q: termino, limite: 20 })
+        .then((resultado) => { if (vigente) setPacientes(resultado.items); })
+        .catch(() => { if (vigente) setError('No se pudo buscar pacientes en la API.'); });
+    }, 250);
+    return () => { vigente = false; window.clearTimeout(timer); };
+  }, [busquedaPaciente, institucionId, patientRepository]);
 
   // Filtrado de pacientes en tiempo real
   const pacientesFiltrados = useMemo(() => {
@@ -153,10 +165,14 @@ export const NewOrderPage: React.FC = () => {
 
     if (pruebasSeleccionadas.some(p => precios[p.id] === undefined || !Number.isFinite(Number(precios[p.id])) || Number(precios[p.id]) < 0)) { setError('Registra el precio acordado para cada prueba.'); return; }
     if (pacienteSeleccionado.edadAnios === null) { setError('Completa la fecha de nacimiento del paciente antes de registrar la orden.'); return; }
+    const solicitante = solicitantes.find(s => s.nombre === medicoSolicitante.trim());
+    if (mode === 'api' && !solicitante) { setError('Selecciona un solicitante activo del catálogo.'); return; }
     setGuardando(true);
     try {
       await laboratoryRepository.crearOrden(institucionId, {
         pacienteId: pacienteSeleccionado.id,
+        versionPaciente: pacienteSeleccionado.version,
+        solicitanteId: solicitante?.id,
         pacienteNombre: `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`,
         pacienteDpi: pacienteSeleccionado.numeroIdentificacion,
         pacienteEdad: pacienteSeleccionado.edadAnios,

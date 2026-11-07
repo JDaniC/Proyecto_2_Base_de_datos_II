@@ -5,14 +5,14 @@ import { HttpError } from '../../services/http/errors';
 import { IdempotencyTracker } from '../../services/http/idempotency';
 
 describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03)', () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>>;
   let tokenMock: string | null = null;
-  let onTokenExpiradoMock: ReturnType<typeof vi.fn>;
+  let onTokenExpiradoMock: ReturnType<typeof vi.fn<() => void>>;
   let tokenProvider: TokenProvider;
 
   beforeEach(() => {
     tokenMock = 'token-prueba-123';
-    onTokenExpiradoMock = vi.fn();
+    onTokenExpiradoMock = vi.fn<() => void>();
     tokenProvider = {
       obtenerToken: vi.fn(async () => tokenMock),
       establecerCredenciales: vi.fn(async () => 'token-nuevo'),
@@ -20,8 +20,8 @@ describe('HttpClient — Transporte HTTP, correlación e idempotencia (E01-P2-03
       onTokenExpirado: onTokenExpiradoMock,
     };
 
-    mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    mockFetch = vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>();
+    globalThis.fetch = mockFetch as typeof fetch;
   });
 
   afterEach(() => {

@@ -1,5 +1,7 @@
 # Cronograma de integración hasta el 5 de noviembre de 2026
 
+> **Histórico.** La [ruta vigente](00_PLAN_MAESTRO.md#4-orden-y-trabajo-en-paralelo) se concentra en E05.
+
 Fecha de planificación: 24/10/2026. Zona: America/Guatemala. Integrantes: Daniel (JDaniC) y David (Davidix888). P1/P2 son lotes intercambiables; no asignan una tarea a una persona. Fechas objetivo, no estados de ejecución. El tablero 06_TABLERO.md conserva la autoridad sobre los estados.
 
 ## 1. Capacidad y compromiso

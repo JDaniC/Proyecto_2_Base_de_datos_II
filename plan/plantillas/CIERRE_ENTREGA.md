@@ -3,15 +3,15 @@
 - Fase y objetivo:
 - Commit integrado:
 - Fecha y participantes:
-- Estado: EN_REVISION / BLOQUEADA / CERRADA.
+- Estado de fase en el tablero: EN_REVISION / BLOQUEADA / HECHA.
 
 ## Tareas y revisión
 
-Enlazar los seis cierres de P1/P2 y sus revisiones; confirmar fase anterior.
+Enlazar las tareas vigentes de P1/P2, sus PR integrados y evidencias. Confirmar el cierre de la fase anterior. Para E05, identificar el resultado de E05-P1-04.
 
 ## Demostración integrada
 
-Preparación, cuenta/rol sintéticos, secuencia UI→API→motor, recarga y fallo/recuperación. Para E00, demostrar corrección/auditorías/contratos sin fingir aplicación disponible.
+Registrar SHA del candidato, instalación, roles sintéticos, secuencia UI→API→motor, recarga y fallo/recuperación. Distinguir motor, emulador y doble de prueba. Para E05, registrar instalación en otro equipo y los recorridos comunes y de laboratorio.
 
 ## Resultados
 
@@ -25,4 +25,4 @@ Versiones de contrato/esquema, migración, configuración sin secretos, rutas y 
 
 ## Decisión
 
-Registrar revisión automática real y verificación de criterios por el ejecutor; no exige aprobación del compañero. Si falla criterio obligatorio, listar tarea reabierta, responsable y resolución; no cerrar por porcentaje de avance ni fecha.
+Registrar PASS de los criterios obligatorios, revisión automática real, PR/commit del acta y verificación en `develop` antes de declarar HECHA la fase. Si un criterio queda FAIL o BLOCKED, registrar tarea afectada, causa, responsable y próxima acción.

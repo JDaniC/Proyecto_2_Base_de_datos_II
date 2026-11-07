@@ -251,6 +251,22 @@ paths:
       responses:
         '201': {description: Borrador de repetición con serie nueva.}
         <<: *erroresLaboratorio
+  /laboratorio/trabajo-analitico:
+    get:
+      operationId: laboratorioTrabajoAnaliticoListar
+      summary: Lista la proyección mínima de examen y muestra para captura o validación.
+      description: No expone solicitante, indicaciones, precios, actores de custodia ni eventos administrativos.
+      tags: [laboratorio]
+      x-permisos: [resultados.analizar|resultados.validar]
+      x-instituciones: [LABORATORIO_CLINICO]
+      x-implementacion: IMPLEMENTED
+      parameters:
+      - {name: ordenId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
+      responses:
+        '200': {description: Página con elementos y siguienteCursor opcional. Cada elemento incluye los ítems y muestras aptas de una orden.}
+        <<: *erroresLaboratorio
   /laboratorio/catalogos/{tipo}:
     get:
       operationId: laboratorioCatalogoListar

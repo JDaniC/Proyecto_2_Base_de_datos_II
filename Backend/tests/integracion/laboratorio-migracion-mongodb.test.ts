@@ -378,6 +378,11 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:cuentaAnalistaId,revision:1,auth_uid:uidAnalista,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAnalista],estado:'ACTIVO',activo:true,nombre_usuario:uidAnalista});
  const cuentaAnalista=await bundle.cuenta.porUid(uidAnalista);assert.ok(cuentaAnalista);
  const contextoAnalista=crearContextoAutenticado({uid:uidAnalista,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuentaAnalista,uuidPublico(randomUUID()));
+ const trabajoAnalitico=await paginas.listarTrabajoAnalitico(contextoAnalista,uuidPublico(resultadoCaso.respuesta.id),{limite:1,orden:'ASC'}).then(p=>p.elementos);
+ assert.equal(trabajoAnalitico.length,1);assert.equal(trabajoAnalitico[0]!.ordenId,resultadoCaso.respuesta.id);assert.ok(trabajoAnalitico[0]!.muestras.some(m=>m.id===retomaCaso.respuesta.id));
+ assert.deepEqual(Object.keys(trabajoAnalitico[0]!).sort(),['estado','items','muestras','ordenId','pacienteId','prioridad','version']);
+ assert.ok(!('precio' in trabajoAnalitico[0]!.items[0]!));assert.ok(!('eventos' in trabajoAnalitico[0]!.muestras[0]!));
+ await assert.rejects(paginas.listarTrabajoAnalitico(contexto,uuidPublico(resultadoCaso.respuesta.id),{limite:1,orden:'ASC'}),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
  const gestionarResultado=new GestionarResultadoLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
  const componenteResultado={parametroId:resultadoCaso.respuesta.items[0]!.prueba.parametros[0]!.id,valorNumerico:12.5,referenciaInferior:10,referenciaSuperior:15,indicador:'NORMAL'};
  const entradaResultado={ordenId:resultadoCaso.respuesta.id,itemId:resultadoCaso.respuesta.items[0]!.id,muestraIds:[retomaCaso.respuesta.id],componentes:[componenteResultado],observaciones:'Captura sintética'};
@@ -487,6 +492,22 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  assert.equal(await ordenes.findOne({_id:posterior.id}),null);
  assert.deepEqual(await db.collection('pacientes').findOne({_id:paciente.id} as Document),archivado);
  if(process.env.PROBAR_COBROS==='1')await probarCobros(db,crearBundlesInstitucionales(['LABORATORIO_CLINICO'],{LABORATORIO_CLINICO:{...bundle,cuenta:bundle.cuenta}})[0]!,resultadoCaso.respuesta);
+ const pacientePaginado=await db.collection<{_id:string}&Document>('pacientes').findOne({_id:pacienteCaso.id});
+ const ordenPaginada=(await invocarOrden({...entradaCaso,versionPaciente:pacientePaginado!.revision})).respuesta;
+ const muestraPaginada=(await gestionarCaso.ejecutar('tomar',{contexto,bundle,claveIdempotencia:uuidPublico(randomUUID()),entrada:{
+  ...altaMuestra,ordenId:ordenPaginada.id,itemIds:[ordenPaginada.items[0]!.id],codigo:'SINT-PAGINA-ANALITICA',
+ }})).respuesta;
+ for(const [version,tipo] of [[1,'RECEPCION'],[2,'ACEPTACION']] as const){
+  await gestionarCaso.ejecutar('evento',{contexto,bundle,id:uuidPublico(muestraPaginada.id),claveIdempotencia:uuidPublico(randomUUID()),entrada:{versionEsperada:version,versionOrden:version+1,tipo,detalle:'Paginación sintética'}});
+ }
+ const paginaAnalitica=await paginas.listarTrabajoAnalitico(contextoAnalista,undefined,{limite:1,orden:'ASC'});
+ assert.equal(paginaAnalitica.elementos.length,1);assert.ok(paginaAnalitica.siguienteCursor);
+ const restoAnalitico=await paginas.listarTrabajoAnalitico(contextoAnalista,undefined,{limite:100,orden:'ASC',cursor:paginaAnalitica.siguienteCursor});
+ const ordenesPaginadas=[...paginaAnalitica.elementos,...restoAnalitico.elementos].map(v=>v.ordenId);
+ assert.equal(new Set(ordenesPaginadas).size,ordenesPaginadas.length);
+ assert.ok(ordenesPaginadas.includes(uuidPublico(ordenPaginada.id)));assert.ok(ordenesPaginadas.includes(uuidPublico(resultadoCaso.respuesta.id)));
+ assert.equal(restoAnalitico.siguienteCursor,undefined);
+ await assert.rejects(paginas.listarTrabajoAnalitico(contextoAnalista,uuidPublico(ordenPaginada.id),{limite:1,orden:'ASC',cursor:paginaAnalitica.siguienteCursor}));
  await ordenes.insertOne(orden);const ordenAlmacenada=await ordenes.findOne({_id:orden._id});
  assert.equal((await migrarLaboratorioMongodb(db,{escritoresDetenidos:true})).estado,'RECONCILIAR');
  await assert.rejects(verificarLaboratorioMongodb(db));

@@ -17,6 +17,8 @@ import { crearPoolMysql } from '../dist-test/src/adaptadores/salida/mysql/crear-
 
 import { recorrerClinica } from '../../Frontend/scripts/clinica-e2e.mjs';
 import { migrarClinicaMongodb } from '../../Database/migrations/005_clinica_mongodb.mjs';
+import { migrarLaboratorioMongodb } from '../../Database/migrations/011_laboratorio_mongodb.mjs';
+import { migrarResultadosLaboratorioMongodb } from '../../Database/migrations/012_resultados_laboratorio_mongodb.mjs';
 import { prepararClinicaFirestore } from '../../Database/migrations/006_clinica_firestore.mjs';
 import { inicializarFirestore } from '../../Database/centro_pediatrico_firestore.mjs';
 
@@ -61,6 +63,7 @@ async function crearCuenta(institucion, secretaria = false) {
   await auth.createUser({ uid, email, password, emailVerified: true });
   await auth.setCustomUserClaims(uid, { institucion });
   const profesionalId = randomUUID();
+  let perfilesAnaliticos;
   const rol = ({HOSPITAL_GENERAL:'MEDICO', CLINICA_ODONTOLOGICA:'ODONTOLOGO', LABORATORIO_CLINICO:'MEDICO_LABORATORIO', CENTRO_MEDICO_PEDIATRICO:'PEDIATRA'})[institucion];
   const permisos = ['pacientes.administrar','historial.leer','historial.archivar','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir', ...(institucion === 'LABORATORIO_CLINICO' ? [] : ['citas.administrar'])];
   if (institucion === 'HOSPITAL_GENERAL' || institucion === 'CLINICA_ODONTOLOGICA') {
@@ -81,19 +84,36 @@ async function crearCuenta(institucion, secretaria = false) {
     await pool.consultar(esPg ? 'INSERT INTO usuario_rol(id_usuario,id_rol) SELECT u.id_usuario,r.id_rol FROM usuario u CROSS JOIN rol r WHERE u.auth_uid=$1 AND r.nombre=$2' : 'INSERT INTO usuario_rol(id_usuario,id_rol) SELECT u.id_usuario,r.id_rol FROM usuario u CROSS JOIN rol r WHERE u.auth_uid=? AND r.nombre=?', [uid, rol]);
   } else if (institucion === 'LABORATORIO_CLINICO') {
     const db = mongo.db('laboratorio_clinico');
-    await db.collection('roles').insertOne({ _id: rolId, revision: 1, nombre: rol, permisos });
+    const rolesLaboratorio = [
+      { _id: rolId, revision: 1, nombre: 'ADMIN_INSTITUCIONAL', permisos: ['pacientes.administrar','historial.leer','historial.archivar','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir','ordenes.administrar','muestras.administrar'] },
+      { _id: randomUUID(), revision: 1, nombre: 'ANALISTA_LABORATORIO', permisos: ['resultados.analizar'] },
+      { _id: randomUUID(), revision: 1, nombre: 'VALIDADOR_LABORATORIO', permisos: ['resultados.validar'] },
+    ];
+    await db.collection('roles').insertMany(rolesLaboratorio);
     await db.collection('solicitantes').insertOne({_id:profesionalId,revision:1,nombre_completo:'Ana Sintética',tipo:'MEDICO',activo:true,numero_colegiado:profesionalId,entidad_colegiacion:'Colegio sintético'});
     await db.collection('usuarios').insertOne({ _id: id, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: [rolId], solicitante_medico_id:profesionalId, estado: 'ACTIVO', activo: true, nombre_usuario: uid });
+    perfilesAnaliticos = {};
+    for (const [perfil, rolAnalitico] of [['analista',rolesLaboratorio[1]],['validador',rolesLaboratorio[2]]]) {
+      const uidAnalitico=randomUUID(), idAnalitico=randomUUID();
+      const correo=`ui-${uidAnalitico}@example.test`, clave=`Sintetica-${randomBytes(12).toString('hex')}`;
+      await auth.createUser({uid:uidAnalitico,email:correo,password:clave,emailVerified:true});
+      await auth.setCustomUserClaims(uidAnalitico,{institucion});
+      await db.collection('usuarios').insertOne({_id:idAnalitico,revision:1,auth_uid:uidAnalitico,proveedor_identidad:'FIREBASE',institucion_id:institucion,rol_ids:[rolAnalitico._id],estado:'ACTIVO',activo:true,nombre_usuario:uidAnalitico});
+      perfilesAnaliticos[perfil]={email:correo,password:clave,id:idAnalitico};
+    }
   } else {
     await firestore.doc(`pediatras/${profesionalId}`).set({revision:1,nombres:'Ana',apellidos:'Sintética',colegiado:profesionalId,entidad_colegiacion:'Colegio sintético',especialidad:'Pediatría',estado:'ACTIVO'});
     await firestore.doc(`roles/${rolId}`).set({ revision: 1, nombre: rol, permisos });
     await firestore.doc(`usuarios/${id}`).set({ revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: [rolId], pediatra_id:profesionalId, estado: 'ACTIVO', nombre_usuario: uid });
   }
-  return { institucion, email, password, secretaria, profesionalId };
+  return { institucion, email, password, secretaria, profesionalId, perfilesAnaliticos };
 }
 try {
   await mongo.connect();
-  await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico')); await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore); await prepararAntecedentesPediatricos(firestore);
+  await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico'));
+  await migrarLaboratorioMongodb(mongo.db('laboratorio_clinico'),{escritoresDetenidos:true});
+  await migrarResultadosLaboratorioMongodb(mongo.db('laboratorio_clinico'),{escritoresDetenidos:true});
+  await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore); await prepararAntecedentesPediatricos(firestore);
   for (const institucion of instituciones) cuentas.push(await crearCuenta(institucion));
   const pediCuenta=cuentas.find(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO');
   const vacunaId=randomUUID(),versionId=randomUUID(),dosisId=randomUUID();
@@ -139,8 +159,14 @@ try {
   const url = `http://127.0.0.1:${frontPort}`;
   for (let i = 0; i < 100; i++) { try { if ((await fetch(url)).ok) break; } catch { /* arranque local */ } await new Promise((r) => setTimeout(r, 100)); }
   assert.equal((await fetch(url)).status, 200);
-  browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
-  const resultados = await recorrerClinica({browser,url,cuentas:process.env.CLINICA_UI_SOLO_PEDIATRIA==='1'?cuentas.filter(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO'):cuentas, reiniciarBackend: async () => {await Promise.all(browser.contexts().flatMap(context=>context.pages().map(page=>page.waitForLoadState('networkidle'))));await app.close(); app = await iniciarBackendAislado();}});
+  const navegadorInstalado=process.env.PLAYWRIGHT_CHANNEL ?? (process.platform==='win32' ? 'msedge' : undefined);
+  browser = await chromium.launch({ headless: true, ...(navegadorInstalado ? { channel: navegadorInstalado } : {}) });
+  const cuentasRecorrido=process.env.CLINICA_UI_SOLO_PEDIATRIA==='1'
+    ? cuentas.filter(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO')
+    : process.env.CLINICA_UI_SOLO_LABORATORIO==='1'
+      ? cuentas.filter(c=>c.institucion==='LABORATORIO_CLINICO')
+      : cuentas;
+  const resultados = await recorrerClinica({browser,url,cuentas:cuentasRecorrido, reiniciarBackend: async () => {await Promise.all(browser.contexts().flatMap(context=>context.pages().map(page=>page.waitForLoadState('networkidle'))));await app.close(); app = await iniciarBackendAislado();}});
   console.log(JSON.stringify(resultados));
   if(process.env.CLINICA_UI_EVIDENCE) await writeFile(process.env.CLINICA_UI_EVIDENCE, JSON.stringify(resultados,null,2));
   }

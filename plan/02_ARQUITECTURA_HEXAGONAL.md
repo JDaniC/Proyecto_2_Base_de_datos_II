@@ -108,9 +108,11 @@ React usa Firebase Authentication para obtener ID token; solo el token viaja a l
 
 Claims usan las cuatro constantes de persistencia, incluida `CENTRO_MEDICO_PEDIATRICO`. Los bundles permitidos son configuración del servidor; una institución desconocida no genera una conexión dinámica. Devolver 404 al pedir recurso ajeno, 403 al carecer de capacidad/permiso y 401 por token inválido. Secretaría recibe perfil administrativo, no notas clínicas.
 
-Provisión es un proceso recuperable entre Auth y una base, no una transacción distribuida. Cuenta PENDIENTE → crear/vincular UID y claim → verificar vínculo único → ACTIVA. Serializar provisión por UID mediante herramienta administrativa única y operación idempotente; revisar vínculos existentes antes de activar y tratar activaciones concurrentes en E06. Si falla, mantener PENDIENTE y reanudar por ID de operación. Desactivar local primero; si revocación falla queda sin acceso local y se registra reintento. El alta de cuentas desde UI se limita al laboratorio; para otras instituciones usar provisión/seed administrativa controlada, sin panel nuevo.
+Provisión es un proceso recuperable entre Auth y una base, no una transacción distribuida. Cuenta PENDIENTE → crear/vincular UID y claim → verificar vínculo único → ACTIVA. Serializar provisión por UID mediante herramienta administrativa única y operación idempotente; revisar vínculos existentes antes de activar. Si falla, mantener PENDIENTE y reanudar por ID de operación. Desactivar local primero; si revocación falla queda sin acceso local y se registra reintento. Para E05 usar la provisión administrativa existente en las cuatro instituciones.
 
 ## 6. Informes y otras fronteras no atómicas
+
+Esta sección conserva el diseño de emisión de archivos oficiales. El cierre técnico vigente muestra resultados validados por orden según DEC20 de [plan/01](01_ALCANCE_Y_DECISIONES.md).
 
 El PDF/archivo de informe de laboratorio se prepara fuera de la transacción con clave determinista, contenido versionado y hash. Solo pasar BORRADOR→EMITIDO si el objeto existe y coincide el hash, y una transacción revalida las versiones de resultados y guarda referencia/auditoría. Un timeout o fallo de almacenamiento conserva borrador; reintentar la misma operación; limpiar temporales huérfanos por tarea controlada. Las descargas atraviesan autorización, nunca una ruta pública de archivo clínico. No hace falta un servicio externo de objetos para la demo: un adaptador local protegido es suficiente si se incluye en respaldo/restauración.
 

@@ -7,10 +7,12 @@ import { Button } from '../design-system/components/Button';
 import { Toast, ToastMessage } from '../design-system/components/Toast';
 import { RouteContent } from '../app/RouteContent';
 import { useAuthSession } from '../app/AuthSessionContext';
+import { useServices } from '../app/ServiceContext';
 
 export const AuthenticatedLayout: React.FC = () => {
   const navigate = useNavigate();
   const { sesion, cerrarSesion } = useAuthSession();
+  const { mode } = useServices();
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
   const [modalLogoutAbierto, setModalLogoutAbierto] = useState<boolean>(false);
@@ -41,6 +43,7 @@ export const AuthenticatedLayout: React.FC = () => {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onNavigate={() => setMobileNavOpen(false)}
         className={mobileNavOpen ? 'mobile-open' : ''}
+        mode={mode}
       />
       {mobileNavOpen && (
         <button

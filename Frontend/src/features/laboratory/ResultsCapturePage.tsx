@@ -234,7 +234,6 @@ export const ResultsCapturePage: React.FC = () => {
         `Resultados de «${itemActivo.nombrePrueba}» guardados exitosamente en estado BORRADOR (Serie: ${resultadoGuardado.serieResultadoId}, Versión ${resultadoGuardado.version}).`
       );
     } catch (err: any) {
-      console.log('ERROR IN handleGuardarBorrador:', err);
       setErrorGlobal(getErrorMessage(err, 'Error guardando resultados analíticos.'));
     } finally {
       setGuardando(false);
@@ -464,6 +463,7 @@ export const ResultsCapturePage: React.FC = () => {
                   <Cpu size={16} style={{ color: 'var(--color-primary)' }} />
                   <input
                     type="text"
+                      aria-label="Equipo Analítico Automatizado"
                     value={equipoAnalitico}
                     onChange={(e) => setEquipoAnalitico(e.target.value)}
                     required
@@ -485,6 +485,7 @@ export const ResultsCapturePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                    aria-label="Método Analítico / Principio"
                   value={metodoAnalitico}
                   onChange={(e) => setMetodoAnalitico(e.target.value)}
                   required
@@ -505,6 +506,7 @@ export const ResultsCapturePage: React.FC = () => {
                 </label>
                 <input
                   type="text"
+                    aria-label="Lote de Reactivo / Cartucho"
                   value={loteReactivo}
                   onChange={(e) => setLoteReactivo(e.target.value)}
                   required

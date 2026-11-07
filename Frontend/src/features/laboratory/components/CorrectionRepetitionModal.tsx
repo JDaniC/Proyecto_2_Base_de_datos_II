@@ -106,6 +106,7 @@ export const CorrectionRepetitionModal: React.FC<CorrectionRepetitionModalProps>
             ordenId: orden.id,
             itemOrdenId: resultadoActual.itemOrdenId,
             muestraId: resultadoActual.muestraId,
+            muestraIds: resultadoActual.muestraIds,
             equipoAnalitico,
             metodoAnalitico,
             loteReactivo,

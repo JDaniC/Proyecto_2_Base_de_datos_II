@@ -20,8 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { isRouteInInstitution } from '../../app/productScope';
-import { SesionUsuario } from '../../services/types';
+import { isRouteDeliveredInApi, isRouteInInstitution } from '../../app/productScope';
+import { ModoServiciosFrontend, SesionUsuario } from '../../services/types';
 
 export interface NavItem {
   id: string;
@@ -36,6 +36,7 @@ export interface SidebarProps {
   onToggleCollapse: () => void;
   onNavigate?: () => void;
   className?: string;
+  mode?: ModoServiciosFrontend;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -44,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   onNavigate,
   className = '',
+  mode = 'mock',
 }) => {
   const getNavItems = (): NavItem[] => {
     const items: NavItem[] = [
@@ -173,6 +175,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     const permissionsByItem: Record<string, string[]> = {
+      'bandeja-lab': ['ordenes.administrar', 'resultados.analizar', 'resultados.validar'],
+      'muestras-lab': ['muestras.administrar'],
       'calidad-lab': ['resultados.analizar', 'resultados.validar', 'usuarios.administrar'],
       'inventario-lab': ['inventario.administrar', 'resultados.analizar', 'usuarios.administrar'],
       'cobros-lab': ['cobros.administrar', 'usuarios.administrar'],
@@ -180,6 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return items.filter((item, index) =>
       (!permissionsByItem[item.id] || permissionsByItem[item.id].some(p => sesion.permisos.some(permission => permission === p))) &&
       isRouteInInstitution(item.path.split('?')[0], sesion.institucionId) &&
+      (mode !== 'api' || isRouteDeliveredInApi(item.path.split('?')[0], sesion.institucionId)) &&
       !items.slice(0, index).some(previous => previous.path.split('?')[0] === item.path.split('?')[0])
     );
   };

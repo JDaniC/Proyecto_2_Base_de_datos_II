@@ -3,7 +3,13 @@ from validar_pr import validar
 
 class ContratoTests(unittest.TestCase):
     def test_tarea(self):
-        validar('[E00-P1-01] Contratos', 'codex/e00-p1-01-contratos', 'develop', ['Backend/a.ts'], '| E00-P1-01 |')
+        validar(
+            '[E05-P2-03] Circuito analítico',
+            'codex/e05-p2-03-circuito-analitico-ui',
+            'develop',
+            ['Backend/a.ts'],
+            '| [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 |',
+        )
     def test_tarea_inexistente(self):
         with self.assertRaises(ValueError):
             validar('[E00-P1-01] Contratos', 'codex/e00-p1-01-x', 'develop', ['a'], 'E00-P1-010')

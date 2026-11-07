@@ -13,7 +13,9 @@
 
 Una suite con mocks es útil para UI, pero no acredita el producto cliente-servidor. Los conteos previos son antecedentes; registrar nuevas ejecuciones por commit. No sumar niveles como si cada prueba fuera un requisito distinto.
 
-## 2. Matriz mínima de aceptación
+## 2. Matriz de aceptación
+
+La tabla conserva los casos del plan original. Los casos obligatorios para el candidato técnico son los delimitados en [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04), con los criterios específicos de [resultados y circuito analítico](entregas/E05_laboratorio/02_P2.md).
 
 | Caso | Ejecución requerida | Evidencia decisiva |
 |---|---|---|
@@ -59,9 +61,9 @@ npm --prefix Frontend run build
 npm --prefix Frontend run test
 ```
 
-Verificadores Database crean entornos aislados según sus guías. La suite histórica completa de frontend requiere reconciliación en E06-P2-02; no se presume verde. El reproductor PG falla mientras A-F01 siga abierto.
+Verificadores Database crean entornos aislados según sus guías. E05-P1-04 clasifica las regresiones de interfaz aplicables al candidato. La corrección de archivo PostgreSQL ya tiene evidencia integrada en E00/E03.
 
-Comandos **a implementar** en Backend durante E01/E06: `build`, `test:unit`, `test:contract`, `test:integration`, `test:security`, `test:e2e`, `lint:architecture`, ejecutables mediante `npm --prefix Backend run <script>`. Hoy no existen. La suite parametrizada recibe un bundle de prueba en configuración; el request productivo nunca selecciona motor.
+Reutilizar `npm --prefix Backend test`, `npm --prefix Backend run lint`, los scripts de integración existentes y el recorrido `node Backend/scripts/run-historial-integration.mjs --clinica-ui`. La suite parametrizada recibe un bundle de prueba en configuración; el request productivo nunca selecciona motor.
 
 **Arnés E00-P2-03 (25/10/2026):** `Backend/tests/contratos/` contiene guardia de destino, formato de resultado, fixtures sintéticos para los cuatro bundles y una suite parametrizada que mapea CA01–CA20 a escenarios, niveles y aplicabilidad. Ejecutar `node --test Backend/tests/contratos/*.test.mjs` para verificar el arnés y `node Backend/tests/contratos/suite-aceptacion.mjs --resumen` para ver los estados pendientes del plan. No arranca API, drivers ni motores: CA funcionales no ejecutados permanecen `NOT_IMPLEMENTED`, por lo que el arnés no acredita persistencia ni comportamiento del backend. Consultar [`Backend/tests/README.md`](../Backend/tests/README.md) para el alcance.
 
@@ -71,6 +73,6 @@ Cada tarea crea `plan/evidencias/EXX/EXX-PX-NN.md` al ejecutarse: requisito/esce
 
 Resultados: PASS, FAIL, BLOCKED, NOT_IMPLEMENTED, NOT_APPLICABLE con justificación. No confundirlos con estados de tarea del tablero.
 
-## 6. Salida final
+## 6. Salida técnica
 
-EF01–EF11 cubiertos, núcleo común en cuatro motores, procesos institucionales completos; sin FAIL crítico/alto ni prueba requerida BLOCKED; modelos/migraciones, instalación en otro equipo, restauración, comparativo y guías; retroalimentación tratada con evidencia. Excepción menor aceptada exige impacto/responsable visible; no permite omitir un requisito académico ni integridad.
+Un mismo commit instalado desde cero en otro equipo, aplicación en modo API, recorridos comunes en cuatro motores y circuito analítico de laboratorio verificados. Las pruebas obligatorias deben quedar PASS y distinguir motores, emuladores y dobles.

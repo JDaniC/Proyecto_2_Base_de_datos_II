@@ -29,8 +29,10 @@ def validar(title, branch, base, paths, board):
     if not match:
         raise ValueError("Título requerido: [E00-P1-01] descripción")
     task = match[1]
-    if not re.search(r"(?<![A-Z0-9-])" + re.escape(task) + r"(?![A-Z0-9-])", board):
-        raise ValueError("La tarea debe existir en plan/06_TABLERO.md; integrar primero el plan")
+    tareas_vigentes = set(re.findall(r"^\| \[(E0[0-7]-P[12]-[0-9]{2})\]\(entregas/", board, re.MULTILINE))
+    # E05-P2-02 conserva una reserva anterior a DEC20 aunque figure fuera de la cola de cierre.
+    if task not in tareas_vigentes and task != "E05-P2-02":
+        raise ValueError("La tarea debe figurar en una fila vigente de plan/06_TABLERO.md")
     if not branch.startswith("codex/" + task.lower() + "-"):
         raise ValueError("Rama requerida: codex/" + task.lower() + "-descripcion")
 

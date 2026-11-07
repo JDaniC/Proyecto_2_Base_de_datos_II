@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 05/11/2026. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 07/11/2026. E05 concentra el trabajo técnico restante. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|
@@ -35,23 +35,10 @@ Actualizado: 05/11/2026. Las tareas de implementación empiezan **PENDIENTE**; l
 | [E04-P2-02](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-02) | P2 | JDaniC | HECHA | E04-P2-01 | [PR #73 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/73), `02910f0`; CodeRabbit APPROVED sobre `97b287c`, contrato-pr/CodeRabbit SUCCESS;326+32 backend,116 HTTP,10 Firestore y87 integral PASS; [evidencia](evidencias/E04/E04-P2-02.md);02/11/2026 |
 | [E04-P2-03](entregas/E04_hospital_dental_pediatria/02_P2.md#e04-p2-03) | P2 | JDaniC | HECHA | E04-P1-01, E04-P1-03, E04-P2-02 | [PR #74 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/74), `8c2a5d1`; CodeRabbit APPROVED sobre `94d86ed`, revision-coderabbit SUCCESS; 87 integral PASS con huella final; [seguimiento](seguimiento/E04-P2-03.md);02/11/2026 |
 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) | P1 | Davidix888 | HECHA | Puerta de fase | [PR #76 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/76), `a3677a8`; CodeRabbit APPROVED sobre `2135589`, contrato-pr/revision-coderabbit SUCCESS; 348 backend PASS, migración 011 + 102 modelo MongoDB PASS; [evidencia](evidencias/E05/E05-P1-01.md), [seguimiento](seguimiento/E05-P1-01.md); 04/11/2026 |
-| [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 | — | PENDIENTE | E05-P2-01 | Sin ejecución registrada |
 | [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 | JDaniC | HECHA | E05-P1-01 | [PR #79 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/79), `78fea1a`; [cierre documental #80](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/80); CodeRabbit APPROVED sobre `fc5a3c5`, controles SUCCESS; auditorías seguridad/requisitos PASS del alcance;363+43 tests y MongoDB/HTTP1+102 PASS; [evidencia](evidencias/E05/E05-P1-03.md);05/11/2026 |
-| [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | JDaniC | EN_REVISION | E05-P1-01 | [PR #78](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78); rama `codex/e05-p2-01-resultados`; traspaso autorizado Davidix888 → JDaniC; auditorías seguridad/requisitos PASS; 371 runtime/unitarias, 46 contratos, migración 012 y MongoDB 1+102 PASS; [evidencia](evidencias/E05/E05-P2-01.md), [auditoría](evidencias/E05/auditoria-E05-P2-01-2026-11-07/resultado.json), [seguimiento](seguimiento/E05-P2-01.md); 07/11/2026 |
-| [E05-P2-02](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 | — | PENDIENTE | E05-P1-01 | Sin ejecución registrada |
-| [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | — | PENDIENTE | E05-P1-02, E05-P1-03, E05-P2-02 | Sin ejecución registrada |
-| [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 | — | PENDIENTE | E06-P1-01, E06-P2-01, E06-P2-02 | Sin ejecución registrada |
-| [E06-P1-03](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E06-P2-01](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-01) | P2 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E06-P2-02](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-02) | P2 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E06-P2-03](entregas/E06_integracion_auditoria/02_P2.md#e06-p2-03) | P2 | — | PENDIENTE | E06-P1-02, E06-P1-03 | Sin ejecución registrada |
-| [E07-P1-01](entregas/E07_entrega_final/01_P1.md#e07-p1-01) | P1 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E07-P1-02](entregas/E07_entrega_final/01_P1.md#e07-p1-02) | P1 | — | PENDIENTE | E07-P1-01, E07-P2-01, E07-P2-02 | Sin ejecución registrada |
-| [E07-P1-03](entregas/E07_entrega_final/01_P1.md#e07-p1-03) | P1 | — | PENDIENTE | E07-P1-02 | Sin ejecución registrada |
-| [E07-P2-01](entregas/E07_entrega_final/02_P2.md#e07-p2-01) | P2 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E07-P2-02](entregas/E07_entrega_final/02_P2.md#e07-p2-02) | P2 | — | PENDIENTE | Puerta de fase | Sin ejecución registrada |
-| [E07-P2-03](entregas/E07_entrega_final/02_P2.md#e07-p2-03) | P2 | — | PENDIENTE | E07-P1-03 | Sin ejecución registrada |
+| [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04) | P1 | — | PENDIENTE | E05-P2-03 | Instalación limpia y verificación en cuatro motores |
+| [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 | JDaniC | HECHA | E05-P1-01 | [PR #78 integrado](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78), `29dd2ca`; CodeRabbit APPROVED sobre `34a5f93`, controles SUCCESS; auditorías seguridad/requisitos PASS del alcance; 371+46 tests y MongoDB 1+102 PASS; [evidencia](evidencias/E05/E05-P2-01.md), [seguimiento](seguimiento/E05-P2-01.md); 07/11/2026 |
+| [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 | JDaniC | EN_REVISION | E05-P1-01, E05-P2-01 | [PR #82](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/82); candidato `4701932`; seguridad/requisitos PASS; recorrido Chrome y MongoDB aislado PASS; [seguimiento](seguimiento/E05-P2-03.md) |
 
 Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una reserva en PR abierto. Consultar [protocolo compartido](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y `python3 scripts/github/cola.py`. El helper evalúa el tablero local; comprobar también el remoto antes de reservar.
 
@@ -64,8 +51,14 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | E02 | HECHA | [Cierre y demostración](evidencias/E02/CIERRE.md); PR #49 integrado (`c1a932a`); Codex sin hallazgos sobre `a09fb9f` |
 | E03 | HECHA | [Cierre y demostración](evidencias/E03/CIERRE.md); PR #65 integrado (`f516156`); Codex sin hallazgos sobre `66e5f46` |
 | E04 | HECHA | [Acta funcional](evidencias/E04/CIERRE.md); PR #75 integrado (`7dea7b4`), CodeRabbit APPROVED sobre `8be6865`, controles SUCCESS; implementación #74 integrada |
-| E05 | PENDIENTE | `plan/evidencias/E05/CIERRE.md` por crear al ejecutar |
-| E06 | PENDIENTE | `plan/evidencias/E06/CIERRE.md` por crear al ejecutar |
-| E07 | PENDIENTE | `plan/evidencias/E07/CIERRE.md` por crear al ejecutar |
+| E05 | PENDIENTE | Cierre técnico en `plan/evidencias/E05/CIERRE.md` después del recorrido del candidato |
+
+## Trabajo fuera de la cola de cierre
+
+| ID histórico | Ejecutor actual | Estado observado | Conservación |
+|---|---|---|---|
+| `E05-P2-02` | JDaniC | EN_CURSO | [Rama y seguimiento](seguimiento/E05-P2-02.md). Reserva remota confirmada y cambios locales. Excluir del cierre no libera ni transfiere la reserva. |
+
+[E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02), [E06](entregas/E06_integracion_auditoria/01_P1.md) y [E07](entregas/E07_entrega_final/01_P1.md) se conservan como referencias históricas. Los IDs retirados de la cola no se marcan HECHA ni se reasignan.
 
 No cambiar estos estados por el conteo de pruebas históricas. Los IDs y dependencias son estables. El lote no restringe al ejecutor; registrar toma, liberación o traspaso con fecha en la evidencia/seguimiento y PR, sin duplicar la tarea. Los archivos detallados contienen el trabajo y criterios, este tablero contiene el estado.

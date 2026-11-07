@@ -17,7 +17,7 @@ import {escenarioClinico,nuevoId} from '../fixtures/clinica-comun.js';
 function controlador(captura:{listado?:unknown[];orden?:unknown[];muestra?:unknown[]}){
  const escritura={ejecutar:async(...args:unknown[])=>{captura.orden=args;return {httpStatus:201,respuesta:{id:nuevoId()}};}};
  const muestra={ejecutar:async(...args:unknown[])=>{captura.muestra=args;return {httpStatus:200,respuesta:{id:nuevoId()}};}};
- const listados={ejecutar:async(...args:unknown[])=>{captura.listado=args;return {datos:[],siguienteCursor:null};}};
+ const listados={ejecutar:async(...args:unknown[])=>{captura.listado=args;return {datos:[],siguienteCursor:null};},trabajoAnalitico:async(...args:unknown[])=>{captura.listado=args;return [];}};
  const recursos={detalle:async()=>({}),catalogo:async()=>({datos:[],siguienteCursor:null})};
  return new LaboratorioController(
   escritura as unknown as CrearOrdenLaboratorio,
@@ -50,4 +50,10 @@ test('frontera laboratorio propaga idempotencia, código durable e IDs canónico
  const muestraId=nuevoId();await controller.evento(e.contexto,e.bundle,muestraId,clave,{versionEsperada:1},res);
  assert.equal(status,200);assert.equal(captura.muestra?.[0],'evento');
  assert.deepEqual(captura.muestra?.[1],{contexto:e.contexto,bundle:e.bundle,id:muestraId,claveIdempotencia:clave,entrada:{versionEsperada:1}});
+});
+
+test('frontera laboratorio publica solo la consulta analitica dedicada',async()=>{
+ const e=escenarioClinico('LABORATORIO_CLINICO'),captura:{listado?:unknown[]}={},controller=controlador(captura);
+ await controller.trabajoAnalitico(e.contexto,e.bundle,{ordenId:e.paciente.id});
+ assert.deepEqual(captura.listado,[{contexto:e.contexto,bundle:e.bundle,entrada:{ordenId:e.paciente.id}}]);
 });

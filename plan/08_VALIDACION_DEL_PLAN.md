@@ -1,5 +1,7 @@
 # Validación documental del plan
 
+> **Histórico.** La [ruta vigente](00_PLAN_MAESTRO.md#4-orden-y-trabajo-en-paralelo) se concentra en E05.
+
 Fecha: 24/10/2026. Alcance: documentos creados para planificar la entrega y actualizar instrucciones de agentes. **No se ejecutó el backend ni se dieron por corregidos los defectos de las auditorías.**
 
 | Comprobación | Resultado |
