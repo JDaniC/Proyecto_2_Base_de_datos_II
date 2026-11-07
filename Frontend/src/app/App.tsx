@@ -93,7 +93,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/bandeja"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
+                  <AuthGuard requierePermiso={['ordenes.administrar', 'resultados.analizar', 'resultados.validar']}>
                     <WorklistPage />
                   </AuthGuard>
                 }
@@ -101,7 +101,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/ordenes/nueva"
                 element={
-                  <AuthGuard requierePermiso={['pacientes.administrar', 'resultados.analizar', 'usuarios.administrar', 'citas.administrar', 'historial.leer']}>
+                  <AuthGuard requierePermiso="ordenes.administrar">
                     <NewOrderPage />
                   </AuthGuard>
                 }
@@ -109,7 +109,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/ordenes/:ordenId"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
+                  <AuthGuard requierePermiso={['ordenes.administrar', 'resultados.analizar', 'resultados.validar']}>
                     <OrderDetailPage />
                   </AuthGuard>
                 }
@@ -117,7 +117,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/muestras"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'pacientes.administrar', 'usuarios.administrar', 'historial.leer']}>
+                  <AuthGuard requierePermiso="muestras.administrar">
                     <SamplesManagementPage />
                   </AuthGuard>
                 }
@@ -125,7 +125,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/resultados/captura/:ordenId"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'usuarios.administrar']}>
+                  <AuthGuard requierePermiso="resultados.analizar">
                     <ResultsCapturePage />
                   </AuthGuard>
                 }
@@ -133,7 +133,7 @@ export const App: React.FC = () => {
               <Route
                 path="/laboratorio/resultados/validacion"
                 element={
-                  <AuthGuard requierePermiso={['resultados.analizar', 'resultados.validar', 'usuarios.administrar']}>
+                  <AuthGuard requierePermiso="resultados.validar">
                     <ResultsValidationPage />
                   </AuthGuard>
                 }

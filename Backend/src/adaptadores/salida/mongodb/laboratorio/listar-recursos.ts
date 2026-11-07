@@ -1,12 +1,13 @@
 import type {Db,Document,Filter,ClientSession} from 'mongodb';
 import type {ContextoAutenticado} from '../../../../aplicacion/puertos/contexto-autenticado.js';
 import type {FiltrosPagina,Pagina} from '../../../../aplicacion/puertos/nucleo.js';
-import type {FiltrosOrdenesLaboratorio,FiltrosMuestrasLaboratorio,FiltrosResultadosLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
+import type {FiltrosOrdenesLaboratorio,FiltrosMuestrasLaboratorio,FiltrosResultadosLaboratorio,TrabajoAnaliticoLaboratorio} from '../../../../aplicacion/puertos/laboratorio.js';
 import type {CodecCursorHistorial} from '../../../../aplicacion/puertos/historial.js';
 import type {OrdenLaboratorio} from '../../../../dominio/laboratorio/ordenes.js';
 import type {Muestra} from '../../../../dominio/laboratorio/muestras.js';
 import type {ResultadoLaboratorio} from '../../../../dominio/laboratorio/resultados/resultado.js';
 import {uuidPublico} from '../../../../dominio/compartido/uuid.js';
+import {versionPositiva} from '../../../../dominio/compartido/version.js';
 import {instanteUtc} from '../../../../dominio/compartido/instante-utc.js';
 import {solicitudInvalida,ErrorDominio} from '../../../../dominio/compartido/error-dominio.js';
 import {normalizarInstante} from '../../../../aplicacion/casos-uso/historiales/consultar-historial.js';
@@ -58,5 +59,28 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
   listarOrdenes:(c:ContextoAutenticado,f:FiltrosOrdenesLaboratorio,p:FiltrosPagina)=>listar<OrdenLaboratorio>('ordenes',c,f,p,async d=>mapearOrdenLaboratorio(d as DocumentoOrdenLaboratorio)),
   listarMuestras:(c:ContextoAutenticado,f:FiltrosMuestrasLaboratorio,p:FiltrosPagina)=>listar<Muestra>('muestras',c,f,p,async(d,session)=>mapearMuestra(d,await db.collection('eventos_muestra').find({muestra_id:d._id},{maxTimeMS:3000,session}).sort({orden_evento:1}).toArray())),
   listarResultados:(c:ContextoAutenticado,f:FiltrosResultadosLaboratorio,p:FiltrosPagina)=>listar<ResultadoLaboratorio>('resultados',c,f,p,async d=>mapearResultadoLaboratorio(d as DocumentoResultadoLaboratorio)),
+  async listarTrabajoAnalitico(c:ContextoAutenticado,ordenId?:string):Promise<readonly TrabajoAnaliticoLaboratorio[]>{
+   if(c.cuenta.institucion!=='LABORATORIO_CLINICO'||!c.cuenta.permisos.some(v=>v==='resultados.analizar'||v==='resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede consultar trabajo analitico.');
+   try{
+    await verificarLaboratorioMongodb(db);const session=db.client.startSession();
+    try{
+     session.startTransaction({readConcern:{level:'snapshot'}});
+     const filtro:Filter<Document>={estado:{$in:['ACEPTADA','PROCESADA']},...(ordenId?{orden_id:uuidPublico(ordenId)}:{})};
+     const documentosMuestra=await db.collection('muestras').find(filtro,{session,maxTimeMS:3000}).sort({fecha_toma:1,_id:1}).limit(500).toArray();
+     const ordenIds=[...new Set(documentosMuestra.map(m=>uuidPublico(m.orden_id as string)))];
+     const salida:TrabajoAnaliticoLaboratorio[]=[];
+     for(const id of ordenIds){
+      const documentoOrden=await db.collection('ordenes').findOne({_id:id},{session,maxTimeMS:3000});if(!documentoOrden)throw new Error('ORDEN_AUSENTE');
+      const orden=mapearOrdenLaboratorio(documentoOrden as unknown as DocumentoOrdenLaboratorio);
+      const muestrasOrden=documentosMuestra.filter(m=>m.orden_id===id);
+      const idsItems=new Set<string>(muestrasOrden.flatMap(m=>(m.item_ids as string[]).map(v=>uuidPublico(v))));
+      salida.push(Object.freeze({ordenId:uuidPublico(orden.id),pacienteId:uuidPublico(orden.pacienteId),prioridad:orden.prioridad,estado:orden.estado,version:versionPositiva(orden.version),
+       items:Object.freeze(orden.items.filter(i=>idsItems.has(i.id)&&i.estado!=='CANCELADO').map(i=>Object.freeze({id:i.id,prueba:i.prueba,estado:i.estado}))),
+       muestras:Object.freeze(muestrasOrden.map(m=>Object.freeze({id:uuidPublico(String(m._id)),codigo:String(m.codigo_barras),itemIds:Object.freeze((m.item_ids as string[]).map(v=>uuidPublico(v))),estado:m.estado as Muestra['estado'],version:versionPositiva(Number(m.revision)),tipoMuestraId:uuidPublico(m.tipo_muestra_id as string),recipiente:String(m.recipiente)})))}));
+     }
+     await session.commitTransaction();return Object.freeze(salida);
+    }catch(e){if(session.inTransaction())await session.abortTransaction();throw e;}finally{await session.endSession();}
+   }catch(e){if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No fue posible consultar el trabajo analitico.');}
+  },
  };
 }

@@ -25,6 +25,7 @@ import { createHttpCatalogRepository } from './catalogs/httpCatalogRepository';
 import { createHttpConsultationRepository } from './consultations/httpConsultationRepository';
 import { createHttpPatientRepository } from './patients/httpPatientRepository';
 import { createHttpHospitalizationRepository } from './hospital/httpHospitalizationRepository';
+import { createHttpLaboratoryRepository } from './laboratory/httpLaboratoryRepository';
 
 export interface HttpServiceFactoryOptions {
   baseUrl?: string;
@@ -85,7 +86,7 @@ export function createHttpServices(options: HttpServiceFactoryOptions = {}): Htt
     auditRepository: requireApiAdapter<AuditRepository>(undefined, 'auditRepository'),
     hospitalizationRepository: createHttpHospitalizationRepository(httpClient),
     examRepository: createHttpExamRepository(httpClient),
-    laboratoryRepository: requireApiAdapter<LaboratoryRepository>(undefined, 'laboratoryRepository'),
+    laboratoryRepository: createHttpLaboratoryRepository(httpClient),
     vaccineRepository: createHttpVaccineRepository(httpClient),
   };
 }

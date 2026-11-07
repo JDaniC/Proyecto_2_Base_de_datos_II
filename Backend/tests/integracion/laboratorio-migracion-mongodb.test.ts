@@ -378,6 +378,11 @@ test('011 MongoDB real: nueva, fallo parcial, recuperación, legado y deriva',{s
  await db.collection<{_id:string}&Document>('usuarios').insertOne({_id:cuentaAnalistaId,revision:1,auth_uid:uidAnalista,proveedor_identidad:'FIREBASE',institucion_id:'LABORATORIO_CLINICO',rol_ids:[rolAnalista],estado:'ACTIVO',activo:true,nombre_usuario:uidAnalista});
  const cuentaAnalista=await bundle.cuenta.porUid(uidAnalista);assert.ok(cuentaAnalista);
  const contextoAnalista=crearContextoAutenticado({uid:uidAnalista,institucion:'LABORATORIO_CLINICO',emitidoEn:instanteUtc(agregado.instante)},cuentaAnalista,uuidPublico(randomUUID()));
+ const trabajoAnalitico=await paginas.listarTrabajoAnalitico(contextoAnalista,uuidPublico(resultadoCaso.respuesta.id));
+ assert.equal(trabajoAnalitico.length,1);assert.equal(trabajoAnalitico[0]!.ordenId,resultadoCaso.respuesta.id);assert.ok(trabajoAnalitico[0]!.muestras.some(m=>m.id===retomaCaso.respuesta.id));
+ assert.deepEqual(Object.keys(trabajoAnalitico[0]!).sort(),['estado','items','muestras','ordenId','pacienteId','prioridad','version']);
+ assert.ok(!('precio' in trabajoAnalitico[0]!.items[0]!));assert.ok(!('eventos' in trabajoAnalitico[0]!.muestras[0]!));
+ await assert.rejects(paginas.listarTrabajoAnalitico(contexto,uuidPublico(resultadoCaso.respuesta.id)),e=>e instanceof Error&&'codigo' in e&&e.codigo==='SIN_PERMISO');
  const gestionarResultado=new GestionarResultadoLaboratorio({reloj:{ahora:()=>instanteUtc(agregado.instante)},ids:{nuevo:()=>uuidPublico(randomUUID())},hash:{sha256:async(s:string)=>createHash('sha256').update(s).digest('hex')}});
  const componenteResultado={parametroId:resultadoCaso.respuesta.items[0]!.prueba.parametros[0]!.id,valorNumerico:12.5,referenciaInferior:10,referenciaSuperior:15,indicador:'NORMAL'};
  const entradaResultado={ordenId:resultadoCaso.respuesta.id,itemId:resultadoCaso.respuesta.items[0]!.id,muestraIds:[retomaCaso.respuesta.id],componentes:[componenteResultado],observaciones:'Captura sintética'};

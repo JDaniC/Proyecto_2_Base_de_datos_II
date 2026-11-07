@@ -8,7 +8,7 @@ test('composición productiva conserva cobros y consultas/listados de laboratori
  const escenario=escenarioClinico('LABORATORIO_CLINICO');
  const cobros:ConsultasCobros={async detalle(){return null;},async listar(){return {elementos:[]};}};
  const consultasLaboratorio:ConsultasLaboratorio={async ordenPorId(){return null;},async muestraPorId(){return null;},async resultadoPorId(){return null;},async listarCatalogo(){return {elementos:[]};}};
- const listadosLaboratorio:ListadosLaboratorio={async listarOrdenes(){return {elementos:[]};},async listarMuestras(){return {elementos:[]};},async listarResultados(){return {elementos:[]};}};
+ const listadosLaboratorio:ListadosLaboratorio={async listarOrdenes(){return {elementos:[]};},async listarMuestras(){return {elementos:[]};},async listarResultados(){return {elementos:[]};},async listarTrabajoAnalitico(){return [];}};
  const b=crearBundlesInstitucionales(['LABORATORIO_CLINICO'],{LABORATORIO_CLINICO:{cuenta:escenario.bundle.cuenta!,uow:escenario.bundle.uow!,cobros,consultasLaboratorio,listadosLaboratorio}})[0]!;
  assert.equal(b.cobros,cobros);assert.equal(b.consultasLaboratorio,consultasLaboratorio);assert.equal(b.listadosLaboratorio,listadosLaboratorio);assert.equal(b.uow,escenario.bundle.uow);
  const ausente=crearBundlesInstitucionales(['LABORATORIO_CLINICO'])[0]!;assert.equal(ausente.cobros,undefined);assert.equal(ausente.consultasLaboratorio,undefined);assert.equal(ausente.listadosLaboratorio,undefined);assert.equal(ausente.estadoPersistencia,'NO_CONFIGURADA');

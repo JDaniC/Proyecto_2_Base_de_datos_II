@@ -234,7 +234,6 @@ export const ResultsCapturePage: React.FC = () => {
         `Resultados de «${itemActivo.nombrePrueba}» guardados exitosamente en estado BORRADOR (Serie: ${resultadoGuardado.serieResultadoId}, Versión ${resultadoGuardado.version}).`
       );
     } catch (err: any) {
-      console.log('ERROR IN handleGuardarBorrador:', err);
       setErrorGlobal(getErrorMessage(err, 'Error guardando resultados analíticos.'));
     } finally {
       setGuardando(false);

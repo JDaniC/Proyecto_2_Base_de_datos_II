@@ -6,12 +6,12 @@ import { TokenStorage } from '../../services/http/tokenStorage';
 import { HttpError } from '../../services/http/errors';
 
 describe('HttpAuthRepository — Sesión institucional y mapeos canónicos (E01-P2-03)', () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>>;
 
   beforeEach(() => {
     TokenStorage.limpiar();
-    mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    mockFetch = vi.fn<(input: RequestInfo | URL, init: RequestInit & { headers: Record<string,string>; body: string }) => Promise<any>>();
+    globalThis.fetch = mockFetch as typeof fetch;
   });
 
   afterEach(() => {

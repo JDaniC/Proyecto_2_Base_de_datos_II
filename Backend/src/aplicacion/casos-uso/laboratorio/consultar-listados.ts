@@ -7,6 +7,17 @@ import type {BundleInstitucional} from '../../puertos/bundle-institucional.js';
 import {validarPermiso} from '../../../dominio/clinica/politicas-institucionales.js';
 import type {FiltrosPagina} from '../../puertos/nucleo.js';
 export class ConsultarListadosLaboratorio{
+ async trabajoAnalitico(p:{contexto:ContextoAutenticado;bundle:BundleInstitucional;entrada:unknown}){
+  if(p.contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||p.bundle.institucion!=='LABORATORIO_CLINICO')throw new ErrorDominio('SIN_PERMISO','Capacidad exclusiva de laboratorio.');
+  const e=objetoCerrado(p.entrada,['ordenId']);
+  if(e.ordenId!==undefined&&typeof e.ordenId!=='string')throw solicitudInvalida('Filtro invalido.','ordenId');
+  if(!p.bundle.cuenta||!p.bundle.listadosLaboratorio)throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','Laboratorio no preparado.');
+  const cuenta=await p.bundle.cuenta.porUid(p.contexto.identidad.uid);
+  if(!cuenta)throw new ErrorDominio('CUENTA_NO_HABILITADA','Cuenta no habilitada.');
+  if(cuenta.id!==p.contexto.cuenta.id||!cuenta.permisos.some(v=>v==='resultados.analizar'||v==='resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede consultar trabajo analitico.');
+  const contexto=crearContextoAutenticado(p.contexto.identidad,cuenta,p.contexto.correlacion);
+  return p.bundle.listadosLaboratorio.listarTrabajoAnalitico(contexto,e.ordenId===undefined?undefined:uuidPublico(e.ordenId));
+ }
  async ejecutar(recurso:'ordenes'|'muestras'|'resultados',p:{contexto:ContextoAutenticado;bundle:BundleInstitucional;entrada:unknown}){
   if(p.contexto.cuenta.institucion!=='LABORATORIO_CLINICO'||p.bundle.institucion!=='LABORATORIO_CLINICO')throw new ErrorDominio('SIN_PERMISO','Capacidad exclusiva de laboratorio.');
   const e=objetoCerrado(p.entrada,['pacienteId',...(recurso!=='ordenes'?['ordenId']:[]),...(recurso==='resultados'?['itemId','serieId']:[]),'estado','desde','hasta','limite','orden','cursor']);

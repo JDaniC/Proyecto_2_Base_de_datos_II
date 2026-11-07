@@ -86,6 +86,18 @@ export interface ListadosLaboratorio {
  listarOrdenes(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
  listarMuestras(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
  listarResultados(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosResultadosLaboratorio, pagina: FiltrosPagina): Promise<Pagina<ResultadoLaboratorio>>;
+ listarTrabajoAnalitico(contexto: import('./contexto-autenticado.js').ContextoAutenticado, ordenId?: UUID): Promise<readonly TrabajoAnaliticoLaboratorio[]>;
+}
+
+/** Proyeccion minima para captura/validacion; no expone solicitante, precios, indicaciones ni custodia. */
+export interface TrabajoAnaliticoLaboratorio {
+ readonly ordenId: UUID;
+ readonly pacienteId: UUID;
+ readonly prioridad: OrdenLaboratorio['prioridad'];
+ readonly estado: OrdenLaboratorio['estado'];
+ readonly version: Version;
+ readonly items: readonly Pick<OrdenLaboratorio['items'][number], 'id' | 'prueba' | 'estado'>[];
+ readonly muestras: readonly Pick<Muestra, 'id' | 'codigo' | 'itemIds' | 'estado' | 'version' | 'tipoMuestraId' | 'recipiente'>[];
 }
 
 export type TipoCatalogoLaboratorio='solicitantes'|'tiposMuestra'|'metodos'|'pruebas'|'proveedores';

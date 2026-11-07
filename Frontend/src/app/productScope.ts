@@ -86,6 +86,16 @@ export function isRouteInInstitution(path: string, institution: InstitucionId): 
   return true;
 }
 
+/** DEC20: en modo API solo se publican pantallas respaldadas por capacidades entregables. */
+export function isRouteDeliveredInApi(path: string, institution: InstitucionId): boolean {
+  if (institution !== 'LABORATORIO_CLINICO') return true;
+  return ![
+    '/laboratorio/informes', '/laboratorio/calidad', '/laboratorio/inventario',
+    '/laboratorio/personal', '/administracion/usuarios', '/administracion/auditoria',
+    '/administracion/catalogos',
+  ].some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+}
+
 export function patientTabs(institution: InstitucionId): string[] {
   return ['GENERAL', ...(institution === 'CENTRO_PEDIATRICO' ? ['RESPONSABLES', 'CRECIMIENTO', 'ANTECEDENTES', 'VACUNACION'] : []),
     'CONSULTAS', 'DIAGNOSTICOS', 'RECETAS',

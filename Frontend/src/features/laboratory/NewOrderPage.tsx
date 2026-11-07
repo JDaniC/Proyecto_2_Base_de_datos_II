@@ -64,8 +64,8 @@ export const NewOrderPage: React.FC = () => {
         setPacientes(resPacientes.items);
         setPruebasCatalogo(resPruebas.filter(p => p.estado === 'ACTIVO'));
         setSolicitantes(resSolicitantes.filter(r => r.estado === 'ACTIVO'));
-      } catch {
-        // Fallback
+      } catch (error) {
+        setError(getErrorMessage(error, 'No se pudieron cargar pacientes y catálogos desde la API.'));
       } finally {
         setCargandoInicial(false);
       }
@@ -157,6 +157,8 @@ export const NewOrderPage: React.FC = () => {
     try {
       await laboratoryRepository.crearOrden(institucionId, {
         pacienteId: pacienteSeleccionado.id,
+        versionPaciente: pacienteSeleccionado.version,
+        solicitanteId: solicitantes.find(s => s.nombre === medicoSolicitante)?.id,
         pacienteNombre: `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`,
         pacienteDpi: pacienteSeleccionado.numeroIdentificacion,
         pacienteEdad: pacienteSeleccionado.edadAnios,

@@ -45,6 +45,8 @@ export type PermisoId =
   | 'informes.emitir'
   | 'cobros.administrar'
   | 'inventario.administrar'
+  | 'ordenes.administrar'
+  | 'muestras.administrar'
   | 'usuarios.administrar'
   | 'auditoria.leer';
 
@@ -1179,6 +1181,8 @@ export interface FiltrosBandejaLab {
 
 export interface CrearOrdenLabDTO {
   pacienteId: string;
+  versionPaciente?: number;
+  solicitanteId?: string;
   pacienteNombre: string;
   pacienteDpi: string;
   pacienteEdad: number;

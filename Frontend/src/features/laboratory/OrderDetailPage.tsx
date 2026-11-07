@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   User,
   CheckCircle2,
-  FileText,
+  FileCheck2,
   History
 } from 'lucide-react';
 import { useAuthSession } from '../../app/AuthSessionContext';
@@ -21,6 +21,7 @@ import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { Alert } from '../../design-system/components/Alert';
 import {
   OrdenLaboratorio,
+  ResultadoLaboratorio,
   PrioridadLaboratorio,
   EstadoOrdenLaboratorio
 } from '../../services/types';
@@ -33,8 +34,13 @@ export const OrderDetailPage: React.FC = () => {
   const institucionId = sesion?.institucionId || 'LABORATORIO_CLINICO';
 
   const [orden, setOrden] = useState<OrdenLaboratorio | null>(null);
+  const [resultados, setResultados] = useState<ResultadoLaboratorio[]>([]);
+  const [errorResultados, setErrorResultados] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [tabActiva, setTabActiva] = useState<'pruebas' | 'muestras' | 'trazabilidad'>('pruebas');
+  const [tabActiva, setTabActiva] = useState<'pruebas' | 'muestras' | 'trazabilidad' | 'resultados'>('pruebas');
+  const puedeAnalizar = sesion?.permisos.includes('resultados.analizar') ?? false;
+  const puedeValidar = sesion?.permisos.includes('resultados.validar') ?? false;
+  const puedeLeerResultados = puedeAnalizar || puedeValidar;
 
   useEffect(() => {
     const cargar = async () => {
@@ -43,6 +49,10 @@ export const OrderDetailPage: React.FC = () => {
       try {
         const data = await laboratoryRepository.obtenerOrdenPorId(institucionId, ordenId);
         setOrden(data);
+        if (puedeLeerResultados) {
+          try { setResultados((await laboratoryRepository.obtenerResultadosPorOrden(institucionId, ordenId)).filter(r => r.estado === 'VALIDADO')); }
+          catch { setErrorResultados('No se pudieron cargar los resultados validados.'); }
+        }
       } catch {
         // Fallback
       } finally {
@@ -50,7 +60,7 @@ export const OrderDetailPage: React.FC = () => {
       }
     };
     cargar();
-  }, [institucionId, ordenId, laboratoryRepository]);
+  }, [institucionId, ordenId, laboratoryRepository, puedeLeerResultados]);
 
   if (cargando) {
     return (
@@ -197,27 +207,20 @@ export const OrderDetailPage: React.FC = () => {
           </div>
 
           <div className="order-header-actions">
-            <Button
+            {sesion?.permisos.includes('muestras.administrar') && <Button
               variant="secondary"
               onClick={() => navigate('/laboratorio/muestras')}
               leftIcon={<TestTube2 size={16} />}
             >
               Gestionar Muestras
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => navigate(`/laboratorio/informes/${orden.id}`)}
-              leftIcon={<FileText size={16} />}
-            >
-              Informe Oficial
-            </Button>
-            <Button
+            </Button>}
+            {puedeAnalizar && <Button
               variant="primary"
               onClick={() => navigate(`/laboratorio/resultados/captura/${orden.id}`)}
               leftIcon={<FlaskConical size={16} />}
             >
               Capturar Resultados
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>
@@ -429,6 +432,10 @@ export const OrderDetailPage: React.FC = () => {
           <History size={16} />
           <span>Trazabilidad de Muestra y Eventos</span>
         </button>
+        {puedeLeerResultados && <button role="tab" aria-selected={tabActiva === 'resultados'} type="button" onClick={() => setTabActiva('resultados')}
+          style={{display:'flex',alignItems:'center',gap:'8px',padding:'10px 16px',fontSize:'13px',fontWeight:tabActiva==='resultados'?700:500,color:tabActiva==='resultados'?'var(--color-primary)':'var(--color-text-secondary)',backgroundColor:'transparent',border:'none',borderBottom:tabActiva==='resultados'?'3px solid var(--color-primary)':'3px solid transparent',cursor:'pointer'}}>
+          <FileCheck2 size={16} /><span>Resultados validados ({resultados.length})</span>
+        </button>}
       </div>
 
       {/* Contenido Pestaña 1: Pruebas */}
@@ -488,6 +495,20 @@ export const OrderDetailPage: React.FC = () => {
               </tfoot>
             </table>
           </div>
+        </Panel>
+      )}
+
+      {tabActiva === 'resultados' && puedeLeerResultados && (
+        <Panel title="Resultados validados de la orden">
+          {errorResultados && <Alert variant="danger" title="Resultados no disponibles">{errorResultados}</Alert>}
+          {!errorResultados && resultados.length === 0 && <p>No hay resultados validados confirmados por la API.</p>}
+          {resultados.map(resultado => <div key={resultado.id} style={{borderBottom:'1px solid var(--color-divider)',padding:'12px 0'}}>
+            <div style={{display:'flex',justifyContent:'space-between',gap:'12px'}}><strong>{resultado.nombrePrueba}</strong><Badge variant="success">Versión {resultado.version}</Badge></div>
+            <div style={{fontSize:'12px',color:'var(--color-text-secondary)',margin:'4px 0 8px'}}>Muestra: {resultado.codigoMuestra} · {resultado.metodoAnalitico}</div>
+            {resultado.parametros.map(parametro => <div key={parametro.id} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:'8px',fontSize:'13px',padding:'4px 0'}}>
+              <span>{parametro.nombre}</span><strong>{parametro.valor} {parametro.unidad}</strong><span>{parametro.rangoTexto || 'Sin referencia'}</span>
+            </div>)}
+          </div>)}
         </Panel>
       )}
 

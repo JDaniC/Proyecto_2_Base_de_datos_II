@@ -89,6 +89,9 @@ export class LaboratorioController{
  @Get('resultados/:id') @RequiereAcceso({permisos:['resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
  resultadoDetalle(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('id') id:string,@Query() query:unknown){consultaEscalarVacia(query);return this.recursos.detalle('resultados',{contexto,bundle,id});}
 
+ @Get('trabajo-analitico') @RequiereAcceso({permisos:['resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
+ trabajoAnalitico(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Query() query:unknown){return this.listados.trabajoAnalitico({contexto,bundle,entrada:consultaEscalar(query)});}
+
  @Get('catalogos/:tipo')
  @RequiereAcceso({permisos:['ordenes.administrar','muestras.administrar','resultados.analizar','resultados.validar'],modo:'ALGUNO',capacidad:'LABORATORIO'})
  catalogo(@Contexto() contexto:ContextoAutenticado,@Bundle() bundle:BundleInstitucional,@Param('tipo') tipo:string,@Query() query:unknown){return this.recursos.catalogo(tipoCatalogo(tipo),{contexto,bundle,entrada:consultaEscalar(query)});}

@@ -59,11 +59,13 @@ export const SamplesManagementPage: React.FC = () => {
 
   const cargarMuestras = async () => {
     setCargando(true);
+    setErrorAccion(null);
     try {
       const data = await laboratoryRepository.obtenerMuestras(institucionId);
       setMuestras(data);
-    } catch {
-      // Fallback
+    } catch (error) {
+      setMuestras([]);
+      setErrorAccion(getErrorMessage(error, 'No se pudieron cargar las muestras desde la API.'));
     } finally {
       setCargando(false);
     }

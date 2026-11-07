@@ -1,5 +1,6 @@
 import { getDisplayLabel } from '../../services/displayLabels';
 import React, { useEffect, useState, useMemo } from 'react';
+import { getErrorMessage } from '../../services/errors';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   FlaskConical,
@@ -17,6 +18,7 @@ import { Badge } from '../../design-system/components/Badge';
 import { Button } from '../../design-system/components/Button';
 import { SkeletonLoader } from '../../design-system/components/SkeletonLoader';
 import { MetricStrip } from '../../design-system/components/MetricStrip';
+import { Alert } from '../../design-system/components/Alert';
 import {
   OrdenLaboratorio,
   PrioridadLaboratorio,
@@ -31,6 +33,7 @@ export const WorklistPage: React.FC = () => {
 
   const [ordenes, setOrdenes] = useState<OrdenLaboratorio[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
   // Filtros
   const [busqueda, setBusqueda] = useState('');
@@ -40,6 +43,7 @@ export const WorklistPage: React.FC = () => {
 
   const cargarBandeja = async () => {
     setCargando(true);
+    setErrorCarga(null);
     try {
       const data = await laboratoryRepository.obtenerBandeja(institucionId, {
         prioridad: filtroPrioridad,
@@ -48,8 +52,9 @@ export const WorklistPage: React.FC = () => {
         busqueda
       });
       setOrdenes(data);
-    } catch {
-      // Fallback
+    } catch (error) {
+      setOrdenes([]);
+      setErrorCarga(getErrorMessage(error, 'No se pudo cargar la bandeja desde la API.'));
     } finally {
       setCargando(false);
     }
@@ -153,6 +158,7 @@ export const WorklistPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {errorCarga && <Alert variant="danger" title="Servicio de laboratorio no disponible">{errorCarga}</Alert>}
       {/* Encabezado Principal */}
       <div
         style={{
