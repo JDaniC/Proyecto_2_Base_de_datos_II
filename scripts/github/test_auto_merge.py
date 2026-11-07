@@ -116,6 +116,20 @@ class CodeRabbitProcessTests(unittest.TestCase):
         self.assertEqual(api.call_args.args[1]['state'], 'pending')
         self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
 
+    def test_rollout_publishes_approval_without_requesting_merge(self):
+        for queued in (False, True):
+            with self.subTest(queued=queued):
+                pr = pull_request(queued=queued)
+                with patch('auto_merge.gh_api', side_effect=[pr, [[review()]], pr, None]) as api, \
+                        patch('auto_merge.checks_for', return_value=[check()]), \
+                        patch('auto_merge.subprocess.run') as command:
+                    process(REPO, 78, allow_auto_merge=False)
+                self.assertEqual(api.call_args.args[1]['state'], 'success')
+                if queued:
+                    self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
+                else:
+                    command.assert_not_called()
+
     def test_changed_head_prevents_status_or_merge(self):
         with patch('auto_merge.gh_api', side_effect=[pull_request(), [[review()]], pull_request(OLD_SHA)]) as api, \
                 patch('auto_merge.checks_for', return_value=[check()]), \

@@ -71,7 +71,7 @@ def candidates(event, repository):
     return pull_requests
 
 
-def process(repository, number, shared_heads=()):
+def process(repository, number, shared_heads=(), *, allow_auto_merge=True):
     pr = gh_api(f"repos/{repository}/pulls/{number}")
     if not eligible(pr, repository):
         print(f"PR #{number}: no elegible (cerrado, borrador, fork o destino distinto)")
@@ -94,16 +94,17 @@ def process(repository, number, shared_heads=()):
         print(f"PR #{number}: cambió durante la lectura; se evaluará en el siguiente evento")
         return
     merge = ["gh", "pr", "merge", str(number), "--repo", repository]
+    can_merge = state == "success" and allow_auto_merge
     try:
         gh_api(f"repos/{repository}/statuses/{sha}", {
             "state": state, "context": CONTEXT, "description": description,
             "target_url": pr["html_url"],
         })
     finally:
-        if state != "success" and current.get("auto_merge"):
+        if not can_merge and current.get("auto_merge"):
             subprocess.run(merge + ["--disable-auto"], check=True)
     print(f"PR #{number}, {sha[:7]}: {state}: {description}")
-    if state != "success":
+    if not can_merge:
         return
     # GitHub conserva los checks requeridos y la resolución de conversaciones.
     subprocess.run(merge + ["--auto", "--squash", "--match-head-commit", sha], check=True)
@@ -116,8 +117,9 @@ def main():
     # El estado requerido de GitHub se comparte entre los PR del mismo SHA.
     head_counts = Counter(pr["head"]["sha"] for pr in pull_requests)
     shared_heads = {sha for sha, count in head_counts.items() if count > 1}
+    allow_auto_merge = os.environ.get("CODERABBIT_ROLLOUT_PAUSED") != "true"
     for pr in pull_requests:
-        process(repository, pr["number"], shared_heads)
+        process(repository, pr["number"], shared_heads, allow_auto_merge=allow_auto_merge)
 
 
 if __name__ == "__main__":
