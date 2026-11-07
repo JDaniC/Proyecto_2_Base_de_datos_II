@@ -9,7 +9,7 @@
   "backend_high_critical_vulnerabilities": 0,
   "mongodb_integration": "PASS",
   "mongodb_model_checks": 102,
-  "frontend_focal_tests": 31,
+  "frontend_focal_tests": 34,
   "browser_ui_http_mongodb": "PASS",
   "installation_followup": "E05-P1-04: mongo-init rechaza orden real existente con BOOTSTRAP_MONGO_ERROR",
   "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó y documentó el protocolo equivalente completo."

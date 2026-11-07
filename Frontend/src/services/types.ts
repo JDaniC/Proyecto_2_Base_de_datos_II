@@ -1217,6 +1217,8 @@ export interface ResultadoLaboratorio {
   id: string;
   serieResultadoId: string;
   version: number;
+  /** Revisión optimista del registro que el usuario tiene en pantalla. */
+  revision?: number;
   ordenId: string;
   codigoOrden: string;
   pacienteId: string;
@@ -1228,6 +1230,7 @@ export interface ResultadoLaboratorio {
   nombrePrueba: string;
   seccion: string;
   muestraId: string;
+  muestraIds?: string[];
   codigoMuestra: string;
   equipoAnalitico: string;
   metodoAnalitico: string;
@@ -1262,6 +1265,7 @@ export interface GuardarResultadoBorradorDTO {
   ordenId: string;
   itemOrdenId: string;
   muestraId: string;
+  muestraIds?: string[];
   equipoAnalitico: string;
   metodoAnalitico: string;
   loteReactivo?: string;

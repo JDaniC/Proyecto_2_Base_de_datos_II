@@ -68,11 +68,43 @@ describe('Laboratorio HTTP E05-P2-03', () => {
 
   it('valida solo con revisión optimista y deriva validador de la sesión', async () => {
     const http = client();
-    vi.mocked(http.get).mockResolvedValueOnce({ data: resultado, meta: { correlacion: id(20) } })
-      .mockResolvedValueOnce({ data: [trabajo], meta: { correlacion: id(20) } });
+    vi.mocked(http.get).mockResolvedValueOnce({ data: [trabajo], meta: { correlacion: id(20) } });
     vi.mocked(http.post).mockResolvedValue({ data: { ...resultado, revision: 2, estado: 'VALIDADO', validadorId: id(14) }, meta: { correlacion: id(20) } });
-    await createHttpLaboratoryRepository(http).validarResultado(institucion, id(11), 'suplantado', 'suplantado');
+    await createHttpLaboratoryRepository(http).validarResultado(institucion, id(11), 'suplantado', 'suplantado', 1);
     expect(vi.mocked(http.post).mock.calls[0][1]).toEqual({ versionEsperada: 1 });
+    expect(vi.mocked(http.get).mock.calls.some(([path]) => path === `/laboratorio/resultados/${id(11)}`)).toBe(false);
+  });
+
+  it('preserva todas las muestras de procedencia al corregir un resultado', async () => {
+    const http = client();
+    const segundaMuestra = id(21);
+    vi.mocked(http.get).mockResolvedValueOnce({ data: { items: [{ ...resultado, procedencia: [{ muestraId: id(9) }, { muestraId: segundaMuestra }] }] }, meta: { correlacion: id(20) } })
+      .mockResolvedValueOnce({ data: [trabajo], meta: { correlacion: id(20) } })
+      .mockResolvedValueOnce({ data: [trabajo], meta: { correlacion: id(20) } });
+    vi.mocked(http.post).mockResolvedValueOnce({ data: { ...resultado, procedencia: [{ muestraId: id(9) }, { muestraId: segundaMuestra }] }, meta: { correlacion: id(20) } });
+    const repo = createHttpLaboratoryRepository(http);
+    const [actual] = await repo.obtenerResultadosPorOrden(institucion, orden.id);
+    expect(actual.muestraIds).toEqual([id(9), segundaMuestra]);
+    await repo.corregirResultado(institucion, resultado.id, {
+      ordenId: orden.id, itemOrdenId: orden.items[0].id, muestraId: actual.muestraId, muestraIds: actual.muestraIds,
+      equipoAnalitico: 'UI', metodoAnalitico: 'UI', analistaId: id(13), analistaNombre: 'Analista',
+      parametros: [{ parametroId: id(8), codigoParametro: 'GLU', nombre: 'Glucosa', valor: '91', unidad: 'mg/dL', rangoTexto: '70-100', alerta: 'NORMAL' }],
+    }, 'Corrección controlada');
+    expect(vi.mocked(http.post).mock.calls[0][1]).toMatchObject({ muestraIds: [id(9), segundaMuestra], motivo: 'Corrección controlada' });
+  });
+
+  it('reutiliza cuerpo y clave si se pierde la respuesta de un traslado', async () => {
+    const http = client();
+    vi.mocked(http.get).mockResolvedValueOnce({ data: muestra, meta: { correlacion: id(20) } })
+      .mockResolvedValueOnce({ data: orden, meta: { correlacion: id(20) } });
+    vi.mocked(http.post).mockRejectedValueOnce(new HttpError({ status: 503, codigo: 'PERSISTENCIA_NO_DISPONIBLE', mensaje: 'Respuesta perdida' }))
+      .mockResolvedValueOnce({ data: { ...muestra, version: 4 }, meta: { correlacion: id(20) } });
+    const repo = createHttpLaboratoryRepository(http);
+    await expect(repo.registrarTrasladoMuestra(institucion, muestra.id, 'Hematología', 'actor')).rejects.toMatchObject({ status: 503 });
+    await expect(repo.registrarTrasladoMuestra(institucion, muestra.id, 'Hematología', 'actor')).resolves.toMatchObject({ version: 4 });
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(http.post).mock.calls[1][1]).toEqual(vi.mocked(http.post).mock.calls[0][1]);
+    expect(vi.mocked(http.post).mock.calls[1][2]?.idempotencyKey).toBe(vi.mocked(http.post).mock.calls[0][2]?.idempotencyKey);
   });
 
   it('conserva resultados validados si falla temporalmente la proyección de trabajo', async () => {

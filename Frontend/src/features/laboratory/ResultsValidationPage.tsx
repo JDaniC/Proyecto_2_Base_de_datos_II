@@ -124,7 +124,8 @@ export const ResultsValidationPage: React.FC = () => {
         institucionId,
         resultadoSeleccionado.id,
         sesion?.cuentaId || 'usr-lab-val-01',
-        `${nombreValidador} (Colegiado ${colegiadoValidador})`
+        `${nombreValidador} (Colegiado ${colegiadoValidador})`,
+        resultadoSeleccionado.revision
       );
 
       setMensajeExito(
