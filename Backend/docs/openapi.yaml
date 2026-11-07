@@ -262,8 +262,10 @@ paths:
       x-implementacion: IMPLEMENTED
       parameters:
       - {name: ordenId, in: query, schema: {$ref: '#/components/schemas/UUID'}}
+      - {name: limite, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      - {name: cursor, in: query, schema: {$ref: '#/components/schemas/Cursor'}}
       responses:
-        '200': {description: Órdenes analíticas con ítems y muestras aptas estrictamente necesarios.}
+        '200': {description: Página con elementos y siguienteCursor opcional. Cada elemento incluye los ítems y muestras aptas de una orden.}
         <<: *erroresLaboratorio
   /laboratorio/catalogos/{tipo}:
     get:

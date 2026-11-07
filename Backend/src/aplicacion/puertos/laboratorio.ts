@@ -86,7 +86,7 @@ export interface ListadosLaboratorio {
  listarOrdenes(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosOrdenesLaboratorio, pagina: FiltrosPagina): Promise<Pagina<OrdenLaboratorio>>;
  listarMuestras(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosMuestrasLaboratorio, pagina: FiltrosPagina): Promise<Pagina<Muestra>>;
  listarResultados(contexto: import('./contexto-autenticado.js').ContextoAutenticado, filtros: FiltrosResultadosLaboratorio, pagina: FiltrosPagina): Promise<Pagina<ResultadoLaboratorio>>;
- listarTrabajoAnalitico(contexto: import('./contexto-autenticado.js').ContextoAutenticado, ordenId?: UUID): Promise<readonly TrabajoAnaliticoLaboratorio[]>;
+ listarTrabajoAnalitico(contexto: import('./contexto-autenticado.js').ContextoAutenticado, ordenId: UUID | undefined, pagina: FiltrosPagina): Promise<Pagina<TrabajoAnaliticoLaboratorio>>;
 }
 
 /** Proyeccion minima para captura/validacion; no expone solicitante, precios, indicaciones ni custodia. */

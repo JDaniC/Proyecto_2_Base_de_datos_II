@@ -59,28 +59,39 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
   listarOrdenes:(c:ContextoAutenticado,f:FiltrosOrdenesLaboratorio,p:FiltrosPagina)=>listar<OrdenLaboratorio>('ordenes',c,f,p,async d=>mapearOrdenLaboratorio(d as DocumentoOrdenLaboratorio)),
   listarMuestras:(c:ContextoAutenticado,f:FiltrosMuestrasLaboratorio,p:FiltrosPagina)=>listar<Muestra>('muestras',c,f,p,async(d,session)=>mapearMuestra(d,await db.collection('eventos_muestra').find({muestra_id:d._id},{maxTimeMS:3000,session}).sort({orden_evento:1}).toArray())),
   listarResultados:(c:ContextoAutenticado,f:FiltrosResultadosLaboratorio,p:FiltrosPagina)=>listar<ResultadoLaboratorio>('resultados',c,f,p,async d=>mapearResultadoLaboratorio(d as DocumentoResultadoLaboratorio)),
-  async listarTrabajoAnalitico(c:ContextoAutenticado,ordenId?:string):Promise<readonly TrabajoAnaliticoLaboratorio[]>{
+  async listarTrabajoAnalitico(c:ContextoAutenticado,ordenId:string|undefined,p:FiltrosPagina):Promise<Pagina<TrabajoAnaliticoLaboratorio>>{
    if(c.cuenta.institucion!=='LABORATORIO_CLINICO'||!c.cuenta.permisos.some(v=>v==='resultados.analizar'||v==='resultados.validar'))throw new ErrorDominio('SIN_PERMISO','No puede consultar trabajo analitico.');
+   if(!Number.isInteger(p.limite)||p.limite<1||p.limite>100||p.orden!=='ASC')throw solicitudInvalida('Paginación inválida.');
    try{
     await verificarLaboratorioMongodb(db);const session=db.client.startSession();
     try{
      session.startTransaction({readConcern:{level:'snapshot'}});
-     const filtro:Filter<Document>={estado:{$in:['ACEPTADA','PROCESADA']},...(ordenId?{orden_id:uuidPublico(ordenId)}:{})};
-     // El cursor consume todos los lotes del servidor dentro de la misma lectura snapshot;
-     // no trunca la bandeja cuando existen mas de 500 muestras elegibles.
-     const documentosMuestra=await db.collection('muestras').find(filtro,{session,maxTimeMS:3000}).sort({fecha_toma:1,_id:1}).batchSize(100).toArray();
-     const ordenIds=[...new Set(documentosMuestra.map(m=>uuidPublico(m.orden_id as string)))];
+     const ambito=JSON.stringify(['LABORATORIO_CLINICO',c.cuenta.id,c.cuenta.version,[...c.cuenta.permisos].sort(),'trabajo-analitico',ordenId??null]);
+     const filtro:Filter<Document & {_id:string}>={...(ordenId?{_id:uuidPublico(ordenId)}:{})};
+     if(p.cursor!==undefined){
+      const ultima=codec.decodificar(p.cursor,ambito);
+      filtro.$or=[{fecha_orden:{$gt:new Date(ultima.fechaHora)}},{fecha_orden:new Date(ultima.fechaHora),_id:{$gt:ultima.id}}];
+     }
+     const estadosAptos={$in:['ACEPTADA','PROCESADA']};
+     // Paginamos por orden, de modo que todas sus muestras se lean en la misma página.
+     const documentosOrden=await db.collection('ordenes').aggregate<Document>([
+      {$match:filtro},{$sort:{fecha_orden:1,_id:1}},
+      {$lookup:{from:'muestras',localField:'_id',foreignField:'orden_id',pipeline:[{$match:{estado:estadosAptos}},{$limit:1},{$project:{_id:1}}],as:'aptas'}},
+      {$match:{'aptas.0':{$exists:true}}},{$limit:p.limite+1},{$unset:'aptas'},
+     ],{session,maxTimeMS:3000}).toArray();
+     const pagina=documentosOrden.slice(0,p.limite);
      const salida:TrabajoAnaliticoLaboratorio[]=[];
-     for(const id of ordenIds){
-      const documentoOrden=await db.collection('ordenes').findOne({_id:id},{session,maxTimeMS:3000});if(!documentoOrden)throw new Error('ORDEN_AUSENTE');
-      const orden=mapearOrdenLaboratorio(documentoOrden as unknown as DocumentoOrdenLaboratorio);
-      const muestrasOrden=documentosMuestra.filter(m=>m.orden_id===id);
+     for(const documentoOrden of pagina){
+      const orden=mapearOrdenLaboratorio(documentoOrden as DocumentoOrdenLaboratorio);
+      const muestrasOrden=await db.collection('muestras').find({orden_id:orden.id,estado:estadosAptos},{session,maxTimeMS:3000}).sort({fecha_toma:1,_id:1}).toArray();
       const idsItems=new Set<string>(muestrasOrden.flatMap(m=>(m.item_ids as string[]).map(v=>uuidPublico(v))));
       salida.push(Object.freeze({ordenId:uuidPublico(orden.id),pacienteId:uuidPublico(orden.pacienteId),prioridad:orden.prioridad,estado:orden.estado,version:versionPositiva(orden.version),
        items:Object.freeze(orden.items.filter(i=>idsItems.has(i.id)&&i.estado!=='CANCELADO').map(i=>Object.freeze({id:i.id,prueba:i.prueba,estado:i.estado}))),
        muestras:Object.freeze(muestrasOrden.map(m=>Object.freeze({id:uuidPublico(String(m._id)),codigo:String(m.codigo_barras),itemIds:Object.freeze((m.item_ids as string[]).map(v=>uuidPublico(v))),estado:m.estado as Muestra['estado'],version:versionPositiva(Number(m.revision)),tipoMuestraId:uuidPublico(m.tipo_muestra_id as string),recipiente:String(m.recipiente)})))}));
      }
-     await session.commitTransaction();return Object.freeze(salida);
+     await session.commitTransaction();
+     const ultimo=pagina.at(-1);
+     return {elementos:Object.freeze(salida),...(documentosOrden.length>p.limite&&ultimo?{siguienteCursor:codec.codificar(ambito,{id:String(ultimo._id),fechaHora:(ultimo.fecha_orden as Date).toISOString()})}:{})};
     }catch(e){if(session.inTransaction())await session.abortTransaction();throw e;}finally{await session.endSession();}
    }catch(e){if(e instanceof ErrorDominio)throw e;throw new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','No fue posible consultar el trabajo analitico.');}
   },

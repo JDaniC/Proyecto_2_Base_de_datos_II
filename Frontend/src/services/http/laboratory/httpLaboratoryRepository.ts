@@ -104,7 +104,7 @@ function alerta(indicador: ComponenteDto['indicador']): AlertaParametroLab {
 }
 function mapParametro(c: ComponenteDto, p?: ParametroPruebaDto): ParametroResultadoLab {
   return {
-    id: c.parametroId, codigoParametro: p?.codigo ?? c.parametroId.slice(0, 8), nombre: p?.nombre ?? c.parametroId,
+    id: c.parametroId, codigoParametro: p?.codigo ?? c.parametroId.slice(0, 8), nombre: p?.nombre ?? 'Parámetro no disponible en la proyección',
     valor: c.valorNumerico === undefined ? String(c.valorTexto ?? '') : String(c.valorNumerico), unidad: c.unidadAplicada ?? p?.unidad ?? '',
     rangoReferenciaMin: c.referenciaInferior, rangoReferenciaMax: c.referenciaSuperior,
     rangoTexto: c.referenciaTexto ?? [c.referenciaInferior, c.referenciaSuperior].filter(v => v !== undefined).join(' – '),
@@ -200,8 +200,30 @@ export function createHttpLaboratoryRepository(http: HttpClient): LaboratoryRepo
     return [...pendientes, ...persistidas];
   };
   const getResultados = async (ordenId: string) => lista((await http.get<ResultadoDto[] | Pagina<ResultadoDto>>('/laboratorio/resultados', { query: { ordenId, limite: 100, orden: 'ASC' } })).data);
-  const getTrabajo = async (ordenId?: string) => (await http.get<TrabajoAnaliticoDto[]>('/laboratorio/trabajo-analitico', { query: { ordenId } })).data;
-  const mapConTrabajo = async (r: ResultadoDto) => { const trabajo=(await getTrabajo(r.ordenId))[0]; return mapResultado(r,trabajo?ordenDesdeTrabajo(trabajo):undefined,trabajo?mapTrabajo(trabajo).muestras:[]); };
+  const getTrabajo = async (ordenId?: string) => {
+    const elementos: TrabajoAnaliticoDto[] = [];
+    let cursor: string | undefined;
+    do {
+      const { data } = await http.get<Pagina<TrabajoAnaliticoDto>>('/laboratorio/trabajo-analitico', {
+        query: { ordenId, limite: 100, cursor },
+      });
+      for (const trabajo of lista(data)) elementos.push(trabajo);
+      cursor = data.siguienteCursor;
+    } while (cursor);
+    return elementos;
+  };
+  const trabajoParaResultado = async (ordenId: string, escrituraConfirmada = false) => {
+    try {
+      return (await getTrabajo(ordenId))[0];
+    } catch (error) {
+      if (!escrituraConfirmada && (!(error instanceof HttpError) || error.status < 500)) throw error;
+      return undefined;
+    }
+  };
+  const mapConTrabajo = async (r: ResultadoDto, escrituraConfirmada = false) => {
+    const trabajo = await trabajoParaResultado(r.ordenId, escrituraConfirmada);
+    return mapResultado(r, trabajo ? ordenDesdeTrabajo(trabajo) : undefined, trabajo ? mapTrabajo(trabajo).muestras : []);
+  };
   const bodyResultado = (dto: GuardarResultadoBorradorDTO) => ({ muestraIds: dto.muestraIds?.length ? dto.muestraIds : [dto.muestraId], componentes: componentes(dto), ...(dto.observaciones ? { observaciones: dto.observaciones } : {}) });
   const methods: Partial<LaboratoryRepository> = {
     async obtenerBandeja(_i, filtros) {
@@ -264,29 +286,30 @@ export function createHttpLaboratoryRepository(http: HttpClient): LaboratoryRepo
     },
     async obtenerResultadosPorOrden(_i, ordenId) {
       const rs = await getResultados(ordenId);
-      let trabajo: TrabajoAnaliticoDto[] = [];
-      try { trabajo = await getTrabajo(ordenId); }
-      catch (error) {
-        if (error instanceof HttpError && (error.status === 401 || error.status === 403)) throw error;
-      }
-      const o=trabajo[0]; const ms=o?mapTrabajo(o).muestras:[];
-      return rs.map(r => mapResultado(r, o?ordenDesdeTrabajo(o):undefined, ms));
+      if (!rs.length) return [];
+      const trabajo = await trabajoParaResultado(ordenId);
+      const muestras = trabajo ? mapTrabajo(trabajo).muestras : [];
+      const orden = trabajo ? ordenDesdeTrabajo(trabajo) : undefined;
+      return rs.map(r => mapResultado(r, orden, muestras));
     },
-    async obtenerResultadoPorId(_i, id) { const r = (await http.get<ResultadoDto>(`/laboratorio/resultados/${encodeURIComponent(id)}`)).data; const trabajo=(await getTrabajo(r.ordenId))[0]; return mapResultado(r, trabajo?ordenDesdeTrabajo(trabajo):undefined, trabajo?mapTrabajo(trabajo).muestras:[]); },
+    async obtenerResultadoPorId(_i, id) {
+      const { data } = await http.get<ResultadoDto>(`/laboratorio/resultados/${encodeURIComponent(id)}`);
+      return mapConTrabajo(data);
+    },
     async guardarResultadoBorrador(_i, dto) {
       const previos = await getResultados(dto.ordenId); const previo = previos.find(r => r.itemId === dto.itemOrdenId && r.estado === 'BORRADOR');
       const base = bodyResultado(dto); const path = previo ? `/laboratorio/resultados/${encodeURIComponent(previo.id)}/borrador` : '/laboratorio/resultados';
       const body = previo ? { versionEsperada: dto.versionEsperada ?? previo.revision, ...base } : { ordenId: dto.ordenId, itemId: dto.itemOrdenId, ...base };
       const r = previo ? await http.put<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) }) : await http.post<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) });
-      const trabajo=(await getTrabajo(dto.ordenId))[0]; return mapResultado(r.data, trabajo?ordenDesdeTrabajo(trabajo):undefined, trabajo?mapTrabajo(trabajo).muestras:[]);
+      return mapConTrabajo(r.data, true);
     },
     async validarResultado(_i, id, _validadorId, _validadorNombre, versionEsperada) {
       if (!Number.isInteger(versionEsperada) || Number(versionEsperada) < 1) throw new Error('Recargue el resultado antes de validarlo.');
       const path = `/laboratorio/resultados/${encodeURIComponent(id)}/validaciones`, body = { versionEsperada };
-      const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: key(path, body) })).data; return mapConTrabajo(r);
+      const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: key(path, body) })).data; return mapConTrabajo(r, true);
     },
-    async corregirResultado(_i, id, dto, motivo) { const path = `/laboratorio/resultados/${encodeURIComponent(id)}/correcciones`, body = { ...bodyResultado(dto), motivo }; const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) })).data; return mapConTrabajo(r); },
-    async repetirAnalisis(_i, ordenId, itemId, _muestraId, dto) { const origen = (await getResultados(ordenId)).filter(r => r.itemId === itemId && r.estado === 'VALIDADO').sort((a, b) => b.version - a.version)[0]; if (!origen) throw new Error('No existe un resultado validado para repetir.'); const path = `/laboratorio/resultados/${encodeURIComponent(origen.id)}/repeticiones`, body = bodyResultado(dto); const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) })).data; return mapConTrabajo(r); },
+    async corregirResultado(_i, id, dto, motivo) { const path = `/laboratorio/resultados/${encodeURIComponent(id)}/correcciones`, body = { ...bodyResultado(dto), motivo }; const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) })).data; return mapConTrabajo(r, true); },
+    async repetirAnalisis(_i, ordenId, itemId, _muestraId, dto) { const origen = (await getResultados(ordenId)).filter(r => r.itemId === itemId && r.estado === 'VALIDADO').sort((a, b) => b.version - a.version)[0]; if (!origen) throw new Error('No existe un resultado validado para repetir.'); const path = `/laboratorio/resultados/${encodeURIComponent(origen.id)}/repeticiones`, body = bodyResultado(dto); const r = (await http.post<ResultadoDto>(path, body, { idempotencyKey: dto.idempotencyKey ?? key(path, body) })).data; return mapConTrabajo(r, true); },
   };
   return new Proxy(methods as LaboratoryRepository, { get(target, prop, receiver) { if (prop in target) return Reflect.get(target, prop, receiver); if (typeof prop !== 'string' || prop === 'then') return undefined; return async () => { throw createApiAdapterUnavailableError('laboratoryRepository', prop, 501, 'NOT_IMPLEMENTED'); }; } });
 }

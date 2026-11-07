@@ -63,6 +63,7 @@ async function crearCuenta(institucion, secretaria = false) {
   await auth.createUser({ uid, email, password, emailVerified: true });
   await auth.setCustomUserClaims(uid, { institucion });
   const profesionalId = randomUUID();
+  let perfilesAnaliticos;
   const rol = ({HOSPITAL_GENERAL:'MEDICO', CLINICA_ODONTOLOGICA:'ODONTOLOGO', LABORATORIO_CLINICO:'MEDICO_LABORATORIO', CENTRO_MEDICO_PEDIATRICO:'PEDIATRA'})[institucion];
   const permisos = ['pacientes.administrar','historial.leer','historial.archivar','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir', ...(institucion === 'LABORATORIO_CLINICO' ? [] : ['citas.administrar'])];
   if (institucion === 'HOSPITAL_GENERAL' || institucion === 'CLINICA_ODONTOLOGICA') {
@@ -90,13 +91,22 @@ async function crearCuenta(institucion, secretaria = false) {
     ];
     await db.collection('roles').insertMany(rolesLaboratorio);
     await db.collection('solicitantes').insertOne({_id:profesionalId,revision:1,nombre_completo:'Ana Sintética',tipo:'MEDICO',activo:true,numero_colegiado:profesionalId,entidad_colegiacion:'Colegio sintético'});
-    await db.collection('usuarios').insertOne({ _id: id, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: rolesLaboratorio.map(r=>r._id), solicitante_medico_id:profesionalId, estado: 'ACTIVO', activo: true, nombre_usuario: uid });
+    await db.collection('usuarios').insertOne({ _id: id, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: [rolId], solicitante_medico_id:profesionalId, estado: 'ACTIVO', activo: true, nombre_usuario: uid });
+    perfilesAnaliticos = {};
+    for (const [perfil, rolAnalitico] of [['analista',rolesLaboratorio[1]],['validador',rolesLaboratorio[2]]]) {
+      const uidAnalitico=randomUUID(), idAnalitico=randomUUID();
+      const correo=`ui-${uidAnalitico}@example.test`, clave=`Sintetica-${randomBytes(12).toString('hex')}`;
+      await auth.createUser({uid:uidAnalitico,email:correo,password:clave,emailVerified:true});
+      await auth.setCustomUserClaims(uidAnalitico,{institucion});
+      await db.collection('usuarios').insertOne({_id:idAnalitico,revision:1,auth_uid:uidAnalitico,proveedor_identidad:'FIREBASE',institucion_id:institucion,rol_ids:[rolAnalitico._id],estado:'ACTIVO',activo:true,nombre_usuario:uidAnalitico});
+      perfilesAnaliticos[perfil]={email:correo,password:clave,id:idAnalitico};
+    }
   } else {
     await firestore.doc(`pediatras/${profesionalId}`).set({revision:1,nombres:'Ana',apellidos:'Sintética',colegiado:profesionalId,entidad_colegiacion:'Colegio sintético',especialidad:'Pediatría',estado:'ACTIVO'});
     await firestore.doc(`roles/${rolId}`).set({ revision: 1, nombre: rol, permisos });
     await firestore.doc(`usuarios/${id}`).set({ revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: [rolId], pediatra_id:profesionalId, estado: 'ACTIVO', nombre_usuario: uid });
   }
-  return { institucion, email, password, secretaria, profesionalId };
+  return { institucion, email, password, secretaria, profesionalId, perfilesAnaliticos };
 }
 try {
   await mongo.connect();
