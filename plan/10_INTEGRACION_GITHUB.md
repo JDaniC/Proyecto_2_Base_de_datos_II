@@ -9,7 +9,7 @@ CodeRabbit revisa los PR. El responsable verifica el alcance y la evidencia. La 
 
 El check nativo de la app 347564 acredita que su ejecución terminó. La revisión de la cuenta `coderabbitai[bot]` acredita el veredicto. `revision-coderabbit` combina ambos requisitos y retira la solicitud de auto-merge si la aprobación falta, es anterior, se descarta o hay cambios solicitados. GitHub exige además conversaciones resueltas y `contrato-pr`. [Significado del check nativo](https://docs.coderabbit.ai/pr-reviews/status-check)
 
-La configuración vive en [`.coderabbit.yaml`](../.coderabbit.yaml). `develop` recibe revisiones como rama predeterminada. `main` se incluye de forma explícita. La señal de una revisión nueva o descartada se ejecuta con permisos vacíos. El flujo que puede escribir estados y solicitar la fusión ejecuta el script de la rama predeterminada.
+La configuración vive en [`.coderabbit.yaml`](../.coderabbit.yaml). `develop` recibe revisiones como rama predeterminada. `main` se incluye de forma explícita. La señal de una revisión nueva o descartada se ejecuta con permisos vacíos. El flujo que puede escribir estados y solicitar la fusión ejecuta el script de la rama predeterminada. La descripción y la cobertura de docstrings generan avisos. Los requisitos de título, alcance y auditorías siguen el contrato y el protocolo del repositorio.
 
 ## Puesta en marcha
 

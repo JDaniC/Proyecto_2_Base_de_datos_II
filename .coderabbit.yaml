@@ -11,6 +11,11 @@ reviews:
   auto_approvals:
     enabled: true
     allow_author_approval: false
+  pre_merge_checks:
+    docstrings:
+      mode: warning
+    description:
+      mode: warning
   path_instructions:
     - path: "**/*"
       instructions: |

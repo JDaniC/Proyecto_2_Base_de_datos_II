@@ -1,5 +1,6 @@
 ## Tarea o entrega
-ID, enlace a la tarea vigente y criterios aplicables al cambio. Título: `[E00-P1-01] descripción`.
+Para una tarea, indicar su ID, enlace y criterios aplicables. Ejemplo de título: `[E00-P1-01] descripción`.
+Para `[CONFIG-GITHUB]`, `[PLAN]` o `[MANTENIMIENTO]`, indicar el tipo de cambio y su alcance. Enlazar la evidencia correspondiente.
 
 ## Cambio y criterios cumplidos
 Describir el problema y el comportamiento resultante.
