@@ -53,10 +53,17 @@ async function recorrerLaboratorio({browser,page,url,headers,paciente,pass,perfi
  const orden=(Array.isArray(cuerpoListado) ? cuerpoListado : cuerpoListado.items ?? cuerpoListado.elementos ?? [])[0];assert.ok(orden);
  pass('orden de laboratorio creada desde UI y persistida por API en MongoDB');
  await page.goto(`${url}/laboratorio/muestras`);
+ const transicionMuestra=async (nombre,ruta)=>{
+  const operacion=page.waitForResponse(r=>r.request().method()==='POST'&&ruta.test(r.url()));
+  await page.getByRole('button',{name:nombre}).first().click();
+  const respuesta=await operacion;
+  assert.ok(respuesta.ok(),`${nombre}: ${respuesta.status()}`);
+ };
  for(let i=0;i<pruebas.length;i++){
-  await page.getByRole('button',{name:'Registrar Toma'}).first().click();
-  await page.getByRole('button',{name:'Recibir en Lab'}).click();
-  await page.getByRole('button',{name:'Aceptar Muestra'}).click();
+  await transicionMuestra('Registrar Toma',/\/laboratorio\/muestras$/);
+  await transicionMuestra('Recibir en Lab',/\/laboratorio\/muestras\/[^/]+\/eventos$/);
+  await transicionMuestra('Aceptar Muestra',/\/laboratorio\/muestras\/[^/]+\/eventos$/);
+  await page.getByText('Apta para análisis',{exact:true}).nth(i).waitFor();
  }
  await page.getByText('Apta para análisis',{exact:true}).last().waitFor();
  pass('toma, recepción y aceptación de dos muestras ejecutadas desde UI');
