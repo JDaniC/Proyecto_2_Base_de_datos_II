@@ -77,27 +77,33 @@ def process(repository, number, shared_heads=()):
         print(f"PR #{number}: no elegible (cerrado, borrador, fork o destino distinto)")
         return
     sha = pr["head"]["sha"]
-    if sha in shared_heads:
-        state, description = "pending", "El commit está compartido por varios PR abiertos"
-    else:
-        checks = checks_for(repository, sha)
-        pages = gh_api(f"repos/{repository}/pulls/{number}/reviews?per_page=100", paginate=True)
-        reviews = [review for page in pages for review in page]
-        state, description = verdict(checks, reviews, sha)
-    # Confirmar que no cambió la cabeza entre lectura y publicación del estado.
-    current = gh_api(f"repos/{repository}/pulls/{number}")
+    try:
+        if sha in shared_heads:
+            state, description = "pending", "El commit está compartido por varios PR abiertos"
+        else:
+            checks = checks_for(repository, sha)
+            pages = gh_api(f"repos/{repository}/pulls/{number}/reviews?per_page=100", paginate=True)
+            reviews = [review for page in pages for review in page]
+            state, description = verdict(checks, reviews, sha)
+        # Confirmar la cabeza antes de publicar un veredicto verificable.
+        current = gh_api(f"repos/{repository}/pulls/{number}")
+    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError):
+        current = pr
+        state, description = "failure", "No se pudo verificar la revisión de CodeRabbit"
     if not eligible(current, repository) or current["head"]["sha"] != sha:
         print(f"PR #{number}: cambió durante la lectura; se evaluará en el siguiente evento")
         return
-    gh_api(f"repos/{repository}/statuses/{sha}", {
-        "state": state, "context": CONTEXT, "description": description,
-        "target_url": pr["html_url"],
-    })
-    print(f"PR #{number}, {sha[:7]}: {state}: {description}")
     merge = ["gh", "pr", "merge", str(number), "--repo", repository]
-    if state != "success":
-        if current.get("auto_merge"):
+    try:
+        gh_api(f"repos/{repository}/statuses/{sha}", {
+            "state": state, "context": CONTEXT, "description": description,
+            "target_url": pr["html_url"],
+        })
+    finally:
+        if state != "success" and current.get("auto_merge"):
             subprocess.run(merge + ["--disable-auto"], check=True)
+    print(f"PR #{number}, {sha[:7]}: {state}: {description}")
+    if state != "success":
         return
     # GitHub conserva los checks requeridos y la resolución de conversaciones.
     subprocess.run(merge + ["--auto", "--squash", "--match-head-commit", sha], check=True)

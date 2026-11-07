@@ -124,13 +124,32 @@ class CodeRabbitProcessTests(unittest.TestCase):
         self.assertEqual(api.call_count, 3)
         command.assert_not_called()
 
-    def test_failed_review_api_leaves_decision_unpublished(self):
-        with patch('auto_merge.gh_api', side_effect=[pull_request(), OSError('GitHub no disponible')]) as api, \
+    def test_failed_review_api_replaces_previous_success_and_disables_auto_merge(self):
+        pr = pull_request(queued=True)
+        status = {'state': 'success'}
+
+        def api(endpoint, data=None, **options):
+            if endpoint.endswith('/reviews?per_page=100'):
+                raise OSError('GitHub no disponible')
+            if data is not None:
+                status.update(data)
+                return None
+            return pr
+
+        with patch('auto_merge.gh_api', side_effect=api), \
+                patch('auto_merge.checks_for', return_value=[check()]), \
+                patch('auto_merge.subprocess.run') as command:
+            process(REPO, 78)
+        self.assertEqual(status['state'], 'failure')
+        self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
+
+    def test_failed_status_write_still_attempts_to_disable_auto_merge(self):
+        pr = pull_request(queued=True)
+        with patch('auto_merge.gh_api', side_effect=[pr, [[review('CHANGES_REQUESTED')]], pr, OSError()]), \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command, self.assertRaises(OSError):
             process(REPO, 78)
-        self.assertEqual(api.call_count, 2)
-        command.assert_not_called()
+        self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
 
 
 if __name__ == '__main__':
