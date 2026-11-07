@@ -4,6 +4,58 @@ import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
+
+async function recorrerLaboratorio({page,url,headers,paciente,pass}) {
+ const post=async(path,data)=>{const r=await page.request.post(`${url}/api/v1${path}`,{headers:{...headers,'Idempotency-Key':randomUUID()},data});assert.ok([200,201].includes(r.status()),`${path}: ${r.status()} ${await r.text()}`);return (await r.json()).data;};
+ const tipo=await post('/laboratorio/referencias/tipos-muestra',{datos:{codigo:'E2E-SUERO',nombre:'Suero E2E',recipiente:'Tubo seco',activo:true},motivo:'Preparación sintética E2E'});
+ const solicitante=await post('/laboratorio/referencias/solicitantes',{datos:{nombre:'Dra. Solicitante E2E',tipo:'MEDICO',entidadColegiacion:'Colegio E2E',numeroColegiado:'E2E-1',activo:true},motivo:'Preparación sintética E2E'});
+ assert.ok(solicitante.id);
+ const metodo=await post('/laboratorio/metodos',{codigo:'E2E-MET',version:1,nombre:'Método E2E',descripcion:'Método sintético'});
+ const parametro1=randomUUID(),parametro2=randomUUID();
+ await post('/laboratorio/pruebas',{codigo:'E2E-BIO',version:1,nombre:'Perfil bioquímico E2E',area:'Bioquímica',metodoId:metodo.id,tiposMuestraIds:[tipo.id],parametros:[
+  {id:parametro1,codigo:'E2E-NUM',nombre:'Medición numérica E2E',tipo:'NUMERICO',obligatorio:true,unidad:'mg/dL'},
+  {id:parametro2,codigo:'E2E-TXT',nombre:'Observación cualitativa E2E',tipo:'TEXTO',obligatorio:true},
+ ]});
+ await page.goto(`${url}/laboratorio/ordenes/nueva`);
+ await page.getByPlaceholder('Buscar paciente por nombre, DPI o número de expediente...').fill('Clínica Sintética');
+ await page.getByText('Paciente Clínica Sintética',{exact:true}).click();
+ await page.locator('#medico-nombre').fill('Dra. Solicitante E2E');
+ await page.locator('#motivo-clinico').fill('Recorrido integrado laboratorio E2E');
+ await page.getByLabel('Seleccionar Perfil bioquímico E2E').check();
+ await page.getByLabel('Precio acordado: Perfil bioquímico E2E (Q)').fill('125.50');
+ await page.getByRole('button',{name:'Emitir Orden de Laboratorio'}).click();
+ await page.waitForURL(/\/laboratorio\/bandeja$/);
+ const listado=await page.request.get(`${url}/api/v1/laboratorio/ordenes?pacienteId=${paciente.id}&limite=10&orden=DESC`,{headers});assert.equal(listado.status(),200,await listado.text());
+ const cuerpoListado=(await listado.json()).data;
+ const orden=(Array.isArray(cuerpoListado) ? cuerpoListado : cuerpoListado.items ?? cuerpoListado.elementos ?? [])[0];assert.ok(orden);
+ pass('orden de laboratorio creada desde UI y persistida por API en MongoDB');
+ await page.goto(`${url}/laboratorio/muestras`);
+ await page.getByRole('button',{name:'Registrar Toma'}).click();
+ await page.getByRole('button',{name:'Recibir en Lab'}).click();
+ await page.getByRole('button',{name:'Aceptar Muestra'}).click();
+ await page.getByText('Apta para análisis',{exact:true}).waitFor();
+ pass('toma, recepción y aceptación de muestra ejecutadas desde UI');
+ await page.goto(`${url}/laboratorio/resultados/captura/${orden.id}`);
+ await page.getByLabel('Equipo Analítico Automatizado').fill('Analizador E2E');
+ await page.getByLabel('Lote de Reactivo / Cartucho').fill('LOTE-E2E-01');
+ await page.getByLabel('Valor para Medición numérica E2E').fill('91.5');
+ await page.getByLabel('Valor para Observación cualitativa E2E').fill('Sin alteraciones');
+ const captura=page.waitForResponse(r=>r.request().method()==='POST'&&/\/api\/v1\/laboratorio\/resultados$/.test(r.url()));
+ await page.getByRole('button',{name:'Guardar Resultados en Borrador'}).click();
+ const respuestaCaptura=await captura;
+ assert.ok([200,201].includes(respuestaCaptura.status()),`captura: ${respuestaCaptura.status()} ${await respuestaCaptura.text()}`);
+ await page.getByText('Borrador Registrado').waitFor();
+ await page.goto(`${url}/laboratorio/resultados/validacion`);
+ await page.getByRole('button',{name:'Validar y Certificar Resultado'}).click();
+ await page.getByText(/validado y certificado con éxito/).waitFor();
+ await page.goto(`${url}/laboratorio/ordenes/${orden.id}`);
+ await page.reload();
+ await page.getByRole('tab',{name:/Resultados validados \(1\)/}).click();
+ await page.getByText('91.5 mg/dL',{exact:false}).waitFor();
+ await page.getByText('Sin alteraciones',{exact:false}).waitFor();
+ pass('captura, validación y lectura tras recarga recorren UI→HTTP→MongoDB');
+}
+
 export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
  const resultados=[];
  for(const cuenta of cuentas) {
@@ -19,6 +71,12 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    const pedi=cuenta.institucion==='CENTRO_MEDICO_PEDIATRICO';
    const alta=await page.request.post(`${url}/api/v1/pacientes`,{headers,data:{nombres:'Paciente',apellidos:'Clínica Sintética',fecha_nacimiento:pedi?'2020-02-29':'2000-02-29',sexo:'MASCULINO',...(pedi?{responsables:[{nombres:'Madre',apellidos:'Sintética',telefono:'55555555',parentesco:'MADRE',es_principal:true,autoriza_atencion:true,documento:{tipo:'CUI',numero:'1234567890101'}}]}:{})}});
    assert.equal(alta.status(),201,`alta ${cuenta.institucion}`); const paciente=(await alta.json()).data;
+   if(cuenta.institucion==='LABORATORIO_CLINICO') {
+    await recorrerLaboratorio({page,url,headers,paciente,pass});
+    // Esta cuenta sintética es personal analítico, no médico individual autorizado
+    // para registrar consultas de la clínica común del laboratorio.
+    continue;
+   }
    if(cuenta.institucion==='HOSPITAL_GENERAL'||pedi) {
     const motivoAgenda=`Agenda institucional ${cuenta.institucion}`;
     const datosCita={paciente_id:paciente.id,version_paciente:paciente.version,profesional_id:cuenta.profesionalId,fecha:'2026-10-19',hora_inicio:'07:00',duracion_minutos:30,motivo:motivoAgenda};

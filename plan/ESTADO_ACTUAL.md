@@ -12,7 +12,7 @@
 ## 2. Ruta de cierre vigente
 
 1. **E05-P2-01**. Integrada en `develop` ([PR #78](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78), `29dd2ca`), con revisión `APPROVED` de CodeRabbit sobre `34a5f93` y ambas auditorías en PASS.
-2. **E05-P2-03**. En curso por `JDaniC` en `codex/e05-p2-03-circuito-analitico-ui` ([seguimiento](seguimiento/E05-P2-03.md)). Conectar el circuito orden → muestra → captura → validación → consulta de resultados en modo API.
+2. **E05-P2-03**. En curso por `Davidix888` en `codex/e05-p2-03-circuito-analitico-ui` ([seguimiento](seguimiento/E05-P2-03.md)). Conectar el circuito orden → muestra → captura → validación → consulta de resultados en modo API.
 3. **E05-P1-04**. Instalar el mismo candidato desde cero en otro equipo y verificar los recorridos en los cuatro motores. Depende de E05-P2-03 integrada. Con evidencia satisfactoria, completar el [acta de fase](plantillas/CIERRE_ENTREGA.md) y verificar su integración y el cierre en el tablero.
 
 Consultar [plan maestro](00_PLAN_MAESTRO.md), [alcance DEC20](01_ALCANCE_Y_DECISIONES.md#dec20--cierre-técnico-compacto-07112026), [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y [revisión](10_INTEGRACION_GITHUB.md). Ejecutar `python3 scripts/github/cola.py` y cotejar con PR y reservas remotas. Inventario E05-P2-02 queda fuera de esta ruta y conserva su [seguimiento y reserva](seguimiento/E05-P2-02.md). E06 y E07 son históricas.

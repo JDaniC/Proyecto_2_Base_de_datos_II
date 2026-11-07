@@ -121,7 +121,9 @@ export const SamplesManagementPage: React.FC = () => {
         actor
       );
 
-      setMuestras((prev) => prev.map((m) => (m.id === actualizada.id ? actualizada : m)));
+      // La primera toma sustituye la fila virtual `pendiente:*` por el ID real
+      // asignado por MongoDB; en transiciones posteriores ambos IDs coinciden.
+      setMuestras((prev) => prev.map((m) => (m.id === muestra.id ? actualizada : m)));
       setNotificacion(`Muestra ${actualizada.codigoMuestra} actualizada a estado ${getDisplayLabel(nuevoEstado).toLowerCase()}.`);
       setTimeout(() => setNotificacion(null), 4000);
     } catch (err: unknown) {

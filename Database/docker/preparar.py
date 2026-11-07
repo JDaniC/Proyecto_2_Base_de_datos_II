@@ -29,7 +29,9 @@ def preparar(destino):
             continue
         valor = base64.b64encode(os.urandom(512)).decode() if nombre == 'mongo_keyfile' else secrets.token_hex(32)
         descriptor = os.open(ruta, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(descriptor, 'w') as archivo:
+        # Los secretos se montan en contenedores Linux: evita CRLF en hosts Windows,
+        # donde el retorno de carro se convertiría en parte de la credencial.
+        with os.fdopen(descriptor, 'w', newline='\n') as archivo:
             archivo.write(valor + '\n')
         creados += 1
     return creados

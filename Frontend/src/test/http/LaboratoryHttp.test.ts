@@ -51,6 +51,21 @@ describe('Laboratorio HTTP E05-P2-03', () => {
     expect(vi.mocked(http.post).mock.calls[0][2]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/i);
   });
 
+  it('expone la toma pendiente y la registra por HTTP antes de los eventos', async () => {
+    const http = client();
+    vi.mocked(http.get)
+      .mockResolvedValueOnce({ data: { items: [] }, meta: { correlacion: id(20) } })
+      .mockResolvedValueOnce({ data: { items: [orden] }, meta: { correlacion: id(20) } })
+      .mockResolvedValueOnce({ data: orden, meta: { correlacion: id(20) } });
+    vi.mocked(http.post).mockResolvedValueOnce({ data: muestra, meta: { correlacion: id(20) } });
+    const repo = createHttpLaboratoryRepository(http);
+    const pendientes = await repo.obtenerMuestras(institucion);
+    expect(pendientes[0]).toMatchObject({ estado: 'PENDIENTE_TOMA', ordenId: orden.id, itemIds: [orden.items[0].id] });
+    await repo.actualizarEstadoMuestra(institucion, pendientes[0].id, 'TOMADA');
+    expect(vi.mocked(http.post).mock.calls[0][0]).toBe('/laboratorio/muestras');
+    expect(vi.mocked(http.post).mock.calls[0][1]).toMatchObject({ ordenId: orden.id, versionOrden: orden.version, itemIds: [orden.items[0].id], tipoMuestraId: id(7) });
+  });
+
   it('valida solo con revisión optimista y deriva validador de la sesión', async () => {
     const http = client();
     vi.mocked(http.get).mockResolvedValueOnce({ data: resultado, meta: { correlacion: id(20) } })
@@ -58,6 +73,23 @@ describe('Laboratorio HTTP E05-P2-03', () => {
     vi.mocked(http.post).mockResolvedValue({ data: { ...resultado, revision: 2, estado: 'VALIDADO', validadorId: id(14) }, meta: { correlacion: id(20) } });
     await createHttpLaboratoryRepository(http).validarResultado(institucion, id(11), 'suplantado', 'suplantado');
     expect(vi.mocked(http.post).mock.calls[0][1]).toEqual({ versionEsperada: 1 });
+  });
+
+  it('conserva resultados validados si falla temporalmente la proyección de trabajo', async () => {
+    const http = client();
+    vi.mocked(http.get)
+      .mockResolvedValueOnce({ data: { items: [{ ...resultado, estado: 'VALIDADO', procedencia: [{ muestraId: id(9), codigo: 'M-HIST-1' }] }] }, meta: { correlacion: id(20) } })
+      .mockRejectedValueOnce(new HttpError({ status: 503, codigo: 'PERSISTENCIA_NO_DISPONIBLE', mensaje: 'Caída temporal' }));
+    const data = await createHttpLaboratoryRepository(http).obtenerResultadosPorOrden(institucion, orden.id);
+    expect(data).toMatchObject([{ estado: 'VALIDADO', codigoMuestra: 'M-HIST-1', nombrePrueba: 'Prueba no disponible en la proyección' }]);
+  });
+
+  it('no oculta errores de autorización al enriquecer resultados', async () => {
+    const http = client();
+    vi.mocked(http.get)
+      .mockResolvedValueOnce({ data: { items: [resultado] }, meta: { correlacion: id(20) } })
+      .mockRejectedValueOnce(new HttpError({ status: 403, codigo: 'SIN_PERMISO', mensaje: 'Sin permiso' }));
+    await expect(createHttpLaboratoryRepository(http).obtenerResultadosPorOrden(institucion, orden.id)).rejects.toMatchObject({ status: 403 });
   });
 
   it('mapea pruebas y referencias desde catálogos de laboratorio', async () => {

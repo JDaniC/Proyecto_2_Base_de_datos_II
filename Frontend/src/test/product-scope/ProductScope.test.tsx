@@ -32,6 +32,7 @@ describe('Producto final: límites de vistas', () => {
   it('limita el laboratorio API al circuito entregable DEC20', () => {
     expect(isRouteDeliveredInApi('/laboratorio/resultados/validacion', 'LABORATORIO_CLINICO')).toBe(true);
     expect(isRouteDeliveredInApi('/laboratorio/calidad', 'LABORATORIO_CLINICO')).toBe(false);
+    expect(isRouteDeliveredInApi('/laboratorio/cobros', 'LABORATORIO_CLINICO')).toBe(false);
     expect(isRouteDeliveredInApi('/laboratorio/informes/orden-1', 'LABORATORIO_CLINICO')).toBe(false);
     expect(isRouteDeliveredInApi('/laboratorio/calidad', 'HOSPITAL_GENERAL')).toBe(true);
   });

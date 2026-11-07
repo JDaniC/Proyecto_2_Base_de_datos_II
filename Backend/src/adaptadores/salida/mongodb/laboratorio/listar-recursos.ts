@@ -66,7 +66,9 @@ export function crearListadosLaboratorioMongodb(db:Db,codec:CodecCursorHistorial
     try{
      session.startTransaction({readConcern:{level:'snapshot'}});
      const filtro:Filter<Document>={estado:{$in:['ACEPTADA','PROCESADA']},...(ordenId?{orden_id:uuidPublico(ordenId)}:{})};
-     const documentosMuestra=await db.collection('muestras').find(filtro,{session,maxTimeMS:3000}).sort({fecha_toma:1,_id:1}).limit(500).toArray();
+     // El cursor consume todos los lotes del servidor dentro de la misma lectura snapshot;
+     // no trunca la bandeja cuando existen mas de 500 muestras elegibles.
+     const documentosMuestra=await db.collection('muestras').find(filtro,{session,maxTimeMS:3000}).sort({fecha_toma:1,_id:1}).batchSize(100).toArray();
      const ordenIds=[...new Set(documentosMuestra.map(m=>uuidPublico(m.orden_id as string)))];
      const salida:TrabajoAnaliticoLaboratorio[]=[];
      for(const id of ordenIds){

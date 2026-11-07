@@ -3,7 +3,7 @@ import {promisify} from 'node:util';
 import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join, resolve} from 'node:path';
+import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomBytes} from 'node:crypto';
 import {createServer} from 'node:net';
@@ -38,7 +38,11 @@ let errorPrincipal;
 try{
  console.log('Preparando cuatro motores aislados:',proyecto);
  await run('python3',[join(root,'Database/docker/preparar.py'),'--secrets-dir',secretos]);
- await run('docker',[...compose,'up','-d','--build','--wait','--wait-timeout','240','postgres','mysql','mongodb']);
+ // El arranque secuencial evita que tres inicializadores pesados compitan por E/S
+ // y memoria en equipos de entrega con recursos limitados.
+ for (const servicio of ['postgres','mysql','mongodb']) {
+  await run('docker',[...compose,'up','-d','--build','--wait','--wait-timeout','240',servicio]);
+ }
  await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);
  // Simula interrupciones antes de habilitar la extensión: PG revierte DDL, MySQL retoma DDL aditivo.
  const pgFallido=join(temporal,'historial-fallo.sql');
@@ -82,7 +86,9 @@ try{
  }
  console.log('PASS preparación SQL: rollback PostgreSQL y recuperación MySQL tras interrupción.');
  Object.assign(entorno,{PG_TEST_PORT:entorno.POSTGRES_PORT,PG_TEST_SECRET_FILE:join(secretos,'postgres_app_password'),MYSQL_TEST_PORT:entorno.MYSQL_PORT,MYSQL_TEST_SECRET_FILE:join(secretos,'mysql_app_password'),MONGO_TEST_PORT:entorno.MONGO_PORT,MONGO_TEST_SECRET_FILE:join(secretos,'mongo_app_password'),MONGO_ADMIN_TEST_SECRET_FILE:join(secretos,'mongo_admin_password')});
- await run('npm',['run','build:test'],{cwd:backend});
+ await (process.platform==='win32'
+  ? run(process.execPath,[join(dirname(process.execPath),'node_modules/npm/bin/npm-cli.js'),'run','build:test'],{cwd:backend})
+  : run('npm',['run','build:test'],{cwd:backend}));
  const conf=JSON.parse(await readFile(join(root,'Database/firebase/firebase.json'),'utf8'));
  const baseIndexes=JSON.parse(await readFile(join(root,'Database/firebase/firestore.indexes.json'),'utf8'));
  const extraIndexes=JSON.parse(await readFile(join(root,'Database/firebase/firestore.historial.indexes.json'),'utf8'));
@@ -91,7 +97,15 @@ try{
  conf.firestore.rules=join(root,'Database/firebase/firestore.rules');conf.firestore.indexes=indexesPath;
  for(const n of ['auth','firestore','hub','logging'])if(conf.emulators[n])conf.emulators[n].port=Number(await puerto());
  const config=join(temporal,'firebase.json');await writeFile(config,JSON.stringify(conf));
- console.log(await run('firebase',['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`${process.execPath} scripts/${clinicaUi ? 'clinica-ui-integration' : pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`],{cwd:backend, timeout: pacientesUi ? 600000 : 300000}));
+ const scriptIntegracion=`scripts/${clinicaUi ? 'clinica-ui-integration' : pacientesUi ? 'pacientes-ui-integration' : 'historial-documental-integration'}.mjs`;
+ const firebaseArgs=['emulators:exec','--only',pacientesUi ? 'auth,firestore' : 'firestore','--project',`demo-${proyecto}`,'--config',config,`"${process.execPath}" ${scriptIntegracion}`];
+ const firebaseCli=process.platform==='win32'&&process.env.APPDATA
+  ? join(process.env.APPDATA,'npm/node_modules/firebase-tools/lib/bin/firebase.js')
+  : undefined;
+ if(process.platform==='win32'&&!firebaseCli)throw new Error('FIREBASE_CLI_NO_LOCALIZADO');
+ console.log(await (process.platform==='win32'
+  ? run(process.execPath,[firebaseCli,...firebaseArgs],{cwd:backend,timeout:pacientesUi ? 600000 : 300000})
+  : run('firebase',firebaseArgs,{cwd:backend,timeout:pacientesUi ? 600000 : 300000})));
  if(clinicaUi){
   const estado=async()=>await run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-U','postgres_admin','-d','hospital_general','-c',"SELECT count(*)::text||':'||md5(string_agg(contenido::text,'' ORDER BY id)) FROM hospital_servicios.recursos"]);
   const antesServicios=await estado();
@@ -114,7 +128,11 @@ try{
  if(JSON.stringify(antes)!==JSON.stringify(despues)) throw new Error('MIGRACION_CAMBIO_EVENTOS');
  await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);
  console.log('PASS SQL: migraciones reejecutadas sobre datos existentes sin eliminar eventos.');
-}catch(error){errorPrincipal=error;throw error;}finally{
+}catch(error){
+ errorPrincipal=error;
+ try { console.error(await run('docker',[...compose,'ps','-a'])); console.error(await run('docker',[...compose,'logs','--tail','80','mysql','mongodb'])); } catch { /* diagnóstico best effort */ }
+ throw error;
+}finally{
  try {await run('docker',[...compose,'down','--volumes','--timeout','30']);}catch(error){if(!errorPrincipal)throw error;console.error('Limpieza aislada pendiente:',error.message);}
  finally {await rm(temporal,{recursive:true,force:true});}
 }

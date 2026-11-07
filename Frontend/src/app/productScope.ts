@@ -90,7 +90,7 @@ export function isRouteInInstitution(path: string, institution: InstitucionId): 
 export function isRouteDeliveredInApi(path: string, institution: InstitucionId): boolean {
   if (institution !== 'LABORATORIO_CLINICO') return true;
   return ![
-    '/laboratorio/informes', '/laboratorio/calidad', '/laboratorio/inventario',
+    '/laboratorio/informes', '/laboratorio/calidad', '/laboratorio/inventario', '/laboratorio/cobros',
     '/laboratorio/personal', '/administracion/usuarios', '/administracion/auditoria',
     '/administracion/catalogos',
   ].some(prefix => path === prefix || path.startsWith(`${prefix}/`));

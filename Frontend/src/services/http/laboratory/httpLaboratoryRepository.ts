@@ -46,7 +46,7 @@ type ResultadoDto = {
   pruebaId: string; pacienteId: string; equipoId?: string; analistaId: string; fechaAnalisis: string;
   estado: 'BORRADOR' | 'VALIDADO'; componentes: ComponenteDto[]; observaciones?: string;
   validadorId?: string; fechaValidacion?: string; motivoCorreccion?: string;
-  procedencia?: Array<{ muestraId: string; codigoHistorico?: string; codigoBarrasHistorico?: string }>;
+  procedencia?: Array<{ muestraId: string; codigo?: string; codigoHistorico?: string; codigoBarrasHistorico?: string }>;
 };
 type TrabajoAnaliticoDto = {
   ordenId: string; pacienteId: string; prioridad: OrdenDto['prioridad']; estado: OrdenDto['estado']; version: number;
@@ -119,9 +119,9 @@ function mapResultado(dto: ResultadoDto, orden?: OrdenDto, muestras: MuestraLabo
     id: dto.id, serieResultadoId: dto.serieId, version: dto.version, ordenId: dto.ordenId,
     codigoOrden: codigo('ORD-LAB', dto.ordenId), pacienteId: dto.pacienteId, pacienteNombre: dto.pacienteId, pacienteDpi: '',
     itemOrdenId: dto.itemId, pruebaId: dto.pruebaId, codigoPrueba: item?.prueba.codigo ?? dto.pruebaId.slice(0, 8),
-    nombrePrueba: item?.prueba.nombre ?? 'Prueba de laboratorio', seccion: 'Laboratorio', muestraId,
-    codigoMuestra: muestra?.codigoMuestra ?? dto.procedencia?.[0]?.codigoHistorico ?? dto.procedencia?.[0]?.codigoBarrasHistorico ?? muestraId,
-    equipoAnalitico: dto.equipoId ?? 'No registrado', metodoAnalitico: item?.prueba.metodoId ?? 'Método de la orden',
+    nombrePrueba: item?.prueba.nombre ?? 'Prueba no disponible en la proyección', seccion: 'Laboratorio', muestraId,
+    codigoMuestra: muestra?.codigoMuestra ?? dto.procedencia?.[0]?.codigo ?? dto.procedencia?.[0]?.codigoHistorico ?? dto.procedencia?.[0]?.codigoBarrasHistorico ?? muestraId,
+    equipoAnalitico: dto.equipoId ?? 'No registrado', metodoAnalitico: item?.prueba.metodoId ?? 'Método no disponible en la proyección',
     parametros: dto.componentes.map(c => mapParametro(c, item?.prueba.parametros?.find(p => p.id === c.parametroId))),
     observaciones: dto.observaciones, estado: dto.estado, analistaId: dto.analistaId, analistaNombre: dto.analistaId,
     fechaAnalisis: dto.fechaAnalisis, validadorId: dto.validadorId, validadorNombre: dto.validadorId,
@@ -161,7 +161,26 @@ function componentes(dto: GuardarResultadoBorradorDTO): ComponenteDto[] {
 export function createHttpLaboratoryRepository(http: HttpClient): LaboratoryRepository {
   const key = stableCommandKeys();
   const getOrden = async (id: string) => (await http.get<OrdenDto>(`/laboratorio/ordenes/${encodeURIComponent(id)}`)).data;
-  const getMuestras = async (ordenId?: string) => lista((await http.get<MuestraDto[] | Pagina<MuestraDto>>('/laboratorio/muestras', { query: { ordenId, limite: 100, orden: 'ASC' } })).data).map(mapMuestra);
+  const getMuestrasPersistidas = async (ordenId?: string) => lista((await http.get<MuestraDto[] | Pagina<MuestraDto>>('/laboratorio/muestras', { query: { ordenId, limite: 100, orden: 'ASC' } })).data).map(mapMuestra);
+  /** Completa la bandeja preanalítica con una fila pendiente por ítem aún sin toma. */
+  const getMuestras = async (ordenId?: string) => {
+    const persistidas = await getMuestrasPersistidas(ordenId);
+    let ordenes: OrdenDto[] = [];
+    try {
+      ordenes = ordenId ? [await getOrden(ordenId)] : lista((await http.get<OrdenDto[] | Pagina<OrdenDto>>('/laboratorio/ordenes', { query: { limite: 100, orden: 'ASC' } })).data);
+    } catch (error) {
+      if (!(error instanceof HttpError) || error.status !== 403) throw error;
+    }
+    const pendientes = ordenes.flatMap(orden => orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA' ? [] : orden.items
+      .filter(item => item.estado !== 'CANCELADO' && !persistidas.some(m => m.ordenId === orden.id && (m as MuestraLaboratorio & { itemIds?: string[] }).itemIds?.includes(item.id)))
+      .map(item => ({
+        id: `pendiente:${orden.id}:${item.id}`, codigoMuestra: `PEND-${orden.id.slice(0, 8)}-${item.id.slice(0, 8)}`,
+        ordenId: orden.id, codigoOrden: codigo('ORD-LAB', orden.id), pacienteId: orden.pacienteId, pacienteNombre: orden.pacienteId,
+        tipoMuestra: item.prueba.tiposMuestraIds?.[0] ?? '', tuboContenedor: 'Contenedor estándar', estado: 'PENDIENTE_TOMA' as const,
+        fechaToma: '', tomadaPor: '', version: 1, eventosTrazabilidad: [], itemIds: [item.id], versionOrden: orden.version,
+      })));
+    return [...pendientes, ...persistidas];
+  };
   const getResultados = async (ordenId: string) => lista((await http.get<ResultadoDto[] | Pagina<ResultadoDto>>('/laboratorio/resultados', { query: { ordenId, limite: 100, orden: 'ASC' } })).data);
   const getTrabajo = async (ordenId?: string) => (await http.get<TrabajoAnaliticoDto[]>('/laboratorio/trabajo-analitico', { query: { ordenId } })).data;
   const mapConTrabajo = async (r: ResultadoDto) => { const trabajo=(await getTrabajo(r.ordenId))[0]; return mapResultado(r,trabajo?ordenDesdeTrabajo(trabajo):undefined,trabajo?mapTrabajo(trabajo).muestras:[]); };
@@ -188,6 +207,15 @@ export function createHttpLaboratoryRepository(http: HttpClient): LaboratoryRepo
     },
     async obtenerMuestras(_i, ordenId) { return getMuestras(ordenId); },
     async actualizarEstadoMuestra(_i, id, estado, motivo, _actor, versionEsperada) {
+      if (id.startsWith('pendiente:')) {
+        if (estado !== 'TOMADA') throw new Error('Registra la toma antes de avanzar la muestra.');
+        const [, ordenId, itemId] = id.split(':');
+        const orden = await getOrden(ordenId);
+        const item = orden.items.find(i => i.id === itemId);
+        if (!item?.prueba.tiposMuestraIds?.[0]) throw new Error('La prueba no tiene un tipo de muestra activo.');
+        const body = { ordenId, versionOrden: orden.version, itemIds: [itemId], tipoMuestraId: item.prueba.tiposMuestraIds[0], codigo: `MUE-${ordenId.slice(0, 8)}-${itemId.slice(0, 8)}`, recipiente: 'Contenedor estándar' };
+        return mapMuestra((await http.post<MuestraDto>('/laboratorio/muestras', body, { idempotencyKey: key('/laboratorio/muestras', body) })).data);
+      }
       const actual = mapMuestra((await http.get<MuestraDto>(`/laboratorio/muestras/${encodeURIComponent(id)}`)).data);
       const orden = await getOrden(actual.ordenId); const tipo = estado === 'RECIBIDA' ? 'RECEPCION' : estado === 'ACEPTADA' ? 'ACEPTACION' : estado === 'RECHAZADA' ? 'RECHAZO' : 'PROCESAMIENTO';
       const path = `/laboratorio/muestras/${encodeURIComponent(id)}/eventos`, body = { versionEsperada: versionEsperada ?? actual.version, versionOrden: orden.version, tipo, detalle: motivo?.trim() || `Cambio de estado a ${estado}` };
@@ -208,7 +236,16 @@ export function createHttpLaboratoryRepository(http: HttpClient): LaboratoryRepo
       const path = `/laboratorio/muestras/${encodeURIComponent(id)}/retomas`, body = { versionEsperada: versionEsperada ?? actual.version, versionOrden: orden.version, tipoMuestraId: actual.tipoMuestra, codigo: `${actual.codigoMuestra}-R`, recipiente: actual.tuboContenedor, motivo };
       return mapMuestra((await http.post<MuestraDto>(path, body, { idempotencyKey: key(path, body) })).data);
     },
-    async obtenerResultadosPorOrden(_i, ordenId) { const [trabajo, rs] = await Promise.all([getTrabajo(ordenId), getResultados(ordenId)]); const o=trabajo[0]; const ms=o?mapTrabajo(o).muestras:[]; return rs.map(r => mapResultado(r, o?ordenDesdeTrabajo(o):undefined, ms)); },
+    async obtenerResultadosPorOrden(_i, ordenId) {
+      const rs = await getResultados(ordenId);
+      let trabajo: TrabajoAnaliticoDto[] = [];
+      try { trabajo = await getTrabajo(ordenId); }
+      catch (error) {
+        if (error instanceof HttpError && (error.status === 401 || error.status === 403)) throw error;
+      }
+      const o=trabajo[0]; const ms=o?mapTrabajo(o).muestras:[];
+      return rs.map(r => mapResultado(r, o?ordenDesdeTrabajo(o):undefined, ms));
+    },
     async obtenerResultadoPorId(_i, id) { const r = (await http.get<ResultadoDto>(`/laboratorio/resultados/${encodeURIComponent(id)}`)).data; const trabajo=(await getTrabajo(r.ordenId))[0]; return mapResultado(r, trabajo?ordenDesdeTrabajo(trabajo):undefined, trabajo?mapTrabajo(trabajo).muestras:[]); },
     async guardarResultadoBorrador(_i, dto) {
       const previos = await getResultados(dto.ordenId); const previo = previos.find(r => r.itemId === dto.itemOrdenId && r.estado === 'BORRADOR');
