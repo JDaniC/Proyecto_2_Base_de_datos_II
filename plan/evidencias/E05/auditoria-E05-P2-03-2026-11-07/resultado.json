@@ -12,5 +12,27 @@
   "frontend_focal_tests": 34,
   "browser_ui_http_mongodb": "PASS",
   "installation_followup": "E05-P1-04: mongo-init rechaza orden real existente con BOOTSTRAP_MONGO_ERROR",
-  "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó y documentó el protocolo equivalente completo."
+  "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó y documentó el protocolo equivalente completo.",
+  "revalidacionPR82": {
+    "candidato": "4701932",
+    "seguridad": "PASS",
+    "requisitos": "PASS",
+    "frontendHttp": 129,
+    "backendRuntimeUnitarias": 372,
+    "contratosBackend": 46,
+    "mongoIntegracion": 1,
+    "mongoModelo": 102,
+    "navegador": {
+      "resultado": "PASS",
+      "hitos": 3,
+      "examenes": 2,
+      "cuentasSeparadas": 3,
+      "validarComoAnalista": 403
+    },
+    "reinstalacion": {
+      "resultado": "FAIL",
+      "error": "BOOTSTRAP_MONGO_ERROR",
+      "seguimiento": "E05-P1-04"
+    }
+  }
 }

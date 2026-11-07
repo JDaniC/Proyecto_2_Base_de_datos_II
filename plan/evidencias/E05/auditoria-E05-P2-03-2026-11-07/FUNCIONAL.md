@@ -29,3 +29,20 @@ La integración MongoDB usa proyecto efímero, secretos temporales y destrucció
 
 Revalidación posterior a las correcciones de revisión: Frontend 34/34 focalizadas y build PASS; incluye revisión visible en validación, procedencia múltiple y reintento estable. Backend lint/arquitectura y `build:test` PASS; MongoDB aislado 1/1 migración y 102/102 modelo PASS.
 
+
+
+## Revalidación de la retoma del PR #82
+
+| Requisito y unidad | Evidencia actual | Resultado |
+|---|---|---|
+| R03, bandeja analítica paginada y detalle. Controlador → caso de uso → puerto → MongoDB → repositorio React | Dos páginas reales con cursor, órdenes únicas, orden completada visible, detalle por UUID, cursor rechazado fuera de su ámbito. Prueba HTTP confirma que React solicita la página siguiente. | PASS |
+| R04/R05, degradación de etiquetas en lectura. `trabajoParaResultado` y `mapResultado` | La lectura validada se conserva ante 503 de proyección. Ante 403 se devuelve el error. La interfaz identifica las etiquetas de prueba/parámetro ausentes. | PASS |
+| R07/R08, escritura confirmada y recarga. `mapConTrabajo` | POST de validación exitoso seguido por GET de enriquecimiento 503 devuelve el resultado validado y su revisión. Se verifica una sola escritura. | PASS |
+| R01/R07/R09, dos exámenes y funciones separadas. `clinica-e2e.mjs` y `clinica-ui-integration.mjs` | Chrome en proyecto efímero: recepción creó una orden con examen numérico y textual y aceptó dos muestras. Analista capturó ambos, recibió 403 al validar. El validador confirmó y leyó ambos tras recarga. | PASS |
+| R02/R06, autoridad y rutas DEC20. Guard/DTO, cliente HTTP, alcance de producto | Backend 372/372 y contratos 46/46 PASS. Frontend 129/129 HTTP y build PASS. | PASS |
+
+Hallazgos reproducidos durante la retoma: el documento HTTP canónico incluía 91 rutas pero dos pruebas aún esperaban 90. Se alineó el inventario de pruebas con la ruta analítica documentada. La prueba de navegador anterior combinaba funciones y mostraba un único examen con varios parámetros. El nuevo recorrido usa dos exámenes, tres cuentas y verifica un rechazo 403 del analista al intentar validar.
+
+Comandos: `npm run build:test`, `npm run lint`, `node --test dist-test/tests/runtime/*.test.js dist-test/tests/unitarios/*.test.js`, `node --test tests/contratos/*.test.mjs`, `node scripts/run-clinica-mongodb-integration.mjs --laboratorio011` desde Backend. `npm test -- --run src/test/http` y `npm run build` desde Frontend.
+
+Navegador: `CLINICA_UI_SOLO_LABORATORIO=1 PLAYWRIGHT_CHANNEL=chrome node scripts/run-historial-integration.mjs --clinica-ui`. Candidato `4701932`. El proceso de navegador terminó con código 0 y emitió tres hitos PASS. El orquestador salió 1 en la fase posterior de reinstalación con `BOOTSTRAP_MONGO_ERROR` sobre la orden ya persistida. Ese control de instalación queda pendiente en E05-P1-04.

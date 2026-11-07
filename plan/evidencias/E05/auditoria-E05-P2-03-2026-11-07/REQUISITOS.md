@@ -15,3 +15,5 @@ Fecha: 07/11/2026, America/Guatemala. Alcance: circuito laboratorio en modo API,
 | R09 | Consigna p.1 | Componentes variables numéricos/textuales conservan unidad/referencia | `mapParametro`, `componentes` | navegador capturó `91.5 mg/dL` y `Sin alteraciones`, validó y releyó tras recarga; modelo 102/102 PASS |
 | R10 | Puerta 05/11 | Seguridad y requisitos sin hallazgos aplicables abiertos antes del PR | esta carpeta | SEGURIDAD y FUNCIONAL: PASS |
 
+
+La [revalidación funcional](FUNCIONAL.md#revalidación-de-la-retoma-del-pr-82) y la [revalidación de seguridad](SEGURIDAD.md#revalidación-de-la-retoma-del-pr-82) acreditan el candidato corregido `4701932`, incluidos dos exámenes distintos y tres sesiones sintéticas separadas.
