@@ -65,17 +65,14 @@ def candidates(event, repository):
     if number and not re.fullmatch(r"[1-9][0-9]*", str(number)):
         raise ValueError("Número de PR inválido")
     pages = gh_api(f"repos/{repository}/pulls?state=open&per_page=100", paginate=True)
-    pull_requests = [pr for page in pages for pr in page if eligible(pr, repository)]
+    pull_requests = [pr for page in pages for pr in page]
     if number:
         pull_requests.sort(key=lambda pr: pr["number"] != int(number))
     return pull_requests
 
 
-def process(repository, number, shared_heads=(), *, allow_auto_merge=True):
-    pr = gh_api(f"repos/{repository}/pulls/{number}")
-    if not eligible(pr, repository):
-        print(f"PR #{number}: no elegible (cerrado, borrador, fork o destino distinto)")
-        return
+def process(repository, pr, shared_heads=(), *, allow_auto_merge=True):
+    number = pr["number"]
     sha = pr["head"]["sha"]
     try:
         if sha in shared_heads:
@@ -94,17 +91,18 @@ def process(repository, number, shared_heads=(), *, allow_auto_merge=True):
         print(f"PR #{number}: cambió durante la lectura; se evaluará en el siguiente evento")
         return
     merge = ["gh", "pr", "merge", str(number), "--repo", repository]
-    can_merge = state == "success" and allow_auto_merge
+    if state == "success" and not allow_auto_merge:
+        state, description = "pending", "Aprobación comprobada; integración en pausa"
     try:
         gh_api(f"repos/{repository}/statuses/{sha}", {
             "state": state, "context": CONTEXT, "description": description,
             "target_url": pr["html_url"],
         })
     finally:
-        if not can_merge and current.get("auto_merge"):
+        if state != "success" and current.get("auto_merge"):
             subprocess.run(merge + ["--disable-auto"], check=True)
     print(f"PR #{number}, {sha[:7]}: {state}: {description}")
-    if not can_merge:
+    if state != "success":
         return
     # GitHub conserva los checks requeridos y la resolución de conversaciones.
     subprocess.run(merge + ["--auto", "--squash", "--match-head-commit", sha], check=True)
@@ -119,7 +117,8 @@ def main():
     shared_heads = {sha for sha, count in head_counts.items() if count > 1}
     allow_auto_merge = os.environ.get("CODERABBIT_ROLLOUT_PAUSED") != "true"
     for pr in pull_requests:
-        process(repository, pr["number"], shared_heads, allow_auto_merge=allow_auto_merge)
+        if eligible(pr, repository):
+            process(repository, pr, shared_heads, allow_auto_merge=allow_auto_merge)
 
 
 if __name__ == "__main__":

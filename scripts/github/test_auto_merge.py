@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from auto_merge import APP_ID, REVIEWER_ID, candidates, eligible, process, verdict
+from auto_merge import APP_ID, REVIEWER_ID, candidates, eligible, main, process, verdict
 
 
 SHA = 'a' * 40
@@ -21,7 +21,7 @@ def review(state='APPROVED', sha=SHA, author=REVIEWER_ID):
 
 
 def pull_request(sha=SHA, queued=False):
-    return dict(state='open', draft=False, base={'ref': 'develop'},
+    return dict(number=78, state='open', draft=False, base={'ref': 'develop'},
                 head={'repo': {'full_name': REPO}, 'sha': sha},
                 html_url='https://example.test/pull/78',
                 auto_merge={'merge_method': 'squash'} if queued else None)
@@ -71,6 +71,16 @@ class CodeRabbitTests(unittest.TestCase):
         self.assertEqual(candidates({'inputs': {'pr': '78'}}, REPO), [second, first])
         self.assertTrue(api.call_args.kwargs['paginate'])
 
+    def test_draft_with_same_head_keeps_the_ready_pull_request_from_reusing_a_status(self):
+        ready = dict(pull_request(), number=12)
+        draft = dict(pull_request(), number=78, draft=True)
+        with patch.dict('auto_merge.os.environ', {'GITHUB_REPOSITORY': REPO, 'GITHUB_EVENT_PATH': 'event.json', 'CODERABBIT_ROLLOUT_PAUSED': 'false'}), \
+                patch('auto_merge.Path.read_text', return_value='{}'), \
+                patch('auto_merge.gh_api', return_value=[[ready, draft]]), \
+                patch('auto_merge.process') as evaluator:
+            main()
+        evaluator.assert_called_once_with(REPO, ready, {SHA}, allow_auto_merge=True)
+
     @patch('auto_merge.gh_api')
     def test_invalid_manual_input_stops_before_api(self, api):
         with self.assertRaises(ValueError):
@@ -81,61 +91,61 @@ class CodeRabbitTests(unittest.TestCase):
 class CodeRabbitProcessTests(unittest.TestCase):
     def test_green_check_with_changes_requested_disables_queued_merge(self):
         pr = pull_request(queued=True)
-        with patch('auto_merge.gh_api', side_effect=[pr, [[review('CHANGES_REQUESTED')]], pr, None]) as api, \
+        with patch('auto_merge.gh_api', side_effect=[[[review('CHANGES_REQUESTED')]], pr, None]) as api, \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78)
+            process(REPO, pr)
         self.assertEqual(api.call_args.args[1]['state'], 'failure')
         self.assertEqual(command.call_args.args[0], ['gh', 'pr', 'merge', '78', '--repo', REPO, '--disable-auto'])
 
     def test_pending_approval_does_not_start_merge(self):
         pr = pull_request()
-        with patch('auto_merge.gh_api', side_effect=[pr, [[]], pr, None]) as api, \
+        with patch('auto_merge.gh_api', side_effect=[[[]], pr, None]) as api, \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78)
+            process(REPO, pr)
         self.assertEqual(api.call_args.args[1]['state'], 'pending')
         command.assert_not_called()
 
     def test_current_approval_from_later_page_enables_merge_for_exact_sha(self):
         pr = pull_request()
-        with patch('auto_merge.gh_api', side_effect=[pr, [[review(sha=OLD_SHA)], [review()]], pr, None]) as api, \
+        with patch('auto_merge.gh_api', side_effect=[[[review(sha=OLD_SHA)], [review()]], pr, None]) as api, \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78)
+            process(REPO, pr)
         self.assertEqual(api.call_args.args[1]['state'], 'success')
         self.assertEqual(command.call_args.args[0][-4:], ['--auto', '--squash', '--match-head-commit', SHA])
 
     def test_shared_commit_never_reuses_another_pull_requests_approval(self):
         pr = pull_request(queued=True)
-        with patch('auto_merge.gh_api', side_effect=[pr, pr, None]) as api, \
+        with patch('auto_merge.gh_api', side_effect=[pr, None]) as api, \
                 patch('auto_merge.checks_for') as checks, \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78, {SHA})
+            process(REPO, pr, {SHA})
         checks.assert_not_called()
         self.assertEqual(api.call_args.args[1]['state'], 'pending')
         self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
 
-    def test_rollout_publishes_approval_without_requesting_merge(self):
+    def test_rollout_keeps_approved_commit_pending_without_requesting_merge(self):
         for queued in (False, True):
             with self.subTest(queued=queued):
                 pr = pull_request(queued=queued)
-                with patch('auto_merge.gh_api', side_effect=[pr, [[review()]], pr, None]) as api, \
+                with patch('auto_merge.gh_api', side_effect=[[[review()]], pr, None]) as api, \
                         patch('auto_merge.checks_for', return_value=[check()]), \
                         patch('auto_merge.subprocess.run') as command:
-                    process(REPO, 78, allow_auto_merge=False)
-                self.assertEqual(api.call_args.args[1]['state'], 'success')
+                    process(REPO, pr, allow_auto_merge=False)
+                self.assertEqual(api.call_args.args[1]['state'], 'pending')
                 if queued:
                     self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
                 else:
                     command.assert_not_called()
 
     def test_changed_head_prevents_status_or_merge(self):
-        with patch('auto_merge.gh_api', side_effect=[pull_request(), [[review()]], pull_request(OLD_SHA)]) as api, \
+        with patch('auto_merge.gh_api', side_effect=[[[review()]], pull_request(OLD_SHA)]) as api, \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78)
-        self.assertEqual(api.call_count, 3)
+            process(REPO, pull_request())
+        self.assertEqual(api.call_count, 2)
         command.assert_not_called()
 
     def test_failed_review_api_replaces_previous_success_and_disables_auto_merge(self):
@@ -153,16 +163,16 @@ class CodeRabbitProcessTests(unittest.TestCase):
         with patch('auto_merge.gh_api', side_effect=api), \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command:
-            process(REPO, 78)
+            process(REPO, pr)
         self.assertEqual(status['state'], 'failure')
         self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
 
     def test_failed_status_write_still_attempts_to_disable_auto_merge(self):
         pr = pull_request(queued=True)
-        with patch('auto_merge.gh_api', side_effect=[pr, [[review('CHANGES_REQUESTED')]], pr, OSError()]), \
+        with patch('auto_merge.gh_api', side_effect=[[[review('CHANGES_REQUESTED')]], pr, OSError()]), \
                 patch('auto_merge.checks_for', return_value=[check()]), \
                 patch('auto_merge.subprocess.run') as command, self.assertRaises(OSError):
-            process(REPO, 78)
+            process(REPO, pr)
         self.assertEqual(command.call_args.args[0][-1], '--disable-auto')
 
 
