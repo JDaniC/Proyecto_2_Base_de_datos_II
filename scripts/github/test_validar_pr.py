@@ -11,7 +11,7 @@ class ContratoTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validar('[E00-P1-01] Contratos', 'Frontend', 'develop', ['a'], 'E00-P1-01')
     def test_config(self):
-        validar('[CONFIG-GITHUB] Flujo', 'codex/flujo', 'develop', ['.github/workflows/ci.yml'], '')
+        validar('[CONFIG-GITHUB] Flujo', 'codex/flujo', 'develop', ['.github/workflows/ci.yml', '.coderabbit.yaml'], '')
     def test_config_no_codigo(self):
         with self.assertRaises(ValueError):
             validar('[CONFIG-GITHUB] Flujo', 'codex/flujo', 'develop', ['Backend/a.ts'], '')
