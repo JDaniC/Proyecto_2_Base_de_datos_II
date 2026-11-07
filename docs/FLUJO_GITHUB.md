@@ -21,7 +21,7 @@ Si hay cambios locales pendientes, usar otro worktree; no usar reset/clean ni bo
 
 ## 3. Revisar con CodeRabbit
 
-CodeRabbit es el revisor automático vigente. Comprobar el check nativo `CodeRabbit` correspondiente al SHA actual del PR. Si no aparece, solicitar `@coderabbitai full review` una vez y verificar que se crea el check correspondiente. No asumir aprobado por silencio ni repetir solicitudes en bucle.
+CodeRabbit es el revisor automático vigente. Comprobar el check nativo `CodeRabbit` y la revisión `APPROVED` del bot correspondientes al SHA actual del PR. Si no aparece, solicitar `@coderabbitai full review` una vez y verificar que se crea el check correspondiente. No asumir aprobado por silencio ni repetir solicitudes en bucle.
 
 El responsable valida las pruebas y los hallazgos aplicables; debe corregirlos y resolver sus conversaciones antes de integrar. Una conclusión exitosa del check no equivale por sí sola a ausencia de hallazgos. La revisión del compañero es opcional.
 
@@ -37,7 +37,7 @@ Tras completar la revisión automática y comprobar su resultado, usar Squash an
 
 ## 5. Excepciones limitadas
 
-`[CONFIG-GITHUB] descripción` solo admite .github/, scripts/github/, plan/, .agents/rules/, docs/FLUJO_GITHUB.md, README.md y AGENTS.md; no código de aplicación. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan el check y la revisión automática. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
+`[CONFIG-GITHUB] descripción` solo admite .coderabbit.yaml, .github/, scripts/github/, plan/, .agents/rules/, docs/FLUJO_GITHUB.md, README.md y AGENTS.md; no código de aplicación. `[PLAN] descripción` solo admite plan/ y guías AGENTS. Ambas conservan el check y la revisión automática. El validador comprueba estructura e IDs, no reemplaza la auditoría funcional ni verifica por sí solo todas las dependencias del tablero.
 
 ## 6. Activación y diagnóstico
 
@@ -49,7 +49,7 @@ El PR `[INTEGRACION-INICIAL] Consolidar frontend y documentación` desde Fronten
 
 ## Continuidad entre agentes y personas
 
-Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). Reservar con PR borrador; antes de retomar revisar rama, commits y seguimiento. El cambio de persona no cambia ID ni crea una tarea paralela. Antigravity lee AGENTS.md y la regla .agents/rules/00-continuidad.md al abrir la raíz del proyecto.
+Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). Antes de implementar, adquirir la reserva exclusiva según plan/11. Abrir PR tras ambas auditorías PASS. Al retomar, revisar rama, commits y seguimiento. El cambio de persona no cambia ID ni crea una tarea paralela. Antigravity lee AGENTS.md y la regla .agents/rules/00-continuidad.md al abrir la raíz del proyecto.
 
 ## Mantenimiento solicitado
 
@@ -59,10 +59,10 @@ Leer [cola compartida y traspaso](../plan/11_CONTINUIDAD_Y_COLA_COMPARTIDA.md). 
 
 La rama predeterminada es develop; main se conserva para las entregas. Los workflows de eventos y comentarios se cargan desde la rama predeterminada. El anterior pull_request_target no se ejecutaba porque solo existía en develop mientras la predeterminada era main.
 
-El flujo actual responde a la finalización de «Validación del proyecto», a checks, comentarios del PR y ejecución manual. Solo ejecuta el script de la rama predeterminada, nunca código del PR con permisos de escritura. Comprueba el check nativo `CodeRabbit` de la app 347564 sobre el SHA actual, completado con conclusión `success`. Un check ausente, anterior o incompleto mantiene la espera; no aceptar silencio como aprobación.
+El evaluador responde a la validación de CI, a cambios de revisión de CodeRabbit, al check nativo, a comentarios de PR y a ejecución manual. Ejecuta el script de la rama predeterminada. La señal de revisión usa un workflow con permisos vacíos y carece de acceso de escritura.
 
-Con el check CodeRabbit exitoso del SHA actual se habilita auto-merge squash; GitHub espera además contrato-pr, conversaciones resueltas y las demás reglas del repositorio. El responsable verifica los hallazgos aplicables antes de resolverlos. Las ramas fusionadas se eliminan automáticamente. Borradores y forks no se integran con este flujo. No exige aprobación de David. Si la rama queda desactualizada, actualizarla, repetir checks y obtener revisión del nuevo SHA.
+La fusión automática requiere check nativo exitoso y aprobación de CodeRabbit sobre el mismo commit. El evaluador publica `revision-coderabbit` y retira el auto-merge en espera si falta alguno de esos requisitos. GitHub aplica además contrato-pr, resolución de conversaciones y reglas de rama. Consultar [la guía de integración](../plan/10_INTEGRACION_GITHUB.md) para activar el control requerido.
 
-Para reevaluar un PR existente: `gh workflow run auto-merge.yml --ref develop -f pr=7` (cambiar el número). Si falta el check CodeRabbit del SHA actual, solicitar `@coderabbitai full review` una vez y esperar el check correspondiente. No repetir comentarios en bucle ni usar --admin. La ejecución manual evalúa, no fabrica un resultado del bot.
+Para reevaluar: `gh workflow run auto-merge.yml --ref develop -f pr=78`. El número prioriza ese PR en la evaluación de todos los abiertos. Si falta una revisión, el responsable puede solicitar `@coderabbitai full review` y comprobar el resultado sobre el SHA actual.
 
 Fuentes: https://github.blog/changelog/2025-11-07-actions-pull_request_target-and-environment-branch-protections-changes/ y https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow
