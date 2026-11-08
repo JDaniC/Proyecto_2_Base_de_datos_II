@@ -53,12 +53,4 @@ Ejecutor `—` significa sin asignación; no implica disponibilidad si hay una r
 | E04 | HECHA | [Acta funcional](evidencias/E04/CIERRE.md); PR #75 integrado (`7dea7b4`), CodeRabbit APPROVED sobre `8be6865`, controles SUCCESS; implementación #74 integrada |
 | E05 | PENDIENTE | Cierre técnico en `plan/evidencias/E05/CIERRE.md` después del recorrido del candidato |
 
-## Trabajo fuera de la cola de cierre
-
-| ID histórico | Ejecutor actual | Estado observado | Conservación |
-|---|---|---|---|
-| `E05-P2-02` | JDaniC | EN_CURSO | [Rama y seguimiento](seguimiento/E05-P2-02.md). Reserva remota confirmada y cambios locales. Excluir del cierre no libera ni transfiere la reserva. |
-
-[E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02), [E06](entregas/E06_integracion_auditoria/01_P1.md) y [E07](entregas/E07_entrega_final/01_P1.md) se conservan como referencias históricas. Los IDs retirados de la cola no se marcan HECHA ni se reasignan.
-
 No cambiar estos estados por el conteo de pruebas históricas. Los IDs y dependencias son estables. El lote no restringe al ejecutor; registrar toma, liberación o traspaso con fecha en la evidencia/seguimiento y PR, sin duplicar la tarea. Los archivos detallados contienen el trabajo y criterios, este tablero contiene el estado.

@@ -83,7 +83,6 @@ Conservar IDs y orden de los archivos originales. La ventana corresponde a la fa
 | 32 | [E05-P1-02 — Generar informes inmutables y descarga autorizada](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 33 | [E05-P1-03 — Facturación, pagos y reversiones con saldo consistente](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 34 | [E05-P2-01 — Captura, validación, corrección y repetición de resultados](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
-| 35 | [E05-P2-02 — Inventario de reactivos, equipos y control de calidad](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 36 | [E05-P2-03 — Integrar laboratorio y administración mínima de cuentas](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 37 | [E06-P1-01 — Revisar autorización y recuperar fallos de identidad](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
 | 38 | [E06-P1-02 — Demostrar equivalencia, atomicidad y concurrencia en cuatro motores](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
