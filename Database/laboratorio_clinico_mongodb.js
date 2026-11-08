@@ -473,6 +473,8 @@
     return valor;
   };
   const equivalente = (a, b) => JSON.stringify(canonico(a)) === JSON.stringify(canonico(b));
+  const sha256 = (valor) => require('node:crypto').createHash('sha256')
+    .update(JSON.stringify(canonico(valor))).digest('hex');
   const mismasClavesIndice = (a, b) => JSON.stringify(Object.entries(a)) === JSON.stringify(Object.entries(b));
   const opcionesIndice = (indice) => ({
     unique: Boolean(indice.unique), sparse: Boolean(indice.sparse), hidden: Boolean(indice.hidden),
@@ -494,19 +496,54 @@
     return;
   }
 
+  // Las migraciones 011/012 evolucionan validadores e indices sin reescribir este
+  // inicializador. Una reaplicacion acepta solo esos destinos publicados y sus
+  // manifiestos LISTO; cualquier otra deriva continua fallando antes de escribir.
+  const manifiestos = new Map(destino.getCollectionInfos({ name: 'historial_modelo' }).length
+    ? destino.getCollection('historial_modelo').find({ id: { $in: [11, 12] } }).toArray().map((v) => [v.id, v])
+    : []);
+  const migracion11 = manifiestos.get(11);
+  const esquemas11 = migracion11?.version === 1 && migracion11?.estado === 'LISTO'
+    ? JSON.parse(require('node:fs').readFileSync(
+      require('node:path').join(process.cwd(), 'Database/migrations/esquemas/011_laboratorio_mongodb_v2.json'), 'utf8',
+    ))
+    : [];
+  const destinos11 = new Map(esquemas11.map((v) => [v.nombre, v]));
+  const manifiesto12 = manifiestos.get(12);
+  const HUELLA_MANIFIESTO_12 = 'd78acdaf16d4e5eff57a44f3988a2617992c3357f4188a8c6ce8c6fbb51d094e';
+  const indices12 = [
+    ix('ix_resultado_fecha', { fecha_analisis: 1, _id: 1 }),
+    ix('ix_resultado_orden_fecha', { orden_id: 1, fecha_analisis: 1, _id: 1 }),
+    ix('ix_resultado_item_fecha', { item_id: 1, fecha_analisis: 1, _id: 1 }),
+    ix('ix_resultado_serie_fecha', { serie_resultado_id: 1, fecha_analisis: 1, _id: 1 }),
+    ix('ix_resultado_paciente_fecha', { paciente_id: 1, fecha_analisis: 1, _id: 1 }, parcialTexto('paciente_id')),
+    ix('ix_resultado_repeticion', { resultado_repetido_de_id: 1, fecha_analisis: 1, _id: 1 }, parcialTexto('resultado_repetido_de_id')),
+  ];
+  const destinoMigrado = (definicion, info) => {
+    const evolucion11 = destinos11.get(definicion.nombre);
+    if (evolucion11 && equivalente(info.options.validator, evolucion11.validador)) return evolucion11;
+    if (definicion.nombre === 'resultados' && manifiesto12?.version === 1 && manifiesto12?.estado === 'LISTO'
+        && manifiesto12.huella === HUELLA_MANIFIESTO_12 && manifiesto12.huellaValidador === sha256(info.options.validator)) {
+      return { nombre: 'resultados', validador: info.options.validator,
+        indices: [...definicion.indices, ...indices12] };
+    }
+    return null;
+  };
+
   // Preflight de TODAS las colecciones antes de crear la primera.
   // No cambia silenciosamente una base antigua ni elimina indices incompatibles.
   const existentes = new Map(destino.getCollectionInfos().map((info) => [info.name, info]));
   for (const definicion of definiciones) {
     const info = existentes.get(definicion.nombre);
     if (!info) continue;
+    const evolucion = destinoMigrado(definicion, info);
     if (info.type !== 'collection' || info.options.capped || info.options.timeseries || info.options.collation
-        || !equivalente(info.options.validator, definicion.validador)
+        || (!equivalente(info.options.validator, definicion.validador) && !evolucion)
         || info.options.validationLevel !== 'strict' || info.options.validationAction !== 'error') {
       throw new Error(`Estructura incompatible en ${definicion.nombre}; preparar migracion explicita antes de continuar.`);
     }
     const indicesExistentes = destino.getCollection(definicion.nombre).getIndexes();
-    for (const esperado of definicion.indices) {
+    for (const esperado of evolucion?.indices || definicion.indices) {
       for (const actual of indicesExistentes) {
         if (actual.name === esperado.name || mismasClavesIndice(actual.key, esperado.key)) {
           if (actual.name !== esperado.name || !mismasClavesIndice(actual.key, esperado.key)

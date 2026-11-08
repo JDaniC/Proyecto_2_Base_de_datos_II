@@ -11,9 +11,9 @@ test('manifiesto Firestore cubre las dos direcciones de crecimiento por paciente
  }
 });
 
-test('huella clínica y migración010 coinciden con el plan de instalación actual',async()=>{
+test('huella clínica y migración013 coinciden con el plan de instalación actual',async()=>{
  const {obtenerPlan}=await import('../../../Database/centro_pediatrico_firestore.mjs');
- const {HUELLA_OBJETIVO}=await import('../../../Database/migrations/010_indice_crecimiento_firestore.mjs');
+ const {HUELLA_OBJETIVO}=await import('../../../Database/migrations/013_manifiesto_pediatrico_firestore.mjs');
  const fuente=await readFile(new URL('../../src/adaptadores/salida/firestore/consultas/clinica-firestore.ts',import.meta.url),'utf8');
  assert.equal((await obtenerPlan()).hash_modelo,HUELLA_OBJETIVO);
  assert.ok(fuente.includes(`HUELLA_CLINICA_FIRESTORE = '${HUELLA_OBJETIVO}'`));

@@ -20,6 +20,7 @@ import { migrarClinicaMongodb } from '../../Database/migrations/005_clinica_mong
 import { migrarLaboratorioMongodb } from '../../Database/migrations/011_laboratorio_mongodb.mjs';
 import { migrarResultadosLaboratorioMongodb } from '../../Database/migrations/012_resultados_laboratorio_mongodb.mjs';
 import { prepararClinicaFirestore } from '../../Database/migrations/006_clinica_firestore.mjs';
+import { prepararManifiestoPediatricoFirestore } from '../../Database/migrations/013_manifiesto_pediatrico_firestore.mjs';
 import { inicializarFirestore } from '../../Database/centro_pediatrico_firestore.mjs';
 
 assert.match(process.env.HISTORIAL_ISOLATED ?? '', /^bdii-ca07-[a-f0-9]{10}$/);
@@ -113,7 +114,7 @@ try {
   await prepararHistorialMongodb(mongo.db('laboratorio_clinico')); await migrarClinicaMongodb(mongo.db('laboratorio_clinico'));
   await migrarLaboratorioMongodb(mongo.db('laboratorio_clinico'),{escritoresDetenidos:true});
   await migrarResultadosLaboratorioMongodb(mongo.db('laboratorio_clinico'),{escritoresDetenidos:true});
-  await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore); await prepararAntecedentesPediatricos(firestore);
+  await inicializarFirestore(firestore); await prepararHistorialFirestore(firestore); await prepararClinicaFirestore(firestore); await prepararManifiestoPediatricoFirestore(firestore); await prepararAntecedentesPediatricos(firestore);
   for (const institucion of instituciones) cuentas.push(await crearCuenta(institucion));
   const pediCuenta=cuentas.find(c=>c.institucion==='CENTRO_MEDICO_PEDIATRICO');
   const vacunaId=randomUUID(),versionId=randomUUID(),dosisId=randomUUID();

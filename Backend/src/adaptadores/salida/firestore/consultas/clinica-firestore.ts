@@ -15,7 +15,7 @@ import { validarEventoHistorial, verificarManifiestoHistorial } from '../../hist
 import { RepositorioPacientesFirestore } from '../pacientes/repositorio-pacientes-firestore.js';
 import { documentoConsultaFirestore, mapearConsultaFirestore } from './mapear-consulta-firestore.js';
 
-export const HUELLA_CLINICA_FIRESTORE = '34517ff024a5d455a8579571f66b881ccaa58b7657e5101a14eeab6755d64de3';
+export const HUELLA_CLINICA_FIRESTORE = '5b3c97d9b34ae5f86b273ef65e42e1431473a0c901bb07a0e8da470a9ab73c67';
 export const VERSION_CLINICA_FIRESTORE = 'clinica-pediatrica-v1-snapshot-2026-10-29';
 const incompatible = () => new ErrorDominio('PERSISTENCIA_NO_DISPONIBLE','La clínica requiere migraciones 004/006/010 y documentos reconciliados.');
 

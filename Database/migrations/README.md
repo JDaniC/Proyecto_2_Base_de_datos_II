@@ -237,3 +237,12 @@ escritores detenidos. Amplía el validador de `resultados` sin modificar M03 ni
 documentos existentes y añade índices parciales de paciente y repetición. Las
 precondiciones, recuperación reanudable y límites de backfill se documentan en
 [012_resultados_laboratorio_mongodb.md](012_resultados_laboratorio_mongodb.md).
+
+## 013 · Manifiesto pediátrico Firestore vigente (E05-P1-04)
+
+Después de 006/010, ejecutar `prepararManifiestoPediatricoFirestore(db)` de
+[013_manifiesto_pediatrico_firestore.mjs](013_manifiesto_pediatrico_firestore.mjs)
+con escritores detenidos. En instalaciones nuevas es un no-op; en volúmenes con
+la huella 010 actualiza ambos manifiestos atómicamente y conserva un respaldo.
+Las precondiciones y recuperación están en
+[013_manifiesto_pediatrico_firestore.md](013_manifiesto_pediatrico_firestore.md).

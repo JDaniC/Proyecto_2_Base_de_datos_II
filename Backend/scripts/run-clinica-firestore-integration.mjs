@@ -2,7 +2,7 @@ import { execFile as ejecutarArchivo } from 'node:child_process';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -60,7 +60,9 @@ const entorno = {
 };
 
 try {
-  await comando('npm', ['run', 'build:test'], { cwd: backend });
+  await (process.platform === 'win32'
+    ? comando(process.execPath, [join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'), 'run', 'build:test'], { cwd: backend })
+    : comando('npm', ['run', 'build:test'], { cwd: backend }));
 
   const confOriginal = JSON.parse(
     await readFile(join(root, 'Database/firebase/firebase.json'), 'utf8'),
@@ -77,11 +79,9 @@ try {
   const configFirebase = join(temporal, 'firebase.json');
   await writeFile(configFirebase, JSON.stringify(confOriginal));
 
-  const comandoPruebas = `${process.execPath} --test dist-test/tests/integracion/clinica-firestore.test.js`;
+  const comandoPruebas = `"${process.execPath}" --test dist-test/tests/integracion/clinica-firestore.test.js`;
 
-  const salidaPruebas = await comando(
-    'firebase',
-    [
+  const firebaseArgs = [
       'emulators:exec',
       '--only',
       'auth,firestore',
@@ -90,9 +90,13 @@ try {
       '--config',
       configFirebase,
       comandoPruebas,
-    ],
-    { cwd: backend, env: entorno, timeout: 180_000 },
-  );
+    ];
+  const firebaseCli = process.platform === 'win32' && process.env.APPDATA
+    ? join(process.env.APPDATA, 'npm/node_modules/firebase-tools/lib/bin/firebase.js')
+    : undefined;
+  const salidaPruebas = await (firebaseCli
+    ? comando(process.execPath, [firebaseCli, ...firebaseArgs], { cwd: backend, env: entorno, timeout: 180_000 })
+    : comando('firebase', firebaseArgs, { cwd: backend, env: entorno, timeout: 180_000 }));
 
   process.stdout.write(`${salidaPruebas}\n`);
 } finally {
