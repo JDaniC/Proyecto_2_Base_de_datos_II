@@ -30,6 +30,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
   const db = cliente.firestore; t.after(()=>cliente.cerrar());
   // Importación explícita del módulo de migración versionado, sin credenciales externas.
   const migracion = await import(new URL('../../../../Database/migrations/006_clinica_firestore.mjs',import.meta.url).href) as {prepararClinicaFirestore(db: unknown, opciones?: {despuesDePagina?:()=>void}): Promise<unknown>};
+  const migracion013 = await import(new URL('../../../../Database/migrations/013_manifiesto_pediatrico_firestore.mjs',import.meta.url).href) as {HUELLA_ORIGEN:string;HUELLA_ORIGEN_CRLF_COMPLETO:string;prepararManifiestoPediatricoFirestore(db:unknown,o?:{antesDeConfirmar?:()=>void}):Promise<{actualizado:boolean}>};
   const inicializador = await import(new URL('../../../../Database/centro_pediatrico_firestore.mjs',import.meta.url).href) as {inicializarFirestore(db:unknown):Promise<unknown>};
   await inicializador.inicializarFirestore(db);
   const actor = id(), rol = id(), profesional = id(), uid = `clinica-${randomUUID()}`;
@@ -48,6 +49,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await db.doc('historial_configuracion/modelo').set({version:1,estado:'LISTO'});
     assert.equal((await migracion.prepararClinicaFirestore(db) as {estado:string}).estado,'LISTO');
     assert.equal((await migracion.prepararClinicaFirestore(db) as {estado:string}).estado,'LISTO');
+    assert.equal((await migracion013.prepararManifiestoPediatricoFirestore(db)).actualizado,false);
   });
   await t.test('consulta completa, receta histórica, todos los signos y reintento estable',async()=>{
     const e = await entrada(), clave = id(); const r = await atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:clave,entrada:e});
@@ -64,26 +66,33 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await assert.rejects(atencion.ejecutar('completa',{contexto,bundle,claveIdempotencia:clave,entrada:e}),{codigo:'SIN_PERMISO'});
     await db.doc(`roles/${rol}`).update({permisos:cuenta.permisos});
   });
-  await t.test('migración010 nueva/existente, rollback, rechazo de deriva y reejecución sin pérdida',async()=>{
-    const m=await import(new URL('../../../../Database/migrations/010_indice_crecimiento_firestore.mjs',import.meta.url).href) as {HUELLA_ORIGEN:string;prepararIndiceCrecimientoFirestore(db:unknown,o?:{antesDeConfirmar?:()=>void}):Promise<{actualizado:boolean}>};
+  await t.test('migración013 nueva/existente, rollback, rechazo de deriva y reejecución sin pérdida',async()=>{
+    const m=migracion013;
     const consultasAntes=(await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()}));
     assert.ok(consultasAntes.length>0);
     const pacienteAntes=(await db.doc(`pacientes/${pacienteId}`).get()).data();
-    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,false);
+    assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,false);
+    const rutas=(await db.doc('configuracion/modelo').get()).get('rutas');
+    await db.doc('configuracion/modelo').update({rutas:['ruta/ajena']});
+    await assert.rejects(m.prepararManifiestoPediatricoFirestore(db),/RUTAS_MODELO_INCOMPATIBLES/);
+    await db.doc('configuracion/modelo').update({rutas});
     await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN});
     await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN});
-    await assert.rejects(m.prepararIndiceCrecimientoFirestore(db,{antesDeConfirmar:()=>{throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
+    await assert.rejects(m.prepararManifiestoPediatricoFirestore(db,{antesDeConfirmar:()=>{throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
     assert.equal((await db.doc('configuracion/modelo').get()).get('hash_modelo'),m.HUELLA_ORIGEN);
+    assert.equal((await db.doc('clinica_configuracion/modelo').get()).get('huella'),m.HUELLA_ORIGEN);
     assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
-    assert.equal((await db.doc('clinica_migracion_010_respaldo/modelo').get()).exists,false);
-    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,true);
-    assert.equal((await m.prepararIndiceCrecimientoFirestore(db)).actualizado,false);
+    assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).exists,false);
+    await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN_CRLF_COMPLETO});
+    await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN_CRLF_COMPLETO});
+    assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,true);
+    assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,false);
     assert.deepEqual((await db.doc(`pacientes/${pacienteId}`).get()).data(),pacienteAntes);
     assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
-    assert.equal((await db.doc('clinica_migracion_010_respaldo/modelo').get()).get('clinica.huella'),m.HUELLA_ORIGEN);
+    assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).get('clinica.huella'),m.HUELLA_ORIGEN_CRLF_COMPLETO);
     const hash=(await db.doc('configuracion/modelo').get()).get('hash_modelo') as string;
     await db.doc('configuracion/modelo').update({hash_modelo:'deriva-desconocida'});
-    await assert.rejects(m.prepararIndiceCrecimientoFirestore(db),/MANIFIESTO_CLINICO_INCOMPATIBLE/);
+    await assert.rejects(m.prepararManifiestoPediatricoFirestore(db),/MANIFIESTO_CLINICO_INCOMPATIBLE/);
     await db.doc('configuracion/modelo').update({hash_modelo:hash});
   });
   await t.test('principal sin autorización y vínculo inactivo se rechazan sin parcialidad',async()=>{

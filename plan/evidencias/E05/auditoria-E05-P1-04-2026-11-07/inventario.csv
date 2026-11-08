@@ -1,0 +1,11 @@
+unidad,tipo,riesgo,prueba,resultado
+Backend/scripts/run-historial-integration.mjs,orquestacion,HIGH,candidato cuatro motores,PASS
+Backend/scripts/run-clinica-firestore-integration.mjs,runner,HIGH,integracion Firestore 20/20,PASS
+Backend/scripts/clinica-ui-integration.mjs,migraciones,HIGH,recorrido integrado,PASS
+Database/migrations/013_manifiesto_pediatrico_firestore.mjs,migracion,HIGH,nueva existente rollback deriva,PASS
+Backend/src/adaptadores/salida/firestore/consultas/clinica-firestore.ts,manifiesto,HIGH,contrato y emulador,PASS
+Database/laboratorio_clinico_mongodb.js,inicializador,HIGH,reaplicacion sobre orden real,PASS
+Database/migrations/esquemas/011_laboratorio_mongodb_v2.json,contrato,HIGH,huella e indices,PASS
+compose.yaml,despliegue,HIGH,montaje solo lectura,PASS
+Database/tests/centro_pediatrico_firestore.test.mjs,contrato,MEDIUM,82/82,PASS
+Frontend,cliente,MEDIUM,build y recorrido API,PASS

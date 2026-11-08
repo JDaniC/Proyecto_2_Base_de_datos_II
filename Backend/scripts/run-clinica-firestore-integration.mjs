@@ -2,7 +2,7 @@ import { execFile as ejecutarArchivo } from 'node:child_process';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -60,7 +60,12 @@ const entorno = {
 };
 
 try {
-  await comando('npm', ['run', 'build:test'], { cwd: backend });
+  const npmCli = [process.env.npm_execpath, join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js')]
+    .find((ruta) => ruta && existsSync(ruta));
+  if (process.platform === 'win32' && !npmCli) throw new Error('Ejecute el runner mediante npm run test:integration:clinica:firestore.');
+  await (process.platform === 'win32'
+    ? comando(process.execPath, [npmCli, 'run', 'build:test'], { cwd: backend })
+    : comando('npm', ['run', 'build:test'], { cwd: backend }));
 
   const confOriginal = JSON.parse(
     await readFile(join(root, 'Database/firebase/firebase.json'), 'utf8'),
@@ -77,11 +82,9 @@ try {
   const configFirebase = join(temporal, 'firebase.json');
   await writeFile(configFirebase, JSON.stringify(confOriginal));
 
-  const comandoPruebas = `${process.execPath} --test dist-test/tests/integracion/clinica-firestore.test.js`;
+  const comandoPruebas = `"${process.execPath}" --test dist-test/tests/integracion/clinica-firestore.test.js`;
 
-  const salidaPruebas = await comando(
-    'firebase',
-    [
+  const firebaseArgs = [
       'emulators:exec',
       '--only',
       'auth,firestore',
@@ -90,9 +93,26 @@ try {
       '--config',
       configFirebase,
       comandoPruebas,
-    ],
-    { cwd: backend, env: entorno, timeout: 180_000 },
-  );
+    ];
+  const prefijosNpm = [
+    ...(process.env.APPDATA ? [join(process.env.APPDATA, 'npm')] : []),
+    ...(process.env.PATH ?? '').split(delimiter).filter(Boolean),
+  ];
+  // En Windows ejecutamos un archivo JS con Node o un ejecutable nativo.
+  // Los shims .cmd no admiten execFile y no se interpolan rutas en un shell.
+  const firebaseCli = process.platform === 'win32'
+    ? [process.env.FIREBASE_CLI_JS, ...prefijosNpm.map((ruta) => join(ruta, 'node_modules/firebase-tools/lib/bin/firebase.js'))]
+      .find((ruta) => ruta?.toLowerCase().endsWith('.js') && existsSync(ruta))
+    : undefined;
+  const firebaseExe = process.platform === 'win32'
+    ? prefijosNpm.map((ruta) => join(ruta, 'firebase.exe')).find(existsSync)
+    : 'firebase';
+  if (!firebaseCli && !firebaseExe) {
+    throw new Error('Firebase CLI no localizado en Windows. Instale firebase-tools o defina FIREBASE_CLI_JS con la ruta a lib/bin/firebase.js.');
+  }
+  const salidaPruebas = await (firebaseCli
+    ? comando(process.execPath, [firebaseCli, ...firebaseArgs], { cwd: backend, env: entorno, timeout: 180_000 })
+    : comando(firebaseExe, firebaseArgs, { cwd: backend, env: entorno, timeout: 180_000 }));
 
   process.stdout.write(`${salidaPruebas}\n`);
 } finally {

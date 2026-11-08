@@ -102,6 +102,7 @@ services:
     entrypoint: [mongosh, --nodb, --norc, --quiet, --file, /config/bootstrap.js]
     volumes:
       - ./Database/laboratorio_clinico_mongodb.js:/workspace/Database/laboratorio_clinico_mongodb.js:ro
+      - ./Database/migrations/esquemas/011_laboratorio_mongodb_v2.json:/workspace/Database/migrations/esquemas/011_laboratorio_mongodb_v2.json:ro
       - ./Database/docker/mongo/bootstrap.js:/config/bootstrap.js:ro
     secrets:
       - mongo_admin_password

@@ -237,3 +237,15 @@ escritores detenidos. Amplía el validador de `resultados` sin modificar M03 ni
 documentos existentes y añade índices parciales de paciente y repetición. Las
 precondiciones, recuperación reanudable y límites de backfill se documentan en
 [012_resultados_laboratorio_mongodb.md](012_resultados_laboratorio_mongodb.md).
+
+## 013 · Manifiesto pediátrico Firestore vigente (E05-P1-04)
+
+Ejecutar `prepararManifiestoPediatricoFirestore(db)` de
+[013_manifiesto_pediatrico_firestore.mjs](013_manifiesto_pediatrico_firestore.mjs)
+con escritores detenidos. Desde un origen LF anterior, ejecutar 010 y luego
+013. Con una huella CRLF conocida en ambos manifiestos, ejecutar 013 antes
+de 010 y antes de reaplicar el inicializador pediátrico. Con LF canónica las
+comprobaciones son de solo lectura. En cloud, publicar y verificar el índice
+de 010 antes de cualquiera de las dos rutas.
+Las precondiciones y recuperación están en
+[013_manifiesto_pediatrico_firestore.md](013_manifiesto_pediatrico_firestore.md).
