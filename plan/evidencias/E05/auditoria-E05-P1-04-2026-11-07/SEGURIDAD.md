@@ -34,3 +34,20 @@ Los paquetes invocables `security-auditor` y `functional-requirements-auditor` n
 4. **S04 — MEDIUM:** el contrato 011 no estaba disponible dentro del contenedor de inicialización. Se monta el JSON exacto como archivo de solo lectura.
 
 Revalidación: lint/arquitectura PASS; backend 372/372 y contratos 46/46 PASS; Firestore offline 82/82 PASS; instalación integrada en cuatro motores PASS. Los fallos de la suite histórica de UI se clasifican en la auditoría funcional y no acreditan persistencia.
+
+
+## Revalidación macOS de la retoma
+
+Candidato `787c8de`. Superficie cambiada: resolución de CLI y fixtures
+de ensayo, preparación Firestore 013, preflight Mongo y verificación de
+reaplicación. El proceso usa proyecto `demo-*`, puertos loopback, credenciales
+sintéticas temporales y volúmenes exclusivos. No publica datos, huellas de
+documentos, credenciales ni tokens. La transacción de Firestore coteja rutas,
+versión, institución, estado, contrato y ambas huellas antes de respaldar y
+actualizar. El inicializador Mongo exige validadores/índices compatibles;
+cuando falta el esquema montado, falla con un error explícito. Las pruebas
+reales confirman rechazo 404 cruzado, 403 del analista, receta inválida sin
+parcialidad y rechazo 409 de atención nueva tras archivo. SCA: 0 en frontend;
+14 moderados heredados y 0 altos/críticos en backend. No cambian lockfiles.
+Resultado PASS del alcance. El detalle reproducible está en
+[la evidencia](../E05-P1-04.md).

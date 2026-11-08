@@ -5,13 +5,42 @@
   "funcional": "PASS",
   "requisitos_trazados": 11,
   "hallazgos_abiertos_aplicables": 0,
-  "backend": { "runtime_unitarias": 372, "contratos": 46, "lint": "PASS" },
-  "frontend": { "build": "PASS", "historicas_pass": 174, "historicas_fail_fuera_alcance": 134 },
+  "backend": {
+    "runtime_unitarias": 372,
+    "contratos": 46,
+    "lint": "PASS"
+  },
+  "frontend": {
+    "build": "PASS",
+    "historicas_pass": 174,
+    "historicas_fail_fuera_alcance": 134
+  },
   "firestore_offline": 82,
   "firestore_clinica": 20,
   "cuatro_motores": "PASS",
   "mongodb_reinstalacion": "PASS",
   "frontend_audit_vulnerabilities": 0,
-  "backend_vulnerabilities": { "moderate": 14, "high": 0, "critical": 0 },
-  "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó el protocolo equivalente completo antes del PR."
+  "backend_vulnerabilities": {
+    "moderate": 14,
+    "high": 0,
+    "critical": 0
+  },
+  "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó el protocolo equivalente completo antes del PR.",
+  "revalidacion": {
+    "candidato": "787c8de",
+    "equipo": "macOS arm64 / Chrome",
+    "hitos": {
+      "HOSPITAL_GENERAL": 30,
+      "CLINICA_ODONTOLOGICA": 18,
+      "LABORATORIO_CLINICO": 18,
+      "CENTRO_MEDICO_PEDIATRICO": 35
+    },
+    "total_hitos": 101,
+    "cuatro_motores": "PASS",
+    "mongo_reaplicacion": "PASS",
+    "firestore_integracion": 20,
+    "frontend_http_y_alcance": 152,
+    "seguridad": "PASS",
+    "funcional": "PASS"
+  }
 }

@@ -37,3 +37,17 @@ Los 134 fallos históricos reproducen principalmente búsquedas del panel retira
 - F04: prueba offline esperaba 12 índices frente a 13 vigentes → expectativa alineada y 82/82 PASS.
 
 No se modificaron flujos de producto ajenos al defecto de instalación.
+
+
+## Revalidación macOS de la retoma
+
+Candidato `787c8de`. Los 101 hitos se repitieron sobre su código.
+La búsqueda de pacientes por interfaz y el rechazo de nuevas atenciones
+archivadas pasaron en los cuatro motores. En laboratorio pasó la clínica
+común con un médico individual y, por separado, el circuito con dos exámenes,
+analista y validador. El runner comparó la huella y el conteo de los datos
+Mongo antes y después de reaplicar el inicializador. La migración 013 pasó
+como no-op en LF, recuperó huellas CRLF conocidas, rechazó rutas incompatibles
+y preservó los documentos ante rollback. El candidato revalidado y los
+comandos están en [la evidencia](../E05-P1-04.md). No quedan fallos aplicables
+en los requisitos R01–R11.

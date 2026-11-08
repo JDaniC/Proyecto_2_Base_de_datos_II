@@ -15,3 +15,5 @@
 | R11 | Instrucción 05/11 | Auditorías previas al PR | `SEGURIDAD.md`, `FUNCIONAL.md`, inventario y resultado | PASS |
 
 No quedan requisitos obligatorios `FAIL` o `BLOCKED` en el alcance de cierre. Firestore es emulado y se declara como tal; no se presenta como proyecto cloud real.
+
+Los resultados de la retoma para R01–R11 se verificaron en macOS sobre `787c8de`. Los comandos, los recuentos por motor y el alcance de los errores reales o inyectados están en [la evidencia](../E05-P1-04.md).
