@@ -243,7 +243,7 @@ precondiciones, recuperación reanudable y límites de backfill se documentan en
 Después de 006/010, ejecutar `prepararManifiestoPediatricoFirestore(db)` de
 [013_manifiesto_pediatrico_firestore.mjs](013_manifiesto_pediatrico_firestore.mjs)
 con escritores detenidos. En instalaciones nuevas con huella LF es un no-op. En volúmenes con
-la huella CRLF conocida actualiza ambos manifiestos y conserva un respaldo.
+una huella CRLF conocida actualiza ambos manifiestos y conserva un respaldo.
 En ese caso, ejecutarla antes de reaplicar el inicializador pediátrico.
 Las precondiciones y recuperación están en
 [013_manifiesto_pediatrico_firestore.md](013_manifiesto_pediatrico_firestore.md).

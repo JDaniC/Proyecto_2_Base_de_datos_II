@@ -30,7 +30,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
   const db = cliente.firestore; t.after(()=>cliente.cerrar());
   // Importación explícita del módulo de migración versionado, sin credenciales externas.
   const migracion = await import(new URL('../../../../Database/migrations/006_clinica_firestore.mjs',import.meta.url).href) as {prepararClinicaFirestore(db: unknown, opciones?: {despuesDePagina?:()=>void}): Promise<unknown>};
-  const migracion013 = await import(new URL('../../../../Database/migrations/013_manifiesto_pediatrico_firestore.mjs',import.meta.url).href) as {HUELLA_ORIGEN:string;prepararManifiestoPediatricoFirestore(db:unknown,o?:{antesDeConfirmar?:()=>void}):Promise<{actualizado:boolean}>};
+  const migracion013 = await import(new URL('../../../../Database/migrations/013_manifiesto_pediatrico_firestore.mjs',import.meta.url).href) as {HUELLA_ORIGEN:string;HUELLA_ORIGEN_CRLF_COMPLETO:string;prepararManifiestoPediatricoFirestore(db:unknown,o?:{antesDeConfirmar?:()=>void}):Promise<{actualizado:boolean}>};
   const inicializador = await import(new URL('../../../../Database/centro_pediatrico_firestore.mjs',import.meta.url).href) as {inicializarFirestore(db:unknown):Promise<unknown>};
   await inicializador.inicializarFirestore(db);
   const actor = id(), rol = id(), profesional = id(), uid = `clinica-${randomUUID()}`;
@@ -82,11 +82,13 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.equal((await db.doc('configuracion/modelo').get()).get('hash_modelo'),m.HUELLA_ORIGEN);
     assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
     assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).exists,false);
+    await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN_CRLF_COMPLETO});
+    await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN_CRLF_COMPLETO});
     assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,true);
     assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,false);
     assert.deepEqual((await db.doc(`pacientes/${pacienteId}`).get()).data(),pacienteAntes);
     assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
-    assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).get('clinica.huella'),m.HUELLA_ORIGEN);
+    assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).get('clinica.huella'),m.HUELLA_ORIGEN_CRLF_COMPLETO);
     const hash=(await db.doc('configuracion/modelo').get()).get('hash_modelo') as string;
     await db.doc('configuracion/modelo').update({hash_modelo:'deriva-desconocida'});
     await assert.rejects(m.prepararManifiestoPediatricoFirestore(db),/MANIFIESTO_CLINICO_INCOMPATIBLE/);

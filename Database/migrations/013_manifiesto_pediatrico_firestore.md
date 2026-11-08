@@ -3,7 +3,7 @@
 Los archivos del modelo se leen con finales LF canónicos para que una copia
 Windows y una Unix calculen la misma huella. La migración actualiza
 `configuracion/modelo` y `clinica_configuracion/modelo` cuando ambos conservan
-la huella CRLF conocida. Una instalación nueva preparada con 006, o un
+una de las huellas CRLF conocidas (reglas CRLF o los tres archivos CRLF). Una instalación nueva preparada con 006, o un
 volumen existente con ambas huellas LF, no necesita una escritura adicional.
 
 En un volumen existente, detener escritores y verificar el respaldo externo
