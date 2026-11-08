@@ -38,7 +38,7 @@ Revalidación: lint/arquitectura PASS; backend 372/372 y contratos 46/46 PASS; F
 
 ## Revalidación macOS de la retoma
 
-Candidato `787c8de`. Superficie cambiada: resolución de CLI y fixtures
+Candidato `f56455b`. Superficie cambiada: resolución de CLI y fixtures
 de ensayo, preparación Firestore 013, preflight Mongo y verificación de
 reaplicación. El proceso usa proyecto `demo-*`, puertos loopback, credenciales
 sintéticas temporales y volúmenes exclusivos. No publica datos, huellas de
@@ -51,3 +51,5 @@ parcialidad y rechazo 409 de atención nueva tras archivo. SCA: 0 en frontend;
 14 moderados heredados y 0 altos/críticos en backend. No cambian lockfiles.
 Resultado PASS del alcance. El detalle reproducible está en
 [la evidencia](../E05-P1-04.md).
+
+Huella 011 alterada: el runner de prueba modificó temporalmente el manifiesto en MongoDB efímero, comprobó que `mongo-init` rechazara la deriva, restauró la huella válida y comprobó una reaplicación sin pérdida.

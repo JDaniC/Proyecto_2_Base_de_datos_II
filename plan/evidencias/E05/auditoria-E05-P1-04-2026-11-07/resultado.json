@@ -27,7 +27,7 @@
   },
   "nota_runtime": "Los paquetes invocables de auditor no estaban expuestos; se aplicó el protocolo equivalente completo antes del PR.",
   "revalidacion": {
-    "candidato": "787c8de",
+    "candidato": "f56455b",
     "equipo": "macOS arm64 / Chrome",
     "hitos": {
       "HOSPITAL_GENERAL": 30,
