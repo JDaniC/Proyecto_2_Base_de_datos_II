@@ -1,6 +1,6 @@
 # Tablero de ejecución
 
-Actualizado: 07/11/2026. E05 concentra el trabajo técnico restante. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
+Actualizado: 08/11/2026. El alcance técnico mínimo de E00 a E05 está cerrado. Las tareas de implementación empiezan **PENDIENTE**; la existencia de este plan no acredita su ejecución. Estados: PENDIENTE → EN_CURSO → EN_REVISION → HECHA; BLOQUEADA exige causa/dependencia y permite avanzar trabajo independiente. HECHA exige criterios y evidencia verificados por el responsable; no requiere aprobación del compañero. La revisión automática se comprueba realmente según plan/10 y plan/11; no se presume por un check verde.
 
 | ID | Lote original | Ejecutor actual | Estado | Dependencias internas | Evidencia / rama / commit / bloqueo |
 |---|---|---|---|---|---|

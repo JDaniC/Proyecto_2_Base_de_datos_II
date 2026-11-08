@@ -1,6 +1,6 @@
 # Plan de construcción y entrega final
 
-Actualizado el 07/11/2026. E00–E04 están integradas. El trabajo técnico pendiente se concentra en **una sola fase, E05**, con tres tareas encadenadas. E06 y E07 se conservan como historial del plan anterior.
+Actualizado el 08/11/2026. E00–E05 están integradas. El [acta de E05](evidencias/E05/CIERRE.md) registra el cierre del alcance técnico mínimo. E06 y E07 se conservan como historial del plan anterior.
 
 ## 1. Resultado que debe alcanzarse
 
