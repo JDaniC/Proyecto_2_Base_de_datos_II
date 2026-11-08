@@ -25,6 +25,8 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 
 ## 2. Calendario diario y resultado integrado
 
+Las filas del 01/11 y 02/11 se ajustaron el 07/11 para reflejar el alcance mínimo de DEC20. [Calendario anterior](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/blob/b2c142e5ee7822dd2dffb5324cc05b740452a17a/plan/09_CRONOGRAMA_HASTA_05_NOV.md).
+
 | Fecha | Bloque A (lote P1, cualquiera) | Bloque B (lote P2, cualquiera) | Resultado y puerta |
 |---|---|---|---|
 | 24/10 | Preparar PR del flujo e inventario de cambios locales | Aceptar invitación y revisar flujo | Preparación; importar plan/UI mediante PR controlado, sin publicar cambios ajenos |

@@ -162,7 +162,7 @@ Fuente: [RNF del proyecto](../Agente/REQUERIMIENTOS_NO_FUNCIONALES.md). Las tare
 | CA13 | [E05-P1-02](entregas/E05_laboratorio/01_P1.md#e05-p1-02), [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) |
 | CA14 | [E05-P1-03](entregas/E05_laboratorio/01_P1.md#e05-p1-03), [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) |
 | CA15 | Referencia histórica de inventario. Fuera del cierre mínimo según DEC20. |
-| CA16 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) |
+| CA16 | [E05-P1-01](entregas/E05_laboratorio/01_P1.md#e05-p1-01) para catálogo inicial y búsqueda. Los límites de calidad quedan fuera del cierre mínimo según DEC20. |
 | CA17 | [E04-P1-02](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-02), [E04-P1-03](entregas/E04_hospital_dental_pediatria/01_P1.md#e04-p1-03), [E06-P1-02](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) |
 | CA18 | [E06-P1-01](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) |
 | CA19 | [E06-P1-03](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-03), [E07-P1-02](entregas/E07_entrega_final/01_P1.md#e07-p1-02) |

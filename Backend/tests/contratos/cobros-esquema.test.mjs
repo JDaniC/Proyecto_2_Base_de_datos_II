@@ -20,9 +20,10 @@ test('OpenAPI publica las siete operaciones de cobros con autorización y errore
  for(const dto of ['CobrosEmitir','CobrosPagar','CobrosRevertir','CobrosAnular','CobrosReceptor'])assert.equal(api.components.schemas[dto].additionalProperties,false);
 });
 
-test('mapa UI conserva cobros en P1-03 e inventario/calidad en P2-02',()=>{
+test('mapa UI conserva cobros y excluye inventario y calidad según DEC20',()=>{
  const mapa=JSON.parse(readFileSync(new URL('../../docs/mapa-ui-v1.json',import.meta.url),'utf8'));
- for(const [responsable,metodos]of [['E05-P1-03',['obtenerFacturas','obtenerFacturaPorId','obtenerFacturaPorOrden','registrarPagoFactura','revertirPagoFactura','anularFactura']],['E05-P2-02',['obtenerEquipos','cambiarEstadoEquipo','registrarEquipo','obtenerControlesCalidad','registrarControlCalidad','obtenerLotesReactivos','obtenerMovimientosInventario','registrarMovimientoInventario','registrarNuevoLoteReactivo']]]){
-  for(const metodo of metodos){const e=mapa.find(x=>x.metodo===`LaboratoryRepository.${metodo}`);assert.ok(e,metodo);assert.equal(e.responsable,responsable,metodo);}
+ for(const [responsable,metodos]of [['E05-P1-03',['obtenerFacturas','obtenerFacturaPorId','obtenerFacturaPorOrden','registrarPagoFactura','revertirPagoFactura','anularFactura']],['DEC20',['obtenerEquipos','cambiarEstadoEquipo','registrarEquipo','obtenerControlesCalidad','registrarControlCalidad','obtenerLotesReactivos','obtenerMovimientosInventario','registrarMovimientoInventario','registrarNuevoLoteReactivo']]]){
+  for(const metodo of metodos){const e=mapa.find(x=>x.metodo===`LaboratoryRepository.${metodo}`);assert.ok(e,metodo);assert.equal(e.responsable,responsable,metodo);
+   if(responsable==='DEC20'){assert.equal(e.destino,'EXCLUIDO',metodo);assert.equal(e.categoria,'EXCLUIDO_ALCANCE_O_SOLO_MOCK',metodo);assert.equal(e.operationId,undefined,metodo);}}
  }
 });

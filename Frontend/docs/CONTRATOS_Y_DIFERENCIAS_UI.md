@@ -1,5 +1,7 @@
 # Inventario de Contratos del Frontend, Diferencias con API y Mapa para OpenAPI (E00-P2-02)
 
+> Referencia histórica de DEC11. DEC20 excluye además los nueve métodos de inventario y calidad en el mapa vigente `Backend/docs/mapa-ui-v1.json` y el inventario de exclusiones de `productScope.ts`.
+
 > **Estado**: Inventario de `E00-P2-02`, reconciliado con el contrato común v1 en `E00-P1-03`. Fuente HTTP canónica: [`Backend/docs/openapi.yaml`](../../Backend/docs/openapi.yaml); mapa exhaustivo vigente: [`mapa-ui-v1.json`](../../Backend/docs/mapa-ui-v1.json). Las rutas especializadas siguen siendo propuestas hasta su puerta contractual E04/E05.
 > **Fuentes verificadas**: `Frontend/src/services/contracts.ts`, `Frontend/src/services/types.ts`, `Frontend/src/app/ServiceContext.tsx`, `Frontend/src/app/productScope.ts`, `Frontend/src/app/AuthSessionContext.tsx`, `Frontend/src/features/**`, `plan/01_ALCANCE_Y_DECISIONES.md` (`DEC01`–`DEC14`), `plan/03_CONTRATOS_Y_FLUJOS.md`, `plan/entregas/E00_base_y_contratos/02_P2.md` (`E00-P2-02`) y `plan/evidencias/E00/E00-P1-01.md`.
 > **Consumidores directos**: `E00-P1-03` (OpenAPI 3.1 y esquemas JSON), `E01-P2-02` (cliente HTTP y modo explícito `mock`/`api`) y `E02`–`E05` (adaptadores y conexión de pantallas).
