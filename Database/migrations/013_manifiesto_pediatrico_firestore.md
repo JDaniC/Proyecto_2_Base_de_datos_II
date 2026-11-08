@@ -1,19 +1,23 @@
-# 013 — Manifiesto pediátrico Firestore vigente
+# 013 — Huella canónica de los manifiestos pediátricos
 
-La ampliación del modelo M04 cambió la huella calculada del plan sin modificar
-datos clínicos. Esta migración sincroniza atómicamente `configuracion/modelo` y
-`clinica_configuracion/modelo` desde la huella 010 conocida hacia la huella del
-plan vigente. Conserva el estado `LISTO` o `RECONCILIAR`, crea un respaldo
-íntegro en `clinica_migracion_013_respaldo/modelo` y no toca pacientes,
-consultas, responsables, historia, auditoría ni operaciones.
+Los archivos del modelo se leen con finales LF canónicos para que una copia
+Windows y una Unix calculen la misma huella. La migración actualiza
+`configuracion/modelo` y `clinica_configuracion/modelo` cuando ambos conservan
+la huella CRLF conocida. Una instalación nueva preparada con 006, o un
+volumen existente con ambas huellas LF, no necesita una escritura adicional.
 
-Con escritores detenidos y respaldo externo verificado, ejecutar
-`prepararManifiestoPediatricoFirestore(db)`. Una instalación nueva preparada
-por 006 ya tiene la huella objetivo y produce un no-op. Un volumen existente
-debe tener exactamente la huella objetivo de 010 en ambos manifiestos; una
-deriva, huellas discordantes, estado `MIGRANDO` o respaldo previo incompatible
-falla cerrado. Un fallo inyectado revierte respaldo y manifiestos.
+En un volumen existente, detener escritores y verificar el respaldo externo
+antes de ejecutar `prepararManifiestoPediatricoFirestore(db)`. Aplicarla antes
+de reaplicar `inicializarFirestore` o iniciar el backend si el volumen tiene
+la huella CRLF. Se comprueban versión, institución, contrato clínico, estado
+`LISTO` o `RECONCILIAR`, igualdad del conjunto de rutas con `obtenerPlan()`,
+huellas conocidas y revisión positiva antes de actualizar. Huellas
+discordantes, rutas diferentes, `MIGRANDO` y respaldo previo incompatible
+impiden la escritura. La transacción crea un respaldo de ambos manifiestos,
+preserva el estado clínico y no altera datos clínicos. Un fallo revierte
+el respaldo y la actualización juntos.
 
-Verificación: `npm run test:integration:clinica:firestore` y el recorrido
-integral de E05-P1-04 con Firestore emulado. El emulador no acredita IAM ni el
-despliegue de índices en un proyecto real.
+Verificación desde la raíz:
+`npm --prefix Backend run test:integration:clinica:firestore` y el recorrido
+integral de E05-P1-04 con Firestore emulado. El emulador acredita la operación
+local; IAM y el despliegue de índices en un proyecto real quedan fuera.

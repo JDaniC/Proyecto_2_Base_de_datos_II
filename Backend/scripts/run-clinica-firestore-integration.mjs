@@ -2,7 +2,7 @@ import { execFile as ejecutarArchivo } from 'node:child_process';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -60,8 +60,11 @@ const entorno = {
 };
 
 try {
+  const npmCli = [process.env.npm_execpath, join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js')]
+    .find((ruta) => ruta && existsSync(ruta));
+  if (process.platform === 'win32' && !npmCli) throw new Error('Ejecute el runner mediante npm run test:integration:clinica:firestore.');
   await (process.platform === 'win32'
-    ? comando(process.execPath, [join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'), 'run', 'build:test'], { cwd: backend })
+    ? comando(process.execPath, [npmCli, 'run', 'build:test'], { cwd: backend })
     : comando('npm', ['run', 'build:test'], { cwd: backend }));
 
   const confOriginal = JSON.parse(
@@ -91,8 +94,12 @@ try {
       configFirebase,
       comandoPruebas,
     ];
-  const firebaseCli = process.platform === 'win32' && process.env.APPDATA
-    ? join(process.env.APPDATA, 'npm/node_modules/firebase-tools/lib/bin/firebase.js')
+  const prefijosNpm = [
+    ...(process.env.APPDATA ? [join(process.env.APPDATA, 'npm')] : []),
+    ...(process.env.PATH ?? '').split(delimiter).filter(Boolean),
+  ];
+  const firebaseCli = process.platform === 'win32'
+    ? prefijosNpm.map((ruta) => join(ruta, 'node_modules/firebase-tools/lib/bin/firebase.js')).find(existsSync)
     : undefined;
   const salidaPruebas = await (firebaseCli
     ? comando(process.execPath, [firebaseCli, ...firebaseArgs], { cwd: backend, env: entorno, timeout: 180_000 })

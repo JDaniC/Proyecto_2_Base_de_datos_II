@@ -28,12 +28,13 @@ export const rolesIniciales = [
 
 export async function obtenerPlan() {
   const [modelo, reglas, indicesTexto] = await Promise.all([
-    readFile(new URL('./firebase/modelo_pediatrico.mjs', import.meta.url)),
-    readFile(new URL('./firebase/firestore.rules', import.meta.url)),
+    readFile(new URL('./firebase/modelo_pediatrico.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('./firebase/firestore.rules', import.meta.url), 'utf8'),
     readFile(new URL('./firebase/firestore.indexes.json', import.meta.url), 'utf8'),
   ]);
   const indices = JSON.parse(indicesTexto);
-  const huella = createHash('sha256').update(modelo).update(reglas).update(indicesTexto)
+  const normalizarLf = (texto) => texto.replace(/\r\n/g, '\n');
+  const huella = createHash('sha256').update(normalizarLf(modelo)).update(normalizarLf(reglas)).update(normalizarLf(indicesTexto))
     .update(JSON.stringify(rolesIniciales)).digest('hex');
   const rutas = modelos.map((m) => m.ruta);
   return { institucion_id: INSTITUCION, version_esquema: VERSION_MODELO, hash_modelo: huella,

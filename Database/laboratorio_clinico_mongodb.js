@@ -503,11 +503,16 @@
     ? destino.getCollection('historial_modelo').find({ id: { $in: [11, 12] } }).toArray().map((v) => [v.id, v])
     : []);
   const migracion11 = manifiestos.get(11);
-  const esquemas11 = migracion11?.version === 1 && migracion11?.estado === 'LISTO'
-    ? JSON.parse(require('node:fs').readFileSync(
-      require('node:path').join(process.cwd(), 'Database/migrations/esquemas/011_laboratorio_mongodb_v2.json'), 'utf8',
-    ))
-    : [];
+  function cargarEsquemas11() {
+    if (migracion11?.version !== 1 || migracion11?.estado !== 'LISTO') return [];
+    const archivo = require('node:path').join(process.cwd(), 'Database/migrations/esquemas/011_laboratorio_mongodb_v2.json');
+    const fs = require('node:fs');
+    if (!fs.existsSync(archivo)) {
+      throw new Error('Esquema 011 no localizado; ejecutar mongosh desde la raíz del repositorio con Database/migrations/esquemas disponible.');
+    }
+    return JSON.parse(fs.readFileSync(archivo, 'utf8'));
+  }
+  const esquemas11 = cargarEsquemas11();
   const destinos11 = new Map(esquemas11.map((v) => [v.nombre, v]));
   const manifiesto12 = manifiestos.get(12);
   const HUELLA_MANIFIESTO_12 = 'd78acdaf16d4e5eff57a44f3988a2617992c3357f4188a8c6ce8c6fbb51d094e';

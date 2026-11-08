@@ -107,6 +107,7 @@ async function recorrerLaboratorio({browser,page,url,headers,paciente,pass,perfi
 
 export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
  const resultados=[];
+ const pacientesPorInstitucion=new Map();
  for(const cuenta of cuentas) {
   const context=await browser.newContext(); const page=await context.newPage();
   const pass=caso=>{resultados.push({institucion:cuenta.institucion,caso,resultado:'PASS'});console.log(`PASS ${cuenta.institucion}: ${caso}`);};
@@ -120,11 +121,18 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    const pedi=cuenta.institucion==='CENTRO_MEDICO_PEDIATRICO';
    const alta=await page.request.post(`${url}/api/v1/pacientes`,{headers,data:{nombres:'Paciente',apellidos:'Clínica Sintética',fecha_nacimiento:pedi?'2020-02-29':'2000-02-29',sexo:'MASCULINO',...(pedi?{responsables:[{nombres:'Madre',apellidos:'Sintética',telefono:'55555555',parentesco:'MADRE',es_principal:true,autoriza_atencion:true,documento:{tipo:'CUI',numero:'1234567890101'}}]}:{})}});
    assert.equal(alta.status(),201,`alta ${cuenta.institucion}`); const paciente=(await alta.json()).data;
-   if(cuenta.institucion==='LABORATORIO_CLINICO') {
+   await page.goto(`${url}/pacientes`);
+   await page.getByPlaceholder('Buscar paciente o expediente').fill('Clínica Sintética');
+   await page.getByText('Paciente Clínica Sintética',{exact:true}).first().waitFor();
+   pass('búsqueda en navegador devuelve el paciente registrado en su motor');
+   for(const [institucion,pacienteAjeno] of pacientesPorInstitucion){
+    const ajeno=await page.request.get(`${url}/api/v1/pacientes/${pacienteAjeno}`,{headers});
+    assert.equal(ajeno.status(),404,`aislamiento ante recurso de ${institucion}`);
+   }
+   if(pacientesPorInstitucion.size)pass('cuenta institucional no puede consultar pacientes de otros motores');
+   pacientesPorInstitucion.set(cuenta.institucion,paciente.id);
+   if(cuenta.institucion==='LABORATORIO_CLINICO'){
     await recorrerLaboratorio({browser,page,url,headers,paciente,pass,perfilesAnaliticos:cuenta.perfilesAnaliticos});
-    // Esta cuenta sintética es personal analítico, no médico individual autorizado
-    // para registrar consultas de la clínica común del laboratorio.
-    continue;
    }
    if(cuenta.institucion==='HOSPITAL_GENERAL'||pedi) {
     const motivoAgenda=`Agenda institucional ${cuenta.institucion}`;
@@ -321,6 +329,15 @@ export async function recorrerClinica({browser,url,cuentas,reiniciarBackend}) {
    if(pedi)await recorrerPediatria({page,url,paciente,headers,pass,reiniciarBackend});
    await page.goto(`${url}/pacientes/${paciente.id}`); await page.getByRole('button',{name:'Archivar expediente'}).click(); await page.locator('textarea').fill('Archivo sintético');
    await page.getByRole('button',{name:/Confirmar archivo/i}).click(); await page.getByText('Expediente archivado',{exact:true}).waitFor(); pass('archivo conserva eventos y consultas');
+   const fichaArchivada=await page.request.get(`${url}/api/v1/pacientes/${paciente.id}`,{headers});
+   assert.equal(fichaArchivada.status(),200);
+   const versionArchivada=(await fichaArchivada.json()).data.version;
+   const nuevaAtencion=await page.request.post(`${url}/api/v1/consultas/completas`,{
+    headers:{...headers,'Idempotency-Key':randomUUID()},data:{...JSON.parse(perdida.body),version_paciente:versionArchivada},
+   });
+   assert.equal(nuevaAtencion.status(),409);
+   assert.equal((await nuevaAtencion.json()).error.codigo,'ESTADO_INVALIDO');
+   pass('el servidor rechaza una nueva atención sobre el expediente archivado');
    await reiniciarBackend(); await page.reload(); await page.getByText('Expediente archivado',{exact:true}).waitFor(); await page.getByRole('link',{name:'Ver atención'}).first().click(); await page.getByRole('button',{name:'Imprimir Receta Médica'}).waitFor(); pass('historia y receta conservadas tras reinicio');
    await page.getByRole('button',{name:'Corregir o Actualizar Consulta'}).click();
    await page.locator('#rect-motivo-input').fill('Corrección con expediente archivado'); await page.locator('#rect-justificacion-input').fill('Corrección histórica autorizada');

@@ -86,15 +86,16 @@ async function crearCuenta(institucion, secretaria = false) {
   } else if (institucion === 'LABORATORIO_CLINICO') {
     const db = mongo.db('laboratorio_clinico');
     const rolesLaboratorio = [
-      { _id: rolId, revision: 1, nombre: 'ADMIN_INSTITUCIONAL', permisos: ['pacientes.administrar','historial.leer','historial.archivar','consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir','ordenes.administrar','muestras.administrar'] },
+      { _id: rolId, revision: 1, nombre: 'ADMIN_INSTITUCIONAL', permisos: ['pacientes.administrar','historial.leer','historial.archivar','ordenes.administrar','muestras.administrar'] },
+      { _id: randomUUID(), revision: 1, nombre: 'MEDICO_LABORATORIO', permisos: ['consultas.registrar','diagnosticos.registrar','tratamientos.registrar','recetas.emitir'] },
       { _id: randomUUID(), revision: 1, nombre: 'ANALISTA_LABORATORIO', permisos: ['resultados.analizar'] },
       { _id: randomUUID(), revision: 1, nombre: 'VALIDADOR_LABORATORIO', permisos: ['resultados.validar'] },
     ];
     await db.collection('roles').insertMany(rolesLaboratorio);
     await db.collection('solicitantes').insertOne({_id:profesionalId,revision:1,nombre_completo:'Ana Sintética',tipo:'MEDICO',activo:true,numero_colegiado:profesionalId,entidad_colegiacion:'Colegio sintético'});
-    await db.collection('usuarios').insertOne({ _id: id, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: [rolId], solicitante_medico_id:profesionalId, estado: 'ACTIVO', activo: true, nombre_usuario: uid });
+    await db.collection('usuarios').insertOne({ _id: id, revision: 1, auth_uid: uid, proveedor_identidad: 'FIREBASE', institucion_id: institucion, rol_ids: rolesLaboratorio.slice(0,2).map(r=>r._id), solicitante_medico_id:profesionalId, estado: 'ACTIVO', activo: true, nombre_usuario: uid });
     perfilesAnaliticos = {};
-    for (const [perfil, rolAnalitico] of [['analista',rolesLaboratorio[1]],['validador',rolesLaboratorio[2]]]) {
+    for (const [perfil, rolAnalitico] of [['analista',rolesLaboratorio[2]],['validador',rolesLaboratorio[3]]]) {
       const uidAnalitico=randomUUID(), idAnalitico=randomUUID();
       const correo=`ui-${uidAnalitico}@example.test`, clave=`Sintetica-${randomBytes(12).toString('hex')}`;
       await auth.createUser({uid:uidAnalitico,email:correo,password:clave,emailVerified:true});

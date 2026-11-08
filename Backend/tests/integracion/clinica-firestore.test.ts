@@ -72,6 +72,10 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     assert.ok(consultasAntes.length>0);
     const pacienteAntes=(await db.doc(`pacientes/${pacienteId}`).get()).data();
     assert.equal((await m.prepararManifiestoPediatricoFirestore(db)).actualizado,false);
+    const rutas=(await db.doc('configuracion/modelo').get()).get('rutas');
+    await db.doc('configuracion/modelo').update({rutas:['ruta/ajena']});
+    await assert.rejects(m.prepararManifiestoPediatricoFirestore(db),/RUTAS_MODELO_INCOMPATIBLES/);
+    await db.doc('configuracion/modelo').update({rutas});
     await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN});
     await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN});
     await assert.rejects(m.prepararManifiestoPediatricoFirestore(db,{antesDeConfirmar:()=>{throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
