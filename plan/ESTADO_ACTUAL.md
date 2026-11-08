@@ -15,7 +15,7 @@
 2. **E05-P2-03**. Integrada en `develop` ([PR #82](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/82), `385ff47`), con CodeRabbit `APPROVED` sobre `e062409`, auditorías PASS y recorrido UI→HTTP→MongoDB de dos exámenes con cuentas separadas y recarga.
 3. **E05-P1-04**. Siguiente tarea disponible. Instalar el mismo candidato desde cero en otro equipo y verificar los recorridos en los cuatro motores. Reproducir y resolver `BOOTSTRAP_MONGO_ERROR` al reinstalar sobre la orden de prueba. Con evidencia satisfactoria, completar el [acta de fase](plantillas/CIERRE_ENTREGA.md) y verificar su integración y el cierre en el tablero.
 
-Consultar [plan maestro](00_PLAN_MAESTRO.md), [alcance DEC20](01_ALCANCE_Y_DECISIONES.md#dec20--cierre-técnico-compacto-07112026), [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y [revisión](10_INTEGRACION_GITHUB.md). Ejecutar `python3 scripts/github/cola.py` y cotejar con PR y reservas remotas. Inventario E05-P2-02 queda fuera de esta ruta y conserva su [seguimiento y reserva](seguimiento/E05-P2-02.md). E06 y E07 son históricas.
+Consultar [plan maestro](00_PLAN_MAESTRO.md), [alcance DEC20](01_ALCANCE_Y_DECISIONES.md#dec20--cierre-técnico-compacto-07112026), [continuidad](11_CONTINUIDAD_Y_COLA_COMPARTIDA.md) y [revisión](10_INTEGRACION_GITHUB.md). Ejecutar `python3 scripts/github/cola.py` y cotejar con PR y reservas remotas. E06 y E07 son históricas.
 
 ## 3. Referencias para verificar y retomar
 

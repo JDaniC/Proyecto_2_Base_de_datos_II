@@ -25,6 +25,8 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 
 ## 2. Calendario diario y resultado integrado
 
+Las filas del 01/11 y 02/11 se ajustaron el 07/11 para reflejar el alcance mínimo de DEC20. [Calendario anterior](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/blob/b2c142e5ee7822dd2dffb5324cc05b740452a17a/plan/09_CRONOGRAMA_HASTA_05_NOV.md).
+
 | Fecha | Bloque A (lote P1, cualquiera) | Bloque B (lote P2, cualquiera) | Resultado y puerta |
 |---|---|---|---|
 | 24/10 | Preparar PR del flujo e inventario de cambios locales | Aceptar invitación y revisar flujo | Preparación; importar plan/UI mediante PR controlado, sin publicar cambios ajenos |
@@ -35,8 +37,8 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 | 29/10 | E03-P1-01 → E03-P1-02 | E03-P2-01/02 después del contrato clínico | Núcleo clínico y adaptadores en revisión |
 | 30/10 | E03-P1-03 después de adaptadores | Cerrar adaptadores; E03-P2-03 después de archivo | Clínica común completa por UI y archivo sin pérdida |
 | 31/10 | E04 dental, hospitalización → coberturas | E04 responsables → vacunas → UI tras módulos | Tres instituciones demostrables |
-| 01/11 | E05-P1-01 → E05-P1-03 | E05-P2-01/02 después de órdenes | Órdenes, muestras, resultados e inventario |
-| 02/11 | E05-P1-02 después de resultados; cerrar cobros | E05-P2-03 después de informes/cobros/inventario | Laboratorio completo; congelar funciones nuevas |
+| 01/11 | E05-P1-01 → E05-P1-03 | E05-P2-01 después de órdenes | Órdenes, muestras, resultados y cobros |
+| 02/11 | Cierre de cobros | E05-P2-03 después de integrar resultados | Circuito analítico conectado |
 | 03/11 | E06 seguridad, restauración y equivalencia | E06 integración UI, regresiones y auditoría final | Candidato integrado en develop; sin defectos críticos/altos ni pruebas requeridas bloqueadas |
 | 04/11 | E07 comparativo; instalación después de manuales/trazabilidad | E07 trazabilidad y manuales | Ambos reproducen instalación; candidato de entrega |
 | 05/11 | E07 ensayo final después de instalación | E07 checklist después del ensayo | PR develop → main aprobado; etiqueta de versión y paquete de entrega |
@@ -83,7 +85,6 @@ Conservar IDs y orden de los archivos originales. La ventana corresponde a la fa
 | 32 | [E05-P1-02 — Generar informes inmutables y descarga autorizada](entregas/E05_laboratorio/01_P1.md#e05-p1-02) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 33 | [E05-P1-03 — Facturación, pagos y reversiones con saldo consistente](entregas/E05_laboratorio/01_P1.md#e05-p1-03) | P1 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 34 | [E05-P2-01 — Captura, validación, corrección y repetición de resultados](entregas/E05_laboratorio/02_P2.md#e05-p2-01) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
-| 35 | [E05-P2-02 — Inventario de reactivos, equipos y control de calidad](entregas/E05_laboratorio/02_P2.md#e05-p2-02) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 36 | [E05-P2-03 — Integrar laboratorio y administración mínima de cuentas](entregas/E05_laboratorio/02_P2.md#e05-p2-03) | P2 (cualquiera) | 01/11–02/11 | 02/11/2026 |
 | 37 | [E06-P1-01 — Revisar autorización y recuperar fallos de identidad](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-01) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |
 | 38 | [E06-P1-02 — Demostrar equivalencia, atomicidad y concurrencia en cuatro motores](entregas/E06_integracion_auditoria/01_P1.md#e06-p1-02) | P1 (cualquiera) | 03/11–03/11 | 03/11/2026 |

@@ -61,7 +61,7 @@ export function resolveServiceMode(
 
 /**
  * Contratos presentes en contracts.ts que quedan excluidos del alcance HTTP/OpenAPI
- * por corresponder a pantallas retiradas, helpers demo o acciones prohibidas desde cliente (DEC11).
+ * por corresponder a pantallas retiradas, helpers demo o acciones prohibidas desde cliente (DEC11 y DEC20).
  */
 export const EXCLUDED_CONTRACT_METHODS = [
   'AuthRepository.obtenerCuentasDemo',
@@ -73,7 +73,16 @@ export const EXCLUDED_CONTRACT_METHODS = [
   'CatalogRepository.cambiarEstadoMedico',
   'CatalogRepository.crearProcedimientoOdontologico',
   'AuditRepository.registrarEvento',
-  'HospitalizationRepository.cambiarEstadoCama'
+  'HospitalizationRepository.cambiarEstadoCama',
+  'LaboratoryRepository.obtenerEquipos',
+  'LaboratoryRepository.cambiarEstadoEquipo',
+  'LaboratoryRepository.registrarEquipo',
+  'LaboratoryRepository.obtenerControlesCalidad',
+  'LaboratoryRepository.registrarControlCalidad',
+  'LaboratoryRepository.obtenerLotesReactivos',
+  'LaboratoryRepository.obtenerMovimientosInventario',
+  'LaboratoryRepository.registrarMovimientoInventario',
+  'LaboratoryRepository.registrarNuevoLoteReactivo',
 ] as const;
 
 export function isRouteInInstitution(path: string, institution: InstitucionId): boolean {
