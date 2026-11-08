@@ -240,10 +240,12 @@ precondiciones, recuperación reanudable y límites de backfill se documentan en
 
 ## 013 · Manifiesto pediátrico Firestore vigente (E05-P1-04)
 
-Después de 006/010, ejecutar `prepararManifiestoPediatricoFirestore(db)` de
+Ejecutar `prepararManifiestoPediatricoFirestore(db)` de
 [013_manifiesto_pediatrico_firestore.mjs](013_manifiesto_pediatrico_firestore.mjs)
-con escritores detenidos. En instalaciones nuevas con huella LF es un no-op. En volúmenes con
-una huella CRLF conocida actualiza ambos manifiestos y conserva un respaldo.
-En ese caso, ejecutarla antes de reaplicar el inicializador pediátrico.
+con escritores detenidos. Desde un origen LF anterior, ejecutar 010 y luego
+013. Con una huella CRLF conocida en ambos manifiestos, ejecutar 013 antes
+de 010 y antes de reaplicar el inicializador pediátrico. Con LF canónica las
+comprobaciones son de solo lectura. En cloud, publicar y verificar el índice
+de 010 antes de cualquiera de las dos rutas.
 Las precondiciones y recuperación están en
 [013_manifiesto_pediatrico_firestore.md](013_manifiesto_pediatrico_firestore.md).

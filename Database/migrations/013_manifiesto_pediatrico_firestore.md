@@ -6,10 +6,15 @@ Windows y una Unix calculen la misma huella. La migración actualiza
 una de las huellas CRLF conocidas (reglas CRLF o los tres archivos CRLF). Una instalación nueva preparada con 006, o un
 volumen existente con ambas huellas LF, no necesita una escritura adicional.
 
-En un volumen existente, detener escritores y verificar el respaldo externo
-antes de ejecutar `prepararManifiestoPediatricoFirestore(db)`. Aplicarla antes
-de reaplicar `inicializarFirestore` o iniciar el backend si el volumen tiene
-la huella CRLF. Se comprueban versión, institución, contrato clínico, estado
+En un volumen existente, detener escritores y verificar el respaldo externo.
+En un proyecto cloud, publicar y verificar el índice de
+[010](010_indice_crecimiento_firestore.md) antes de cualquiera de estas rutas.
+
+- Origen LF anterior a 010: ejecutar 010 y luego 013. La primera migra a la huella canónica y la segunda confirma el estado sin escribir.
+- Ambas huellas coinciden con una variante CRLF conocida: ejecutar 013 antes de 010 y antes de reaplicar `inicializarFirestore`. Después, 010 comprueba la huella LF y no vuelve a escribir.
+- Instalación nueva: inicializar el modelo y preparar 006. Con la huella LF canónica, 010 y 013 verifican sin cambiar los manifiestos.
+
+Ejecutar 013 mediante `prepararManifiestoPediatricoFirestore(db)`. Se comprueban versión, institución, contrato clínico, estado
 `LISTO` o `RECONCILIAR`, igualdad del conjunto de rutas con `obtenerPlan()`,
 huellas conocidas y revisión positiva antes de actualizar. Huellas
 discordantes, rutas diferentes, `MIGRANDO` y respaldo previo incompatible
