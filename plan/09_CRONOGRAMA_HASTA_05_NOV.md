@@ -35,8 +35,8 @@ Al cierre de E00, ambos deben medir tiempo real y reestimar tareas pendientes. S
 | 29/10 | E03-P1-01 → E03-P1-02 | E03-P2-01/02 después del contrato clínico | Núcleo clínico y adaptadores en revisión |
 | 30/10 | E03-P1-03 después de adaptadores | Cerrar adaptadores; E03-P2-03 después de archivo | Clínica común completa por UI y archivo sin pérdida |
 | 31/10 | E04 dental, hospitalización → coberturas | E04 responsables → vacunas → UI tras módulos | Tres instituciones demostrables |
-| 01/11 | E05-P1-01 → E05-P1-03 | E05-P2-01/02 después de órdenes | Órdenes, muestras, resultados e inventario |
-| 02/11 | E05-P1-02 después de resultados; cerrar cobros | E05-P2-03 después de informes/cobros/inventario | Laboratorio completo; congelar funciones nuevas |
+| 01/11 | E05-P1-01 → E05-P1-03 | E05-P2-01 después de órdenes | Órdenes, muestras, resultados y cobros |
+| 02/11 | Cierre de cobros | E05-P2-03 después de integrar resultados | Circuito analítico conectado |
 | 03/11 | E06 seguridad, restauración y equivalencia | E06 integración UI, regresiones y auditoría final | Candidato integrado en develop; sin defectos críticos/altos ni pruebas requeridas bloqueadas |
 | 04/11 | E07 comparativo; instalación después de manuales/trazabilidad | E07 trazabilidad y manuales | Ambos reproducen instalación; candidato de entrega |
 | 05/11 | E07 ensayo final después de instalación | E07 checklist después del ensayo | PR develop → main aprobado; etiqueta de versión y paquete de entrega |
