@@ -5,7 +5,8 @@ import {existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {randomBytes} from 'node:crypto';
+import {createHash,randomBytes} from 'node:crypto';
+import {MongoClient} from 'mongodb';
 import {createServer} from 'node:net';
 const execFile=promisify(execFileCallback);
 // Comparte únicamente la preparación aislada; cada recorrido conserva sus propias aserciones.
@@ -33,6 +34,21 @@ async function estadoSql(){
  const pg=await run('docker',[...compose,'exec','-T','postgres','psql','-X','-At','-U','postgres_admin','-d','hospital_general','-c',"SELECT count(*)::text||':'||md5(string_agg(contenido::text,'' ORDER BY id)) FROM hospital_historial.eventos"]);
  const my=await run('docker',[...compose,'exec','-T','mysql','sh','-c',`MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot -N -B -e "SELECT COUNT(*),SHA2(GROUP_CONCAT(CAST(contenido AS CHAR) ORDER BY id),256) FROM clinica_historial.eventos"`]);
  return {pg,my};
+}
+async function estadoMongo(){
+ const password=(await readFile(join(secretos,'mongo_admin_password'),'utf8')).trim();
+ const cliente=new MongoClient(`mongodb://127.0.0.1:${entorno.MONGO_PORT}/?directConnection=true`,{
+  auth:{username:'mongo_admin',password},authSource:'admin',
+ });
+ try{
+  const db=cliente.db('laboratorio_clinico');
+  const estado={};
+  for(const nombre of ['ordenes','muestras','resultados','consultas_clinicas','historial_eventos']){
+   const datos=await db.collection(nombre).find({}).sort({_id:1}).toArray();
+   estado[nombre]={total:datos.length,huella:createHash('sha256').update(JSON.stringify(datos)).digest('hex')};
+  }
+  return estado;
+ }finally{await cliente.close();}
 }
 let errorPrincipal;
 try{
@@ -126,7 +142,11 @@ try{
  await migrarSql();
  const despues=await estadoSql();
  if(JSON.stringify(antes)!==JSON.stringify(despues)) throw new Error('MIGRACION_CAMBIO_EVENTOS');
+ const mongoAntes=await estadoMongo();
+ if(clinicaUi&&['ordenes','muestras','resultados','consultas_clinicas'].some(nombre=>mongoAntes[nombre].total===0))throw new Error('RECORRIDO_MONGO_SIN_DATOS');
  await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);
+ if(JSON.stringify(mongoAntes)!==JSON.stringify(await estadoMongo()))throw new Error('BOOTSTRAP_MONGO_CAMBIO_DATOS');
+ console.log('PASS MongoDB: reaplicación conserva órdenes, muestras, resultados, consultas e historial.');
  console.log('PASS SQL: migraciones reejecutadas sobre datos existentes sin eliminar eventos.');
 }catch(error){
  errorPrincipal=error;
