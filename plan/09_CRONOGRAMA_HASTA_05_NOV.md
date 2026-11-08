@@ -4,7 +4,7 @@
 
 Fecha de planificación: 24/10/2026. Zona: America/Guatemala. Integrantes: Daniel (JDaniC) y David (Davidix888). P1/P2 son lotes intercambiables; no asignan una tarea a una persona. Fechas objetivo, no estados de ejecución. El tablero 06_TABLERO.md conserva la autoridad sobre los estados.
 
-## Avance real al 07/11/2026
+## Avance real al 08/11/2026
 
 | Fase o tarea | Avance verificado |
 |---|---|
@@ -13,7 +13,7 @@ Fecha de planificación: 24/10/2026. Zona: America/Guatemala. Integrantes: Danie
 | E05-P1-03 | Cobros integrados el 05/11 por [PR #79](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/79). |
 | E05-P2-01 | Resultados versionados integrados el 07/11 por [PR #78](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78). |
 | E05-P2-03 | Circuito analítico HTTP integrado el 07/11 por [PR #82](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/82). |
-| E05-P1-04 y cierre E05 | Pendientes. La integración de E05-P2-03 habilita la instalación limpia y los recorridos en los cuatro motores. |
+| E05-P1-04 y cierre E05 | Instalación y recorridos verificados en cuatro motores. [PR #86](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/86) integrado en `35011a8`. [Acta de cierre](evidencias/E05/CIERRE.md). |
 
 ## 1. Capacidad y compromiso
 
