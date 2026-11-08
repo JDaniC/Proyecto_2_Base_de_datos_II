@@ -35,20 +35,39 @@ async function estadoSql(){
  const my=await run('docker',[...compose,'exec','-T','mysql','sh','-c',`MYSQL_PWD="$(cat /run/secrets/mysql_root_password)" mysql -uroot -N -B -e "SELECT COUNT(*),SHA2(GROUP_CONCAT(CAST(contenido AS CHAR) ORDER BY id),256) FROM clinica_historial.eventos"`]);
  return {pg,my};
 }
-async function estadoMongo(){
+async function conMongoEnsayo(accion){
  const password=(await readFile(join(secretos,'mongo_admin_password'),'utf8')).trim();
  const cliente=new MongoClient(`mongodb://127.0.0.1:${entorno.MONGO_PORT}/?directConnection=true`,{
   auth:{username:'mongo_admin',password},authSource:'admin',
  });
- try{
-  const db=cliente.db('laboratorio_clinico');
+ try{return await accion(cliente.db('laboratorio_clinico'));}finally{await cliente.close();}
+}
+/** Compara el estado persistido con conteos y huellas internas, sin registrar documentos. */
+async function estadoMongo(){
+ return conMongoEnsayo(async db=>{
   const estado={};
   for(const nombre of ['ordenes','muestras','resultados','consultas_clinicas','historial_eventos']){
    const datos=await db.collection(nombre).find({}).sort({_id:1}).toArray();
    estado[nombre]={total:datos.length,huella:createHash('sha256').update(JSON.stringify(datos)).digest('hex')};
   }
   return estado;
- }finally{await cliente.close();}
+ });
+}
+/** Inyecta una deriva únicamente en el manifiesto de este proyecto efímero. */
+async function probarHuellaMongo(){
+ await conMongoEnsayo(async db=>{
+  const modelos=db.collection('historial_modelo');
+  const previo=await modelos.findOne({id:11,estado:'LISTO'});
+  if(!previo)throw new Error('MANIFIESTO_MONGO_011_AUSENTE');
+  await modelos.updateOne({_id:previo._id},{$set:{huella:'0'.repeat(64)}});
+  try{
+   let rechazo=false;
+   try{await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);}
+   catch(e){if(!String(e.message).includes('MANIFIESTO_LABORATORIO_INCOMPATIBLE'))throw e;rechazo=true;}
+   if(!rechazo)throw new Error('BOOTSTRAP_MONGO_ACEPTO_HUELLA_INCOMPATIBLE');
+  }finally{await modelos.updateOne({_id:previo._id},{$set:{huella:previo.huella}});}
+ });
+ console.log('PASS MongoDB: reaplicación rechaza huella 011 alterada.');
 }
 let errorPrincipal;
 try{
@@ -144,6 +163,7 @@ try{
  if(JSON.stringify(antes)!==JSON.stringify(despues)) throw new Error('MIGRACION_CAMBIO_EVENTOS');
  const mongoAntes=await estadoMongo();
  if(clinicaUi&&['ordenes','muestras','resultados','consultas_clinicas'].some(nombre=>mongoAntes[nombre].total===0))throw new Error('RECORRIDO_MONGO_SIN_DATOS');
+ if(clinicaUi)await probarHuellaMongo();
  await run('docker',[...compose,'run','--rm','--no-deps','mongo-init']);
  if(JSON.stringify(mongoAntes)!==JSON.stringify(await estadoMongo()))throw new Error('BOOTSTRAP_MONGO_CAMBIO_DATOS');
  console.log('PASS MongoDB: reaplicación conserva órdenes, muestras, resultados, consultas e historial.');

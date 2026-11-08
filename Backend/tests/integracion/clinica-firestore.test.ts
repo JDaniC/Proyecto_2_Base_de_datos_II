@@ -80,6 +80,7 @@ test('E03-P2-02 CA05/09/10 clínica Firestore aislada', {skip: !host}, async t =
     await db.doc('clinica_configuracion/modelo').update({huella:m.HUELLA_ORIGEN});
     await assert.rejects(m.prepararManifiestoPediatricoFirestore(db,{antesDeConfirmar:()=>{throw new Error('FALLO_INYECTADO');}}),/FALLO_INYECTADO/);
     assert.equal((await db.doc('configuracion/modelo').get()).get('hash_modelo'),m.HUELLA_ORIGEN);
+    assert.equal((await db.doc('clinica_configuracion/modelo').get()).get('huella'),m.HUELLA_ORIGEN);
     assert.deepEqual((await db.collection('consultas').get()).docs.map(d=>({id:d.id,datos:d.data()})),consultasAntes);
     assert.equal((await db.doc('clinica_migracion_013_respaldo/modelo').get()).exists,false);
     await db.doc('configuracion/modelo').update({hash_modelo:m.HUELLA_ORIGEN_CRLF_COMPLETO});

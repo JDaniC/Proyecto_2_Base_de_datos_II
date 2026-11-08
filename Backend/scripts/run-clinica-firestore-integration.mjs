@@ -98,12 +98,21 @@ try {
     ...(process.env.APPDATA ? [join(process.env.APPDATA, 'npm')] : []),
     ...(process.env.PATH ?? '').split(delimiter).filter(Boolean),
   ];
+  // En Windows ejecutamos un archivo JS con Node o un ejecutable nativo.
+  // Los shims .cmd no admiten execFile y no se interpolan rutas en un shell.
   const firebaseCli = process.platform === 'win32'
-    ? prefijosNpm.map((ruta) => join(ruta, 'node_modules/firebase-tools/lib/bin/firebase.js')).find(existsSync)
+    ? [process.env.FIREBASE_CLI_JS, ...prefijosNpm.map((ruta) => join(ruta, 'node_modules/firebase-tools/lib/bin/firebase.js'))]
+      .find((ruta) => ruta?.toLowerCase().endsWith('.js') && existsSync(ruta))
     : undefined;
+  const firebaseExe = process.platform === 'win32'
+    ? prefijosNpm.map((ruta) => join(ruta, 'firebase.exe')).find(existsSync)
+    : 'firebase';
+  if (!firebaseCli && !firebaseExe) {
+    throw new Error('Firebase CLI no localizado en Windows. Instale firebase-tools o defina FIREBASE_CLI_JS con la ruta a lib/bin/firebase.js.');
+  }
   const salidaPruebas = await (firebaseCli
     ? comando(process.execPath, [firebaseCli, ...firebaseArgs], { cwd: backend, env: entorno, timeout: 180_000 })
-    : comando('firebase', firebaseArgs, { cwd: backend, env: entorno, timeout: 180_000 }));
+    : comando(firebaseExe, firebaseArgs, { cwd: backend, env: entorno, timeout: 180_000 }));
 
   process.stdout.write(`${salidaPruebas}\n`);
 } finally {

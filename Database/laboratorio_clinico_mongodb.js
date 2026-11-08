@@ -503,6 +503,7 @@
     ? destino.getCollection('historial_modelo').find({ id: { $in: [11, 12] } }).toArray().map((v) => [v.id, v])
     : []);
   const migracion11 = manifiestos.get(11);
+  /** Comprueba que el esquema publicado es el que figura en el manifiesto aplicado. */
   function cargarEsquemas11() {
     if (migracion11?.version !== 1 || migracion11?.estado !== 'LISTO') return [];
     const archivo = require('node:path').join(process.cwd(), 'Database/migrations/esquemas/011_laboratorio_mongodb_v2.json');
@@ -510,7 +511,9 @@
     if (!fs.existsSync(archivo)) {
       throw new Error('Esquema 011 no localizado; ejecutar mongosh desde la raíz del repositorio con Database/migrations/esquemas disponible.');
     }
-    return JSON.parse(fs.readFileSync(archivo, 'utf8'));
+    const esquema = JSON.parse(fs.readFileSync(archivo, 'utf8'));
+    if (sha256(esquema) !== migracion11.huella) throw new Error('MANIFIESTO_LABORATORIO_INCOMPATIBLE: huella 011 inesperada.');
+    return esquema;
   }
   const esquemas11 = cargarEsquemas11();
   const destinos11 = new Map(esquemas11.map((v) => [v.nombre, v]));
