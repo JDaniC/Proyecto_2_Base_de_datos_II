@@ -33,7 +33,7 @@ Cada fase contiene `01_P1.md` y `02_P2.md` en `entregas/`. Los dos índices de l
 
 ## 4. Orden y trabajo en paralelo
 
-Ruta restante: [E05-P2-01](entregas/E05_laboratorio/02_P2.md#e05-p2-01) → [E05-P2-03](entregas/E05_laboratorio/02_P2.md#e05-p2-03) → [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04). La primera integra el PR existente de resultados. La segunda conecta el circuito de órdenes, muestras y resultados a la interfaz. La tercera verifica la instalación y los recorridos exigidos.
+Resultados y circuito analítico integrados mediante [PR #78](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/78) y [PR #82](https://github.com/JDaniC/Proyecto_2_Base_de_datos_II/pull/82). La ruta restante es [E05-P1-04](entregas/E05_laboratorio/01_P1.md#e05-p1-04), que verifica la instalación y los recorridos exigidos.
 
 La consulta de resultados validados por orden cubre la visualización clínica del laboratorio. La emisión de archivos oficiales, inventario/calidad y la ampliación de cobros o administración quedan fuera de la ruta de cierre. Se mantienen los módulos ya integrados, las estructuras del modelo y las referencias del trabajo aplazado. La ruta de presentación se limita a capacidades disponibles en modo API.
 
